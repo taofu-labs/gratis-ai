@@ -3,10 +3,10 @@
  * storage prefixes, event names, and derived constants.
  *
  * Every branded string in the codebase imports from here.
- * To rebrand, change VITE_APP_NAME in .env — everything else follows.
+ * To rebrand, change VITE_APP_NAME in .env - everything else follows.
  */
 
-const raw = import.meta.env.VITE_APP_NAME || `gratisAI`
+const raw = import.meta.env.VITE_APP_NAME || `Gratis`
 const slug = raw.toLowerCase()
 
 // ── Display ──────────────────────────────────────────────────────
@@ -21,6 +21,9 @@ export const APP_VERSION = typeof __APP_VERSION__ !== `undefined` ? __APP_VERSIO
 
 /** Generic prefix for all app-owned keys: `gratisai:` */
 export const APP_PREFIX = `${ slug }:`
+
+/** Previous app-owned localStorage prefixes to clear during full resets. */
+export const LEGACY_APP_PREFIXES = [ `gratisai:` ].filter( prefix => prefix !== APP_PREFIX )
 
 /** localStorage prefix for settings: `gratisai:settings:` */
 export const STORAGE_PREFIX = `${ slug }:settings:`

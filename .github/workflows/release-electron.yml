@@ -60,17 +60,17 @@ jobs:
           prerelease: false
           generate_release_notes: true
           body: |
-            ## Download gratisAI
+            ## Download Gratis
 
             Click the link for your device to start downloading:
 
-            - 🍎 [**Mac (Apple Silicon)**](https://github.com/${{ github.repository }}/releases/latest/download/gratisAI-mac.dmg) — M1, M2, M3, M4 Macs
-            - 🪟 [**Windows**](https://github.com/${{ github.repository }}/releases/latest/download/gratisAI-win.exe)
-            - 🐧 [**Linux**](https://github.com/${{ github.repository }}/releases/latest/download/gratisAI-linux.AppImage)
+            - 🍎 [**Mac (Apple Silicon)**](https://github.com/${{ github.repository }}/releases/latest/download/Gratis-mac.dmg) — M1, M2, M3, M4 Macs
+            - 🪟 [**Windows**](https://github.com/${{ github.repository }}/releases/latest/download/Gratis-win.exe)
+            - 🐧 [**Linux**](https://github.com/${{ github.repository }}/releases/latest/download/Gratis-linux.AppImage)
 
             <details><summary>Intel Mac</summary>
 
-            - 🍎 [**Mac (Intel)**](https://github.com/${{ github.repository }}/releases/latest/download/gratisAI-mac-intel.dmg) — older Intel-based Macs
+            - 🍎 [**Mac (Intel)**](https://github.com/${{ github.repository }}/releases/latest/download/Gratis-mac-intel.dmg) — older Intel-based Macs
 
             </details>
 
@@ -191,13 +191,13 @@ jobs:
         if: matrix.platform == 'mac'
         run: |
           cd release
-          mv gratisAI-mac-arm64.dmg gratisAI-mac.dmg
-          mv gratisAI-mac-x64.dmg gratisAI-mac-intel.dmg
-          mv gratisAI-mac-arm64.zip gratisAI-mac.zip
-          mv gratisAI-mac-x64.zip gratisAI-mac-intel.zip
-          mv gratisAI-mac-arm64.dmg.blockmap gratisAI-mac.dmg.blockmap 2>/dev/null || true
-          mv gratisAI-mac-x64.dmg.blockmap gratisAI-mac-intel.dmg.blockmap 2>/dev/null || true
-          sed -i '' 's/gratisAI-mac-arm64/gratisAI-mac/g; s/gratisAI-mac-x64/gratisAI-mac-intel/g' latest*.yml
+          mv Gratis-mac-arm64.dmg Gratis-mac.dmg
+          mv Gratis-mac-x64.dmg Gratis-mac-intel.dmg
+          mv Gratis-mac-arm64.zip Gratis-mac.zip
+          mv Gratis-mac-x64.zip Gratis-mac-intel.zip
+          mv Gratis-mac-arm64.dmg.blockmap Gratis-mac.dmg.blockmap 2>/dev/null || true
+          mv Gratis-mac-x64.dmg.blockmap Gratis-mac-intel.dmg.blockmap 2>/dev/null || true
+          sed -i '' 's/Gratis-mac-arm64/Gratis-mac/g; s/Gratis-mac-x64/Gratis-mac-intel/g' latest*.yml
 
       - name: Upload artifacts to release
         uses: softprops/action-gh-release@v2

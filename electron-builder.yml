@@ -1,5 +1,5 @@
-appId: com.gratisai.app
-productName: gratisAI
+appId: com.trueperformancenetwork.gratis
+productName: Gratis
 directories:
   output: release/
 
@@ -10,13 +10,13 @@ asarUnpack:
 
 publish:
   provider: github
-  owner: actuallymentor
+  owner: taofu-labs
   repo: gratis-ai
 
 # --- macOS ---
 mac:
   category: public.app-category.productivity
-  artifactName: "gratisAI-mac-${arch}.${ext}"
+  artifactName: "Gratis-mac-${arch}.${ext}"
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
@@ -34,7 +34,7 @@ mac:
 
 # --- Windows ---
 win:
-  artifactName: "gratisAI-win.${ext}"
+  artifactName: "Gratis-win.${ext}"
   target:
     - target: nsis
       arch:
@@ -48,7 +48,7 @@ nsis:
 # --- Linux ---
 linux:
   category: Utility
-  artifactName: "gratisAI-linux.${ext}"
+  artifactName: "Gratis-linux.${ext}"
   target:
     - target: AppImage
       arch:

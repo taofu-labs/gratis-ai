@@ -8,6 +8,9 @@ const CONFIG_PATHS = {
     'multi-thread/wllama.wasm': `/wasm/multi-thread/wllama.wasm`,
 }
 
+const DEFAULT_BROWSER_CONTEXT = 2048
+const FALLBACK_BROWSER_CONTEXT = 1024
+
 /**
  * Detect which chat template family a Jinja template belongs to.
  * Returns a string key used by format_chat_prompt to pick the right formatter.
@@ -167,26 +170,26 @@ export default class WllamaProvider {
             on_progress( { progress: 0, status: `Loading model into memory...` } )
         }
 
-        // Use all but one core — wllama runs inference in a Web Worker so it
-        // won't block the UI thread.  Keeping one core free avoids starving
-        // the browser's main thread and compositor.
+        // Use all but one core when SharedArrayBuffer is available. Without
+        // cross-origin isolation, browsers cannot run the threaded WASM build.
         const hw_threads = navigator.hardwareConcurrency || 1
-        const n_threads = Math.max( 1, hw_threads - 1 )
+        const can_thread = window.crossOriginIsolated === true
+        const n_threads = can_thread ? Math.max( 1, hw_threads - 1 ) : 1
 
-        // Larger batch sizes speed up prompt ingestion (the "thinking" phase
-        // before tokens start streaming).  1024 is safe on multi-threaded
-        // systems; single-threaded stays conservative to avoid memory spikes.
-        const n_batch = n_threads > 1 ? 1024 : 256
+        // Browser memory failures are often caused by oversized context/batch
+        // settings rather than the GGUF file itself. Start with practical chat
+        // defaults and retry smaller before surfacing an error.
+        const n_ctx = Math.min( cached.context_length || DEFAULT_BROWSER_CONTEXT, DEFAULT_BROWSER_CONTEXT )
+        const n_batch = n_threads > 1 ? 512 : 128
 
         const file_size_mb = ( cached.blob.size / 1_000_000 ).toFixed( 0 )
-        log.info( `[wllama] Loading model ${ model_id } (${ file_size_mb } MB, ${ n_threads } threads, batch ${ n_batch })` )
+        log.info( `[wllama] Loading model ${ model_id } (${ file_size_mb } MB, ${ n_threads } threads, ctx ${ n_ctx }, batch ${ n_batch })` )
 
-        try {
-
+        const load_with_options = async ( options ) => {
             await this._wllama.loadModel( [ cached.blob ], {
-                n_ctx: cached.context_length || 2048,
-                n_batch,
-                n_threads,
+                n_ctx: options.n_ctx,
+                n_batch: options.n_batch,
+                n_threads: options.n_threads,
 
                 // Quantize the KV cache from FP16 → Q8_0.  Halves cache memory
                 // with near-zero quality loss (+0.002 ppl), freeing headroom for
@@ -194,6 +197,11 @@ export default class WllamaProvider {
                 cache_type_k: `q8_0`,
                 cache_type_v: `q8_0`,
             } )
+        }
+
+        try {
+
+            await load_with_options( { n_ctx, n_batch, n_threads } )
 
         } catch ( load_err ) {
 
@@ -213,23 +221,38 @@ export default class WllamaProvider {
                 || load_err.message?.includes( `out of bounds` )
 
             if( is_memory_error ) {
-                log.error( `[wllama] Out of memory loading ${ model_id } (${ file_size_mb } MB)` )
-                throw new Error( `This model is too large for your browser's memory. Try a smaller model or close other tabs.` )
+                log.warn( `[wllama] Memory pressure loading ${ model_id } (${ file_size_mb } MB), retrying safe mode` )
+
+                try {
+                    await this.unload_model()
+                    this._wllama = new Wllama( CONFIG_PATHS, {
+                        suppressNativeLog: true,
+                    } )
+                    await load_with_options( {
+                        n_ctx: Math.min( cached.context_length || FALLBACK_BROWSER_CONTEXT, FALLBACK_BROWSER_CONTEXT ),
+                        n_batch: 64,
+                        n_threads: 1,
+                    } )
+                } catch ( fallback_err ) {
+                    log.error( `[wllama] Out of memory loading ${ model_id } (${ file_size_mb } MB) after safe-mode retry`, fallback_err )
+                    throw new Error( `This browser could not load the local model. Try reloading once, closing other tabs, or using the desktop app for local models.` )
+                }
+            } else {
+
+                // Wllama's internal Glue protocol error — the WASM worker crashed or returned
+                // a non-binary response (e.g. the C++ side hit OOM and sent a JSON error).
+                // This typically means the model is too large for WebAssembly's 4 GB heap.
+                const is_glue_error = load_err.message?.includes( `Invalid magic number` )
+                    || load_err.message?.includes( `Invalid version number` )
+
+                if( is_glue_error ) {
+                    log.error( `[wllama] WASM worker protocol error loading ${ model_id } (${ file_size_mb } MB)` )
+                    throw new Error( `Failed to load this model in the browser — it's likely too large for WebAssembly memory. Try a smaller quantization or use the desktop app.` )
+                }
+
+                log.error( `[wllama] Failed to load model:`, load_err )
+                throw load_err
             }
-
-            // Wllama's internal Glue protocol error — the WASM worker crashed or returned
-            // a non-binary response (e.g. the C++ side hit OOM and sent a JSON error).
-            // This typically means the model is too large for WebAssembly's 4 GB heap.
-            const is_glue_error = load_err.message?.includes( `Invalid magic number` )
-                || load_err.message?.includes( `Invalid version number` )
-
-            if( is_glue_error ) {
-                log.error( `[wllama] WASM worker protocol error loading ${ model_id } (${ file_size_mb } MB)` )
-                throw new Error( `Failed to load this model in the browser — it's likely too large for WebAssembly memory. Try a smaller quantization or use the desktop app.` )
-            }
-
-            log.error( `[wllama] Failed to load model:`, load_err )
-            throw load_err
 
         }
 

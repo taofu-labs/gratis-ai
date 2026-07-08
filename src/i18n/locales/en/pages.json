@@ -1,7 +1,7 @@
 {
-    "tagline": "Your own AI assistant that runs entirely on this device. Private, fast, and works offline.",
-    "value_prop_privacy": "Your conversations stay on your device — nothing is sent to the cloud",
-    "value_prop_offline": "Works without internet after initial setup",
+    "tagline": "Private AI that runs on your device. Presented by True Performance Network and built to keep working offline.",
+    "value_prop_privacy": "Your conversations stay on your device - nothing is sent to the cloud",
+    "value_prop_offline": "Download a model once, then keep working without internet",
     "get_started": "Get Started",
     "checking_device": "Checking your device...",
     "show_device_details": "Show device details",
@@ -32,7 +32,7 @@
     "change_model": "Change model",
     "theme_label": "Theme: {{theme}}",
 
-    "desktop_banner_text": "Get more power with the same privacy — try the desktop app",
+    "desktop_banner_text": "Get more power with the same privacy - try the desktop app",
     "get_the_app": "Get the app",
 
     "update_version_available": "Version {{version}} is available",
@@ -43,7 +43,12 @@
     "update_ready_description": "Version {{version}} has been downloaded. Restart the app to apply the update.",
     "update_quit_and_reopen": "Quit and Reopen",
 
-    "get_app_tagline": "Download the desktop app for faster, fully-offline AI powered by your own hardware.",
+    "get_app_tagline": "Download the desktop app for faster local AI powered by your own hardware.",
+    "desktop_in_works_title": "Desktop app in the works",
+    "desktop_in_works_description": "The {{name}} desktop app is being prepared for macOS, Windows, and Linux. The browser version stays private and local while we package the native builds.",
+    "desktop_in_works_speed": "Built for larger local models",
+    "desktop_in_works_privacy": "Same private on-device workflow",
+    "desktop_in_works_models": "Native desktop builds coming soon",
     "download_for": "Download for {{platform}}",
     "not_configured": "Not configured",
     "intel_mac_prompt": "Running an Intel Mac?",

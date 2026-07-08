@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { log } from 'mentie'
-import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, Cloud, HardDrive } from 'lucide-react'
+import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, HardDrive, Settings } from 'lucide-react'
 import ChatInput from '../molecules/ChatInput'
 import VoiceModelDialog from '../molecules/VoiceModelDialog'
 import LanguageSelector from '../molecules/LanguageSelector'
+import SettingsModal from '../molecules/SettingsModal'
 import Sidebar from '../molecules/Sidebar'
 import use_llm from '../../hooks/use_llm'
 import use_model_manager from '../../hooks/use_model_manager'
@@ -14,6 +15,8 @@ import use_chat_history from '../../hooks/use_chat_history'
 import { useTranslation } from 'react-i18next'
 import { export_conversation } from '../../utils/export'
 import { DISPLAY_NAME, storage_key } from '../../utils/branding'
+import BrandMark from '../atoms/BrandMark'
+import ConvergenceCanvas from '../atoms/ConvergenceCanvas'
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -22,9 +25,22 @@ const PageWrapper = styled.div`
     flex: 1;
     position: relative;
     overflow: hidden;
+    background: ${ ( { theme } ) => theme.colors.background };
+    isolation: isolate;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: radial-gradient( ellipse 54% 50% at 50% 44%, transparent 16%, ${ ( { theme } ) => theme.colors.background } 78% );
+        pointer-events: none;
+    }
 `
 
 const Container = styled.div`
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -58,14 +74,29 @@ const TopRight = styled.div`
     top: ${ ( { theme } ) => theme.spacing.md };
     right: ${ ( { theme } ) => theme.spacing.md };
     z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
+`
+
+const IconButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+    transition: color 0.15s;
+
+    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
 const Title = styled.h1`
-    font-size: clamp( 2.5rem, 2rem + 3vw, 4rem );
+    font-size: clamp( 2.75rem, 6vw, 4.75rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
-    margin-bottom: 2rem;
-    letter-spacing: -0.02em;
+    margin: ${ ( { theme } ) => theme.spacing.md } 0 ${ ( { theme } ) => theme.spacing.md };
+    line-height: 1;
 `
 
 const Tagline = styled.p`
@@ -73,6 +104,14 @@ const Tagline = styled.p`
     color: ${ ( { theme } ) => theme.colors.text_secondary };
     margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
+`
+
+const SignalRule = styled.span`
+    width: 6.5rem;
+    height: 3px;
+    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    background: ${ ( { theme } ) => theme.colors.accent };
+    margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
 `
 
 // ── Model status ────────────────────────────────────────────────────
@@ -165,7 +204,7 @@ const ErrorAction = styled.button`
  * Google-style search home for returning users.
  * Preloads the active model on mount so chat is instant.
  */
-export default function HomePage() {
+export default function HomePage( { theme_preference, on_theme_toggle } ) {
 
     const { t } = useTranslation( 'pages' )
     const navigate = useNavigate()
@@ -176,6 +215,7 @@ export default function HomePage() {
 
     const [ load_error, set_load_error ] = useState( null )
     const [ sidebar_collapsed, set_sidebar_collapsed ] = useState( true )
+    const [ settings_open, set_settings_open ] = useState( false )
 
     // Voice input hook
     const {
@@ -201,7 +241,6 @@ export default function HomePage() {
     const active_id = localStorage.getItem( storage_key( `active_model_id` ) )
     const active_model = cached_models.find( ( m ) => m.id === active_id )
     const model_name = active_model?.name || active_id || `Unknown`
-    const is_cloud = active_model?.source === 'openrouter'
 
     // ── Preload model on mount ──────────────────────────────────────
 
@@ -305,8 +344,8 @@ export default function HomePage() {
     }, [] )
 
     const handle_new_chat = useCallback( () => {
-        navigate( `/chat` )
-    }, [ navigate ] )
+        navigate( active_id ? `/chat` : `/select-model` )
+    }, [ active_id, navigate ] )
 
     const handle_export = useCallback( async ( conversation ) => {
         const msgs = await load_messages( conversation.id )
@@ -325,6 +364,8 @@ export default function HomePage() {
 
     return <PageWrapper>
 
+        <ConvergenceCanvas centerX={ 0.5 } count={ 44 } ambient={ 0.0009 } />
+
         <Sidebar
             collapsed={ sidebar_collapsed }
             on_toggle={ handle_sidebar_toggle }
@@ -333,11 +374,19 @@ export default function HomePage() {
             on_export={ handle_export }
             on_delete={ handle_delete }
             on_delete_all={ handle_delete_all }
+            active_model_id={ active_id }
         />
 
         { /* Language selector — top right corner */ }
         <TopRight>
             <LanguageSelector />
+            <IconButton
+                data-testid="settings-btn"
+                onClick={ () => set_settings_open( true ) }
+                aria-label={ t( `common:aria_open_settings` ) }
+            >
+                <Settings size={ 18 } />
+            </IconButton>
         </TopRight>
 
         { /* Toggle button — only visible when sidebar is closed */ }
@@ -351,7 +400,9 @@ export default function HomePage() {
 
         <Container>
 
+            <BrandMark size="2.75rem" />
             <Title>{ DISPLAY_NAME }</Title>
+            <SignalRule />
             <Tagline>
                 { t( 'tagline' ) }
             </Tagline>
@@ -389,8 +440,8 @@ export default function HomePage() {
                 { is_loading && <>
                     <LoadingDot />
                     <span>{ t( 'loading_model', { name: model_name } ) }</span>
-                    <ModelTag $cloud={ is_cloud }>
-                        { is_cloud ? <><Cloud size={ 10 } /> { t( 'cloud' ) }</> : <><HardDrive size={ 10 } /> { t( 'local' ) }</> }
+                    <ModelTag>
+                        <HardDrive size={ 10 } /> { t( 'local' ) }
                     </ModelTag>
                     <SwitchIcon
                         onClick={ handle_switch_model }
@@ -403,8 +454,8 @@ export default function HomePage() {
 
                 { !is_loading && loaded_model_id && <>
                     <span>{ t( 'model_ready', { name: model_name } ) }</span>
-                    <ModelTag $cloud={ is_cloud }>
-                        { is_cloud ? <><Cloud size={ 10 } /> { t( 'cloud' ) }</> : <><HardDrive size={ 10 } /> { t( 'local' ) }</> }
+                    <ModelTag>
+                        <HardDrive size={ 10 } /> { t( 'local' ) }
                     </ModelTag>
                     <SwitchIcon
                         onClick={ handle_switch_model }
@@ -430,6 +481,13 @@ export default function HomePage() {
             </ErrorBanner> }
 
         </Container>
+
+        <SettingsModal
+            is_open={ settings_open }
+            on_close={ () => set_settings_open( false ) }
+            theme_preference={ theme_preference }
+            on_theme_change={ on_theme_toggle }
+        />
 
     </PageWrapper>
 

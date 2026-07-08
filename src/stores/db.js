@@ -3,9 +3,10 @@ import { log } from 'mentie'
 import { DB_NAME } from '../utils/branding'
 
 const DB_VERSION = 1
+const LEGACY_DB_NAMES = [ `gratisai-db` ]
 
 /**
- * Opens (or creates) the gratisAI IndexedDB database
+ * Opens (or creates) the Gratis IndexedDB database
  * @returns {Promise<import('idb').IDBPDatabase>}
  */
 export const get_db = async () => {
@@ -58,5 +59,46 @@ export const clear_all_data = async () => {
         tx.objectStore( `models` ).clear(),
         tx.done,
     ] )
+
+}
+
+const delete_database = ( name ) => new Promise( ( resolve ) => {
+
+    if( typeof indexedDB === `undefined` ) {
+        resolve()
+        return
+    }
+
+    const request = indexedDB.deleteDatabase( name )
+    request.onsuccess = () => resolve()
+    request.onerror = () => resolve()
+    request.onblocked = () => resolve()
+
+} )
+
+/**
+ * Clear legacy IndexedDB databases from previous branding.
+ * @returns {Promise<void>}
+ */
+export const clear_legacy_data = async () => {
+
+    await Promise.all(
+        LEGACY_DB_NAMES
+            .filter( name => name !== DB_NAME )
+            .map( delete_database ),
+    )
+
+}
+
+/**
+ * Clear Cache Storage entries owned by this origin.
+ * @returns {Promise<void>}
+ */
+export const clear_browser_caches = async () => {
+
+    if( typeof caches === `undefined` ) return
+
+    const keys = await caches.keys()
+    await Promise.all( keys.map( key => caches.delete( key ) ) )
 
 }

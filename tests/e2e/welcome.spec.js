@@ -4,12 +4,27 @@ test.describe( `Welcome Page`, () => {
 
     test( `loads and displays app name`, async ( { page } ) => {
         await page.goto( `/` )
-        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: `Gratis` } ) ).toBeVisible()
     } )
 
     test( `shows Get Started button`, async ( { page } ) => {
         await page.goto( `/` )
         await expect( page.getByTestId( `get-started-btn` ) ).toBeVisible()
+    } )
+
+    test( `settings opens before a model is loaded`, async ( { page } ) => {
+        await page.goto( `/` )
+        await page.getByTestId( `settings-btn` ).click()
+        await expect( page.getByTestId( `settings-modal` ) ).toBeVisible()
+    } )
+
+    test( `settings opens on returning-user home`, async ( { page } ) => {
+        await page.addInitScript( () => {
+            localStorage.setItem( `gratis:settings:active_model_id`, `smollm2-360m-q4km` )
+        } )
+        await page.goto( `/` )
+        await page.getByTestId( `settings-btn` ).click()
+        await expect( page.getByTestId( `settings-modal` ) ).toBeVisible()
     } )
 
     test( `shows value propositions about privacy and offline`, async ( { page } ) => {
@@ -56,7 +71,7 @@ test.describe( `Welcome Page`, () => {
 
         // Welcome page
         await page.goto( `/` )
-        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: `Gratis` } ) ).toBeVisible()
 
         // Model select page
         await page.goto( `/select-model` )

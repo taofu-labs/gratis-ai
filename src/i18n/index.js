@@ -14,7 +14,6 @@ import en_chat from './locales/en/chat.json'
 import en_settings from './locales/en/settings.json'
 import en_models from './locales/en/models.json'
 import en_pages from './locales/en/pages.json'
-import en_nerd from './locales/en/nerd.json'
 
 // Spanish
 import es_common from './locales/es/common.json'
@@ -114,12 +113,12 @@ const detect_language = () => {
 
 }
 
-const ns = ( common, chat, settings, models, pages, nerd ) => ( { common, chat, settings, models, pages, nerd } )
+const ns = ( common, chat, settings, models, pages ) => ( { common, chat, settings, models, pages } )
 
 i18n.use( initReactI18next ).init( {
 
     resources: {
-        en: ns( en_common, en_chat, en_settings, en_models, en_pages, en_nerd ),
+        en: ns( en_common, en_chat, en_settings, en_models, en_pages ),
         es: ns( es_common, es_chat, es_settings, es_models, es_pages ),
         fr: ns( fr_common, fr_chat, fr_settings, fr_models, fr_pages ),
         de: ns( de_common, de_chat, de_settings, de_models, de_pages ),
@@ -135,6 +134,7 @@ i18n.use( initReactI18next ).init( {
     lng: detect_language(),
     fallbackLng: `en`,
     defaultNS: `common`,
+    showSupportNotice: false,
 
     interpolation: {
         escapeValue: false,

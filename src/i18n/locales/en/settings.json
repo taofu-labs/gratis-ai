@@ -73,5 +73,8 @@
     "danger_zone": "Danger Zone",
     "danger_zone_description": "This will permanently delete all conversations, models, and settings.",
     "delete_everything": "Delete Everything",
-    "confirm_delete_all": "This will delete all conversations, cached models, and settings. This cannot be undone."
+    "confirm_delete_all": "This will delete all conversations, cached models, and settings. This cannot be undone.",
+    "reset_app": "Reset Gratis",
+    "reset_app_description": "Return Gratis to the first-run screen by deleting conversations, downloaded models, cloud keys, settings, and cached app files from this browser.",
+    "confirm_reset_app": "Reset Gratis on this browser? This deletes conversations, downloaded models, cloud keys, settings, and cached app files. This cannot be undone."
 }

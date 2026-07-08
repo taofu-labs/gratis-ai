@@ -116,7 +116,7 @@ test.describe( `UX Improvements - Mobile & Touch`, () => {
 
     test( `welcome page is usable on mobile`, async ( { page } ) => {
         await page.goto( `/` )
-        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: `Gratis` } ) ).toBeVisible()
         await expect( page.getByTestId( `get-started-btn` ) ).toBeVisible()
     } )
 

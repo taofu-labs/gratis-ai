@@ -16,8 +16,9 @@ const Banner = styled.div`
     justify-content: center;
     gap: ${ p => p.theme.spacing.md };
     padding: ${ p => p.theme.spacing.xs } ${ p => p.theme.spacing.md };
-    background: ${ p => p.theme.colors.text };
-    color: ${ p => p.theme.colors.background };
+    background: ${ p => p.theme.colors.accent };
+    color: ${ p => p.theme.colors.accent_ink };
+    border-bottom: none;
     font-size: 0.8125rem;
     line-height: 1.4;
     min-height: 2rem;
@@ -31,6 +32,8 @@ const Message = styled.span`
     display: flex;
     align-items: center;
     gap: ${ p => p.theme.spacing.sm };
+    font-family: ${ p => p.theme.fonts.mono };
+    font-size: 0.75rem;
 `
 
 const AppLink = styled( Link )`
@@ -38,15 +41,18 @@ const AppLink = styled( Link )`
     align-items: center;
     gap: ${ p => p.theme.spacing.xs };
     padding: 0.15rem ${ p => p.theme.spacing.sm };
-    background: ${ p => p.theme.colors.accent };
-    color: #fff;
-    border-radius: ${ p => p.theme.border_radius.full };
+    background: ${ p => p.theme.colors.primary };
+    color: ${ p => p.theme.colors.background };
+    border-radius: ${ p => p.theme.border_radius.md };
     font-size: 0.8125rem;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
 
-    &:hover { opacity: 0.85; }
+    &:hover {
+        background: ${ p => p.theme.colors.primary_hover };
+        color: ${ p => p.theme.colors.background };
+    }
 `
 
 const DismissButton = styled.button`
@@ -56,12 +62,15 @@ const DismissButton = styled.button`
     align-items: center;
     padding: 0.15rem;
     background: none;
-    color: ${ p => p.theme.colors.background }80;
+    color: ${ p => p.theme.colors.accent_ink };
     border: none;
     cursor: pointer;
     border-radius: ${ p => p.theme.border_radius.sm };
 
-    &:hover { color: ${ p => p.theme.colors.background }; }
+    &:hover {
+        background: rgba( 16, 17, 18, 0.12 );
+        color: ${ p => p.theme.colors.accent_ink };
+    }
 `
 
 /**

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye, Cloud, Plus } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
@@ -18,6 +18,7 @@ const Container = styled.div`
     min-height: 0;
     padding: ${ ( { theme } ) => theme.spacing.xl };
     overflow-y: auto;
+    background: ${ ( { theme } ) => theme.colors.background };
 
     /* Flex spacers center content when it fits, collapse when it overflows */
     &::before, &::after {
@@ -27,10 +28,23 @@ const Container = styled.div`
 `
 
 const Title = styled.h1`
-    font-size: clamp( 1.5rem, 1.2rem + 1.5vw, 2rem );
+    position: relative;
+    font-size: clamp( 2rem, 4vw, 2.875rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
-    margin-bottom: 2rem;
+    margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
+    padding-bottom: ${ ( { theme } ) => theme.spacing.md };
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        width: 5.5rem;
+        height: 3px;
+        border-radius: ${ ( { theme } ) => theme.border_radius.full };
+        background: ${ ( { theme } ) => theme.colors.accent };
+        transform: translateX( -50% );
+    }
 `
 
 const Subtitle = styled.p`
@@ -38,7 +52,7 @@ const Subtitle = styled.p`
     margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
     max-width: 520px;
-    line-height: 1.5;
+    line-height: 1.6;
 `
 
 
@@ -68,29 +82,30 @@ const CardRow = styled.div`
 const variant_color = ( theme, $variant ) =>
     $variant === `uncensored` ? theme.colors.error
         : $variant === `vision` ? theme.colors.info
-            : $variant === `nerd` ? theme.colors.info
-                : theme.colors.accent
+            : theme.colors.accent
 
 const OptionCard = styled.button`
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: ${ ( { theme } ) => theme.spacing.lg };
-    border: 2px solid ${ ( { theme, $active, $variant } ) =>
+    border: 1px solid ${ ( { theme, $active, $variant } ) =>
         $active ? variant_color( theme, $variant ) : theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.lg };
     text-align: center;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s;
     cursor: pointer;
-    background: transparent;
+    background: ${ ( { theme } ) => theme.colors.surface };
 
     &:hover {
         border-color: ${ ( { theme, $active, $variant } ) =>
         $active ? variant_color( theme, $variant ) : theme.colors.text_muted };
+        background: ${ ( { theme } ) => theme.colors.surface_hover };
+        transform: translateY( -2px );
     }
 
     ${ ( { $active, $variant, theme } ) => $active && `
-        box-shadow: 0 0 0 1px ${ variant_color( theme, $variant ) };
+        box-shadow: 0 0 0 3px rgba( 255, 90, 31, 0.12 );
     ` }
 `
 
@@ -104,7 +119,7 @@ const CardLabel = styled.h2`
     color: ${ ( { $variant, theme } ) =>
         $variant === `faster` ? theme.colors.success
             : $variant === `uncensored` ? theme.colors.error
-                : $variant === `vision` || $variant === `nerd` ? theme.colors.info
+                : $variant === `vision` ? theme.colors.info
                     : theme.colors.accent };
 `
 
@@ -220,19 +235,19 @@ const RecommendedBadge = styled.div`
 
 const DownloadButton = styled.button`
     background: ${ ( { theme } ) => theme.colors.accent };
-    color: white;
+    color: ${ ( { theme } ) => theme.colors.accent_ink };
     padding: ${ ( { theme } ) => `${ theme.spacing.md } ${ theme.spacing.xl }` };
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
     font-size: 1rem;
     font-weight: 600;
     margin-top: ${ ( { theme } ) => theme.spacing.md };
-    transition: opacity 0.15s;
+    transition: background 0.15s;
     display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.sm };
     min-height: 2.75rem;
 
-    &:hover { opacity: 0.85; }
+    &:hover { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
 `
 
 // Toggle buttons for expanding model lists
@@ -279,11 +294,13 @@ const ModelOption = styled.button`
     padding: ${ ( { theme } ) => theme.spacing.md };
     border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    background: ${ ( { theme, $active } ) => $active ? `rgba( 255, 90, 31, 0.1 )` : theme.colors.surface };
     text-align: left;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, background 0.15s;
 
     &:hover {
         border-color: ${ ( { theme } ) => theme.colors.text_muted };
+        background: ${ ( { theme } ) => theme.colors.surface_hover };
     }
 `
 
@@ -428,7 +445,7 @@ const Spinner = styled( LoaderCircle )`
     @keyframes spin { to { transform: rotate( 360deg ); } }
 `
 
-// ─── Section headers for local / cloud split ──────────────────────────────────
+// ─── Section headers ──────────────────────────────────────────────────────────
 
 const SectionHeader = styled.div`
     text-align: center;
@@ -441,107 +458,18 @@ const SectionHeader = styled.div`
 `
 
 const SectionTitle = styled.h2`
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.25rem;
+    font-weight: 700;
     color: ${ ( { theme } ) => theme.colors.text };
     margin-bottom: 2px;
 `
 
 const SectionSubtitle = styled.p`
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-`
-
-// Subtle links for adding cloud providers when models already exist
-const AddProviderLinks = styled.div`
-    display: flex;
-    justify-content: center;
-    gap: ${ ( { theme } ) => theme.spacing.lg };
-    margin-top: ${ ( { theme } ) => theme.spacing.sm };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.md };
-`
-
-const AddProviderLink = styled.button`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    transition: color 0.15s;
-
-    &:hover { color: ${ ( { theme } ) => theme.colors.info }; }
-`
-
-const CloudSetupCard = styled.button`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: ${ ( { theme } ) => theme.spacing.lg };
-    border: 2px dashed ${ ( { theme } ) => theme.colors.border };
-    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
-    text-align: center;
-    transition: border-color 0.15s;
-    cursor: pointer;
-    background: transparent;
-
-    &:hover {
-        border-color: ${ ( { theme } ) => theme.colors.info };
-    }
-`
-
-const CloudSetupLabel = styled.h3`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-    font-size: 1rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.info };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
-`
-
-const CloudSetupSubtitle = styled.p`
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-`
-
-const CloudModelCard = styled.button`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: ${ ( { theme } ) => theme.spacing.lg };
-    border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.info : theme.colors.border };
-    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
-    text-align: center;
-    transition: border-color 0.15s;
-    cursor: pointer;
-    background: transparent;
-
-    &:hover {
-        border-color: ${ ( { theme } ) => theme.colors.text_muted };
-    }
-`
-
-const CloudModelName = styled.div`
-    font-weight: 500;
     font-size: 0.9rem;
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
-`
-
-const CloudModelMeta = styled.div`
-    font-size: 0.8rem;
+    line-height: 1.55;
     color: ${ ( { theme } ) => theme.colors.text_muted };
-`
-
-const CloudTag = styled.span`
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.info };
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-left: 6px;
+    max-width: 34rem;
+    margin: 0 auto;
 `
 
 
@@ -610,7 +538,7 @@ export default function ModelSelectPage() {
     // All catalog models for the alternatives list, sorted: fits-in-memory first → params desc
     const catalog_models = useMemo( () => {
 
-        return [ ...MODEL_CATALOG ].filter( m => !m.cloud_only ).sort( ( a, b ) => {
+        return [ ...MODEL_CATALOG ].sort( ( a, b ) => {
 
             const a_fits = can_fit_in_memory( a, max_model_bytes ) ? 1 : 0
             const b_fits = can_fit_in_memory( b, max_model_bytes ) ? 1 : 0
@@ -665,14 +593,6 @@ export default function ModelSelectPage() {
 
     }
 
-    /**
-     * Handle clicking on an already-configured cloud model — activate and go to chat.
-     */
-    const handle_cloud_model_click = ( cloud_model_id ) => {
-        localStorage.setItem( storage_key( `active_model_id` ), cloud_model_id )
-        navigate( `/chat` )
-    }
-
     const handle_select = ( model_id ) => {
         set_custom_model( null )
         set_custom_error( null )
@@ -715,9 +635,6 @@ export default function ModelSelectPage() {
     // Card row when we have at least 2 options to compare
     const card_count = 1 + ( faster ? 1 : 0 ) + ( uncensored ? 1 : 0 ) + ( vision ? 1 : 0 )
     const show_card_row = card_count >= 2
-
-    // Cloud models already configured by the user (from both providers)
-    const cloud_models = cached_models.filter( m => m.source === `openrouter` || m.source === `venice` )
 
     return <Container>
 
@@ -960,74 +877,7 @@ export default function ModelSelectPage() {
             </ExpandPanel>
         </> }
 
-        { /* ── Cloud Models section ── */ }
-        <SectionHeader>
-            <SectionTitle>{ t( 'cloud_models_section' ) }</SectionTitle>
-            <SectionSubtitle>{ t( 'cloud_models_subtitle' ) }</SectionSubtitle>
-        </SectionHeader>
-
-        { /* No existing cloud models → show setup cards */ }
-        { cloud_models.length === 0 && <CardRow>
-
-            <CloudSetupCard
-                data-testid="openrouter-setup-card"
-                onClick={ () => navigate( `/cloud-setup?provider=openrouter` ) }
-            >
-                <CloudSetupLabel>
-                    <Plus size={ 16 } />
-                    { t( 'openrouter_setup_card' ) }
-                </CloudSetupLabel>
-                <CloudSetupSubtitle>{ t( 'openrouter_setup_subtitle' ) }</CloudSetupSubtitle>
-            </CloudSetupCard>
-
-            <CloudSetupCard
-                data-testid="venice-setup-card"
-                onClick={ () => navigate( `/cloud-setup?provider=venice` ) }
-            >
-                <CloudSetupLabel>
-                    <Plus size={ 16 } />
-                    { t( 'venice_setup_card' ) }
-                </CloudSetupLabel>
-                <CloudSetupSubtitle>{ t( 'venice_setup_subtitle' ) }</CloudSetupSubtitle>
-            </CloudSetupCard>
-
-        </CardRow> }
-
-        { /* Existing cloud models → show model cards + subtle add links */ }
-        { cloud_models.length > 0 && <>
-
-            <CardRow>
-                { cloud_models.map( ( model ) => {
-
-                    const provider_label = model.source === `venice` ? `Venice` : `OpenRouter`
-
-                    return <CloudModelCard
-                        key={ model.id }
-                        data-testid={ `cloud-model-${ model.id }` }
-                        onClick={ () => handle_cloud_model_click( model.id ) }
-                    >
-                        <CloudModelName>
-                            { model.name }
-                            <CloudTag><Cloud size={ 10 } /> { provider_label }</CloudTag>
-                        </CloudModelName>
-                        <CloudModelMeta>{ t( 'common:ready' ) || `ready to chat` }</CloudModelMeta>
-                    </CloudModelCard>
-
-                } ) }
-            </CardRow>
-
-            <AddProviderLinks>
-                <AddProviderLink onClick={ () => navigate( `/cloud-setup?provider=openrouter` ) }>
-                    <Plus size={ 12 } /> { t( 'add_openrouter_model' ) }
-                </AddProviderLink>
-                <AddProviderLink onClick={ () => navigate( `/cloud-setup?provider=venice` ) }>
-                    <Plus size={ 12 } /> { t( 'add_venice_model' ) }
-                </AddProviderLink>
-            </AddProviderLinks>
-
-        </> }
-
-        { /* ── Download action + step progress (below all model sections) ── */ }
+        { /* ── Download action + step progress ── */ }
         <DownloadButton
             data-testid="model-select-confirm-btn"
             onClick={ handle_download }
