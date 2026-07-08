@@ -10,12 +10,12 @@ const STORAGE_KEY = storage_key( `theme` )
  */
 export default function use_theme() {
 
-    // Read stored preference, defaulting to 'system'
+    // Read stored preference, defaulting to the TPN dark canvas
     const [ theme_preference, set_preference ] = useState( () => {
         try {
-            return localStorage.getItem( STORAGE_KEY ) || `system`
+            return localStorage.getItem( STORAGE_KEY ) || `dark`
         } catch {
-            return `system`
+            return `dark`
         }
     } )
 

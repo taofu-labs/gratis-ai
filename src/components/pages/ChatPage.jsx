@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import { log } from 'mentie'
 import toast from 'react-hot-toast'
-import { ArrowRight, LoaderCircle, WifiOff } from 'lucide-react'
+import { ArrowRight, LoaderCircle } from 'lucide-react'
 import AppLayout from '../molecules/AppLayout'
 import MessageList from '../molecules/MessageList'
 import ChatInput from '../molecules/ChatInput'
@@ -15,7 +15,6 @@ import use_chat_history from '../../hooks/use_chat_history'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_settings from '../../hooks/use_settings'
 import use_voice_input from '../../hooks/use_voice_input'
-import use_online from '../../hooks/use_online'
 import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
 import { get_model_by_id, format_file_size } from '../../utils/model_catalog'
@@ -153,31 +152,6 @@ const SpinnerIcon = styled.div`
 `
 
 
-const OfflineBanner = styled.div`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    width: 100%;
-    max-width: 540px;
-    padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md }` };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
-    border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    background: ${ ( { theme } ) => theme.colors.warning_background || `rgba( 200, 160, 60, 0.08 )` };
-    color: ${ ( { theme } ) => theme.colors.warning || `#b8a05c` };
-    font-size: 0.85rem;
-`
-
-const OfflineSwitchButton = styled.button`
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.accent };
-    white-space: nowrap;
-    margin-left: auto;
-    transition: opacity 0.15s;
-
-    &:hover { opacity: 0.7; }
-`
-
 
 /**
  * Main chat interface page with layout shell
@@ -204,9 +178,6 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     const query_processed_ref = useRef( false )
 
     const { load_model, chat_stream, abort, is_generating, is_endpoint_warming, is_loading: is_model_loading, loaded_model_id } = use_llm()
-    const is_cloud_model = loaded_model_id?.startsWith( `openrouter:` ) || loaded_model_id?.startsWith( `venice:` ) || false
-    const is_online = use_online()
-    const is_offline_cloud = is_cloud_model && !is_online
     const {
         conversations,
         create_conversation,
@@ -808,7 +779,6 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
             messages={ messages }
             is_streaming={ is_generating }
             is_endpoint_warming={ is_endpoint_warming }
-            is_cloud_model={ is_cloud_model }
             on_regenerate={ handle_regenerate }
             on_edit={ handle_edit }
         />
@@ -840,32 +810,19 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
 
                 <WelcomeContent $visible={ should_center }>
                     <WelcomeTitle>{ t( 'what_can_i_help_with' ) }</WelcomeTitle>
-                    <PrivacyHint>{ t(
-                        loaded_model_id?.startsWith( `venice:` ) ? `privacy_venice`
-                            : loaded_model_id?.startsWith( `openrouter:` ) ? `privacy_openrouter`
-                                : `privacy_local`
-                    ) }</PrivacyHint>
+                    <PrivacyHint>{ t( 'privacy_local' ) }</PrivacyHint>
                     { is_endpoint_warming && <WakingUpIndicator /> }
                 </WelcomeContent>
 
                 { /* Warming indicator persists above the input after the welcome area collapses */ }
                 { is_endpoint_warming && has_messages && <WakingUpIndicator show_hint /> }
 
-                { /* Offline warning for cloud models */ }
-                { is_offline_cloud && <OfflineBanner data-testid="offline-banner">
-                    <WifiOff size={ 14 } />
-                    <span>{ t( 'offline_cloud_message' ) }</span>
-                    <OfflineSwitchButton onClick={ () => navigate( '/select-model' ) }>
-                        { t( 'offline_switch_model' ) }
-                    </OfflineSwitchButton>
-                </OfflineBanner> }
-
                 <ChatInput
                     ref={ chat_input_ref }
                     on_send={ send_message }
                     on_stop={ handle_stop }
                     is_generating={ is_generating }
-                    disabled={ !has_model || is_offline_cloud }
+                    disabled={ !has_model }
                     auto_focus
                     on_mic_click={ handle_mic_click }
                     on_mic_stop={ handle_mic_stop }

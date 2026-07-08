@@ -22,7 +22,7 @@
 </p>
 
 <h3 align="center">
-  <a href="https://ai.gratis.sh">ai.gratis.sh</a> — use it free, right now, in your browser
+  <a href="https://gratis.trueperformancenetwork.com">gratis.trueperformancenetwork.com</a> - public PoC by True Performance Network
 </h3>
 
 <p align="center">
@@ -33,7 +33,7 @@
 
 ## What is this?
 
-gratisAI is a chat app — like ChatGPT — except **everything runs on your own computer**. Your conversations never leave your device. There's no account, no subscription, and no one reading your messages.
+Gratis is a chat app - like ChatGPT - except **everything runs on your own computer**. Your conversations never leave your device. There's no account, no subscription, and no one reading your messages.
 
 It works in two ways:
 
@@ -49,11 +49,11 @@ It works in two ways:
 
 **Option 1 — Open the website**
 
-Go to **[ai.gratis.sh](https://ai.gratis.sh)** and start chatting. The app will recommend a model for your hardware and download it. After that first download, it works offline.
+Go to **[gratis.trueperformancenetwork.com](https://gratis.trueperformancenetwork.com)** and start chatting. The app will recommend a model for your hardware and download it. After that first download, it works offline.
 
 **Option 2 — Install the desktop app**
 
-Download the latest release from [GitHub Releases](https://github.com/actuallymentor/gratis-ai/releases) for macOS, Windows, or Linux. The desktop app runs models faster and can handle much larger models.
+Download the latest release from [GitHub Releases](https://github.com/taofu-labs/gratis-ai/releases) for macOS, Windows, or Linux. The desktop app runs models faster and can handle much larger models.
 
 ## What models can I run?
 

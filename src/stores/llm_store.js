@@ -24,7 +24,7 @@ const use_llm_store = create( ( set, get ) => ( {
     // ── Internal (not consumed by UI) ────────────────────────────────
 
     _provider: null,
-    _provider_type: null,     // 'local' | 'openrouter' | 'venice'
+    _provider_type: null,
     _provider_promise: null,
     _load_promise: null,
     _loading_model_id: null,
@@ -35,26 +35,23 @@ const use_llm_store = create( ( set, get ) => ( {
      * Ensure the provider is initialised (handles async creation).
      * Uses a shared promise so all concurrent callers get the same instance.
      *
-     * If the active model starts with 'openrouter:' or 'venice:', creates the
-     * corresponding cloud provider. Otherwise, creates the standard local provider.
+     * Cloud model IDs from previous versions are cleared; Gratis now loads
+     * local models only.
      */
     ensure_provider: async ( model_id ) => {
 
         const state = get()
         const target_id = model_id || localStorage.getItem( storage_key( `active_model_id` ) ) || ``
 
-        // Determine the target provider type from the model ID prefix
-        const target_type = target_id.startsWith( `openrouter:` ) ? `openrouter`
-            : target_id.startsWith( `venice:` ) ? `venice`
-                : `local`
+        const target_type = `local`
 
         const current_type = state._provider_type
 
-        // Gracefully handle stale `runpod:` prefix from previous versions
-        if( target_id.startsWith( `runpod:` ) ) {
-            log.warn( `[use_llm] Stale runpod: prefix — clearing active model` )
+        // Gracefully handle stale cloud prefixes from previous versions.
+        if( target_id.startsWith( `runpod:` ) || target_id.startsWith( `openrouter:` ) || target_id.startsWith( `venice:` ) ) {
+            log.warn( `[use_llm] Stale cloud model prefix — clearing active model` )
             localStorage.removeItem( storage_key( `active_model_id` ) )
-            return null
+            throw new Error( `This cloud model configuration is no longer supported. Choose a local model to continue.` )
         }
 
         // If we have a provider of the correct type, reuse it
@@ -69,48 +66,6 @@ const use_llm_store = create( ( set, get ) => ( {
                 await state._provider.unload_model()
             } catch { /* best effort */ }
             set( { _provider: null, _provider_promise: null, loaded_model_id: null, is_endpoint_warming: false } )
-        }
-
-        if( target_type === `openrouter` ) {
-
-            // Lazy import to keep the OpenRouter provider out of the main bundle
-            const { default: OpenRouterProvider } = await import( `../providers/openrouter_provider.js` )
-
-            const openrouter_model_id = target_id.replace( `openrouter:`, `` )
-
-            // Read config from the OpenRouter store
-            const config_raw = localStorage.getItem( storage_key( `openrouter_config` ) )
-            const config = config_raw ? JSON.parse( config_raw ) : {}
-
-            const provider = new OpenRouterProvider( {
-                api_key: config.api_key || ``,
-                model_id: openrouter_model_id,
-            } )
-
-            set( { _provider: provider, _provider_type: `openrouter` } )
-            return provider
-
-        }
-
-        if( target_type === `venice` ) {
-
-            // Lazy import to keep the Venice provider out of the main bundle
-            const { default: VeniceProvider } = await import( `../providers/venice_provider.js` )
-
-            const venice_model_id = target_id.replace( `venice:`, `` )
-
-            // Read config from the Venice store
-            const config_raw = localStorage.getItem( storage_key( `venice_config` ) )
-            const config = config_raw ? JSON.parse( config_raw ) : {}
-
-            const provider = new VeniceProvider( {
-                api_key: config.api_key || ``,
-                model_id: venice_model_id,
-            } )
-
-            set( { _provider: provider, _provider_type: `venice` } )
-            return provider
-
         }
 
         // Standard local provider

@@ -28,7 +28,7 @@ test.describe( `Electron Inference`, () => {
     test( `full onboarding → download → chat → inference flow`, async () => {
 
         // Welcome page should load
-        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible( { timeout: 15_000 } )
+        await expect( page.getByRole( `heading`, { name: `Gratis` } ) ).toBeVisible( { timeout: 15_000 } )
 
         // Wait for device detection
         await expect( page.getByTestId( `get-started-btn` ) ).toBeEnabled( { timeout: 15_000 } )

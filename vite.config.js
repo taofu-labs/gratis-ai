@@ -9,7 +9,7 @@ const pkg = JSON.parse( readFileSync( `./package.json`, `utf-8` ) )
 export default defineConfig( ( { mode } ) => {
 
     const env = loadEnv( mode, process.cwd(), `` )
-    const app_name = env.VITE_APP_NAME || `gratisAI`
+    const app_name = env.VITE_APP_NAME || `Gratis`
 
     return {
         define: {
@@ -23,9 +23,9 @@ export default defineConfig( ( { mode } ) => {
                 manifest: {
                     name: app_name,
                     short_name: app_name,
-                    description: `Run AI locally. Your data never leaves your device.`,
-                    theme_color: `#1a1a2e`,
-                    background_color: `#1a1a2e`,
+                    description: `Private AI that runs locally on your device, presented by True Performance Network.`,
+                    theme_color: `#0F1011`,
+                    background_color: `#0F1011`,
                     display: `standalone`,
                     start_url: `/`,
                     icons: [

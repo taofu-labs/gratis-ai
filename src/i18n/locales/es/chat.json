@@ -1,35 +1,24 @@
 {
     "placeholder": "Escribe un mensaje...",
     "placeholder_ask": "Pregunta lo que quieras...",
-
     "thinking": "Pensando...",
     "show_thinking": "Mostrar razonamiento",
     "hide_thinking": "Ocultar razonamiento",
     "show_all_thinking": "Mostrar todo el razonamiento",
     "collapse": "Contraer",
-
     "what_can_i_help_with": "¿En qué puedo ayudarte?",
     "privacy_local": "Estás usando un modelo local. Nadie puede ver lo que haces.",
-    "privacy_openrouter": "Estás usando un modelo en la nube de OpenRouter. OpenRouter puede ver lo que haces.",
-    "privacy_venice": "Estás usando un modelo en la nube de Venice. Nadie puede ver lo que haces.",
     "loading_your_model": "Cargando tu modelo...",
-
     "lets_get_you_set_up": "Vamos a configurarlo todo",
     "no_model_description": "Necesitas descargar un modelo de IA antes de empezar a chatear. Solo toma un minuto.",
     "set_up_a_model": "Configurar un modelo",
-
     "waking_up": "Despertando la IA",
     "waking_up_hint": "Las IAs en la nube pueden tardar 1–5 minutos en arrancar. También se duermen tras 5 minutos de inactividad.",
     "slow_device_warning": "Tu dispositivo parece bastante lento. Recomendamos la app de escritorio para mejor rendimiento.",
     "get_the_desktop_app": "Obtener la app de escritorio",
-
     "recording": "Grabando",
     "transcribing": "Transcribiendo",
     "loading_voice_model": "Cargando modelo de voz",
-
-    "offline_cloud_message": "Estás sin conexión — los modelos en la nube necesitan internet",
-    "offline_switch_model": "Cambiar modelo",
-
     "image_requires_vision": "La entrada de imágenes requiere soporte de modelo de visión (próximamente)",
     "unsupported_file_type": "Este tipo de archivo no es compatible",
     "file_too_large": "El archivo es demasiado grande (máx. 100 KB)"
