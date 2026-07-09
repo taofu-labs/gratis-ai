@@ -1,7 +1,5 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import '@fontsource-variable/montserrat'
-import '@fontsource-variable/nunito'
 import './i18n'
 import App from './App'
 import './index.css'

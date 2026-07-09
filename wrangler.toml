@@ -4,7 +4,7 @@
 # The project name here must match the application name in the
 # Cloudflare dashboard (Workers & Pages → Applications).
 
-name = "gratis-ai-sh"
+name = "gratis-trueperformancenetwork"
 compatibility_date = "2026-02-24"
 
 [assets]

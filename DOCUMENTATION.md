@@ -1,4 +1,4 @@
-# gratisAI
+# Gratis
 
 > Run AI locally. Your data never leaves your device.
 

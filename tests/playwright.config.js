@@ -55,15 +55,6 @@ export default defineConfig( {
             timeout: 2_400_000,
         },
 
-        // OpenRouter cloud tests — requires VITE_OPENROUTER_DEV_KEY env var
-        {
-            name: `openrouter`,
-            testMatch: /\bnerd_mode\.spec\.js$/,
-            retries: 0,
-            workers: 1,
-            timeout: 600_000,
-        },
-
     ],
 
 } )

@@ -16,13 +16,27 @@ const Container = styled.div`
     flex: 1;
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
+    background: ${ ( { theme } ) => theme.colors.background };
 `
 
 const Title = styled.h1`
-    font-size: clamp( 1.5rem, 1.2rem + 1.5vw, 2rem );
+    position: relative;
+    font-size: clamp( 2rem, 4vw, 2.625rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-bottom: 2rem;
+    padding-bottom: ${ ( { theme } ) => theme.spacing.md };
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        width: 5.5rem;
+        height: 3px;
+        border-radius: ${ ( { theme } ) => theme.border_radius.full };
+        background: ${ ( { theme } ) => theme.colors.accent };
+        transform: translateX( -50% );
+    }
 `
 
 const StatusMessage = styled.p`
@@ -42,7 +56,8 @@ const ProgressContainer = styled.div`
 const ProgressBar = styled.div`
     width: 100%;
     height: 8px;
-    background: ${ ( { theme } ) => theme.colors.border_subtle };
+    background: ${ ( { theme } ) => theme.colors.surface };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
     overflow: hidden;
 `
@@ -61,12 +76,14 @@ const ProgressDetails = styled.div`
     margin-top: ${ ( { theme } ) => theme.spacing.sm };
     font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
+    font-family: ${ ( { theme } ) => theme.fonts.mono };
     font-variant-numeric: tabular-nums;
 `
 
 const PercentText = styled.span`
     font-weight: 600;
-    font-size: 1.5rem;
+    font-size: 2.625rem;
+    font-family: ${ ( { theme } ) => theme.fonts.heading };
     color: ${ ( { theme } ) => theme.colors.text };
     margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
     font-variant-numeric: tabular-nums;
@@ -77,6 +94,7 @@ const PercentText = styled.span`
 const ETAText = styled.p`
     font-size: 0.85rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
+    font-family: ${ ( { theme } ) => theme.fonts.mono };
     margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
     min-height: 1.3em;
 `
@@ -286,8 +304,8 @@ export default function DownloadPage() {
         const { samples } = speed_ref.current
         if( samples.length < 2 || progress.bytes_total <= 0 ) return ``
 
-        const recent = samples[ samples.length - 1 ]
-        const older = samples[ 0 ]
+        const [ older ] = samples
+        const recent = samples.at( -1 )
         const elapsed_ms = recent.time - older.time
         const bytes_transferred = recent.bytes - older.bytes
 

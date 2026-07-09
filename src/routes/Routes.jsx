@@ -17,17 +17,15 @@ const ModelSelectPage = lazy( maybe_prefetch( () => import( '../components/pages
 const DownloadPage = lazy( maybe_prefetch( () => import( '../components/pages/DownloadPage' ) ) )
 const ChatPage = lazy( maybe_prefetch( () => import( '../components/pages/ChatPage' ) ) )
 const GetAppPage = lazy( maybe_prefetch( () => import( '../components/pages/GetAppPage' ) ) )
-const NerdSetupPage = lazy( maybe_prefetch( () => import( '../components/pages/NerdSetupPage' ) ) )
-const CloudSetupPage = lazy( maybe_prefetch( () => import( '../components/pages/CloudSetupPage' ) ) )
 const NotFoundPage = lazy( maybe_prefetch( () => import( '../components/pages/NotFoundPage' ) ) )
 
 /**
  * Pick the right landing page: returning users get the search home,
  * first-time users get the onboarding welcome.
  */
-function LandingPage() {
+function LandingPage( props ) {
     const has_model = !!localStorage.getItem( storage_key( `active_model_id` ) )
-    return has_model ? <HomePage /> : <WelcomePage />
+    return has_model ? <HomePage { ...props } /> : <WelcomePage { ...props } />
 }
 
 /**
@@ -45,12 +43,10 @@ export default function Routes( { theme_preference, theme_mode, on_theme_toggle 
 
     return <Suspense fallback={ <div /> }>
         <RouterRoutes>
-            <Route path="/" element={ <LandingPage /> } />
+            <Route path="/" element={ <LandingPage { ...layout_props } /> } />
             <Route path="/select-model" element={ <ModelSelectPage /> } />
             <Route path="/download" element={ <DownloadPage /> } />
             <Route path="/chat/:id?" element={ <ChatPage { ...layout_props } /> } />
-            <Route path="/nerd-setup" element={ <NerdSetupPage /> } />
-            <Route path="/cloud-setup" element={ <CloudSetupPage /> } />
             <Route path="/get-app" element={ <GetAppPage /> } />
             <Route path="*" element={ <NotFoundPage /> } />
         </RouterRoutes>

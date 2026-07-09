@@ -1,35 +1,24 @@
 {
     "placeholder": "Typ een bericht…",
     "placeholder_ask": "Stel een vraag…",
-
     "thinking": "Aan het nadenken…",
     "show_thinking": "Denkproces tonen",
     "hide_thinking": "Denkproces verbergen",
     "show_all_thinking": "Volledig denkproces tonen",
     "collapse": "Inklappen",
-
     "what_can_i_help_with": "Waar kan ik je mee helpen?",
     "privacy_local": "Je gebruikt een lokaal model. Niemand kan zien wat je doet.",
-    "privacy_openrouter": "Je gebruikt een OpenRouter-cloudmodel. OpenRouter kan zien wat je doet.",
-    "privacy_venice": "Je gebruikt een Venice-cloudmodel. Niemand kan zien wat je doet.",
     "loading_your_model": "Je model wordt geladen…",
-
     "lets_get_you_set_up": "Laten we je op weg helpen",
     "no_model_description": "Je moet eerst een AI-model downloaden voordat je kunt chatten. Het duurt maar een minuutje.",
     "set_up_a_model": "Een model instellen",
-
     "waking_up": "AI wordt wakker",
     "waking_up_hint": "Cloud-AI's kunnen 1–5 minuten nodig hebben om op te starten. Ze gaan ook in slaapstand na 5 minuten inactiviteit.",
     "slow_device_warning": "Je apparaat lijkt vrij traag. We raden de desktop-app aan voor betere prestaties.",
     "get_the_desktop_app": "Download de desktop-app",
-
     "recording": "Opnemen",
     "transcribing": "Transcriberen",
     "loading_voice_model": "Spraakmodel laden",
-
-    "offline_cloud_message": "Je bent offline — cloudmodellen vereisen een internetverbinding",
-    "offline_switch_model": "Model wisselen",
-
     "image_requires_vision": "Afbeeldingsinvoer vereist ondersteuning voor een visiemodel (binnenkort beschikbaar)",
     "unsupported_file_type": "Dit bestandstype wordt niet ondersteund",
     "file_too_large": "Bestand is te groot (max 100 KB)"

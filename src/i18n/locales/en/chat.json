@@ -1,35 +1,24 @@
 {
     "placeholder": "Type a message...",
     "placeholder_ask": "Ask anything...",
-
     "thinking": "Thinking...",
     "show_thinking": "Show thinking",
     "hide_thinking": "Hide thinking",
     "show_all_thinking": "Show all thinking",
     "collapse": "Collapse",
-
     "what_can_i_help_with": "What can I help with?",
     "privacy_local": "You are using a local model. Nobody can see what you do.",
-    "privacy_openrouter": "You are using an OpenRouter cloud model. OpenRouter can see what you do.",
-    "privacy_venice": "You are using a Venice cloud model. Nobody can see what you do.",
     "loading_your_model": "Loading your model...",
-
     "lets_get_you_set_up": "Let's get you set up",
     "no_model_description": "You need to download an AI model before you can start chatting. It only takes a minute.",
     "set_up_a_model": "Set up a model",
-
     "waking_up": "Waking up the AI",
     "waking_up_hint": "Cloud AIs can take 1–5 minutes to start. They also fall asleep after 5 minutes of inactivity.",
     "slow_device_warning": "Your device appears quite slow. We recommend downloading the Desktop app for better performance.",
     "get_the_desktop_app": "Get the Desktop app",
-
     "recording": "Recording",
     "transcribing": "Transcribing",
     "loading_voice_model": "Loading voice model",
-
-    "offline_cloud_message": "You're offline — cloud models need an internet connection",
-    "offline_switch_model": "Switch model",
-
     "image_requires_vision": "Image input requires vision model support (coming soon)",
     "unsupported_file_type": "This file type is not supported",
     "file_too_large": "File is too large (max 100 KB)"

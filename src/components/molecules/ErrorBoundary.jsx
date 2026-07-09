@@ -103,8 +103,8 @@ export default class ErrorBoundary extends Component {
         const error_message = this.state.error?.message || `An unexpected error occurred`
         const error_stack = this.state.error?.stack || ``
 
-        return <Translation ns="pages">{ ( t ) =>
-            <Container>
+        return <Translation ns="pages">
+            { ( t ) => <Container>
                 <IconWrapper><AlertTriangle size={ 40 } /></IconWrapper>
                 <Title>{ t( `error_title` ) }</Title>
                 <Description>
@@ -120,7 +120,8 @@ export default class ErrorBoundary extends Component {
                     <RotateCcw size={ 16 } />
                     { t( `reload_the_app` ) }
                 </ReloadButton>
-            </Container> }</Translation>
+            </Container> }
+        </Translation>
 
     }
 

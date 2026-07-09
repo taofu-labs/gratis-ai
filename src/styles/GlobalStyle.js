@@ -2,6 +2,38 @@ import { createGlobalStyle } from 'styled-components'
 
 const GlobalStyle = createGlobalStyle`
 
+    @font-face {
+        font-family: 'Space Grotesk';
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url('/fonts/space-grotesk-latin.woff2') format('woff2');
+    }
+
+    @font-face {
+        font-family: 'Instrument Sans';
+        font-style: normal;
+        font-weight: 400 600;
+        font-display: swap;
+        src: url('/fonts/instrument-sans-400-latin.woff2') format('woff2');
+    }
+
+    @font-face {
+        font-family: 'IBM Plex Mono';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url('/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
+    }
+
+    @font-face {
+        font-family: 'IBM Plex Mono';
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+        src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
+    }
+
     *, *::before, *::after {
         box-sizing: border-box;
         margin: 0;
@@ -28,12 +60,12 @@ const GlobalStyle = createGlobalStyle`
 
     body {
         font-family: ${ ( { theme } ) => theme.fonts.body };
-        font-size: clamp( 1rem, 0.9rem + 0.5vw, 1.25rem );
+        font-size: 1rem;
         background: ${ ( { theme } ) => theme.colors.background };
         color: ${ ( { theme } ) => theme.colors.text };
         line-height: 1.5;
-        letter-spacing: 0.012em;
-        word-spacing: 0.16em;
+        letter-spacing: 0;
+        word-spacing: normal;
         min-height: 100vh;
         min-height: 100dvh;
         overflow: hidden;
@@ -41,7 +73,8 @@ const GlobalStyle = createGlobalStyle`
 
     h1, h2, h3, h4, h5, h6 {
         font-family: ${ ( { theme } ) => theme.fonts.heading };
-        font-weight: 500;
+        font-weight: 700;
+        letter-spacing: 0;
     }
 
     #root {
@@ -82,7 +115,7 @@ const GlobalStyle = createGlobalStyle`
 
     /* Focus indicators — never outline: none */
     :focus-visible {
-        outline: 3px solid ${ ( { theme } ) => theme.colors.accent };
+        outline: 3px solid rgba( 255, 90, 31, 0.35 );
         outline-offset: 2px;
     }
 

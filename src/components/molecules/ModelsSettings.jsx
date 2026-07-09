@@ -6,9 +6,9 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { format_file_size } from '../../utils/model_catalog'
 import use_model_manager from '../../hooks/use_model_manager'
-import { clear_all_data, get_db } from '../../stores/db'
+import { clear_all_data, clear_browser_caches, clear_legacy_data, get_db } from '../../stores/db'
 import { export_conversation } from '../../utils/export'
-import { storage_key, APP_PREFIX } from '../../utils/branding'
+import { storage_key, APP_PREFIX, LEGACY_APP_PREFIXES } from '../../utils/branding'
 
 const Section = styled.div`
     margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
@@ -257,21 +257,24 @@ export default function ModelsSettings( { on_close, on_model_switch } ) {
 
     const handle_clear_all = async () => {
 
-        const confirmed = confirm( t( `confirm_delete_all` ) )
+        const confirmed = confirm( t( `confirm_reset_app` ) )
         if( !confirmed ) return
 
         await clear_all_data()
+        await clear_legacy_data()
+        await clear_browser_caches()
 
-        // Clear all app-owned localStorage keys
+        // Clear all current and legacy app-owned localStorage keys.
+        const prefixes = [ APP_PREFIX, ...LEGACY_APP_PREFIXES ]
         const keys_to_remove = []
         for( let i = 0; i < localStorage.length; i++ ) {
             const key = localStorage.key( i )
-            if( key?.startsWith( APP_PREFIX ) ) keys_to_remove.push( key )
+            if( prefixes.some( prefix => key?.startsWith( prefix ) ) ) keys_to_remove.push( key )
         }
         keys_to_remove.forEach( ( k ) => localStorage.removeItem( k ) )
 
         if( on_close ) on_close()
-        navigate( `/` )
+        window.location.assign( `/` )
 
     }
 
@@ -378,13 +381,13 @@ export default function ModelsSettings( { on_close, on_model_switch } ) {
 
         <DangerPanel $expanded={ show_danger }>
             <DangerZone>
-                <Description>{ t( `danger_zone_description` ) }</Description>
+                <Description>{ t( `reset_app_description` ) }</Description>
                 <ButtonRow>
                     <DangerButton
                         data-testid="clear-all-data-btn"
                         onClick={ handle_clear_all }
                     >
-                        { t( `delete_everything` ) }
+                        { t( `reset_app` ) }
                     </DangerButton>
                 </ButtonRow>
             </DangerZone>
