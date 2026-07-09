@@ -1,5 +1,5 @@
-# Deploy web app to Cloudflare Workers (Static Assets) when a version
-# bump lands on main.  Project name is defined in wrangler.toml.
+# Deploy web app to Cloudflare Workers (Static Assets) when web changes
+# land on main. Project name is defined in wrangler.toml.
 #
 # Requires:
 #   Secrets  — CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
@@ -9,41 +9,25 @@ name: Deploy Web
 on:
   push:
     branches: [main]
-    paths: [package.json]
+    paths:
+      - .env
+      - .github/workflows/deploy-web.yml
+      - index.html
+      - package.json
+      - package-lock.json
+      - public/**
+      - src/**
+      - vite.config.js
+      - wrangler.toml
+  workflow_dispatch:
 
 concurrency:
   group: deploy-web
   cancel-in-progress: true
 
 jobs:
-  # ── Gate: only proceed when the version string actually changed ──
-  check-version:
-    runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.diff.outputs.changed }}
-      version: ${{ steps.diff.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Compare version with latest release
-        id: diff
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          CURR=$(node -p "require('./package.json').version")
-          PREV=$(gh release view --json tagName -q .tagName 2>/dev/null | sed 's/^v//' || echo "")
-          echo "latest-release=$PREV curr=$CURR"
-          if [ "$PREV" != "$CURR" ]; then
-            echo "changed=true"  >> "$GITHUB_OUTPUT"
-            echo "version=$CURR" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
   # ── Build & deploy to Cloudflare Workers (Static Assets) ──
   deploy:
-    needs: check-version
-    if: needs.check-version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
