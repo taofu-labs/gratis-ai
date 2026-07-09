@@ -134,6 +134,7 @@ i18n.use( initReactI18next ).init( {
     lng: detect_language(),
     fallbackLng: `en`,
     defaultNS: `common`,
+    showSupportNotice: false,
 
     interpolation: {
         escapeValue: false,
