@@ -14,5 +14,5 @@ const Mark = styled.img`
  * @returns {JSX.Element}
  */
 export default function BrandMark( { size = `2.875rem` } ) {
-    return <Mark src="/icons/tpn-logo-mark.png" alt="" aria-hidden="true" $size={ size } />
+    return <Mark src="/icons/icon-512.png" alt="" aria-hidden="true" $size={ size } />
 }
