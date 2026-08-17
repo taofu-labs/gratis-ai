@@ -9,7 +9,6 @@ const CONFIG_PATHS = {
 }
 
 const DEFAULT_BROWSER_CONTEXT = 2048
-const FALLBACK_BROWSER_CONTEXT = 1024
 
 /**
  * Detect which chat template family a Jinja template belongs to.
@@ -183,11 +182,12 @@ export default class WllamaProvider {
         const can_thread = window.crossOriginIsolated === true
         const n_threads = can_thread ? Math.max( 1, hw_threads - 1 ) : 1
 
-        // Browser memory failures are often caused by oversized context/batch
-        // settings rather than the GGUF file itself. Start with practical chat
-        // defaults and retry smaller before surfacing an error.
-        const requested_context = options.context_length || cached.context_length || DEFAULT_BROWSER_CONTEXT
-        const n_ctx = Math.min( requested_context, cached.context_length || requested_context, DEFAULT_BROWSER_CONTEXT )
+        // If the user explicitly selected a context, honor it. Otherwise use a
+        // conservative browser default for catalog models with very large max ctx.
+        const has_context_override = Number.isFinite( options.context_length ) && options.context_length > 0
+        const requested_context = has_context_override ? options.context_length : cached.context_length || DEFAULT_BROWSER_CONTEXT
+        const context_ceiling = has_context_override ? requested_context : DEFAULT_BROWSER_CONTEXT
+        const n_ctx = Math.min( requested_context, cached.context_length || requested_context, context_ceiling )
         const n_batch = n_threads > 1 ? 512 : 128
 
         const file_size_mb = ( cached.blob.size / 1_000_000 ).toFixed( 0 )
@@ -229,21 +229,30 @@ export default class WllamaProvider {
                 || load_err.message?.includes( `out of bounds` )
 
             if( is_memory_error ) {
-                log.warn( `[wllama] Memory pressure loading ${ model_id } (${ file_size_mb } MB), retrying safe mode` )
+                log.warn( `[wllama] Memory pressure loading ${ model_id } (${ file_size_mb } MB, ctx ${ n_ctx })` )
 
-                try {
-                    await this.unload_model()
-                    this._wllama = new Wllama( CONFIG_PATHS, {
-                        suppressNativeLog: true,
-                    } )
-                    await load_with_options( {
-                        n_ctx: Math.min( requested_context, cached.context_length || requested_context, FALLBACK_BROWSER_CONTEXT ),
-                        n_batch: 64,
-                        n_threads: 1,
-                    } )
-                } catch ( fallback_err ) {
-                    log.error( `[wllama] Out of memory loading ${ model_id } (${ file_size_mb } MB) after safe-mode retry`, fallback_err )
-                    throw new Error( `This browser could not load the local model. Try reloading once, closing other tabs, or using the desktop app for local models.` )
+                const can_retry_same_context = n_threads > 1 || n_batch > 64
+
+                if( can_retry_same_context ) {
+                    try {
+                        await this.unload_model()
+                        this._wllama = new Wllama( CONFIG_PATHS, {
+                            suppressNativeLog: true,
+                        } )
+                        if( on_progress ) {
+                            on_progress( { progress: 0, status: `Retrying ${ n_ctx.toLocaleString() } context in safe mode...` } )
+                        }
+                        await load_with_options( {
+                            n_ctx,
+                            n_batch: 64,
+                            n_threads: 1,
+                        } )
+                    } catch ( fallback_err ) {
+                        log.error( `[wllama] Out of memory loading ${ model_id } (${ file_size_mb } MB, ctx ${ n_ctx })`, fallback_err )
+                        throw new Error( `Could not load this model at ${ n_ctx.toLocaleString() } context in this browser. Try a smaller context or a smaller quantization.` )
+                    }
+                } else {
+                    throw new Error( `Could not load this model at ${ n_ctx.toLocaleString() } context in this browser. Try a smaller context or a smaller quantization.` )
                 }
             } else {
 
