@@ -7,7 +7,7 @@ import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
 import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_download_time, estimate_model_memory, quality_score } from '../../utils/model_catalog'
-import { parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
+import { parse_hf_url, resolve_hf_models } from '../../utils/hf_url_parser'
 import { storage_key } from '../../utils/branding'
 
 const Container = styled.div`
@@ -438,6 +438,55 @@ const CustomModelStatus = styled.div`
     display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.xs };
+    line-height: 1.35;
+`
+
+const CustomModelControls = styled.div`
+    display: grid;
+    grid-template-columns: minmax( 0, 1fr ) 8.5rem;
+    gap: ${ ( { theme } ) => theme.spacing.sm };
+    margin-top: ${ ( { theme } ) => theme.spacing.sm };
+
+    @media ( max-width: 520px ) {
+        grid-template-columns: 1fr;
+    }
+`
+
+const CustomModelField = styled.label`
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+`
+
+const CustomModelFieldLabel = styled.span`
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+    text-transform: uppercase;
+`
+
+const CustomModelSelect = styled.select`
+    width: 100%;
+    min-height: 2.5rem;
+    padding: ${ ( { theme } ) => theme.spacing.sm };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    background: ${ ( { theme } ) => theme.colors.input_background };
+    color: ${ ( { theme } ) => theme.colors.text };
+    font-size: 0.85rem;
+
+    &:focus {
+        outline: none;
+        border-color: ${ ( { theme } ) => theme.colors.accent };
+    }
+`
+
+const CustomModelHint = styled.div`
+    font-size: 0.75rem;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+    margin-top: ${ ( { theme } ) => theme.spacing.xs };
+    line-height: 1.35;
 `
 
 const Spinner = styled( LoaderCircle )`
@@ -476,6 +525,8 @@ const SectionSubtitle = styled.p`
 // ─── Benchmark display ────────────────────────────────────────────────────────
 
 const BENCHMARK_LABELS = { mmlu: `MMLU`, gpqa: `GPQA`, humaneval: `Code`, math: `Math`, gsm8k: `GSM8K` }
+const DEFAULT_CUSTOM_CONTEXT = 4096
+const CUSTOM_CONTEXT_OPTIONS = [ 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144 ]
 
 function BenchmarkRow( { benchmarks } ) {
     return <BenchmarkGrid>
@@ -559,9 +610,25 @@ export default function ModelSelectPage() {
 
     // Custom model state
     const [ custom_url, set_custom_url ] = useState( `` )
-    const [ custom_model, set_custom_model ] = useState( null )
+    const [ custom_model_options, set_custom_model_options ] = useState( [] )
+    const [ selected_custom_file, set_selected_custom_file ] = useState( null )
+    const [ custom_context_length, set_custom_context_length ] = useState( DEFAULT_CUSTOM_CONTEXT )
     const [ custom_loading, set_custom_loading ] = useState( false )
     const [ custom_error, set_custom_error ] = useState( null )
+
+    const custom_model = useMemo( () => {
+
+        const selected_model = custom_model_options.find( model => model.file_name === selected_custom_file )
+            || custom_model_options[ 0 ]
+
+        if( !selected_model ) return null
+
+        return {
+            ...selected_model,
+            context_length: custom_context_length,
+        }
+
+    }, [ custom_context_length, custom_model_options, selected_custom_file ] )
 
     // Resolve the active model — custom > user pick > smarter default
     const active_model = custom_model
@@ -582,6 +649,13 @@ export default function ModelSelectPage() {
 
         if( !active_model ) return
 
+        if( active_model.is_custom ) {
+            localStorage.setItem(
+                storage_key( `model_context_length:${ active_model.id }` ),
+                String( active_model.context_length )
+            )
+        }
+
         // Cached models can skip the download page entirely
         if( active_is_cached ) {
             localStorage.setItem( storage_key( `active_model_id` ), active_model.id )
@@ -594,7 +668,8 @@ export default function ModelSelectPage() {
     }
 
     const handle_select = ( model_id ) => {
-        set_custom_model( null )
+        set_custom_model_options( [] )
+        set_selected_custom_file( null )
         set_custom_error( null )
         set_selected_model_id( model_id )
     }
@@ -612,12 +687,14 @@ export default function ModelSelectPage() {
 
         set_custom_loading( true )
         set_custom_error( null )
-        set_custom_model( null )
+        set_custom_model_options( [] )
+        set_selected_custom_file( null )
         set_selected_model_id( null )
 
         try {
-            const model = await resolve_hf_model( parsed )
-            set_custom_model( model )
+            const models = await resolve_hf_models( parsed )
+            set_custom_model_options( models )
+            set_selected_custom_file( models[ 0 ]?.file_name ?? null )
         } catch ( err ) {
             set_custom_error( err.message )
         } finally {
@@ -840,7 +917,7 @@ export default function ModelSelectPage() {
                         <CustomModelInput
                             data-testid="custom-model-input"
                             type="text"
-                            placeholder="hf.co/org/repo:Q4_K_M"
+                            placeholder="hf.co/org/repo"
                             value={ custom_url }
                             onChange={ ( e ) => set_custom_url( e.target.value ) }
                             disabled={ custom_loading }
@@ -863,9 +940,45 @@ export default function ModelSelectPage() {
                         <AlertTriangle size={ 12 } /> { custom_error }
                     </CustomModelStatus> }
 
+                    { custom_model_options.length > 0 && !custom_loading && <CustomModelControls>
+                        <CustomModelField>
+                            <CustomModelFieldLabel>{ t( 'quantization_label' ) }</CustomModelFieldLabel>
+                            <CustomModelSelect
+                                data-testid="custom-model-quant-select"
+                                value={ selected_custom_file || `` }
+                                onChange={ ( e ) => set_selected_custom_file( e.target.value ) }
+                            >
+                                { custom_model_options.map( model =>
+                                    <option key={ model.file_name } value={ model.file_name }>
+                                        { model.quantization } - { format_file_size( model.file_size_bytes ) } - { model.file_name }
+                                    </option>
+                                ) }
+                            </CustomModelSelect>
+                        </CustomModelField>
+
+                        <CustomModelField>
+                            <CustomModelFieldLabel>{ t( 'context_length_label' ) }</CustomModelFieldLabel>
+                            <CustomModelSelect
+                                data-testid="custom-model-context-select"
+                                value={ custom_context_length }
+                                onChange={ ( e ) => set_custom_context_length( parseInt( e.target.value, 10 ) ) }
+                            >
+                                { CUSTOM_CONTEXT_OPTIONS.map( context_length =>
+                                    <option key={ context_length } value={ context_length }>
+                                        { context_length.toLocaleString() }
+                                    </option>
+                                ) }
+                            </CustomModelSelect>
+                        </CustomModelField>
+                    </CustomModelControls> }
+
                     { custom_model && !custom_loading && <CustomModelStatus>
-                        <Check size={ 12 } /> { custom_model.name } — { format_file_size( custom_model.file_size_bytes ) } ({ custom_model.quantization })
+                        <Check size={ 12 } /> { custom_model.name } - { custom_model.quantization }, { custom_model.context_length.toLocaleString() } ctx
                     </CustomModelStatus> }
+
+                    { custom_model && !custom_loading && !window.electronAPI && custom_model.context_length > 2048 && <CustomModelHint>
+                        { t( 'browser_context_cap' ) }
+                    </CustomModelHint> }
 
                     { /* Warn browser users about large custom models that may exceed WASM limits */ }
                     { custom_model && !custom_loading && !window.electronAPI && custom_model.file_size_bytes > 2_000_000_000 && <CustomModelStatus $error>

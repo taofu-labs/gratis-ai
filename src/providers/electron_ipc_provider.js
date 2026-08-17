@@ -9,21 +9,26 @@ export default class ElectronIPCProvider {
 
     constructor() {
         this._loaded_model_id = null
+        this._loaded_context_length = null
     }
 
     /**
      * Load a model via IPC
      * @param {string} model_id - The model ID to load
      * @param {Function} [on_progress] - Progress callback
+     * @param {{ context_length?: number|null }} [options] - Load options
      * @returns {Promise<void>}
      */
-    async load_model( model_id, on_progress ) {
+    async load_model( model_id, on_progress, options = {} ) {
 
         log.debug( `[electron] Loading model ${ model_id }` )
         if( on_progress ) on_progress( { progress: 0, status: `Loading model...` } )
 
-        const result = await window.electronAPI.load_model( model_id )
+        const result = await window.electronAPI.load_model( model_id, {
+            context_length: options.context_length,
+        } )
         this._loaded_model_id = model_id
+        this._loaded_context_length = options.context_length ?? null
 
         // Let the caller know if context was reduced due to VRAM limits
         if( result?.context_reduced ) {
@@ -137,6 +142,7 @@ export default class ElectronIPCProvider {
         log.debug( `[electron] Unloading model` )
         await window.electronAPI.unload_model()
         this._loaded_model_id = null
+        this._loaded_context_length = null
 
     }
 

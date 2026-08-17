@@ -18,6 +18,7 @@ const use_llm_store = create( ( set, get ) => ( {
     is_generating: false,
     is_endpoint_warming: false,
     loaded_model_id: null,
+    loaded_context_length: null,
     stats: null,
     error: null,
 
@@ -28,6 +29,7 @@ const use_llm_store = create( ( set, get ) => ( {
     _provider_promise: null,
     _load_promise: null,
     _loading_model_id: null,
+    _loading_context_length: null,
 
     // ── Actions ──────────────────────────────────────────────────────
 
@@ -65,7 +67,7 @@ const use_llm_store = create( ( set, get ) => ( {
             try {
                 await state._provider.unload_model()
             } catch { /* best effort */ }
-            set( { _provider: null, _provider_promise: null, loaded_model_id: null, is_endpoint_warming: false } )
+            set( { _provider: null, _provider_promise: null, loaded_model_id: null, loaded_context_length: null, is_endpoint_warming: false } )
         }
 
         // Standard local provider
@@ -92,12 +94,14 @@ const use_llm_store = create( ( set, get ) => ( {
     load_model: async ( model_id, on_progress ) => {
 
         const state = get()
+        const context_override = parseInt( localStorage.getItem( storage_key( `model_context_length:${ model_id }` ) ), 10 )
+        const context_length = Number.isFinite( context_override ) && context_override > 0 ? context_override : null
 
         // Already loaded — nothing to do
-        if( state.loaded_model_id === model_id && !state.is_loading ) return
+        if( state.loaded_model_id === model_id && state.loaded_context_length === context_length && !state.is_loading ) return
 
         // Already loading this exact model — return existing promise
-        if( state._load_promise && state._loading_model_id === model_id ) {
+        if( state._load_promise && state._loading_model_id === model_id && state._loading_context_length === context_length ) {
             return state._load_promise
         }
 
@@ -108,18 +112,18 @@ const use_llm_store = create( ( set, get ) => ( {
             log.info( `[use_llm] Loading model: ${ model_id }` )
 
             try {
-                await provider.load_model( model_id, on_progress )
+                await provider.load_model( model_id, on_progress, { context_length } )
 
                 // Use provider's canonical ID — reflects a potentially recreated endpoint
                 const final_model_id = provider.get_loaded_model() || model_id
-                set( { loaded_model_id: final_model_id } )
+                set( { loaded_model_id: final_model_id, loaded_context_length: context_length } )
                 log.info( `[use_llm] Model loaded successfully: ${ final_model_id }` )
             } catch ( err ) {
                 log.error( `[use_llm] Model load failed:`, err.message )
                 set( { error: err.message } )
                 throw err
             } finally {
-                set( { is_loading: false, _load_promise: null, _loading_model_id: null } )
+                set( { is_loading: false, _load_promise: null, _loading_model_id: null, _loading_context_length: null } )
             }
 
         } )()
@@ -128,7 +132,7 @@ const use_llm_store = create( ( set, get ) => ( {
         // where a concurrent caller sees _load_promise but _loading_model_id
         // hasn't been set yet (it was previously inside the async IIFE,
         // after the first `await`, giving a window for the dedup to miss)
-        set( { is_loading: true, error: null, _loading_model_id: model_id, _load_promise: promise } )
+        set( { is_loading: true, error: null, _loading_model_id: model_id, _loading_context_length: context_length, _load_promise: promise } )
 
         return promise
 

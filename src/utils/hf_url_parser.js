@@ -6,8 +6,35 @@ const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
  * @returns {string|null}
  */
 export const extract_quantization = ( file_name ) => {
-    const match = file_name.match( /[._-]((?:I?Q\d[\w_]*|F(?:16|32)))/i )
+    const match = file_name.match( /[._-]((?:UD-)?(?:I?Q\d[\w_]*|BF16|F(?:16|32)))/i )
     return match ? match[ 1 ] : null
+}
+
+const normalize_quantization = ( quantization ) =>
+    ( quantization || `` ).toUpperCase().replace( /[-.]/g, `_` )
+
+const quantization_rank = ( quantization ) => {
+
+    const quant = normalize_quantization( quantization )
+
+    if( !quant ) return 100
+    if( quant.includes( `Q4_K_M` ) ) return 0
+    if( quant.includes( `Q4_K_XL` ) ) return 1
+    if( quant.includes( `Q4_K_S` ) ) return 2
+    if( quant.includes( `Q4_0` ) ) return 3
+    if( quant.includes( `IQ4` ) ) return 4
+    if( quant.includes( `Q5` ) ) return 10
+    if( quant.includes( `Q3` ) ) return 20
+    if( quant.includes( `IQ3` ) ) return 25
+    if( quant.includes( `Q2` ) ) return 30
+    if( quant.includes( `IQ2` ) ) return 35
+    if( quant.includes( `Q6` ) ) return 40
+    if( quant.includes( `Q8` ) ) return 50
+    if( quant.includes( `BF16` ) || quant.includes( `F16` ) || quant.includes( `F32` ) ) return 60
+    if( quant.includes( `IQ1` ) || quant.includes( `Q1` ) ) return 90
+
+    return 80
+
 }
 
 /**
@@ -128,16 +155,30 @@ const build_model_def = ( repo, file_name, file_size_bytes ) => ( {
     is_custom: true,
 } )
 
+const resolve_file_size = async ( repo, file ) => {
+
+    if( file.size ) return file.size
+
+    try {
+        const head_url = `${ HF_BASE_URL }/${ repo }/resolve/main/${ file.rfilename }`
+        const head = await fetch( head_url, { method: `HEAD` } )
+        return parseInt( head.headers.get( `content-length` ) ) || 0
+    } catch {
+        return 0
+    }
+
+}
+
 /**
- * Resolve a parsed HF URL to a full model definition by querying the HF API.
- * Fetches repo file listing, finds the matching GGUF file, and returns a complete
- * model definition ready for download.
+ * Resolve a parsed HF URL to available GGUF model definitions by querying the HF API.
+ * Direct file links return one option. Repo links return all GGUF options, sorted
+ * toward practical 4-bit defaults so we never silently choose a 1-bit quant.
  *
  * @param {{ repo: string, file_name: string|null, quantization: string|null }} parsed
- * @returns {Promise<import('./model_catalog').ModelDefinition>}
- * @throws {Error} If repo not found, no GGUF files, or no matching quantization
+ * @returns {Promise<import('./model_catalog').ModelDefinition[]>}
+ * @throws {Error} If repo not found or no GGUF files exist
  */
-export const resolve_hf_model = async ( parsed ) => {
+export const resolve_hf_models = async ( parsed ) => {
 
     const { repo, file_name: direct_file, quantization } = parsed
 
@@ -148,7 +189,7 @@ export const resolve_hf_model = async ( parsed ) => {
         if( !head.ok ) throw new Error( `File not found: ${ direct_file }` )
 
         const size = parseInt( head.headers.get( `content-length` ) ) || 0
-        return build_model_def( repo, direct_file, size )
+        return [ build_model_def( repo, direct_file, size ) ]
     }
 
     // Query HF API for repo file listing
@@ -167,26 +208,39 @@ export const resolve_hf_model = async ( parsed ) => {
     const gguf_files = siblings.filter( ( f ) => f.rfilename?.endsWith( `.gguf` ) )
     if( !gguf_files.length ) throw new Error( `No GGUF files found in ${ repo }` )
 
-    // Find the target file — match by quantization hint, or pick a sensible default
-    let target_file
+    const quant_lower = quantization?.toLowerCase()
 
-    if( quantization ) {
-        const quant_lower = quantization.toLowerCase()
-        target_file = gguf_files.find( ( f ) => f.rfilename.toLowerCase().includes( quant_lower ) )
-        if( !target_file ) throw new Error( `No GGUF file matching "${ quantization }" in ${ repo }` )
-    } else {
-        // Prefer Q4_K_M as a reasonable default, fall back to first file
-        target_file = gguf_files.find( ( f ) => f.rfilename.includes( `Q4_K_M` ) ) || gguf_files[ 0 ]
+    const models = ( await Promise.all(
+        gguf_files.map( async file => build_model_def( repo, file.rfilename, await resolve_file_size( repo, file ) ) )
+    ) )
+        .sort( ( a, b ) => {
+
+            if( quant_lower ) {
+                const a_matches = a.file_name.toLowerCase().includes( quant_lower ) ? 1 : 0
+                const b_matches = b.file_name.toLowerCase().includes( quant_lower ) ? 1 : 0
+                if( a_matches !== b_matches ) return b_matches - a_matches
+            }
+
+            return quantization_rank( a.quantization ) - quantization_rank( b.quantization )
+                || a.file_size_bytes - b.file_size_bytes
+                || a.file_name.localeCompare( b.file_name )
+
+        } )
+
+    if( quant_lower && !models.some( model => model.file_name.toLowerCase().includes( quant_lower ) ) ) {
+        throw new Error( `No GGUF file matching "${ quantization }" in ${ repo }` )
     }
 
-    // Siblings may not include file size — fetch via HEAD if needed
-    let file_size = target_file.size || 0
-    if( !file_size ) {
-        const head_url = `${ HF_BASE_URL }/${ repo }/resolve/main/${ target_file.rfilename }`
-        const head = await fetch( head_url, { method: `HEAD` } )
-        file_size = parseInt( head.headers.get( `content-length` ) ) || 0
-    }
+    return models
 
-    return build_model_def( repo, target_file.rfilename, file_size )
+}
 
+/**
+ * Resolve a parsed HF URL to a single preferred model definition.
+ * @param {{ repo: string, file_name: string|null, quantization: string|null }} parsed
+ * @returns {Promise<import('./model_catalog').ModelDefinition>}
+ */
+export const resolve_hf_model = async ( parsed ) => {
+    const models = await resolve_hf_models( parsed )
+    return models[ 0 ]
 }

@@ -37,10 +37,15 @@
  */
 
 /**
+ * @typedef {Object} LoadOptions
+ * @property {number|null} [context_length] - Context window to request when loading
+ */
+
+/**
  * LLM Provider interface — both backends implement this API
  *
  * @typedef {Object} LLMProvider
- * @property {( model_path: string, on_progress?: function ) => Promise<void>} load_model
+ * @property {( model_path: string, on_progress?: function, options?: LoadOptions ) => Promise<void>} load_model
  * @property {( messages: ChatMessage[], opts?: GenerateOptions ) => Promise<string>} chat
  * @property {( messages: ChatMessage[], opts?: GenerateOptions ) => AsyncIterable<string>} chat_stream
  * @property {() => void} abort

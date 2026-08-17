@@ -12,7 +12,7 @@ contextBridge.exposeInMainWorld( `electronAPI`, {
     get_system_locale: () => ipcRenderer.invoke( `system:locale` ),
 
     // Model lifecycle
-    load_model: ( model_path ) => ipcRenderer.invoke( `llm:load`, model_path ),
+    load_model: ( model_path, options ) => ipcRenderer.invoke( `llm:load`, model_path, options ),
     unload_model: () => ipcRenderer.invoke( `llm:unload` ),
     get_loaded_model: () => ipcRenderer.invoke( `llm:status` ),
 

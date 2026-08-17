@@ -455,7 +455,7 @@ const register_ipc_handlers = () => {
     } )
 
     // Load a model by ID — resolves the path here, sends to worker for loading
-    ipcMain.handle( `llm:load`, async ( _event, model_id ) => {
+    ipcMain.handle( `llm:load`, async ( _event, model_id, options = {} ) => {
 
         const manifest = read_manifest()
         const model = manifest.find( ( m ) => m.id === model_id )
@@ -467,7 +467,10 @@ const register_ipc_handlers = () => {
         // Estimate the largest context that fits in available memory. Use 70%
         // of total RAM as the budget (headroom for OS, Electron, V8 heap).
         // If we overshoot, the worker's VRAM retry loop will halve down safely.
-        const requested_ctx = estimate_context_for_system( model )
+        const context_override = parseInt( options.context_length, 10 )
+        const requested_ctx = Number.isFinite( context_override ) && context_override > 0
+            ? context_override
+            : estimate_context_for_system( model )
 
         const result = await worker_request( `load`, {
             model_path,
@@ -481,7 +484,7 @@ const register_ipc_handlers = () => {
         return {
             success: true,
             context_size: result.context_size,
-            context_reduced: result.context_size < ( model.context_length || requested_ctx ),
+            context_reduced: result.context_size < requested_ctx,
         }
 
     } )

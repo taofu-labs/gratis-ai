@@ -127,6 +127,7 @@ export default class WllamaProvider {
     constructor() {
         this._wllama = null
         this._loaded_model_id = null
+        this._loaded_context_length = null
         this._abort_controller = null
         this._template_type = `unknown`
         this._eos_str = `</s>`
@@ -140,10 +141,16 @@ export default class WllamaProvider {
      * @param {Function} [on_progress] - Progress callback
      * @returns {Promise<void>}
      */
-    async load_model( model_id, on_progress ) {
+    async load_model( model_id, on_progress, options = {} ) {
+
+        const requested_context_override = options.context_length ?? null
 
         // Skip reload if this exact model is already loaded and healthy
-        if( this._loaded_model_id === model_id && this._wllama?.isModelLoaded() ) {
+        if(
+            this._loaded_model_id === model_id
+            && this._loaded_context_length === requested_context_override
+            && this._wllama?.isModelLoaded()
+        ) {
             log.info( `[wllama] Model ${ model_id } already loaded, skipping reload` )
             if( on_progress ) on_progress( { progress: 1, status: `Model ready` } )
             return
@@ -179,7 +186,8 @@ export default class WllamaProvider {
         // Browser memory failures are often caused by oversized context/batch
         // settings rather than the GGUF file itself. Start with practical chat
         // defaults and retry smaller before surfacing an error.
-        const n_ctx = Math.min( cached.context_length || DEFAULT_BROWSER_CONTEXT, DEFAULT_BROWSER_CONTEXT )
+        const requested_context = options.context_length || cached.context_length || DEFAULT_BROWSER_CONTEXT
+        const n_ctx = Math.min( requested_context, cached.context_length || requested_context, DEFAULT_BROWSER_CONTEXT )
         const n_batch = n_threads > 1 ? 512 : 128
 
         const file_size_mb = ( cached.blob.size / 1_000_000 ).toFixed( 0 )
@@ -229,7 +237,7 @@ export default class WllamaProvider {
                         suppressNativeLog: true,
                     } )
                     await load_with_options( {
-                        n_ctx: Math.min( cached.context_length || FALLBACK_BROWSER_CONTEXT, FALLBACK_BROWSER_CONTEXT ),
+                        n_ctx: Math.min( requested_context, cached.context_length || requested_context, FALLBACK_BROWSER_CONTEXT ),
                         n_batch: 64,
                         n_threads: 1,
                     } )
@@ -257,6 +265,7 @@ export default class WllamaProvider {
         }
 
         this._loaded_model_id = model_id
+        this._loaded_context_length = requested_context_override
 
         // Verify the tokenizer works — some GGUF files (e.g. QuantFactory conversions)
         // have broken tokenizer data that crashes the WASM runtime. Catching this
@@ -460,6 +469,7 @@ export default class WllamaProvider {
             this._wllama = null
         }
         this._loaded_model_id = null
+        this._loaded_context_length = null
 
     }
 
