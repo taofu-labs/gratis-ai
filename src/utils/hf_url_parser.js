@@ -204,8 +204,11 @@ export const resolve_hf_models = async ( parsed ) => {
     const data = await response.json()
     const siblings = data.siblings || []
 
-    // Filter to GGUF files only
-    const gguf_files = siblings.filter( ( f ) => f.rfilename?.endsWith( `.gguf` ) )
+    // Filter to text-model GGUF files only. Multimodal projector files
+    // (mmproj-*.gguf) are sidecars, not loadable chat models by themselves.
+    const gguf_files = siblings.filter( ( f ) =>
+        f.rfilename?.endsWith( `.gguf` ) && !f.rfilename.toLowerCase().startsWith( `mmproj` )
+    )
     if( !gguf_files.length ) throw new Error( `No GGUF files found in ${ repo }` )
 
     const quant_lower = quantization?.toLowerCase()

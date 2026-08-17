@@ -247,7 +247,12 @@ const DownloadButton = styled.button`
     gap: ${ ( { theme } ) => theme.spacing.sm };
     min-height: 2.75rem;
 
-    &:hover { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
+    &:hover:not(:disabled) { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
 `
 
 // Toggle buttons for expanding model lists
@@ -644,10 +649,12 @@ export default function ModelSelectPage() {
     const free_bytes = capabilities?.memory?.free_bytes
     const model_needs = active_model ? estimate_model_memory( active_model ) : 0
     const low_memory = is_electron && free_bytes && model_needs > 0 && free_bytes < model_needs * 1.2
+    const browser_large_custom_model = !is_electron && active_model?.is_custom && active_model.file_size_bytes > 2_000_000_000
 
     const handle_download = () => {
 
         if( !active_model ) return
+        if( browser_large_custom_model ) return
 
         if( active_model.is_custom ) {
             localStorage.setItem(
@@ -976,13 +983,13 @@ export default function ModelSelectPage() {
                         <Check size={ 12 } /> { custom_model.name } - { custom_model.quantization }, { custom_model.context_length.toLocaleString() } ctx
                     </CustomModelStatus> }
 
-                    { custom_model && !custom_loading && !window.electronAPI && custom_model.context_length > 2048 && <CustomModelHint>
+                    { custom_model && !custom_loading && !is_electron && custom_model.context_length > 2048 && <CustomModelHint>
                         { t( 'browser_context_cap' ) }
                     </CustomModelHint> }
 
                     { /* Warn browser users about large custom models that may exceed WASM limits */ }
-                    { custom_model && !custom_loading && !window.electronAPI && custom_model.file_size_bytes > 2_000_000_000 && <CustomModelStatus $error>
-                        <AlertTriangle size={ 12 } /> { t( 'large_model_warning' ) }
+                    { custom_model && !custom_loading && browser_large_custom_model && <CustomModelStatus $error>
+                        <AlertTriangle size={ 12 } /> { t( 'browser_large_model_blocked' ) }
                     </CustomModelStatus> }
 
                 </CustomModelSection>
@@ -994,6 +1001,7 @@ export default function ModelSelectPage() {
         <DownloadButton
             data-testid="model-select-confirm-btn"
             onClick={ handle_download }
+            disabled={ browser_large_custom_model }
         >
             { active_is_cached ? t( 'start_chatting' ) : t( 'download_and_start' ) } <ArrowRight size={ 18 } />
         </DownloadButton>
