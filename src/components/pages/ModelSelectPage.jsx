@@ -482,13 +482,6 @@ const CustomModelSelect = styled.select`
     }
 `
 
-const CustomModelHint = styled.div`
-    font-size: 0.75rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    margin-top: ${ ( { theme } ) => theme.spacing.xs };
-    line-height: 1.35;
-`
-
 const Spinner = styled( LoaderCircle )`
     animation: spin 1s linear infinite;
     @keyframes spin { to { transform: rotate( 360deg ); } }
@@ -976,10 +969,6 @@ export default function ModelSelectPage() {
                     { custom_model && !custom_loading && <CustomModelStatus>
                         <Check size={ 12 } /> { custom_model.name } - { custom_model.quantization }, { custom_model.context_length.toLocaleString() } ctx
                     </CustomModelStatus> }
-
-                    { custom_model && !custom_loading && !is_electron && custom_model.context_length > 2048 && <CustomModelHint>
-                        { t( 'browser_context_cap' ) }
-                    </CustomModelHint> }
 
                     { /* Warn browser users about large custom models that may exceed WASM limits */ }
                     { custom_model && !custom_loading && browser_large_custom_model && <CustomModelStatus $error>
