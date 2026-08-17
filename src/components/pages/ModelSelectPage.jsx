@@ -247,12 +247,7 @@ const DownloadButton = styled.button`
     gap: ${ ( { theme } ) => theme.spacing.sm };
     min-height: 2.75rem;
 
-    &:hover:not(:disabled) { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
-
-    &:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
+    &:hover { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
 `
 
 // Toggle buttons for expanding model lists
@@ -654,7 +649,6 @@ export default function ModelSelectPage() {
     const handle_download = () => {
 
         if( !active_model ) return
-        if( browser_large_custom_model ) return
 
         if( active_model.is_custom ) {
             localStorage.setItem(
@@ -989,7 +983,7 @@ export default function ModelSelectPage() {
 
                     { /* Warn browser users about large custom models that may exceed WASM limits */ }
                     { custom_model && !custom_loading && browser_large_custom_model && <CustomModelStatus $error>
-                        <AlertTriangle size={ 12 } /> { t( 'browser_large_model_blocked' ) }
+                        <AlertTriangle size={ 12 } /> { t( 'large_model_warning' ) }
                     </CustomModelStatus> }
 
                 </CustomModelSection>
@@ -1001,7 +995,6 @@ export default function ModelSelectPage() {
         <DownloadButton
             data-testid="model-select-confirm-btn"
             onClick={ handle_download }
-            disabled={ browser_large_custom_model }
         >
             { active_is_cached ? t( 'start_chatting' ) : t( 'download_and_start' ) } <ArrowRight size={ 18 } />
         </DownloadButton>

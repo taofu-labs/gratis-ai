@@ -32,7 +32,6 @@
     "quantization_label": "Quantization",
     "context_length_label": "Context",
     "browser_context_cap": "Browsers currently load custom models at 2,048 context max. The desktop app uses your selected context.",
-    "browser_large_model_blocked": "This custom model is too large for the browser runtime. Use the desktop app or choose a smaller quantization.",
     "may_be_too_large_browser": "May be too large for this browser",
     "large_model_warning": "Large models may fail to load in the browser. Consider a smaller quantization or the desktop app.",
     "low_memory_warning": "Only {{free}} of memory free — this model needs about {{needed}}. Try closing other apps or picking a smaller model to avoid slowdowns and potential crashes.",
