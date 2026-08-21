@@ -102,8 +102,8 @@ bash scripts/setup_docker_e2e.sh
 
 # Pre-download model files to /tmp/gratisai-test-models/ (speeds up Electron tests)
 bash scripts/download_test_models.sh --fast    # SmolLM2 only (~200 MB)
-bash scripts/download_test_models.sh --medium  # 4 models, no Mistral (~1.7 GB)
-bash scripts/download_test_models.sh --all     # All 5 models (~4.4 GB)
+bash scripts/download_test_models.sh --medium  # 4 compact architecture fixtures (~2.9 GB)
+bash scripts/download_test_models.sh --all     # Add Qwen 3.5 2B (~4.2 GB total)
 ```
 
 ### Test Structure
@@ -190,7 +190,7 @@ Models need roughly **1.2x their file size** once loaded (weights + KV cache + c
 
 | Runtime | Limit |
 |---------|-------|
-| Shared Memory64 + JSPI | 15 GB model budget below wllama64's 16 GiB virtual ceiling, further capped to 85% of reported device memory |
+| Shared Memory64 + JSPI | 15 GB model budget below wllama64's 16 GiB virtual ceiling, further capped to 70% of reported device memory |
 | wasm32 compatibility | ~3.4 GB hard ceiling, further capped to 60% of reported device memory and 70% of the JS heap limit |
 
 The inference context starts at 2,048 tokens even when a model advertises 128K or 262K. Allocating the advertised maximum at startup would waste gigabytes of KV cache before the first short chat.
@@ -208,8 +208,8 @@ The selector walks tiers from highest quality to lowest and picks the **first ti
 | NVIDIA RTX 4090 (24 GB) | ~24 GB | **Mistral 7B** (5.1 GB) | Mixtral needs 31.7 GB loaded — doesn't fit yet. |
 | Intel laptop (8 GB, no GPU) | ~5.6 GB | **Mistral 7B** (5.1 GB) | 70% of 8 GB = 5.6 GB. Tight but viable at CPU speed. |
 | Intel laptop (4 GB, no GPU) | ~2.8 GB | **DeepSeek R1 1.5B** (1.1 GB) | Budget fits medium-tier models only. |
-| Browser with Memory64 (8 GB reported) | ~6.8 GB | **Qwen3 8B** (5.0 GB) | Memory64 removes the wasm32 ceiling; device-memory headroom remains. |
-| Browser compatibility runtime (8 GB reported) | ~3.4 GB | **Qwen 3.5 2B** (1.28 GB) | wasm32 remains bounded by its 4 GiB address space. |
+| Browser with Memory64 (8 GB reported) | ~5.6 GB | **Phi-4 Mini** (2.5 GB) | Memory64 removes the wasm32 ceiling while leaving 30% device-memory headroom. |
+| Browser compatibility runtime (8 GB reported) | ~3.4 GB | **Phi-4 Mini** (2.5 GB) | wasm32 remains bounded by its 4 GiB address space. |
 
 ### Model tiers
 

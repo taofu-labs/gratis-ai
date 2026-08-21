@@ -622,6 +622,11 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
             // Handle ?q= parameter — auto-send message once model is ready
             if( q_param && ( model_loaded || loaded_model_id ) ) {
                 query_processed_ref.current = true
+                set_search_params( ( prev ) => {
+                    const next = new URLSearchParams( prev )
+                    next.delete( `q` )
+                    return next
+                }, { replace: true } )
                 await send_message( q_param )
                 chat_input_ref.current?.focus()
                 return

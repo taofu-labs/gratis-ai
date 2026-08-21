@@ -1097,7 +1097,7 @@ const BENCHMARK_FIELDS = [ `mmlu`, `gpqa`, `humaneval`, `math`, `gsm8k` ]
 
 /**
  * Composite quality score from benchmark data.
- * Missing results count as zero instead of inflating sparse model cards.
+ * Simple average of the comparable results a model publishes.
  * Custom models without benchmarks return 0 (sort below scored models).
  *
  * @param {ModelDefinition} model
@@ -1113,7 +1113,7 @@ export const quality_score = ( model ) => {
 
     if( !scores.length ) return 0
 
-    return scores.reduce( ( sum, v ) => sum + v, 0 ) / BENCHMARK_FIELDS.length
+    return scores.reduce( ( sum, v ) => sum + v, 0 ) / scores.length
 
 }
 

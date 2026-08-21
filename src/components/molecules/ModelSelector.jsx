@@ -10,6 +10,7 @@ import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_openrouter_store from '../../stores/openrouter_store'
 import use_venice_store from '../../stores/venice_store'
 import use_llm_store from '../../stores/llm_store'
+import { clear_browser_model_cache } from '../../utils/model_download'
 
 const Container = styled.div`
     position: relative;
@@ -270,7 +271,9 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
 
             } else {
 
-                // Browser: clear the models IndexedDB store
+                // Browser weights live in OPFS; IndexedDB contains metadata.
+                // Clear both or multi-GB orphan files remain invisible on disk.
+                await clear_browser_model_cache()
                 const { get_db } = await import( `../../stores/db.js` )
                 const db = await get_db()
                 await db.clear( `models` )

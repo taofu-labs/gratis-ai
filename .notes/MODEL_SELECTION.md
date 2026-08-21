@@ -439,7 +439,7 @@ Five benchmarks were selected for maximum cross-model coverage:
 | Qwen3 32B | 83.6 | 49.5 | 72.1 | 61.6 | 93.4 | **72.0** |
 | Llama 3.3 70B | 86.0 | 50.5 | 88.4 | 77.0 | — | **75.5** |
 
-**Quality Score** = sum of comparable benchmark fields divided by all five fields. Missing results count as zero so a model card publishing one strong metric cannot outrank a comprehensively measured model. Different quant variants of the same base model share identical scores. Used as the primary sort key in `select_best_model()`, `get_fitting_models()`, and `select_model_pair()`.
+**Quality Score** = simple average of the comparable benchmark fields a model publishes. Different quant variants of the same base model share identical scores. Used as the primary sort key in `select_best_model()`, `get_fitting_models()`, and `select_model_pair()`. Never substitute a different benchmark merely to fill a missing field; extend the schema when cross-model coverage justifies it.
 
 #### Data sources
 

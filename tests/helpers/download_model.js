@@ -64,7 +64,7 @@ export async function select_model_on_page( page, model ) {
 
     const option = page.getByTestId( `model-option-${ model.id }` )
     if( await option.isVisible() ) {
-        if( await option.getAttribute( `role` ) === `button` ) await option.click()
+        await option.click()
         return
     }
 

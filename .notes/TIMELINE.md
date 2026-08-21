@@ -10,6 +10,7 @@
 - Aligned browser load/selection context at 2K and kept Qwen 3.5 2B in its documented non-thinking default.
 - Strengthened inference tests to reject waking/empty fallbacks and assert semantic output.
 - Fixed same-window settings propagation, first-message route transitions, OPFS clearing, and E2E completion races found by the full browser matrix.
+- Follow-up review fixed selector purge leakage, Firefox fallback selection, storage validation, and an unintended global recommendation-score change.
 
 ## 2026-03-13 — Purge All Models button in model selector (v0.38.0)
 

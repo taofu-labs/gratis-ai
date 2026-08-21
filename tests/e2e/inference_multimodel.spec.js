@@ -14,6 +14,15 @@ const models = process.env.RESEARCH_INFERENCE
 
 test.describe( `Multi-Architecture Inference`, () => {
 
+    test.beforeEach( async ( { page } ) => {
+        page.on( `console`, message => {
+            if( message.type() === `error` ) {
+                console.log( `[browser:${ message.type() }] ${ message.text() }` )
+            }
+        } )
+        page.on( `pageerror`, error => console.log( `[browser:pageerror] ${ error.message }` ) )
+    } )
+
     for( const model of models ) {
 
         test( `${ model.name } (${ model.template }) — download and inference`, async ( { page } ) => {

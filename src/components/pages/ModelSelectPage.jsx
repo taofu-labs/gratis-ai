@@ -973,11 +973,6 @@ export default function ModelSelectPage() {
                         <Check size={ 12 } /> { custom_model.name } — { format_file_size( custom_model.file_size_bytes ) } ({ custom_model.quantization })
                     </CustomModelStatus> }
 
-                    { /* Warn only when this runtime's measured memory budget is insufficient. */ }
-                    { custom_model && !custom_loading && !window.electronAPI && !can_fit_in_memory( custom_model, max_model_bytes ) && <CustomModelStatus $error>
-                        <AlertTriangle size={ 12 } /> { t( 'large_model_warning' ) }
-                    </CustomModelStatus> }
-
                 </CustomModelSection>
 
             </ExpandPanel>

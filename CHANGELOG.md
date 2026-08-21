@@ -17,6 +17,12 @@
 - Synchronize generation settings immediately across open components
 - Preserve the first message while a new chat receives its routed ID
 - Unload active models before clearing OPFS-backed model data
+- Remove OPFS weights when purging all models from the selector
+- Remove obsolete Workbox model duplicates left by older installations
+- Refuse missing OPFS entries instead of silently re-downloading during load
+- Validate Xet downloads by their stored file size when Content-Length is absent
+- Consume deep-link queries once when opening an existing conversation
+- Use the self-hosted compatibility runtime on older Firefox builds
 - Reject empty/waking placeholders in real-inference tests
 - Correct four stale catalog download sizes and exact model selection in E2E
 

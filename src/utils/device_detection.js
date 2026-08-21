@@ -328,11 +328,11 @@ export const estimate_max_model_bytes = ( capabilities ) => {
     const wasm_ceiling = has_memory64 ? 15_000_000_000 : 3_400_000_000
 
     // navigator.deviceMemory is intentionally rounded and capped at 8 GB.
-    // Memory64 weights live outside V8, so use a larger—but still cautious—
-    // fraction and do not apply Chrome's JS heap limit to this path.
-    const device_mem = capabilities?.memory?.device_memory
-    const device_fraction = has_memory64 ? 0.85 : 0.6
-    const device_cap = device_mem ? device_mem * device_fraction * 1_000_000_000 : Infinity
+    // Unknown devices get a conservative 4 GB assumption; otherwise a missing
+    // Chromium-only hint would expose the full 15 GB ceiling on small machines.
+    const device_mem = capabilities?.memory?.device_memory || 4
+    const device_fraction = has_memory64 ? 0.7 : 0.6
+    const device_cap = device_mem * device_fraction * 1_000_000_000
 
     // wasm32 loading still shares practical limits with large JS buffers.
     const heap_limit = capabilities?.memory?.js_heap_limit

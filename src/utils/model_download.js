@@ -27,6 +27,28 @@ export const get_browser_model_manager = () => {
     return browser_model_manager
 }
 
+/**
+ * Return a validated OPFS model without triggering a network download.
+ * Some Hugging Face/Xet responses omit Content-Length. Wllama records an
+ * `originalSize` of zero in that case even though OPFS contains the complete
+ * file, so validate against the catalog/API size as a safe fallback.
+ * @param {string} download_url
+ * @param {number} [expected_size]
+ * @returns {Promise<import('wllama64').Model|null>}
+ */
+export const get_browser_cached_model = async ( download_url, expected_size ) => {
+
+    const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
+    const stored_model = models.find( model => model.url === download_url )
+
+    if( !stored_model ) return null
+    if( stored_model.validate() === ModelValidationStatus.VALID ) return stored_model
+
+    const stored_size = stored_model.files.reduce( ( total, file ) => total + file.size, 0 )
+    return expected_size > 0 && stored_size === expected_size ? stored_model : null
+
+}
+
 const remove_browser_cache_entry = async ( cached ) => {
 
     if( cached?.download_url ) {
@@ -117,11 +139,9 @@ export const is_model_cached = async ( model_id, expected_repo, expected_file ) 
     }
 
     try {
-        const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
-        const stored_model = models.find( model => model.url === cached.download_url )
-        const valid = stored_model?.validate() === ModelValidationStatus.VALID
+        const stored_model = await get_browser_cached_model( cached.download_url, cached.file_size_bytes )
 
-        if( !valid ) {
+        if( !stored_model ) {
             log.warn( `[download] OPFS cache invalid for ${ model_id }, clearing metadata` )
             await remove_browser_cache_entry( cached )
             return false
@@ -256,14 +276,17 @@ export const download_model = async ( model, on_progress, signal ) => {
         } ),
     } )
 
+    const downloaded_files = await downloaded.open()
+    const [ first_file ] = downloaded_files
+    const downloaded_size = downloaded_files.reduce( ( total, file ) => total + file.size, 0 )
+
     on_progress( {
         progress: 1,
-        bytes_loaded: downloaded.size,
-        bytes_total: downloaded.size,
+        bytes_loaded: downloaded_size,
+        bytes_total: downloaded_size,
         status: `Validating model...`,
     } )
 
-    const [ first_file ] = await downloaded.open()
     const header = new Uint8Array( await first_file.slice( 0, 4 ).arrayBuffer() )
     const is_valid_gguf = header[ 0 ] === 0x47 && header[ 1 ] === 0x47 && header[ 2 ] === 0x55 && header[ 3 ] === 0x46
     if( !is_valid_gguf ) {
@@ -279,7 +302,7 @@ export const download_model = async ( model, on_progress, signal ) => {
         storage: `wllama64-opfs`,
         download_url: url,
         cached_at: now,
-        file_size_bytes: downloaded.size,
+        file_size_bytes: downloaded_size,
         name: model.name,
         category: model.category,
         hugging_face_repo: model.hugging_face_repo,
@@ -292,7 +315,7 @@ export const download_model = async ( model, on_progress, signal ) => {
         last_used_at: now,
     } )
 
-    log.info( `[download] Complete: ${ model.name } (${ ( downloaded.size / 1e6 ).toFixed( 0 ) } MB)` )
-    on_progress( { progress: 1, bytes_loaded: downloaded.size, bytes_total: downloaded.size, status: `Complete` } )
+    log.info( `[download] Complete: ${ model.name } (${ ( downloaded_size / 1e6 ).toFixed( 0 ) } MB)` )
+    on_progress( { progress: 1, bytes_loaded: downloaded_size, bytes_total: downloaded_size, status: `Complete` } )
 
 }

@@ -94,6 +94,17 @@ and WASM assets from jsDelivr. This violates the offline/privacy contract.
 
 **Fix**: Pin matching `@wllama/wllama-compat`, copy both assets under `public/wasm/compat`, and
 call `setCompat()` with local paths. Keep the PWA precache limit above the fallback WASM's ~16 MiB.
+Pass `firefox_safari` as the compatibility mode so Firefox without Memory64/JSPI can use those
+local wasm32 assets; the default `safari` mode deliberately disables compatibility on Firefox.
+
+Browser model weights now live in OPFS and IndexedDB stores metadata only. Validate the OPFS
+`Model` before loading and call `loadModel(model)` directly; `loadModelFromUrl(..., useCache: true)`
+silently downloads again when storage eviction leaves stale metadata. Purge paths must clear OPFS,
+IndexedDB, and the pre-0.41 Workbox `hf-model-cache` duplicate.
+
+Hugging Face/Xet responses can omit `Content-Length`. Wllama then writes zero as metadata
+`originalSize`, making its otherwise complete OPFS model fail `Model.validate()`. Compare the sum
+of stored OPFS file sizes to the catalog/Hugging Face API size before declaring that entry missing.
 
 ## Chat list overflow: min-height vs height on #root (2026-02-28)
 

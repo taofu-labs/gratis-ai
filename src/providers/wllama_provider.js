@@ -1,7 +1,8 @@
-import { Wllama, WllamaError, WllamaRuntimeError } from 'wllama64'
+import { Wllama, WllamaError } from 'wllama64'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
 import { DEFAULT_RUNTIME_CONTEXT, get_model_by_id } from '../utils/model_catalog'
+import { get_browser_cached_model } from '../utils/model_download'
 
 // Memory64 is the primary runtime. The matching wasm32 build remains local so
 // Safari and older browsers never need to fetch executable code from a CDN.
@@ -55,6 +56,14 @@ export default class WllamaProvider {
             throw new Error( `Model ${ model_id } not found in cache` )
         }
 
+        const stored_model = cached.download_url
+            ? await get_browser_cached_model( cached.download_url, cached.file_size_bytes )
+            : null
+
+        if( cached.download_url && !stored_model ) {
+            throw new Error( `Model files are missing from browser storage. Download the model again.` )
+        }
+
         if( on_progress ) on_progress( { progress: 0, status: `Loading model into memory...` } )
 
         this._wllama = new Wllama( CONFIG_PATHS, {
@@ -62,7 +71,9 @@ export default class WllamaProvider {
             logger: WLLAMA_LOGGER,
             suppressNativeLog: true,
         } )
-        this._wllama.setCompat( COMPAT_PATHS )
+        // The second argument permits Firefox to use the local wasm32 fallback
+        // when its Memory64/JSPI path is unavailable.
+        this._wllama.setCompat( COMPAT_PATHS, `firefox_safari` )
 
         const { compat } = this._wllama.getWorkerResources()
         const runtime_name = compat ? `wasm32 compatibility` : `Memory64`
@@ -111,10 +122,7 @@ export default class WllamaProvider {
             if( cached.blob ) {
                 await this._wllama.loadModel( [ cached.blob ], load_options )
             } else {
-                await this._wllama.loadModelFromUrl( cached.download_url, {
-                    ...load_options,
-                    useCache: true,
-                } )
+                await this._wllama.loadModel( stored_model, load_options )
             }
 
         } catch ( load_error ) {
@@ -123,7 +131,6 @@ export default class WllamaProvider {
 
             const message = load_error?.message || ``
             const is_memory_error = load_error instanceof RangeError
-                || load_error instanceof WllamaRuntimeError
                 || /memory|out of bounds|allocation failed|cannot allocate/i.test( message )
 
             if( is_memory_error ) {
