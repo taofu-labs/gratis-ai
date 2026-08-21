@@ -21,6 +21,7 @@
 - Remove obsolete Workbox model duplicates left by older installations
 - Refuse missing OPFS entries instead of silently re-downloading during load
 - Validate Xet downloads by their stored file size when Content-Length is absent
+- Keep Xet download progress moving when the server omits Content-Length
 - Consume deep-link queries once when opening an existing conversation
 - Use the self-hosted compatibility runtime on older Firefox builds
 - Reject empty/waking placeholders in real-inference tests

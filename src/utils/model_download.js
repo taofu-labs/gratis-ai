@@ -1,6 +1,7 @@
 import { log } from 'mentie'
 import { ModelManager, ModelValidationStatus } from 'wllama64'
 import { get_db } from '../stores/db'
+import { get_model_by_id } from './model_catalog'
 
 const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
 
@@ -139,7 +140,8 @@ export const is_model_cached = async ( model_id, expected_repo, expected_file ) 
     }
 
     try {
-        const stored_model = await get_browser_cached_model( cached.download_url, cached.file_size_bytes )
+        const expected_size = cached.file_size_bytes || get_model_by_id( model_id )?.file_size_bytes
+        const stored_model = await get_browser_cached_model( cached.download_url, expected_size )
 
         if( !stored_model ) {
             log.warn( `[download] OPFS cache invalid for ${ model_id }, clearing metadata` )
@@ -268,12 +270,15 @@ export const download_model = async ( model, on_progress, signal ) => {
     // second multi-GB copy in V8 while assembling a Blob and supports resume.
     const downloaded = await get_browser_model_manager().downloadModel( url, {
         signal,
-        progressCallback: ( { loaded, total } ) => on_progress( {
-            progress: total > 0 ? Math.min( loaded / total, 1 ) : 0,
-            bytes_loaded: loaded,
-            bytes_total: total || model.file_size_bytes,
-            status: `Downloading...`,
-        } ),
+        progressCallback: ( { loaded, total } ) => {
+            const bytes_total = total || model.file_size_bytes
+            on_progress( {
+                progress: bytes_total > 0 ? Math.min( loaded / bytes_total, 1 ) : 0,
+                bytes_loaded: loaded,
+                bytes_total,
+                status: `Downloading...`,
+            } )
+        },
     } )
 
     const downloaded_files = await downloaded.open()

@@ -102,7 +102,7 @@ Browser model weights now live in OPFS and IndexedDB stores metadata only. Valid
 silently downloads again when storage eviction leaves stale metadata. Purge paths must clear OPFS,
 IndexedDB, and the pre-0.41 Workbox `hf-model-cache` duplicate.
 
-Hugging Face/Xet responses can omit `Content-Length`. Wllama then writes zero as metadata
+Hugging Face/Xet responses can omit `Content-Length`. Wllama then writes zero/null as metadata
 `originalSize`, making its otherwise complete OPFS model fail `Model.validate()`. Compare the sum
 of stored OPFS file sizes to the catalog/Hugging Face API size before declaring that entry missing.
 

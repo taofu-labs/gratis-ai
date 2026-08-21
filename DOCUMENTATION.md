@@ -209,7 +209,7 @@ The selector walks tiers from highest quality to lowest and picks the **first ti
 | Intel laptop (8 GB, no GPU) | ~5.6 GB | **Mistral 7B** (5.1 GB) | 70% of 8 GB = 5.6 GB. Tight but viable at CPU speed. |
 | Intel laptop (4 GB, no GPU) | ~2.8 GB | **DeepSeek R1 1.5B** (1.1 GB) | Budget fits medium-tier models only. |
 | Browser with Memory64 (8 GB reported) | ~5.6 GB | **Phi-4 Mini** (2.5 GB) | Memory64 removes the wasm32 ceiling while leaving 30% device-memory headroom. |
-| Browser compatibility runtime (8 GB reported) | ~3.4 GB | **Phi-4 Mini** (2.5 GB) | wasm32 remains bounded by its 4 GiB address space. |
+| Browser compatibility runtime (memory unknown) | ~2.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | Firefox/Safari omit the memory hint, so selection stays conservative below the wasm32 ceiling. |
 
 ### Model tiers
 

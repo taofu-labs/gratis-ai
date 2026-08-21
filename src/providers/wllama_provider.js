@@ -56,9 +56,17 @@ export default class WllamaProvider {
             throw new Error( `Model ${ model_id } not found in cache` )
         }
 
-        const stored_model = cached.download_url
-            ? await get_browser_cached_model( cached.download_url, cached.file_size_bytes )
-            : null
+        const model = get_model_by_id( model_id )
+        let stored_model = null
+
+        try {
+            if( cached.download_url ) {
+                const expected_size = cached.file_size_bytes || model?.file_size_bytes
+                stored_model = await get_browser_cached_model( cached.download_url, expected_size )
+            }
+        } catch ( error ) {
+            log.warn( `[wllama] Could not access browser model storage:`, error )
+        }
 
         if( cached.download_url && !stored_model ) {
             throw new Error( `Model files are missing from browser storage. Download the model again.` )
@@ -84,7 +92,6 @@ export default class WllamaProvider {
         const n_threads = Math.min( 8, Math.max( 1, Math.floor( hardware_threads / 2 ) ) )
         const n_batch = n_threads > 1 ? 512 : 256
         const n_ctx = Math.min( cached.context_length || DEFAULT_RUNTIME_CONTEXT, DEFAULT_RUNTIME_CONTEXT )
-        const model = get_model_by_id( model_id )
         const reasoning_enabled = cached.reasoning_enabled ?? model?.reasoning_enabled
         const file_size_mb = ( cached.file_size_bytes / 1_000_000 ).toFixed( 0 )
 
