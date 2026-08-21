@@ -71,7 +71,7 @@ const variant_color = ( theme, $variant ) =>
             : $variant === `nerd` ? theme.colors.info
                 : theme.colors.accent
 
-const OptionCard = styled.button`
+const OptionCard = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -679,6 +679,12 @@ export default function ModelSelectPage() {
         set_selected_model_id( model_id )
     }
 
+    const select_with_keyboard = ( event, model_id ) => {
+        if( ![ `Enter`, ` ` ].includes( event.key ) ) return
+        event.preventDefault()
+        handle_select( model_id )
+    }
+
     // Resolve a custom HuggingFace URL into a model definition
     const handle_custom_load = async ( e ) => {
 
@@ -753,9 +759,13 @@ export default function ModelSelectPage() {
 
             { /* Faster option */ }
             { faster && <OptionCard
+                data-testid={ `model-option-${ faster.id }` }
+                role="button"
+                tabIndex={ 0 }
                 $active={ active_model?.id === faster.id }
                 $variant="faster"
                 onClick={ () => handle_select( faster.id ) }
+                onKeyDown={ event => select_with_keyboard( event, faster.id ) }
             >
                 <CardLabel $variant="faster">
                     <Zap size={ 18 } />
@@ -778,9 +788,13 @@ export default function ModelSelectPage() {
 
             { /* Smarter option */ }
             <OptionCard
+                data-testid={ `model-option-${ smarter.id }` }
+                role="button"
+                tabIndex={ 0 }
                 $active={ active_model?.id === smarter.id }
                 $variant="smarter"
                 onClick={ () => handle_select( smarter.id ) }
+                onKeyDown={ event => select_with_keyboard( event, smarter.id ) }
             >
                 <CardLabel $variant="smarter">
                     <Sparkles size={ 18 } />
@@ -803,9 +817,13 @@ export default function ModelSelectPage() {
 
             { /* Uncensored option */ }
             { uncensored && <OptionCard
+                data-testid={ `model-option-${ uncensored.id }` }
+                role="button"
+                tabIndex={ 0 }
                 $active={ active_model?.id === uncensored.id }
                 $variant="uncensored"
                 onClick={ () => handle_select( uncensored.id ) }
+                onKeyDown={ event => select_with_keyboard( event, uncensored.id ) }
             >
                 <CardLabel $variant="uncensored">
                     <ShieldOff size={ 18 } />
@@ -828,9 +846,13 @@ export default function ModelSelectPage() {
 
             { /* Vision option */ }
             { vision && <OptionCard
+                data-testid={ `model-option-${ vision.id }` }
+                role="button"
+                tabIndex={ 0 }
                 $active={ active_model?.id === vision.id }
                 $variant="vision"
                 onClick={ () => handle_select( vision.id ) }
+                onKeyDown={ event => select_with_keyboard( event, vision.id ) }
             >
                 <CardLabel $variant="vision">
                     <Eye size={ 18 } />
@@ -854,7 +876,7 @@ export default function ModelSelectPage() {
         </CardRow> }
 
         { /* ── Single-card fallback (no meaningfully smaller model available) ── */ }
-        { !show_card_row && active_model && <RecommendedCard>
+        { !show_card_row && active_model && <RecommendedCard data-testid={ `model-option-${ active_model.id }` }>
             <RecommendedBadge>
                 <Sparkles size={ 14 } />
                 { custom_model ? t( 'custom_hf_model' ) : t( 'recommended_for_device' ) }
@@ -892,6 +914,7 @@ export default function ModelSelectPage() {
                         const is_selected = model.id === active_model?.id
                         return <ModelOption
                             key={ model.id }
+                            data-testid={ `model-option-${ model.id }` }
                             $active={ is_selected }
                             onClick={ () => handle_select( model.id ) }
                         >
@@ -950,8 +973,8 @@ export default function ModelSelectPage() {
                         <Check size={ 12 } /> { custom_model.name } — { format_file_size( custom_model.file_size_bytes ) } ({ custom_model.quantization })
                     </CustomModelStatus> }
 
-                    { /* Warn browser users about large custom models that may exceed WASM limits */ }
-                    { custom_model && !custom_loading && !window.electronAPI && custom_model.file_size_bytes > 2_000_000_000 && <CustomModelStatus $error>
+                    { /* Warn only when this runtime's measured memory budget is insufficient. */ }
+                    { custom_model && !custom_loading && !window.electronAPI && !can_fit_in_memory( custom_model, max_model_bytes ) && <CustomModelStatus $error>
                         <AlertTriangle size={ 12 } /> { t( 'large_model_warning' ) }
                     </CustomModelStatus> }
 

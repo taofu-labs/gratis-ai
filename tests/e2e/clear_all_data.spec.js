@@ -31,26 +31,22 @@ test.describe( `Clear All Data`, () => {
         await page.getByTestId( `danger-zone-toggle` ).click()
         await expect( page.getByTestId( `clear-all-data-btn` ) ).toBeVisible()
 
-        // Click "Clear all data" — may require a confirmation dialog
+        // The app uses a native confirmation dialog. Playwright dismisses
+        // unhandled dialogs, so accept it before clicking the destructive action.
+        page.once( `dialog`, dialog => dialog.accept() )
         await page.getByTestId( `clear-all-data-btn` ).click()
-
-        // Handle confirmation dialog if one appears
-        const confirm_btn = page.getByTestId( `clear-all-data-confirm-btn` )
-        if( await confirm_btn.isVisible( { timeout: 2_000 } ).catch( () => false ) ) {
-            await confirm_btn.click()
-        }
 
         // Wait for the app to reset — settings modal should close
         await expect( page.getByTestId( `settings-modal` ) ).not.toBeVisible( { timeout: 10_000 } )
 
-        // App should show the setup CTA (no model loaded state)
-        await expect( page.getByTestId( `setup-model-btn` ) ).toBeVisible( { timeout: 10_000 } )
+        // A full reset returns to first-run onboarding.
+        await expect( page.getByTestId( `get-started-btn` ) ).toBeVisible( { timeout: 10_000 } )
 
         // Conversations should be cleared — no assistant messages visible
         await expect( page.locator( `[data-testid="assistant-message"]` ) ).toHaveCount( 0, { timeout: 5_000 } )
 
-        // Chat input should be disabled (no model loaded)
-        await expect( page.getByTestId( `send-btn` ) ).toBeDisabled()
+        // Chat UI is unavailable until onboarding has selected a model again.
+        await expect( page.getByTestId( `chat-input` ) ).toHaveCount( 0 )
 
     } )
 

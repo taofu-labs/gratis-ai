@@ -7,8 +7,10 @@ import { useTranslation } from 'react-i18next'
 import { format_file_size } from '../../utils/model_catalog'
 import use_model_manager from '../../hooks/use_model_manager'
 import { clear_all_data, get_db } from '../../stores/db'
+import { clear_browser_model_cache } from '../../utils/model_download'
 import { export_conversation } from '../../utils/export'
 import { storage_key, APP_PREFIX } from '../../utils/branding'
+import use_llm from '../../stores/llm_store'
 
 const Section = styled.div`
     margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
@@ -198,6 +200,7 @@ export default function ModelsSettings( { on_close, on_model_switch } ) {
     const navigate = useNavigate()
     const { t } = useTranslation( `settings` )
     const { cached_models, storage_used, storage_estimate, delete_model } = use_model_manager()
+    const unload_model = use_llm( state => state.unload_model )
     const [ confirming, set_confirming ] = useState( null )
     const [ show_danger, set_show_danger ] = useState( false )
     const active_model_id = localStorage.getItem( storage_key( `active_model_id` ) )
@@ -260,6 +263,10 @@ export default function ModelsSettings( { on_close, on_model_switch } ) {
         const confirmed = confirm( t( `confirm_delete_all` ) )
         if( !confirmed ) return
 
+        // OPFS cannot reliably remove a Blob while the WASM worker still holds
+        // it open. Release inference before deleting browser model files.
+        await unload_model()
+        await clear_browser_model_cache()
         await clear_all_data()
 
         // Clear all app-owned localStorage keys

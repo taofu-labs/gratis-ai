@@ -30,7 +30,8 @@ export const get_db = async () => {
                 msg_store.createIndex( `conversation_id`, `conversation_id` )
             }
 
-            // Models store (cached GGUF blobs + metadata)
+            // Model metadata. Legacy entries may contain GGUF blobs; new browser
+            // downloads keep weights in wllama64's streaming OPFS cache.
             if( !db.objectStoreNames.contains( `models` ) ) {
                 const model_store = db.createObjectStore( `models`, { keyPath: `id` } )
                 model_store.createIndex( `last_used_at`, `last_used_at` )

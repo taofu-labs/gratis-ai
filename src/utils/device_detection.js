@@ -19,8 +19,42 @@
  * @property {number|null} memory.js_heap_limit - performance.memory?.jsHeapSizeLimit (Chrome only)
  * @property {Object} cpu
  * @property {number} cpu.cores - navigator.hardwareConcurrency
+ * @property {Object} wasm
+ * @property {boolean} wasm.memory64 - Shared Memory64 + JSPI runtime available
+ * @property {boolean} wasm.jspi - JavaScript Promise Integration available
+ * @property {boolean} wasm.cross_origin_isolated - Required shared-memory headers active
  * @property {'browser' | 'electron'} runtime
  */
+
+/**
+ * Detect the exact shared Memory64 primitive used by wllama64.
+ * @returns {{ memory64: boolean, jspi: boolean, cross_origin_isolated: boolean }}
+ */
+export const detect_wasm_capabilities = () => {
+
+    const jspi = !!WebAssembly.Suspending
+    const cross_origin_isolated = globalThis.crossOriginIsolated === true
+    let shared_memory64 = false
+
+    try {
+        const memory = new WebAssembly.Memory( {
+            address: `i64`,
+            initial: 1n,
+            maximum: 1n,
+            shared: true,
+        } )
+        shared_memory64 = memory.grow( 0n ) === 1n
+    } catch {
+        shared_memory64 = false
+    }
+
+    return {
+        memory64: cross_origin_isolated && jspi && shared_memory64,
+        jspi,
+        cross_origin_isolated,
+    }
+
+}
 
 /**
  * Probes WebGPU for GPU info and VRAM heuristic
@@ -176,6 +210,11 @@ export const detect_capabilities = async () => {
             cpu: {
                 cores: sys.cpus,
             },
+            wasm: {
+                memory64: false,
+                jspi: false,
+                cross_origin_isolated: false,
+            },
             runtime,
             platform: sys.platform,
             arch: sys.arch,
@@ -218,6 +257,7 @@ export const detect_capabilities = async () => {
         cpu: {
             cores,
         },
+        wasm: detect_wasm_capabilities(),
         runtime,
     }
 
@@ -248,8 +288,8 @@ export const detect_capabilities = async () => {
  *
  * ## Browser (WASM)
  *
- * Limited to the ~4 GB WASM 32-bit address space minus runtime overhead.
- * Also capped against navigator.deviceMemory and jsHeapSizeLimit.
+ * Memory64 browsers have a 16 GiB virtual ceiling; compatibility browsers
+ * retain the ~4 GiB wasm32 ceiling. Device memory remains a conservative cap.
  *
  * @param {DeviceCapabilities} capabilities
  * @returns {number} Max model file size in bytes
@@ -282,19 +322,22 @@ export const estimate_max_model_bytes = ( capabilities ) => {
 
     }
 
-    // Browser: hard ceiling from WASM 32-bit address space minus runtime overhead (~600 MB)
-    const wasm_ceiling = 3_400_000_000
+    const has_memory64 = capabilities?.wasm?.memory64 === true
 
-    // If the browser reports device memory, use 60% of it as a soft cap
-    // (the rest is needed by the browser, OS, and other tabs)
+    // Leave runtime and KV-cache headroom beneath each linear-memory ceiling.
+    const wasm_ceiling = has_memory64 ? 15_000_000_000 : 3_400_000_000
+
+    // navigator.deviceMemory is intentionally rounded and capped at 8 GB.
+    // Memory64 weights live outside V8, so use a larger—but still cautious—
+    // fraction and do not apply Chrome's JS heap limit to this path.
     const device_mem = capabilities?.memory?.device_memory
-    const device_cap = device_mem ? device_mem * 0.6 * 1_000_000_000 : Infinity
+    const device_fraction = has_memory64 ? 0.85 : 0.6
+    const device_cap = device_mem ? device_mem * device_fraction * 1_000_000_000 : Infinity
 
-    // Chrome exposes jsHeapSizeLimit — useful as a cross-check
+    // wasm32 loading still shares practical limits with large JS buffers.
     const heap_limit = capabilities?.memory?.js_heap_limit
-    const heap_cap = heap_limit ? heap_limit * 0.7 : Infinity
+    const heap_cap = !has_memory64 && heap_limit ? heap_limit * 0.7 : Infinity
 
     return Math.floor( Math.min( wasm_ceiling, device_cap, heap_cap ) )
 
 }
-

@@ -136,3 +136,45 @@ All file sizes verified via HuggingFace API (`/api/models/{repo}/tree/main`).
 - **4 of 6 models lack benchmarks** — `quality_score()` returns 0, so `select_best_uncensored()`
   will prefer models with published scores (Dolphin 8B, Venice 24B)
 - **Coverage gaps:** no training-based Dolphin models at 4B, 14B, or 32B
+
+---
+
+## wllama64 and current browser model research (2026-08-21)
+
+### Runtime
+
+- `wllama64` 1.0.0 tracks Wllama 3.6.0 and uses a shared Memory64 build with a 16 GiB virtual ceiling.
+- Primary browser requirements are 64-bit Chromium 137+, JSPI, shared Memory64, and COOP/COEP.
+- The package's automatic compatibility path uses a CDN unless overridden. Ship matching
+  `@wllama/wllama-compat` assets locally to keep executable code offline.
+- Wllama V3 uses OpenAI-compatible chat responses and embedded Jinja. This removes the V2
+  tokenizer/manual-template/byte-decoder workarounds.
+- Stream model downloads to OPFS with `ModelManager`; buffering every response chunk and joining
+  a Blob temporarily duplicates the model in the JavaScript heap.
+
+Primary source: https://github.com/actuallymentor/wllama64/tree/v1.0.0
+
+### Candidate decision
+
+| Candidate | Exact Q4_K_M file | License | Decision |
+|:----------|------------------:|:--------|:---------|
+| Qwen 3.5 2B | 1,280,835,840 B | Apache-2.0 | Added; real Memory64 UI inference passed |
+| Qwen 3.5 4B | 2,740,937,888 B | Apache-2.0 | Deferred; download passed but load failed on test host |
+| Ministral 3 3B Instruct 2512 | 2,147,023,008 B | Apache-2.0 | Deferred; download did not complete within 15 minutes |
+| Ministral 3 14B Instruct 2512 | 8,239,593,024 B | Apache-2.0 | Deferred pending actual >4 GiB inference proof |
+| LFM2.5 1.2B / 8B-A1B | 730,895,168 / 5,155,564,768 B | LFM Open License 1.0 | Do not recommend by default; >=$10M revenue restriction |
+| gpt-oss-20b MXFP4 | 12,109,566,624 B | Apache-2.0 | Deferred pending Harmony parsing and 16 GiB headroom proof |
+
+Qwen documents the 2B model as non-thinking by default. Keep `reasoning: true` as capability
+metadata but use `reasoning_enabled: false` for its default template/runtime behavior; otherwise
+the UI can sit on an empty bubble while the runtime generates hidden reasoning.
+
+Qwen source: https://huggingface.co/Qwen/Qwen3.5-2B
+
+Quant source: https://huggingface.co/unsloth/Qwen3.5-2B-GGUF
+
+### Acceptance rule
+
+Add a browser model only after the exact catalog GGUF completes download, load, embedded-template
+chat, non-empty streamed inference, and a semantic assertion through the real Playwright UI flow.
+Build success or Electron-native inference does not validate wllama64.

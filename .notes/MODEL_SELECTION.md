@@ -325,7 +325,7 @@ These show **realistic total consumption** for common deployment scenarios:
 
 > **⚠️ This section has a shelf life.** New models release frequently. See [Section 9 (Chores)](#9-chores--keeping-this-document-current) for update instructions.
 >
-> **Last verified: 2026-02-22**
+> **Last verified: 2026-08-21**
 
 ### 0.5B–1B (Tiny / Edge)
 
@@ -341,12 +341,13 @@ These show **realistic total consumption** for common deployment scenarios:
 
 | Model | Params | Strengths | License |
 |:------|-------:|:----------|:--------|
+| **Qwen 3.5 2B** | 2.3B | Current hybrid architecture; strong instruction following, reasoning, and multilingual results; browser inference verified at Q4_K_M | Apache 2.0 |
 | **SmolLM3-3B** | 3B | Outperforms Llama-3.2-3B and Qwen2.5-3B on 12 benchmarks; fully open (weights + code + data) | Apache 2.0 |
 | **Phi-4-mini** | 3.8B | Reasoning comparable to 7-9B models; 128K context; 20+ languages | MIT |
 | Gemma-3n-E2B | 5B / ~2B active | Multimodal (text+image+audio+video); 140+ languages; selective activation | Gemma |
 | Llama-3.2-3B | 3.2B | Mature ecosystem; edge-optimized | Llama |
 
-**Pick:** SmolLM3-3B for general text. Phi-4-mini for reasoning. Gemma-3n-E2B for multimodal.
+**Pick:** Qwen 3.5 2B for the browser-tested current default. SmolLM3-3B for fully open training data. Phi-4-mini for a mature reasoning alternative.
 
 ### 3B–8B (Medium)
 
@@ -401,6 +402,7 @@ parsed and displayed as collapsible thinking blocks (see `MessageBubble.jsx`).
 | Model Family | Reasoning | Activation | Notes |
 |:-------------|:---------:|:-----------|:------|
 | **Qwen3** (all sizes) | Yes | **On by default.** Disable with `/no_think` in prompt. | Dual-mode: thinking enabled unless explicitly suppressed. |
+| **Qwen 3.5** | Yes | Controlled by the embedded Jinja template and wllama64 reasoning mode. | Never hand-build ChatML; thinking/non-thinking markers differ from Qwen3. |
 | **SmolLM3-3B** | Yes | **On by default.** | Dual-mode reasoning, similar to Qwen3. |
 | **Phi-4 Mini (instruct)** | No | — | The instruct variant lacks built-in thinking. A separate `Phi-4-mini-reasoning` model exists but we don't ship it. |
 | **Llama 3.3 70B** | No | — | No native thinking mode. |
@@ -437,7 +439,7 @@ Five benchmarks were selected for maximum cross-model coverage:
 | Qwen3 32B | 83.6 | 49.5 | 72.1 | 61.6 | 93.4 | **72.0** |
 | Llama 3.3 70B | 86.0 | 50.5 | 88.4 | 77.0 | — | **75.5** |
 
-**Quality Score** = simple average of available benchmarks (0-100). Different quant variants of the same base model share identical scores. Used as the primary sort key in `select_best_model()`, `get_fitting_models()`, and `select_model_pair()`.
+**Quality Score** = sum of comparable benchmark fields divided by all five fields. Missing results count as zero so a model card publishing one strong metric cannot outrank a comprehensively measured model. Different quant variants of the same base model share identical scores. Used as the primary sort key in `select_best_model()`, `get_fitting_models()`, and `select_model_pair()`.
 
 #### Data sources
 
@@ -525,44 +527,43 @@ No training-based Dolphin models exist for these parameter brackets:
 
 ## 7. WASM-Specific Constraints
 
-This section is directly relevant to the localLM browser runtime (wllama).
+This section is directly relevant to the browser runtime (`wllama64` 1.0.0, based on Wllama 3.6.0).
 
 ### Hard limits
 
 | Constraint | Value | Source |
 |:-----------|:------|:-------|
-| wasm32 address space | 4 GiB theoretical | [WebAssembly spec][6] |
-| Practical browser limit | **~3.0–3.5 GiB** | Process shares memory with JS/DOM/OS |
-| Per-file ArrayBuffer limit | 2 GiB | Browser API limitation |
-| wllama workaround | Split files (~512 MiB chunks) | [wllama docs][7] |
+| Memory64 virtual linear memory | 16 GiB maximum; starts at 128 MiB and negotiates downward | [wllama64][7] |
+| Memory64 requirements | 64-bit Chromium 137+, shared Memory64, JSPI, COOP + COEP | [wllama64][7] |
+| wasm32 compatibility | 4 GiB theoretical, ~3.4 GB practical app budget | [WebAssembly spec][6] |
+| Model storage | Streamed OPFS cache; large single files are read in bounded chunks | [wllama64][7] |
 
 ### Browser-specific limits
 
-| Browser | Default | With opt-in flags | Mobile |
-|:--------|:--------|:------------------|:-------|
-| Chrome (desktop) | 2 GiB | 4 GiB | ~300 MiB–1 GiB |
-| Firefox (desktop) | 2 GiB | 4 GiB | ~1–2 GiB |
-| Safari (desktop) | 2 GiB | ~4 GiB | ~1–2 GiB (iOS) |
+| Runtime | Project behavior |
+|:--------|:-----------------|
+| Shared Memory64 + JSPI | Primary runtime. Budget is the lesser of 15 GB and 85% of reported device memory. |
+| Supported Safari without Memory64/JSPI | Locally bundled `@wllama/wllama-compat`; no CDN executable fetch. |
+| Firefox without required primitives | Not forced onto the documented near-unusable compatibility mode. |
+| Electron | Uses native `node-llama-cpp`; wllama64 is not involved. |
 
-### What fits in the browser (3.4 GiB budget, 2K context)
+### What fits in the browser (2K runtime context)
 
-| Configuration | Model Size | KV Cache | Runtime | Total | Verdict |
-|:--------------|----------:|---------:|--------:|------:|:--------|
-| 1.5B Q4_K_M | 0.93 GiB | 0.05 GiB | 0.3 GiB | **1.3 GiB** | Comfortable |
-| 3B Q4_K_M | 1.8 GiB | 0.12 GiB | 0.3 GiB | **2.2 GiB** | Good — **recommended sweet spot** |
-| 3B Q8_0 | 3.0 GiB | 0.12 GiB | 0.3 GiB | **3.4 GiB** | Tight — at the limit |
-| 7B Q2_K | 2.8 GiB | 0.11 GiB | 0.3 GiB | **3.2 GiB** | Fits but quality is poor |
-| 7B Q4_K_M | 4.1 GiB | — | — | — | **Does not fit** |
+| Configuration | File | Status in this migration |
+|:--------------|-----:|:-------------------------|
+| SmolLM2 360M Q4_K_M | 270,590,880 B | Memory64 download, load, Jinja chat, and semantic response passed |
+| **Qwen 3.5 2B Q4_K_M** | **1,280,835,840 B** | **Added: full browser UI inference passed** |
+| Qwen 3.5 4B Q4_K_M | 2,740,937,888 B | Deferred: download passed but model load failed in the available test host |
+| Ministral 3 3B Q4_K_M | 2,147,023,008 B | Deferred: download did not complete within 15 minutes; no inference result |
+| Ministral 3 14B Q4_K_M | 8,239,593,024 B | Deferred: no successful >4 GiB inference proof yet |
 
-### WebAssembly memory64 (Wasm 3.0, September 2025)
+### Model research cut (2026-08-21)
 
-The `memory64` proposal is now part of Wasm 3.0 and is shipping in Chrome, Firefox, and Safari.
-It allows i64 addressing, expanding the theoretical limit to 16 GiB in browsers. This opens the door
-to 7B+ Q4 models in the browser — **but requires wllama to adopt memory64 builds.**
-
-> **Current status (2026-02):** wllama has not yet shipped memory64 builds. Monitor the
-> [wllama GitHub][7] for updates. When available, the WASM budget table above should be
-> revised with a 16 GiB ceiling.
+- Add Qwen 3.5 2B Q4_K_M. It is Apache-2.0, a useful quality step at 1.28 GB, and passed real inference.
+- Reconsider Qwen 3.5 4B and Ministral 3 3B/14B only after each completes the same app-level test on a host with ample free memory and download bandwidth.
+- Defer LFM2.5 defaults: its license restricts commercial use by entities at or above $10M annual revenue.
+- Defer gpt-oss-20b: its 12.1 GB file needs measured Memory64 headroom plus verified Harmony channel parsing.
+- Never copy non-equivalent benchmarks into the five-field schema (for example, MMLU-Pro is not MMLU and LiveCodeBench is not HumanEval).
 
 
 ---
@@ -573,10 +574,13 @@ to 7B+ Q4 models in the browser — **but requires wllama to adopt memory64 buil
 ```
 START: How much memory do you have?
 
-├─ ≤ 3.4 GiB (WASM browser)
-│   ├─ Want quality? → 1.5B @ Q5_K_M  (1.1 GiB)
-│   ├─ Want capability? → 3B @ Q4_K_M  (2.2 GiB total)
-│   └─ Pushing limits? → 3B @ Q8_0     (3.4 GiB total, tight)
+├─ wasm32 compatibility browser
+│   ├─ Safest → 1–2B @ Q4_K_M
+│   └─ Practical ceiling → ~3.4 GB including runtime headroom
+│
+├─ Memory64 browser (16 GiB virtual ceiling)
+│   ├─ Default verified → Qwen 3.5 2B @ Q4_K_M
+│   └─ Larger model → include only after exact GGUF passes real inference
 │
 ├─ 4–8 GiB (entry/mid GPU or Apple M1)
 │   ├─ 4 GiB → 7B @ IQ4_XS  (3.6 GiB)
@@ -600,7 +604,8 @@ START: How much memory do you have?
 
 | Memory | Best "just works" config | Model recommendation |
 |:-------|:-------------------------|:---------------------|
-| WASM (3.4 GiB) | 3B @ Q4_K_M | SmolLM3-3B or Qwen3-4B (small variant) |
+| Browser, broadly compatible | 2B @ Q4_K_M | Qwen 3.5 2B |
+| Browser, Memory64 | Device-dependent | Do not infer fit from the 16 GiB virtual ceiling alone |
 | 8 GiB | 8B @ Q5_K_M | Qwen3-8B |
 | 16 GiB | 14B @ Q8_0 | Qwen3-14B |
 | 24 GiB | 32B @ Q5_K_M | Qwen3-32B |
@@ -621,7 +626,7 @@ START: How much memory do you have?
 |:--------|:---------------|:--------------|
 | [§5 Model recommendations](#5-best-open-source-models-by-parameter-size) | Every 2-3 months, or when a major model drops | See procedure below |
 | [§6 Uncensored models](#6-uncensored-models) | Every 3-4 months, or when a notable uncensored release appears | See procedure below |
-| [§7 WASM constraints](#7-wasm-specific-constraints) | When wllama ships memory64 builds | Check [wllama GitHub][7] |
+| [§7 WASM constraints](#7-wasm-specific-constraints) | Every wllama64 upgrade or browser-engine change | Run real inference, then check [wllama64][7] |
 | [§1 Quantization table](#1-how-quantization-affects-memory) | When llama.cpp adds new quant types | Check [llama.cpp quantize README][1] |
 | [§3 File size table](#3-what-fits-where--memory-budget-tables) | When new common model sizes emerge | Recalculate using the formula |
 
@@ -680,7 +685,7 @@ START: How much memory do you have?
 
 ### Procedure: Updating WASM constraints (§7)
 
-1. Check [wllama GitHub][7] for memory64 support
+1. Check [wllama64][7] for runtime and compatibility changes
 2. Check [MDN WebAssembly.Memory docs][8] for browser limit changes
 3. Test actual limits in target browsers if possible
 
@@ -698,7 +703,7 @@ START: How much memory do you have?
 [4]: https://reddit.com/r/LocalLLaMA "r/LocalLLaMA — community hub for local LLM deployment"
 [5]: https://github.com/ggml-org/llama.cpp/discussions/406 "llama.cpp discussion #406 — perplexity benchmarks"
 [6]: https://webassembly.github.io/spec/ "WebAssembly specification"
-[7]: https://github.com/ngxson/wllama "wllama — WebAssembly llama.cpp bindings"
+[7]: https://github.com/actuallymentor/wllama64 "wllama64 — Memory64 llama.cpp bindings"
 [8]: https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory "MDN — WebAssembly.Memory"
 [15]: https://huggingface.co/dphn/Dolphin-Mistral-24B-Venice-Edition "Dolphin-Mistral-24B-Venice-Edition model card"
 [16]: https://huggingface.co/cognitivecomputations "Cognitive Computations — Dolphin series creator"
@@ -713,7 +718,7 @@ START: How much memory do you have?
 | 4 | https://reddit.com/r/LocalLLaMA | r/LocalLLaMA — community hub for local LLM deployment |
 | 5 | https://github.com/ggml-org/llama.cpp/discussions/406 | llama.cpp discussion — perplexity benchmarks across quant levels |
 | 6 | https://webassembly.github.io/spec/ | WebAssembly specification |
-| 7 | https://github.com/ngxson/wllama | wllama — WebAssembly llama.cpp bindings |
+| 7 | https://github.com/actuallymentor/wllama64 | wllama64 — Memory64 llama.cpp bindings |
 | 8 | https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory | MDN — WebAssembly.Memory documentation |
 | 9 | https://huggingface.co/blog/daya-shankar/open-source-llms | HuggingFace — open source LLMs overview |
 | 10 | https://arxiv.org/html/2505.09388v1 | Qwen3 technical report |

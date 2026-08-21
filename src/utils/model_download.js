@@ -1,7 +1,44 @@
 import { log } from 'mentie'
+import { ModelManager, ModelValidationStatus } from 'wllama64'
 import { get_db } from '../stores/db'
 
 const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
+
+const WLLAMA_CACHE_LOGGER = {
+    debug: ( ...args ) => log.debug( `[model-cache]`, ...args ),
+    log: ( ...args ) => log.info( `[model-cache]`, ...args ),
+    warn: ( ...args ) => log.warn( `[model-cache]`, ...args ),
+    error: ( ...args ) => log.error( `[model-cache]`, ...args ),
+}
+
+let browser_model_manager = null
+
+/**
+ * Get the shared browser model manager backed by OPFS.
+ * @returns {ModelManager}
+ */
+export const get_browser_model_manager = () => {
+    if( !browser_model_manager ) {
+        browser_model_manager = new ModelManager( {
+            allowOffline: true,
+            logger: WLLAMA_CACHE_LOGGER,
+        } )
+    }
+    return browser_model_manager
+}
+
+const remove_browser_cache_entry = async ( cached ) => {
+
+    if( cached?.download_url ) {
+        const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
+        const stored_model = models.find( model => model.url === cached.download_url )
+        if( stored_model ) await stored_model.remove()
+    }
+
+    const db = await get_db()
+    if( cached?.id ) await db.delete( `models`, cached.id )
+
+}
 
 /**
  * Builds the Hugging Face download URL for a model
@@ -59,12 +96,38 @@ export const is_model_cached = async ( model_id, expected_repo, expected_file ) 
     // A mismatch means the registry changed to a different GGUF file
     if( expected_repo && cached.hugging_face_repo !== expected_repo ) {
         log.warn( `[download] Cache stale for ${ model_id }: source changed, clearing` )
-        await db.delete( `models`, model_id )
+        await remove_browser_cache_entry( cached )
         return false
     }
     if( expected_file && cached.file_name !== expected_file ) {
         log.warn( `[download] Cache stale for ${ model_id }: source changed, clearing` )
+        await remove_browser_cache_entry( cached )
+        return false
+    }
+
+    // Legacy versions stored the entire Blob in IndexedDB.
+    if( cached.blob ) {
+        log.debug( `[download] Cache hit: ${ model_id } (legacy IndexedDB)` )
+        return true
+    }
+
+    if( !cached.download_url ) {
         await db.delete( `models`, model_id )
+        return false
+    }
+
+    try {
+        const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
+        const stored_model = models.find( model => model.url === cached.download_url )
+        const valid = stored_model?.validate() === ModelValidationStatus.VALID
+
+        if( !valid ) {
+            log.warn( `[download] OPFS cache invalid for ${ model_id }, clearing metadata` )
+            await remove_browser_cache_entry( cached )
+            return false
+        }
+    } catch ( error ) {
+        log.warn( `[download] Could not validate OPFS cache for ${ model_id }:`, error )
         return false
     }
 
@@ -86,8 +149,34 @@ export const get_cached_model = async ( model_id ) => {
 }
 
 /**
+ * Delete one browser model from OPFS and its IndexedDB metadata.
+ * @param {Object|string} model_or_id - Cached model metadata or model ID
+ * @returns {Promise<void>}
+ */
+export const delete_browser_model = async ( model_or_id ) => {
+
+    const db = await get_db()
+    const cached = typeof model_or_id === `string`
+        ? await db.get( `models`, model_or_id )
+        : model_or_id
+
+    if( cached ) await remove_browser_cache_entry( cached )
+
+}
+
+/**
+ * Clear every OPFS model downloaded through wllama64.
+ * @returns {Promise<void>}
+ */
+export const clear_browser_model_cache = async () => {
+    if( window.electronAPI ) return
+    await get_browser_model_manager().clear()
+}
+
+/**
  * Downloads a GGUF model from Hugging Face with progress tracking.
- * In Electron, saves to the filesystem via IPC. In browser, stores in IndexedDB.
+ * Electron streams to the filesystem; browsers stream to OPFS and keep only
+ * lightweight source metadata in IndexedDB.
  *
  * @param {Object} model - Model definition
  * @param {string} model.id - Unique model ID
@@ -155,48 +244,31 @@ export const download_model = async ( model, on_progress, signal ) => {
 
     }
 
-    // Browser path: download in renderer and store in IndexedDB
-    const response = await fetch( url, { signal } )
-
-    if( !response.ok ) {
-        throw new Error( `Download failed: ${ response.status } ${ response.statusText }` )
-    }
-
-    const content_length = parseInt( response.headers.get( `content-length` ) ) || model.file_size_bytes
-    const reader = response.body.getReader()
-    const chunks = []
-    let bytes_loaded = 0
-
-    // Stream the response and track progress
-    while( true ) {
-
-        const { done, value } = await reader.read()
-        if( done ) break
-
-        chunks.push( value )
-        bytes_loaded += value.length
-
-        const progress = content_length > 0 ? bytes_loaded / content_length : 0
-
-        on_progress( {
-            progress: Math.min( progress, 1 ),
-            bytes_loaded,
-            bytes_total: content_length,
+    // Browser path: Wllama streams directly into OPFS. This avoids keeping a
+    // second multi-GB copy in V8 while assembling a Blob and supports resume.
+    const downloaded = await get_browser_model_manager().downloadModel( url, {
+        signal,
+        progressCallback: ( { loaded, total } ) => on_progress( {
+            progress: total > 0 ? Math.min( loaded / total, 1 ) : 0,
+            bytes_loaded: loaded,
+            bytes_total: total || model.file_size_bytes,
             status: `Downloading...`,
-        } )
+        } ),
+    } )
 
-    }
+    on_progress( {
+        progress: 1,
+        bytes_loaded: downloaded.size,
+        bytes_total: downloaded.size,
+        status: `Validating model...`,
+    } )
 
-    on_progress( { progress: 1, bytes_loaded, bytes_total: content_length, status: `Saving to cache...` } )
-
-    // Combine chunks into a single blob
-    const blob = new Blob( chunks )
-
-    // Validate GGUF magic number — catches corrupt downloads, HTML error pages, or redirect bodies
-    const header = new Uint8Array( await blob.slice( 0, 4 ).arrayBuffer() )
+    const [ first_file ] = await downloaded.open()
+    const header = new Uint8Array( await first_file.slice( 0, 4 ).arrayBuffer() )
     const is_valid_gguf = header[ 0 ] === 0x47 && header[ 1 ] === 0x47 && header[ 2 ] === 0x55 && header[ 3 ] === 0x46
     if( !is_valid_gguf ) {
         log.warn( `[download] GGUF validation failed — file may be corrupt` )
+        await downloaded.remove()
         throw new Error( `Downloaded file is not a valid GGUF model. The file may be corrupted or the URL may have redirected to an error page.` )
     }
 
@@ -204,9 +276,10 @@ export const download_model = async ( model, on_progress, signal ) => {
     const db = await get_db()
     await db.put( `models`, {
         id: model.id,
-        blob,
+        storage: `wllama64-opfs`,
+        download_url: url,
         cached_at: now,
-        file_size_bytes: blob.size,
+        file_size_bytes: downloaded.size,
         name: model.name,
         category: model.category,
         hugging_face_repo: model.hugging_face_repo,
@@ -214,10 +287,12 @@ export const download_model = async ( model, on_progress, signal ) => {
         parameters_label: model.parameters_label,
         quantization: model.quantization,
         context_length: model.context_length,
+        reasoning: model.reasoning,
+        reasoning_enabled: model.reasoning_enabled,
         last_used_at: now,
     } )
 
-    log.info( `[download] Complete: ${ model.name } (${ ( blob.size / 1e6 ).toFixed( 0 ) } MB)` )
-    on_progress( { progress: 1, bytes_loaded: blob.size, bytes_total: blob.size, status: `Complete` } )
+    log.info( `[download] Complete: ${ model.name } (${ ( downloaded.size / 1e6 ).toFixed( 0 ) } MB)` )
+    on_progress( { progress: 1, bytes_loaded: downloaded.size, bytes_total: downloaded.size, status: `Complete` } )
 
 }

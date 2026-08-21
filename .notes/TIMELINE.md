@@ -1,5 +1,16 @@
 # Timeline
 
+## 2026-08-21 — wllama64 Memory64 migration and model validation
+
+- Migrated browser inference from Wllama V2 to `wllama64` 1.0.0 / Wllama V3.
+- Replaced manual family prompt formatting with embedded Jinja and OpenAI-compatible chat streaming.
+- Streamed browser model downloads to OPFS; retained legacy IndexedDB Blob loading and local wasm32 compatibility assets.
+- Added Qwen 3.5 2B Q4_K_M after real Chromium Memory64 inference passed through the full UI.
+- Deferred Qwen 3.5 4B and Ministral 3 candidates because the exact acceptance run did not complete successfully.
+- Aligned browser load/selection context at 2K and kept Qwen 3.5 2B in its documented non-thinking default.
+- Strengthened inference tests to reject waking/empty fallbacks and assert semantic output.
+- Fixed same-window settings propagation, first-message route transitions, OPFS clearing, and E2E completion races found by the full browser matrix.
+
 ## 2026-03-13 — Purge All Models button in model selector (v0.38.0)
 
 - "Purge All Models" button in ModelSelector dropdown (both TopBar desktop + Sidebar mobile)

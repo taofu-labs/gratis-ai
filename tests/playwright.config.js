@@ -11,8 +11,8 @@ export default defineConfig( {
         headless: true,
         viewport: { width: 1280, height: 720 },
         actionTimeout: 30_000,
-        // GGUF model blobs are stored in IndexedDB — allow unlimited storage
-        // so large models don't hit Chromium's default quota
+        // GGUF model files are streamed to OPFS. Allow realistic large-model
+        // tests to use the full temporary profile quota.
         launchOptions: {
             // Use system Chromium on Alpine (musl) where Playwright's glibc binaries won't work
             ...( process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && {
@@ -44,15 +44,6 @@ export default defineConfig( {
             retries: 0,
             workers: 1,
             timeout: 600_000,
-        },
-
-        // Heavy tests — large model downloads, slow inference (nightly/optional)
-        {
-            name: `heavy`,
-            testMatch: /\binference_mistral\.spec\.js$/,
-            retries: 0,
-            workers: 1,
-            timeout: 2_400_000,
         },
 
         // OpenRouter cloud tests — requires VITE_OPENROUTER_DEV_KEY env var

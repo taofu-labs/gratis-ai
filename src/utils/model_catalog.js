@@ -39,6 +39,7 @@
  * @property {string} hugging_face_repo - HF repo path (org/name)
  * @property {string} file_name - GGUF filename
  * @property {boolean} reasoning - Whether the model supports native thinking/reasoning mode (<think> tags)
+ * @property {boolean} [reasoning_enabled] - Whether thinking mode is enabled by default
  * @property {string} license - License identifier
  * @property {string} [system_prompt] - Model-specific system prompt (overrides the global default when no custom prompt is set)
  * @property {boolean} [uncensored] - Whether this model has had refusal behavior removed
@@ -85,7 +86,7 @@ export const MODEL_CATALOG = [
         parameters_label: `0.36B`,
         quantization: `Q4_K_M`,
         bpw: 4.85,
-        file_size_bytes: 259_915_680,
+        file_size_bytes: 270_590_880,
         context_length: 8_192,
         layers: 32,
         kv_heads: 5,
@@ -133,7 +134,7 @@ export const MODEL_CATALOG = [
         parameters_label: `1.1B`,
         quantization: `Q4_K_M`,
         bpw: 4.85,
-        file_size_bytes: 643_728_768,
+        file_size_bytes: 668_788_096,
         context_length: 2_048,
         layers: 22,
         kv_heads: 4,
@@ -155,7 +156,7 @@ export const MODEL_CATALOG = [
         parameters_label: `1B`,
         quantization: `Q4_K_M`,
         bpw: 4.85,
-        file_size_bytes: 775_647_360,
+        file_size_bytes: 807_694_464,
         context_length: 131_072,
         layers: 16,
         kv_heads: 8,
@@ -177,7 +178,7 @@ export const MODEL_CATALOG = [
         parameters_label: `1.5B`,
         quantization: `Q4_K_M`,
         bpw: 4.85,
-        file_size_bytes: 1_071_584_864,
+        file_size_bytes: 1_117_320_800,
         context_length: 131_072,
         layers: 28,
         kv_heads: 2,
@@ -210,6 +211,36 @@ export const MODEL_CATALOG = [
         benchmarks: { mmlu: 62.6, gpqa: 28.3, humaneval: 52.7, math: 43.5, gsm8k: 75.4 },
         license: `Apache-2.0`,
         category: `lightweight`,
+    },
+
+    {
+        id: `qwen35-2b-q4km`,
+        name: `Qwen 3.5 2B`,
+        description: `Current compact Qwen with strong reasoning, instruction following, and multilingual support.`,
+        family: `qwen35`,
+        parameters: 2_274_069_824,
+        parameters_label: `2B`,
+        quantization: `Q4_K_M`,
+        bpw: 4.85,
+        file_size_bytes: 1_280_835_840,
+        context_length: 262_144,
+
+        // Qwen 3.5 uses three linear-attention layers per full-attention
+        // layer. Only its six full-attention layers grow a traditional KV cache.
+        layers: 6,
+        kv_heads: 2,
+        head_dim: 256,
+
+        hugging_face_repo: `unsloth/Qwen3.5-2B-GGUF`,
+        file_name: `Qwen3.5-2B-Q4_K_M.gguf`,
+        hf_model_repo: `Qwen/Qwen3.5-2B`,
+        reasoning: true,
+        // Qwen documents the 2B release as non-thinking by default. Explicitly
+        // preserve that fast chat mode; reasoning can become a user toggle later.
+        reasoning_enabled: false,
+        benchmarks: { mmlu: null, gpqa: 51.6, humaneval: null, math: null, gsm8k: null },
+        license: `Apache-2.0`,
+        category: `medium`,
     },
 
     // ── 3B models ───────────────────────────────────────────────────────
@@ -1015,11 +1046,10 @@ export const get_model_by_id = ( id ) => MODEL_CATALOG.find( m => m.id === id )
 // Includes Electron process, V8 heap, and node-llama-cpp internal allocations
 const RUNTIME_OVERHEAD = 500_000_000
 
-// Default context for memory fitness checks — models advertise max context
-// (e.g. 131K) but users typically start with short conversations. Using a
-// conservative default prevents the KV cache from dominating the estimate
-// and disqualifying models that easily fit at practical context lengths.
-const DEFAULT_ESTIMATION_CONTEXT = 2048
+// One practical default for both selection and loading. Models advertise up to
+// 262K, but allocating that maximum would reject—or crash—otherwise usable
+// local models before the first short conversation.
+export const DEFAULT_RUNTIME_CONTEXT = 2048
 
 /**
  * Estimate total runtime memory for a model (weights + KV cache + overhead).
@@ -1031,12 +1061,12 @@ const DEFAULT_ESTIMATION_CONTEXT = 2048
  * that lack architecture data.
  *
  * @param {ModelDefinition} model - The model definition
- * @param {number} [context_length] - Override context length (defaults to 2048 for practical estimation)
+ * @param {number} [context_length] - Override context length (defaults to the runtime context)
  * @returns {number} Estimated total memory in bytes
  */
 export const estimate_model_memory = ( model, context_length ) => {
 
-    const ctx = context_length ?? DEFAULT_ESTIMATION_CONTEXT
+    const ctx = context_length ?? DEFAULT_RUNTIME_CONTEXT
 
     // If architecture params are present, compute KV cache properly
     // KV cache = 2 × layers × kv_heads × head_dim × context × 2 bytes (FP16)
@@ -1067,8 +1097,8 @@ const BENCHMARK_FIELDS = [ `mmlu`, `gpqa`, `humaneval`, `math`, `gsm8k` ]
 
 /**
  * Composite quality score from benchmark data.
- * Simple average of all non-null scores. Custom models without
- * benchmarks return 0 (sort below scored models).
+ * Missing results count as zero instead of inflating sparse model cards.
+ * Custom models without benchmarks return 0 (sort below scored models).
  *
  * @param {ModelDefinition} model
  * @returns {number} 0-100, higher is better
@@ -1083,7 +1113,7 @@ export const quality_score = ( model ) => {
 
     if( !scores.length ) return 0
 
-    return scores.reduce( ( sum, v ) => sum + v, 0 ) / scores.length
+    return scores.reduce( ( sum, v ) => sum + v, 0 ) / BENCHMARK_FIELDS.length
 
 }
 

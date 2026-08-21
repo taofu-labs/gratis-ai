@@ -73,17 +73,27 @@ callers can slip through between the IIFE creation and the first `await`.
 the IIFE, immediately after creating the promise.
 
 
-## Wllama streaming emits Unicode replacement chars (2026-02-28)
+## Wllama V2 and V3 APIs are incompatible (2026-08-21)
 
-`chunk.currentText` from wllama's completion stream uses `TextDecoder.decode(buffer)`
-**without** `{ stream: true }`. When a multi-byte UTF-8 character (e.g. `ã` = `0xC3 0xA3`)
-is split across two tokens, the first decode emits `U+FFFD` as a replacement character.
-The delta logic (`new_text.slice(last_text.length)`) captures it before the next token
-completes the sequence.
+`wllama64` 1.0.0 follows Wllama V3. It removes `tokenize()`/`detokenize()` and the old
+`createCompletion(prompt, options)` shape. Chat must use `createChatCompletion({ messages,
+...options })`; streamed text is `chunk.choices[0].delta.content` and is already decoded.
 
-**Fix**: Use `chunk.piece` (raw `Uint8Array` bytes) with a streaming `TextDecoder`:
-`utf8.decode(chunk.piece, { stream: true })` buffers incomplete sequences. Final
-`utf8.decode()` after the loop flushes any held-back bytes.
+**Fix**: Let llama.cpp render the GGUF's embedded Jinja template. Never restore family-based
+manual formatting or the V2 `chunk.piece` workaround: Qwen 3.5, Ministral 3, Gemma, and Harmony
+templates have model-specific behavior that simple ChatML/Mistral guessing cannot reproduce.
+
+Do not pass catalog `reasoning: true` to Wllama's load flag. Catalog metadata means the model
+*supports* thinking, while V3 reasoning parsing can move it out of `delta.content`; the current UI
+expects `<think>` markup in the content stream. Use a separate `reasoning_enabled` template default.
+
+## wllama64 compatibility defaults to a CDN (2026-08-21)
+
+On unsupported browsers, the constructor's default compatibility mode fetches executable worker
+and WASM assets from jsDelivr. This violates the offline/privacy contract.
+
+**Fix**: Pin matching `@wllama/wllama-compat`, copy both assets under `public/wasm/compat`, and
+call `setCompat()` with local paths. Keep the PWA precache limit above the fallback WASM's ~16 MiB.
 
 ## Chat list overflow: min-height vs height on #root (2026-02-28)
 
@@ -113,15 +123,32 @@ return plain objects `{ status: 'error', message }`. Also handle the returned st
 in the renderer (`Sidebar.jsx`) since the event-based `updater:error` path may not fire
 for all rejection scenarios.
 
-## E2E test race: select_model_on_page checks text before render (2026-03-01)
+## E2E model selection can false-select hidden/recommended cards (2026-08-21)
 
-`select_model_on_page` in `tests/helpers/download_model.js` called `page.locator('body').textContent()`
-immediately after URL navigation — before the React component rendered. With empty page text, it
-fell to Strategy 2, skipped the toggle click (not visible yet), then found model buttons inside
-the still-hidden `ExpandPanel`.
+Reading the whole page's text sees collapsed card details and hidden alternatives, so matching a
+model name does not prove that model is active. A test once requested SmolLM2 but downloaded Qwen3
+8B, then accepted the waking-up placeholder as generated output.
 
-**Fix**: Wait for `model-select-confirm-btn` to be visible before reading page text. Also changed
-the toggle visibility check from instant `isVisible()` to `expect().toBeVisible()` with timeout.
+**Fix**: Every selectable model has `data-testid="model-option-{id}"`. Click that exact visible
+option (expanding alternatives first), exclude the waking indicator, wait for completion stats,
+then assert semantic output and reject the empty-response fallback.
+
+TopBar and mobile Sidebar both render `model-selector-dropdown`; CSS hides one. Tests that use
+this id must add `.filter({ visible: true })` or Playwright strict mode sees two matches.
+
+## Same-window settings hooks need an app event (2026-08-21)
+
+`SettingsModal` and `ChatPage` each mount `use_settings()`. Updating localStorage in the modal does
+not fire the browser `storage` event in the same document, so inference kept stale max-token and
+prompt values. `use_settings` now dispatches/listens for `EVENTS.settings_changed` locally while
+retaining `storage` for cross-tab synchronization.
+
+## New-conversation route transition can erase its first user message (2026-08-21)
+
+Creating a conversation updates local state while the route is briefly still `/chat`. The route
+reset effect could see a current ID with no URL ID and clear messages before navigation committed;
+deep links and regeneration then showed assistant-only or empty conversations. Track the pending
+conversation ID until `/chat/:id` arrives and skip that transient reset.
 
 ## E2E test race: Ctrl+, shortcut test fires before handlers register (2026-03-01)
 

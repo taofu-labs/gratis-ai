@@ -8,12 +8,12 @@
 
 ## 1. Project Overview
 
-**gratisAI** is a privacy-first, fully offline-capable chat application that runs open-source LLM models entirely on the user's device. No data leaves the device. Inference runs locally — in the browser via WebAssembly/WebGPU (using `wllama`), or natively via `node-llama-cpp` when packaged as an Electron app.
+**gratisAI** is a privacy-first, fully offline-capable chat application that runs open-source LLM models entirely on the user's device. No data leaves the device. Inference runs locally — in the browser via WebAssembly (using `wllama64`), or natively via `node-llama-cpp` when packaged as an Electron app.
 
 ### 1.1 Core Principles
 
 - **One codebase, two targets**: The app is a Progressive Web App (PWA) built with Vite + React (JavaScript). The same codebase compiles to both a deployable PWA and an Electron desktop application.
-- **GGUF-only model format**: All models use the GGUF format. This allows a single model file to work across both the browser (wllama) and Electron (node-llama-cpp) runtimes.
+- **GGUF-only model format**: All models use the GGUF format. This allows a single model file to work across both the browser (wllama64) and Electron (node-llama-cpp) runtimes.
 - **Offline-first**: After initial model download, the entire application works without any network connection.
 - **No mocking in tests**: All Playwright tests run against the real application in a real browser. Tests use lightweight GGUF models to perform actual inference. No mocks, no stubs, no fakes.
 - **Test-driven development**: Every feature must have passing Playwright tests before moving to the next feature. The development loop is: implement → open in browser → write tests → verify → commit.
@@ -42,10 +42,10 @@
 
 | Runtime | Library | Purpose |
 |---------|---------|---------|
-| Browser (PWA) | `@anthropic-ai/wllama` or `@nicfab/wllama` or the canonical `wllama` package | WASM + WebGPU port of llama.cpp. Loads GGUF models directly in the browser. Check npm for the current canonical package name — use the most maintained fork. |
+| Browser (PWA) | `wllama64` 1.x | Memory64 + JSPI build of llama.cpp with OpenAI-compatible chat completions, embedded Jinja templates, and a locally hosted wasm32 fallback. |
 | Electron (native) | `node-llama-cpp` | Native Node.js bindings to llama.cpp. Auto-detects CUDA (Nvidia), Metal (macOS), Vulkan (cross-platform). Runs in Electron's main process. |
 
-> **Important**: Verify the exact npm package name for wllama at development time. The ecosystem moves fast. The key requirement is: it must load `.gguf` files in the browser via WASM, and ideally support WebGPU acceleration.
+> **Important**: Pin `wllama64` while its API/runtime is young. Upgrade only after real Chromium inference passes with the exact catalog GGUFs.
 
 ### 2.3 Electron
 
@@ -61,14 +61,14 @@
 |---------|-----------|
 | E2E testing | Playwright |
 | Test runner | Playwright Test (`@playwright/test`) |
-| Browser | Chromium (WebGPU support required for full tests; WASM fallback acceptable) |
+| Browser | 64-bit Chromium 137+ for Memory64 inference tests; locally bundled wasm32 compatibility remains available for supported older browsers |
 | Model for tests | A tiny GGUF model (see §9) |
 
 ### 2.5 Storage
 
 | Concern | Technology |
 |---------|-----------|
-| Model cache | IndexedDB (via `idb` wrapper or raw) for storing downloaded GGUF blobs |
+| Model cache | Origin Private File System (OPFS) for streamed GGUF files; IndexedDB stores model metadata and legacy blobs |
 | Chat history | IndexedDB — stores all conversations, messages, and metadata locally |
 | Settings/preferences | `localStorage` for lightweight key-value settings |
 | PWA caching | Service Worker via `vite-plugin-pwa` (Workbox) |
@@ -95,7 +95,7 @@ gratisai/
 │   ├── App.jsx                   # Root component with router
 │   ├── providers/
 │   │   ├── types.js              # LLMProvider JSDoc typedefs + shared types
-│   │   ├── wllama_provider.js    # Browser wllama implementation
+│   │   ├── wllama_provider.js    # Browser wllama64 implementation
 │   │   ├── electron_ipc_provider.js  # Renderer-side IPC bridge to native
 │   │   ├── factory.js            # create_provider() — runtime detection + instantiation
 │   │   └── model_registry.js     # Model definitions, categories, env var mapping
@@ -142,7 +142,7 @@ gratisai/
 │   │   └── GlobalStyle.js        # Global CSS reset + base styles
 │   └── utils/
 │       ├── device_detection.js   # WebGPU/WebGL capability probing
-│       ├── model_download.js     # Fetch + cache GGUF to IndexedDB
+│       ├── model_download.js     # Stream GGUF to OPFS + cache metadata
 │       ├── format.js             # Message formatting, markdown helpers
 │       ├── export.js             # Export conversation to markdown or JSON
 │       ├── model_param_resolver.js # Parse /?model= param: local ID vs HF repo vs HF repo+file
@@ -315,15 +315,16 @@ This is the core abstraction. Both backends implement this exact interface.
 // }
 ```
 
-### 5.1 Browser Implementation (wllama)
+### 5.1 Browser Implementation (wllama64)
 
 File: `src/providers/wllama_provider.js`
 
-- Uses the `wllama` npm package to load GGUF files in the browser.
-- Models are fetched from Hugging Face and cached in IndexedDB.
-- wllama handles WASM loading and optional WebGPU acceleration internally.
-- Streaming is done via wllama's token callback mechanism.
-- The `abort()` method should call wllama's abort/cancel mechanism.
+- Uses the `wllama64` npm package and its V3 OpenAI-compatible API.
+- Models stream from Hugging Face into OPFS, avoiding a second multi-gigabyte Blob in the JavaScript heap. IndexedDB stores source and display metadata; legacy IndexedDB blobs remain loadable.
+- The primary runtime is shared Memory64 + JSPI. `@wllama/wllama-compat` assets are bundled locally for supported wasm32 fallback browsers, preserving offline/privacy guarantees.
+- Load with `jinja: true` and render the GGUF's embedded chat template through `createChatCompletion({ messages, ... })`. Do not guess model families or hand-build prompts.
+- Streaming reads `chunk.choices[0].delta.content`; `abort()` aborts the request's `AbortController`.
+- Start with a practical 2,048-token context and CPU execution. Larger contexts and WebGPU offload require their own memory-tested rollout. Keep Qwen 3.5 2B in its documented non-thinking default; model capability metadata must not silently enable expensive reasoning.
 
 ### 5.2 Electron Implementation (node-llama-cpp)
 
@@ -359,7 +360,7 @@ export function create_provider() {
         return new ElectronIPCProvider()
     }
 
-    // Default to browser-based wllama provider
+    // Default to browser-based wllama64 provider
     return new WllamaProvider()
 }
 ```
@@ -460,7 +461,7 @@ The `/?q=` and `/?model=` query parameters are supported on `/chat`. Behavior:
 - A cancel button.
 
 **Implementation**:
-- **Browser**: Fetch the GGUF file from Hugging Face with streaming (`fetch` + `ReadableStream`). Store the completed download in IndexedDB as a blob along with full model metadata (name, category, repo, filename, size, context length, etc.).
+- **Browser**: Use wllama64's `ModelManager` to stream the GGUF from Hugging Face directly into OPFS. Store source/display metadata in IndexedDB; never assemble the complete response in the JavaScript heap.
 - **Electron**: Download to a local file path in the app's data directory. Store metadata in a JSON manifest alongside the model files.
 - On completion, behavior depends on the flow:
   - **First-time onboarding** (no models cached yet): navigate to `/chat`.
@@ -505,7 +506,7 @@ The `/?q=` and `/?model=` query parameters are supported on `/chat`. Behavior:
 - Clicking it opens a dropdown listing all locally cached models, sorted by most recently used.
 - Each entry shows: model name, parameter count, quantization, and cached file size.
 - The currently active model has a checkmark or highlight.
-- Selecting a different model triggers: unload current model → load selected model from IndexedDB cache → inference is now on the new model.
+- Selecting a different model triggers: unload current model → load selected model from OPFS (or a legacy IndexedDB blob) → inference is now on the new model.
 - A loading spinner replaces the dropdown text while a model switch is in progress.
 - At the bottom of the dropdown, a divider followed by an **"+ Add Model"** action. Clicking this navigates to `/select-model` so the user can download an additional model. After download, the user is returned to `/chat` with the new model loaded.
 - The dropdown also has a **"Manage Models"** action (below "+ Add Model") that opens the model management section within Settings (see §6.6).
@@ -626,11 +627,11 @@ This tab provides full management of all locally cached models.
   - A **status badge**: "Active" (currently loaded), "Cached" (downloaded, not loaded), or "Default" (one of the env-var tier defaults)
 - **Actions per model**:
   - **Load**: Switches to this model (unloads current, loads selected). Disabled if already active.
-  - **Delete**: Removes the model from IndexedDB cache. Shows a confirmation dialog: *"Delete {model name}? This will free {size} of storage. You can re-download it later."* Cannot delete the currently active model — user must switch first.
+  - **Delete**: Removes the model file from OPFS and its metadata from IndexedDB. Shows a confirmation dialog: *"Delete {model name}? This will free {size} of storage. You can re-download it later."* Cannot delete the currently active model — user must switch first.
 - The list is sorted by last used (most recent first), with the active model always pinned at top.
 
 **Storage Summary** (shown at the top of the Models tab):
-- Total storage used by cached models (sum of all GGUF blobs in IndexedDB).
+- Total storage used by cached models (sum of model metadata file sizes across OPFS and legacy IndexedDB entries).
 - Number of cached models.
 - Estimated available storage (via `navigator.storage.estimate()` where available).
 
@@ -653,7 +654,7 @@ data-testid="add-model-custom-btn"
 
 Separated by a red-tinted divider to signal destructiveness.
 
-- **Clear All Data**: Button that opens a confirmation dialog: *"This will delete all conversations, cached models, and settings. This cannot be undone."* On confirm: clears IndexedDB (conversations, messages, models stores), clears all `gratisai:*` localStorage keys, unloads the current model, and redirects to `/` (welcome page). `data-testid="clear-all-data-btn"`
+- **Clear All Data**: Button that opens a confirmation dialog: *"This will delete all conversations, cached models, and settings. This cannot be undone."* On confirm: clears OPFS model files, IndexedDB stores, all `gratisai:*` localStorage keys, unloads the current model, and redirects to `/` (welcome page). `data-testid="clear-all-data-btn"`
 - **Export All Conversations**: Downloads a ZIP file containing every conversation as individual `.md` files. Uses the browser's `File System Access API` or a fallback blob download. `data-testid="export-all-btn"`
 
 #### Keyboard Shortcuts Reference
@@ -737,7 +738,9 @@ Database name: `gratisai-db`
 /**
  * @typedef {Object} CachedModel
  * @property {string} id - Model identifier (repo/filename)
- * @property {Blob} blob - The GGUF file
+ * @property {Blob} [blob] - Legacy GGUF storage used before the OPFS migration
+ * @property {'wllama64-opfs'} [storage] - Current browser model storage backend
+ * @property {string} [download_url] - Stable source/cache key for the OPFS model
  * @property {number} cached_at - Timestamp
  * @property {number} file_size_bytes
  * @property {string} name - Human-readable display name
@@ -990,19 +993,8 @@ export default defineConfig( {
             },
             workbox: {
                 globPatterns: [ `**/*.{js,css,html,wasm}` ],
-                maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB for WASM files
-                runtimeCaching: [
-                    {
-                        urlPattern: /^https:\/\/huggingface\.co\/.*/,
-                        handler: `CacheFirst`,
-                        options: {
-                            cacheName: `hf-model-cache`,
-                            expiration: { maxEntries: 5, maxAgeSeconds: 30 * 24 * 60 * 60 },
-                            cacheableResponse: { statuses: [ 0, 200 ] },
-                            rangeRequests: true,
-                        },
-                    },
-                ],
+                // Includes the ~16 MiB local wasm32 compatibility runtime.
+                maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
             },
         } ),
     ],
@@ -1013,8 +1005,8 @@ export default defineConfig( {
 
 After initial load and model download:
 - All application code is cached by the service worker.
-- The GGUF model is cached in IndexedDB.
-- wllama's WASM binary is cached by the service worker.
+- The GGUF model is cached in OPFS; IndexedDB retains its metadata.
+- wllama64's Memory64 binary and local wasm32 compatibility files are cached by the service worker.
 - The app functions fully offline.
 
 ---
@@ -1340,12 +1332,13 @@ The developing agent should build the app in this order. **Each phase must have 
 
 ## 14. Critical Implementation Notes
 
-### 14.1 wllama Integration
+### 14.1 wllama64 Integration
 
-The wllama library's API may vary by version. At development time, the agent should:
-1. Install the package: `npm install wllama` (or the current canonical package).
-2. Read the package's README and source/types to understand the exact API.
-3. Key operations needed: initialize wasm, load a GGUF model from a URL or ArrayBuffer, run chat completion with streaming, abort generation.
+The browser runtime is pinned because Wllama V3 differs materially from V2:
+1. Install `wllama64` and the matching `@wllama/wllama-compat` release.
+2. Copy and precache both local runtimes; never allow an automatic executable download from a CDN.
+3. Use the OpenAI-compatible `createChatCompletion` request/response shape and embedded Jinja templates.
+4. Before dependency upgrades, run real non-empty, semantically checked inference in current 64-bit Chromium. A successful build is not an inference test.
 
 ### 14.2 Data Attributes for Testing
 
@@ -1433,7 +1426,8 @@ Every page/component should handle:
     "react-hot-toast": "latest",
     "less-lazy": "latest",
     "idb": "^8.x",
-    "wllama": "latest",
+    "wllama64": "1.0.0",
+    "@wllama/wllama-compat": "3.6.0",
     "uuid": "^9.x"
   },
   "devDependencies": {

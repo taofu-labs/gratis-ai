@@ -17,8 +17,17 @@ export async function download_model_via_ui( page, model, opts = {} ) {
     // Step 1 — Welcome page
     await page.goto( `/` )
     await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
-    await expect( page.getByTestId( `get-started-btn` ) ).toBeEnabled( { timeout: 15_000 } )
-    await page.getByTestId( `get-started-btn` ).click()
+    const get_started = page.getByTestId( `get-started-btn` )
+    if( await get_started.isVisible() ) {
+        await expect( get_started ).toBeEnabled( { timeout: 15_000 } )
+        await get_started.click()
+    } else {
+        // Returning users land on HomePage with their active model already
+        // loaded. Follow its real switch-model action into the picker.
+        const switch_model = page.getByTestId( `home-switch-model` ).filter( { visible: true } )
+        await expect( switch_model ).toBeVisible( { timeout: load_timeout } )
+        await switch_model.click()
+    }
 
     // Step 2 — Model select: expand alternatives, pick the target model
     await expect( page ).toHaveURL( /\/select-model/ )
@@ -53,45 +62,19 @@ export async function select_model_on_page( page, model ) {
     // Wait for the model select page to be fully rendered before inspecting
     await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible( { timeout: 10_000 } )
 
-    // Strategy 1 — Check if the model name appears in the full page text.
-    // The card details are in the DOM even when visually collapsed, so we can
-    // read the page text without clicking any toggles.
-    const page_text = await page.locator( `body` ).textContent()
-
-    if( page_text?.includes( model.name ) ) {
-
-        // The model is somewhere on the page (likely a recommendation card).
-        // Check if it's inside one of the two OptionCards (two-card layout).
-        // OptionCards are direct-child buttons of the CardRow.
-        const card_buttons = page.locator( `button`, { hasText: model.name } )
-        const card_count = await card_buttons.count()
-
-        // Filter to only the recommendation cards (not alternatives, not confirm)
-        // by checking they contain "Show details" (a card-specific toggle)
-        for( let i = 0; i < card_count; i++ ) {
-            const btn = card_buttons.nth( i )
-            const inner = await btn.textContent()
-            if( inner?.includes( `Show details` ) ) {
-                await btn.click()
-                return
-            }
-        }
-
-        // If we're here, the name appeared in a non-button element (RecommendedCard <div>).
-        // That means it's the single-card recommendation — already selected, nothing to do.
+    const option = page.getByTestId( `model-option-${ model.id }` )
+    if( await option.isVisible() ) {
+        if( await option.getAttribute( `role` ) === `button` ) await option.click()
         return
-
     }
 
-    // Strategy 2 — Model is not a recommendation. Open alternatives and pick from list.
+    // The model is in the collapsed alternatives list.
     const toggle = page.getByTestId( `change-model-toggle` )
     await expect( toggle ).toBeVisible( { timeout: 5_000 } )
     await toggle.click()
 
-    // Alternatives are plain buttons inside the expand panel, each containing the model name
-    const alternative = page.locator( `button`, { hasText: model.name } )
-    await expect( alternative.first() ).toBeVisible( { timeout: 5_000 } )
-    await alternative.first().click()
+    await expect( option ).toBeVisible( { timeout: 5_000 } )
+    await option.click()
 
 }
 
@@ -127,11 +110,11 @@ export async function switch_model( page, model, opts = {} ) {
     const { load_timeout = 60_000 } = opts
 
     // Open model selector dropdown
-    await page.getByTestId( `model-selector-dropdown` ).click()
+    const dropdown = page.getByTestId( `model-selector-dropdown` ).filter( { visible: true } )
+    await dropdown.click()
 
     // Click the model option
-    const option = page.locator( `[data-testid="model-selector-dropdown"]` )
-        .locator( `..` )
+    const option = dropdown.locator( `..` )
         .locator( `button`, { hasText: model.name } )
 
     await option.click()
@@ -149,7 +132,11 @@ export async function switch_model( page, model, opts = {} ) {
  */
 export async function send_message( page, message ) {
 
+    const user_messages = page.getByTestId( `user-message` )
+    const previous_count = await user_messages.count()
+
     await page.getByTestId( `chat-input` ).fill( message )
     await page.getByTestId( `send-btn` ).click()
+    await expect( user_messages ).toHaveCount( previous_count + 1 )
 
 }

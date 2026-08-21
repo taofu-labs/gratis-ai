@@ -1,123 +1,26 @@
-import { Wllama } from '@wllama/wllama'
+import { Wllama, WllamaError, WllamaRuntimeError } from 'wllama64'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
+import { DEFAULT_RUNTIME_CONTEXT, get_model_by_id } from '../utils/model_catalog'
 
-// WASM paths — served from public/wasm/ (copied there by postinstall script)
-const CONFIG_PATHS = {
-    'single-thread/wllama.wasm': `/wasm/single-thread/wllama.wasm`,
-    'multi-thread/wllama.wasm': `/wasm/multi-thread/wllama.wasm`,
+// Memory64 is the primary runtime. The matching wasm32 build remains local so
+// Safari and older browsers never need to fetch executable code from a CDN.
+const CONFIG_PATHS = { default: `/wasm/wllama.wasm` }
+const COMPAT_PATHS = {
+    worker: `/wasm/compat/wllama.js`,
+    wasm: `/wasm/compat/wllama.wasm`,
+}
+
+const WLLAMA_LOGGER = {
+    debug: ( ...args ) => log.debug( `[wllama64]`, ...args ),
+    log: ( ...args ) => log.info( `[wllama64]`, ...args ),
+    warn: ( ...args ) => log.warn( `[wllama64]`, ...args ),
+    error: ( ...args ) => log.error( `[wllama64]`, ...args ),
 }
 
 /**
- * Detect which chat template family a Jinja template belongs to.
- * Returns a string key used by format_chat_prompt to pick the right formatter.
- * @param {string} template - Jinja template from GGUF metadata
- * @returns {'zephyr' | 'chatml' | 'mistral' | 'llama3' | 'unknown'}
- */
-const detect_template_type = ( template ) => {
-
-    if( !template ) return `unknown`
-
-    // Zephyr / TinyLlama — uses <|user|>, <|system|>, <|assistant|> with eos_token
-    if( template.includes( `<|user|>` ) && template.includes( `eos_token` ) ) return `zephyr`
-
-    // ChatML — uses <|im_start|> and <|im_end|>
-    if( template.includes( `<|im_start|>` ) ) return `chatml`
-
-    // Llama 3 — uses <|start_header_id|>
-    if( template.includes( `<|start_header_id|>` ) ) return `llama3`
-
-    // Mistral — uses [INST] and [/INST]
-    if( template.includes( `[INST]` ) ) return `mistral`
-
-    return `unknown`
-
-}
-
-/**
- * Manually format chat messages into a prompt string.
- * Bypasses wllama's formatChat which has a bug where eos_token
- * is not provided to the Jinja template engine, producing broken prompts.
- * @param {Array<{role: string, content: string}>} messages
- * @param {string} eos_token - The EOS token string (e.g., "</s>")
- * @param {string} bos_token - The BOS token string (e.g., "<s>")
- * @param {string} eot_token - The EOT (end-of-turn) token string (e.g., "<|eot_id|>")
- * @param {string} template_type - One of the detected template types
- * @returns {string} Formatted prompt ready for completion
- */
-const format_chat_prompt = ( messages, eos_token, bos_token, eot_token, template_type ) => {
-
-    let prompt = ``
-
-    switch ( template_type ) {
-
-    // Zephyr format — used by TinyLlama, Zephyr, StableLM
-    case `zephyr`:
-        for( const { role, content } of messages ) {
-            prompt += `<|${ role }|>\n${ content }${ eos_token }`
-        }
-        prompt += `<|assistant|>\n`
-        break
-
-        // ChatML format — used by SmolLM2, Qwen, many fine-tunes
-    case `chatml`:
-        for( const { role, content } of messages ) {
-            prompt += `<|im_start|>${ role }\n${ content }<|im_end|>\n`
-        }
-        prompt += `<|im_start|>assistant\n`
-        break
-
-        // Llama 3 format — uses header IDs
-    case `llama3`:
-        prompt += `<|begin_of_text|>`
-        for( const { role, content } of messages ) {
-            prompt += `<|start_header_id|>${ role }<|end_header_id|>\n\n${ content }${ eot_token }`
-        }
-        prompt += `<|start_header_id|>assistant<|end_header_id|>\n\n`
-        break
-
-        // Mistral format — [INST] wrapping
-    case `mistral`: {
-        // Mistral puts system prompt before the first [INST] if present
-        const system_msg = messages.find( m => m.role === `system` )
-        const non_system = messages.filter( m => m.role !== `system` )
-        // BOS only once at the start, not before every [INST]
-        prompt += bos_token
-        let turn_idx = 0
-
-        for( const { role, content } of non_system ) {
-            if( role === `user` ) {
-                prompt += `[INST] `
-                // Prepend system prompt to the first user message
-                if( system_msg && turn_idx === 0 ) {
-                    prompt += `${ system_msg.content }\n\n`
-                }
-                prompt += `${ content } [/INST]`
-                turn_idx++
-            } else if( role === `assistant` ) {
-                prompt += ` ${ content }${ eos_token }`
-            }
-        }
-        break
-    }
-
-    // Fallback — simple concatenation with role markers
-    default:
-        for( const { role, content } of messages ) {
-            prompt += `### ${ role }:\n${ content }\n`
-        }
-        prompt += `### assistant:\n`
-        break
-
-    }
-
-    return prompt
-
-}
-
-/**
- * Browser-based LLM provider using wllama (WASM llama.cpp)
- * Implements the LLMProvider interface from types.js
+ * Browser-based LLM provider using wllama64 (Memory64 llama.cpp).
+ * Implements the LLMProvider interface from types.js.
  */
 export default class WllamaProvider {
 
@@ -125,323 +28,241 @@ export default class WllamaProvider {
         this._wllama = null
         this._loaded_model_id = null
         this._abort_controller = null
-        this._template_type = `unknown`
-        this._eos_str = `</s>`
-        this._bos_str = `<s>`
-        this._eot_str = ``
     }
 
     /**
-     * Load a GGUF model from IndexedDB cache
+     * Load a GGUF model from the browser cache.
+     * New downloads live in Wllama's streaming OPFS cache; legacy IndexedDB
+     * blobs remain supported so upgrades do not force a multi-GB re-download.
      * @param {string} model_id - The model ID in IndexedDB
      * @param {Function} [on_progress] - Progress callback
      * @returns {Promise<void>}
      */
     async load_model( model_id, on_progress ) {
 
-        // Skip reload if this exact model is already loaded and healthy
         if( this._loaded_model_id === model_id && this._wllama?.isModelLoaded() ) {
             log.info( `[wllama] Model ${ model_id } already loaded, skipping reload` )
             if( on_progress ) on_progress( { progress: 1, status: `Model ready` } )
             return
         }
 
-        // Unload any existing model first
         if( this._wllama ) await this.unload_model()
 
-        // Create new wllama instance
-        this._wllama = new Wllama( CONFIG_PATHS, {
-            suppressNativeLog: true,
-        } )
-
-        // Retrieve model blob from IndexedDB
         const db = await get_db()
         const cached = await db.get( `models`, model_id )
 
-        if( !cached?.blob ) {
+        if( !cached?.blob && !cached?.download_url ) {
             throw new Error( `Model ${ model_id } not found in cache` )
         }
 
-        // Report initial progress
-        if( on_progress ) {
-            on_progress( { progress: 0, status: `Loading model into memory...` } )
+        if( on_progress ) on_progress( { progress: 0, status: `Loading model into memory...` } )
+
+        this._wllama = new Wllama( CONFIG_PATHS, {
+            allowOffline: true,
+            logger: WLLAMA_LOGGER,
+            suppressNativeLog: true,
+        } )
+        this._wllama.setCompat( COMPAT_PATHS )
+
+        const { compat } = this._wllama.getWorkerResources()
+        const runtime_name = compat ? `wasm32 compatibility` : `Memory64`
+
+        // Keep enough CPU for the browser compositor. Large reported core counts
+        // otherwise create a wasteful pthread pool in desktop-class browsers.
+        const hardware_threads = navigator.hardwareConcurrency || 1
+        const n_threads = Math.min( 8, Math.max( 1, Math.floor( hardware_threads / 2 ) ) )
+        const n_batch = n_threads > 1 ? 512 : 256
+        const n_ctx = Math.min( cached.context_length || DEFAULT_RUNTIME_CONTEXT, DEFAULT_RUNTIME_CONTEXT )
+        const model = get_model_by_id( model_id )
+        const reasoning_enabled = cached.reasoning_enabled ?? model?.reasoning_enabled
+        const file_size_mb = ( cached.file_size_bytes / 1_000_000 ).toFixed( 0 )
+
+        log.info( `[wllama] Loading ${ model_id } (${ file_size_mb } MB, ${ runtime_name }, ${ n_threads } threads, ${ n_ctx } ctx)` )
+
+        const load_options = {
+            n_ctx,
+            n_batch,
+            n_threads,
+            n_parallel: 1,
+
+            // Wllama v3 enables WebGPU by default. Keep the migration CPU-stable:
+            // GPU offload and quantized KV cache have different memory behavior
+            // and need their own measured rollout.
+            n_gpu_layers: 0,
+            cache_type_k: `f16`,
+            cache_type_v: `f16`,
+
+            // Let llama.cpp render the GGUF's embedded Jinja template. Manual
+            // family guessing breaks Qwen 3.5, Ministral 3, Gemma, and Harmony.
+            jinja: true,
+
+            // Keep reasoning markup in the normal content stream: the existing
+            // UI parses <think> blocks itself and has no separate V3 reasoning
+            // channel. Only override template generation when a model declares
+            // a deliberate default (Qwen 3.5 2B defaults to non-thinking).
+            reasoning: false,
+            ... reasoning_enabled !== undefined ? {
+                default_template_kwargs: { enable_thinking: reasoning_enabled },
+            } : {},
         }
-
-        // Use all but one core — wllama runs inference in a Web Worker so it
-        // won't block the UI thread.  Keeping one core free avoids starving
-        // the browser's main thread and compositor.
-        const hw_threads = navigator.hardwareConcurrency || 1
-        const n_threads = Math.max( 1, hw_threads - 1 )
-
-        // Larger batch sizes speed up prompt ingestion (the "thinking" phase
-        // before tokens start streaming).  1024 is safe on multi-threaded
-        // systems; single-threaded stays conservative to avoid memory spikes.
-        const n_batch = n_threads > 1 ? 1024 : 256
-
-        const file_size_mb = ( cached.blob.size / 1_000_000 ).toFixed( 0 )
-        log.info( `[wllama] Loading model ${ model_id } (${ file_size_mb } MB, ${ n_threads } threads, batch ${ n_batch })` )
 
         try {
 
-            await this._wllama.loadModel( [ cached.blob ], {
-                n_ctx: cached.context_length || 2048,
-                n_batch,
-                n_threads,
-
-                // Quantize the KV cache from FP16 → Q8_0.  Halves cache memory
-                // with near-zero quality loss (+0.002 ppl), freeing headroom for
-                // longer contexts or larger models within the WASM ceiling.
-                cache_type_k: `q8_0`,
-                cache_type_v: `q8_0`,
-            } )
-
-        } catch ( load_err ) {
-
-            // "Module is already initialized" — a concurrent load booted
-            // the WASM runtime before this call could. Safe to bail out:
-            // the winning call will complete the load and the store's dedup
-            // will surface its result to all callers.
-            if( load_err.message?.includes( `already initialized` ) ) {
-                log.warn( `[wllama] Module already initialized — concurrent load detected, deferring` )
-                this._wllama = null
-                return
+            if( cached.blob ) {
+                await this._wllama.loadModel( [ cached.blob ], load_options )
+            } else {
+                await this._wllama.loadModelFromUrl( cached.download_url, {
+                    ...load_options,
+                    useCache: true,
+                } )
             }
 
-            // WASM heap overflow produces a RangeError when the model is too large
-            const is_memory_error = load_err instanceof RangeError
-                || load_err.message?.includes( `memory` )
-                || load_err.message?.includes( `out of bounds` )
+        } catch ( load_error ) {
+
+            await this._dispose_runtime()
+
+            const message = load_error?.message || ``
+            const is_memory_error = load_error instanceof RangeError
+                || load_error instanceof WllamaRuntimeError
+                || /memory|out of bounds|allocation failed|cannot allocate/i.test( message )
 
             if( is_memory_error ) {
                 log.error( `[wllama] Out of memory loading ${ model_id } (${ file_size_mb } MB)` )
-                throw new Error( `This model is too large for your browser's memory. Try a smaller model or close other tabs.` )
+                throw new Error( `This model is too large for your browser's available memory. Try a smaller model or close other tabs.` )
             }
 
-            // Wllama's internal Glue protocol error — the WASM worker crashed or returned
-            // a non-binary response (e.g. the C++ side hit OOM and sent a JSON error).
-            // This typically means the model is too large for WebAssembly's 4 GB heap.
-            const is_glue_error = load_err.message?.includes( `Invalid magic number` )
-                || load_err.message?.includes( `Invalid version number` )
-
-            if( is_glue_error ) {
-                log.error( `[wllama] WASM worker protocol error loading ${ model_id } (${ file_size_mb } MB)` )
-                throw new Error( `Failed to load this model in the browser — it's likely too large for WebAssembly memory. Try a smaller quantization or use the desktop app.` )
+            if( load_error instanceof WllamaError && load_error.type === `load_error` ) {
+                log.error( `[wllama] Runtime rejected ${ model_id }:`, load_error )
+                throw new Error( `This model could not be loaded by the browser runtime. Delete it, re-download it, or try a smaller model.` )
             }
 
-            log.error( `[wllama] Failed to load model:`, load_err )
-            throw load_err
+            log.error( `[wllama] Failed to load model:`, load_error )
+            throw load_error
 
+        }
+
+        if( !this._wllama.getChatTemplate() ) {
+            await this.unload_model()
+            throw new Error( `This GGUF has no embedded chat template. Choose an instruct/chat model instead of a base model.` )
         }
 
         this._loaded_model_id = model_id
 
-        // Verify the tokenizer works — some GGUF files (e.g. QuantFactory conversions)
-        // have broken tokenizer data that crashes the WASM runtime. Catching this
-        // early gives the user a clear message instead of silent 0-token outputs.
-        try {
-            const probe_tokens = await this._wllama.tokenize( `Hello`, true )
-            if( !probe_tokens?.length ) throw new Error( `empty` )
-        } catch {
-            await this.unload_model()
-            throw new Error( `This model file has an incompatible tokenizer. Please delete it and re-download.` )
-        }
+        const [ model_name, model_arch ] = this._model_identity()
+        log.info( `[wllama] Ready: ${ model_name } (${ model_arch }, ${ runtime_name })` )
 
-        // Detect the chat template type and cache EOS/BOS token strings
-        // so we can format prompts ourselves (wllama's formatChat has a bug
-        // where eos_token is not provided to the Jinja template engine)
-        const template = this._wllama.getChatTemplate()
-        this._template_type = detect_template_type( template )
-        log.info( `[wllama] Detected template type: ${ this._template_type }` )
-
-        // Get EOS and BOS token strings by detokenizing their IDs
-        // detokenize returns Uint8Array so we need to decode to string
-        const decoder = new TextDecoder()
-        try {
-            const eos_id = this._wllama.getEOS()
-            const bos_id = this._wllama.getBOS()
-            const eot_id = this._wllama.getEOT()
-            if( eos_id >= 0 ) this._eos_str = decoder.decode( await this._wllama.detokenize( [ eos_id ] ) )
-            if( bos_id >= 0 ) this._bos_str = decoder.decode( await this._wllama.detokenize( [ bos_id ] ) )
-            if( eot_id >= 0 ) this._eot_str = decoder.decode( await this._wllama.detokenize( [ eot_id ] ) )
-            log.info( `[wllama] Tokens — EOS: ${ JSON.stringify( this._eos_str ) }, BOS: ${ JSON.stringify( this._bos_str ) }, EOT: ${ JSON.stringify( this._eot_str ) }` )
-        } catch ( token_err ) {
-            log.warn( `[wllama] Could not resolve special tokens, using defaults`, token_err )
-        }
-
-        // Update last_used_at timestamp — non-critical, don't fail the load if storage is full
+        // Timestamp writes are non-critical; a full storage quota must not make
+        // an otherwise healthy model fail after loading.
         try {
             await db.put( `models`, { ...cached, last_used_at: Date.now() } )
         } catch {
             log.warn( `[wllama] Could not update last_used_at (storage quota may be full)` )
         }
 
-        if( on_progress ) {
-            on_progress( { progress: 1, status: `Model ready` } )
-        }
+        if( on_progress ) on_progress( { progress: 1, status: `Model ready` } )
 
     }
 
     /**
-     * Format chat messages into a prompt string.
-     * Uses our own formatter to work around wllama's eos_token bug.
-     * @param {Array<{role: string, content: string}>} messages
-     * @returns {string} Formatted prompt
-     */
-    _format_chat( messages ) {
-        return format_chat_prompt( messages, this._eos_str, this._bos_str, this._eot_str, this._template_type )
-    }
-
-    /**
-     * Single-shot chat completion
+     * Single-shot chat completion.
      * @param {import('./types').ChatMessage[]} messages
      * @param {import('./types').GenerateOptions} [opts]
      * @returns {Promise<string>}
      */
     async chat( messages, opts = {} ) {
 
-        if( !this._wllama || !this._wllama.isModelLoaded() ) {
-            throw new Error( `No model loaded` )
-        }
+        this._assert_ready()
 
-        const sampling = this._build_sampling( opts )
-        const prompt = this._format_chat( messages )
-
-        const t0 = performance.now()
-
-        const response = await this._wllama.createCompletion( prompt, {
-            nPredict: opts.max_tokens || 2048,
-            sampling,
-            stream: false,
-            useCache: true,
+        const started_at = performance.now()
+        const response = await this._wllama.createChatCompletion( {
+            messages,
+            ...this._build_completion_options( opts ),
         } )
 
-        // Rough token estimate — wllama doesn't expose token count for non-streaming
-        const elapsed_s = ( performance.now() - t0 ) / 1000
-        const approx_tokens = response.split( /\s+/ ).length
-
+        const content = response.choices?.[ 0 ]?.message?.content || ``
+        const token_count = response.usage?.completion_tokens || 0
+        const elapsed_s = ( performance.now() - started_at ) / 1000
         const [ model_name, model_arch ] = this._model_identity()
-        log.info( `[wllama] [${ model_name } (${ model_arch })] Chat complete — ~${ approx_tokens } tokens in ${ elapsed_s.toFixed( 1 ) }s (~${ ( approx_tokens / elapsed_s ).toFixed( 1 ) } tk/s)` )
 
-        return response
+        log.info( `[wllama] [${ model_name } (${ model_arch })] Chat complete — ${ token_count } tokens in ${ elapsed_s.toFixed( 1 ) }s` )
+
+        return content
 
     }
 
     /**
-     * Streaming chat completion — yields tokens as they are generated.
-     * Uses our own chat formatter + createCompletion for reliability.
+     * Streaming chat completion — yields text deltas as they arrive.
      * @param {import('./types').ChatMessage[]} messages
      * @param {import('./types').GenerateOptions} [opts]
      * @returns {AsyncGenerator<string>}
      */
     async *chat_stream( messages, opts = {} ) {
 
-        if( !this._wllama || !this._wllama.isModelLoaded() ) {
-            throw new Error( `No model loaded` )
-        }
-
+        this._assert_ready()
         this._abort_controller = new AbortController()
-        const sampling = this._build_sampling( opts )
 
-        // Use our own chat formatter which correctly includes EOS/BOS tokens
-        // (wllama's formatChat has a bug where eos_token is not provided to the Jinja engine)
-        const prompt = this._format_chat( messages )
-        log.insane( `[wllama] Prompt (${ this._template_type }):\n`, prompt )
-
-        const utf8 = new TextDecoder()
+        const started_at = performance.now()
+        let first_token_at = null
         let token_count = 0
-        const t0 = performance.now()
-        let ttft = null // time to first token
-
-        const stream = await this._wllama.createCompletion( prompt, {
-            nPredict: opts.max_tokens || 2048,
-            sampling,
-            stream: true,
-            useCache: true,
-            abortSignal: this._abort_controller.signal,
-        } )
 
         try {
 
+            const stream = await this._wllama.createChatCompletion( {
+                messages,
+                ...this._build_completion_options( opts ),
+                stream: true,
+                abortSignal: this._abort_controller.signal,
+            } )
+
             for await ( const chunk of stream ) {
 
-                token_count++
+                const text = chunk.choices?.[ 0 ]?.delta?.content || ``
+                const reported_tokens = chunk.usage?.completion_tokens || chunk.timings?.predicted_n
+                if( reported_tokens ) token_count = reported_tokens
 
-                // Decode raw token bytes in streaming mode — holds back incomplete
-                // multi-byte UTF-8 sequences instead of emitting replacement chars
-                const text = utf8.decode( chunk.piece, { stream: true } )
                 if( text ) {
-
-                    if( ttft === null ) ttft = performance.now() - t0
+                    if( first_token_at === null ) first_token_at = performance.now()
                     yield text
                 }
 
             }
 
-            // Flush any bytes the streaming decoder held back
-            const trailing = utf8.decode()
-            if( trailing ) yield trailing
-
-            // Performance summary for this generation
-            const elapsed_ms = performance.now() - t0
-
+            const elapsed_ms = performance.now() - started_at
+            const ttft_ms = first_token_at === null ? elapsed_ms : first_token_at - started_at
+            const decode_ms = Math.max( elapsed_ms - ttft_ms, 0 )
+            const tokens_per_second = decode_ms > 0 ? token_count / ( decode_ms / 1000 ) : 0
             const [ model_name, model_arch ] = this._model_identity()
 
-            if( token_count > 0 ) {
+            log.info( `[wllama] [${ model_name } (${ model_arch })] ${ token_count } tokens — ttft ${ ttft_ms.toFixed( 0 ) }ms, ${ tokens_per_second.toFixed( 1 ) } tk/s` )
 
-                // tk/s excludes the prompt processing time (TTFT) so it reflects
-                // pure decode throughput — the number the user "feels"
-                const decode_ms = elapsed_ms - ( ttft || 0 )
-                const tks = decode_ms > 0 ? ( token_count / ( decode_ms / 1000 ) ).toFixed( 1 ) : `∞`
-
-                log.info(
-                    `[wllama] [${ model_name } (${ model_arch })] ${ token_count } tokens — ttft ${ ttft.toFixed( 0 ) }ms, ${ tks } tk/s (${ ( elapsed_ms / 1000 ).toFixed( 1 ) }s total)`
-                )
-
-            } else {
-                log.warn( `[wllama] [${ model_name }] Model generated 0 tokens. Template type: ${ this._template_type }` )
-            }
-
-        } catch ( err ) {
-            // Don't re-throw abort errors
-            if( err.name === `AbortError` || err.message?.includes( `abort` ) ) return
-            throw err
+        } catch ( error ) {
+            if( error.name === `AbortError` || error.message?.includes( `abort` ) ) return
+            throw error
         } finally {
             this._abort_controller = null
         }
 
     }
 
-    /**
-     * Abort any in-progress generation
-     */
+    /** Abort any in-progress generation. */
     abort() {
-        if( this._abort_controller ) {
-            this._abort_controller.abort()
-            this._abort_controller = null
-        }
+        if( !this._abort_controller ) return
+        this._abort_controller.abort()
+        this._abort_controller = null
     }
 
     /**
-     * Unload the current model from memory
+     * Unload the current model from memory.
      * @returns {Promise<void>}
      */
     async unload_model() {
-
-        if( this._wllama ) {
-            log.info( `[wllama] Unloading model ${ this._loaded_model_id }` )
-            try {
-                await this._wllama.exit()
-            } catch {
-                // Ignore errors during cleanup
-            }
-            this._wllama = null
-        }
+        if( this._wllama ) log.info( `[wllama] Unloading model ${ this._loaded_model_id }` )
+        await this._dispose_runtime()
         this._loaded_model_id = null
-
     }
 
     /**
-     * Get the currently loaded model ID
+     * Get the currently loaded model ID.
      * @returns {string|null}
      */
     get_loaded_model() {
@@ -449,16 +270,31 @@ export default class WllamaProvider {
     }
 
     /**
-     * Check if a model is loaded and ready
+     * Check if a model is loaded and ready.
      * @returns {boolean}
      */
     is_ready() {
-        return !!this._wllama && this._wllama.isModelLoaded()
+        return !!this._wllama?.isModelLoaded()
+    }
+
+    /** Assert that inference can start. */
+    _assert_ready() {
+        if( !this.is_ready() ) throw new Error( `No model loaded` )
+    }
+
+    /** Release the current WASM worker even after a partial load failure. */
+    async _dispose_runtime() {
+        if( !this._wllama ) return
+        try {
+            await this._wllama.exit()
+        } catch {
+            // A crashed worker has already released its resources.
+        }
+        this._wllama = null
     }
 
     /**
      * Read the actual model identity from GGUF metadata.
-     * Returns [name, architecture] — never assumes the catalog ID matches.
      * @returns {[string, string]}
      */
     _model_identity() {
@@ -470,14 +306,15 @@ export default class WllamaProvider {
     }
 
     /**
-     * Build wllama sampling config from GenerateOptions
+     * Build Wllama's OpenAI-compatible completion options.
      * @param {import('./types').GenerateOptions} opts
-     * @returns {Object} Wllama SamplingConfig
+     * @returns {Object}
      */
-    _build_sampling( opts ) {
+    _build_completion_options( opts ) {
 
-        const sampling = {
-            temp: opts.temperature ?? 0.7,
+        return {
+            max_tokens: opts.max_tokens ?? 2048,
+            temperature: opts.temperature ?? 0.7,
             top_p: opts.top_p ?? 0.95,
             top_k: opts.top_k ?? 40,
             min_p: opts.min_p ?? 0.05,
@@ -485,12 +322,10 @@ export default class WllamaProvider {
             penalty_last_n: opts.repeat_last_n ?? 64,
             penalty_freq: opts.frequency_penalty ?? 0,
             penalty_present: opts.presence_penalty ?? 0,
+            cache_prompt: true,
+            ... opts.seed !== undefined && opts.seed !== -1 ? { seed: opts.seed } : {} ,
+            ... opts.stop_sequences?.length ? { stop: opts.stop_sequences } : {} ,
         }
-
-        // Wire seed for reproducible outputs (-1 means random, omit it)
-        if( opts.seed !== undefined && opts.seed !== -1 ) sampling.seed = opts.seed
-
-        return sampling
 
     }
 

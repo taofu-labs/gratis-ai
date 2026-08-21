@@ -44,4 +44,5 @@ export const EVENTS = {
     open_settings:   `${ slug }:open-settings`,
     close_modal:     `${ slug }:close-modal`,
     stop_generation: `${ slug }:stop-generation`,
+    settings_changed: `${ slug }:settings-changed`,
 }

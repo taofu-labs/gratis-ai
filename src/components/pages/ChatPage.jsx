@@ -202,6 +202,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     const chat_input_ref = useRef( null )
     const is_generating_ref = useRef( false )
     const query_processed_ref = useRef( false )
+    const pending_conversation_id_ref = useRef( null )
 
     const { load_model, chat_stream, abort, is_generating, is_endpoint_warming, is_loading: is_model_loading, loaded_model_id } = use_llm()
     const is_cloud_model = loaded_model_id?.startsWith( `openrouter:` ) || loaded_model_id?.startsWith( `venice:` ) || false
@@ -311,6 +312,10 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     // Load conversation messages when navigating to /chat/:id
     useEffect( () => {
 
+        if( conversation_id === pending_conversation_id_ref.current ) {
+            pending_conversation_id_ref.current = null
+        }
+
         if( conversation_id && conversation_id !== current_conversation_id ) {
 
             // Validate that the conversation exists before loading messages
@@ -336,7 +341,9 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         }
 
         // Reset state when navigating to /chat (no id)
-        if( !conversation_id && current_conversation_id ) {
+        if( !conversation_id
+            && current_conversation_id
+            && pending_conversation_id_ref.current !== current_conversation_id ) {
             set_current_conversation_id( null )
             set_messages( [] )
         }
@@ -498,6 +505,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         let conv_id = current_conversation_id
         if( !conv_id ) {
             conv_id = await create_conversation( text )
+            pending_conversation_id_ref.current = conv_id
             set_current_conversation_id( conv_id )
             navigate( `/chat/${ conv_id }`, { replace: true } )
         }
@@ -614,11 +622,8 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
             // Handle ?q= parameter — auto-send message once model is ready
             if( q_param && ( model_loaded || loaded_model_id ) ) {
                 query_processed_ref.current = true
-                set_search_params( {}, { replace: true } )
-                setTimeout( () => {
-                    send_message( q_param )
-                    chat_input_ref.current?.focus()
-                }, 100 )
+                await send_message( q_param )
+                chat_input_ref.current?.focus()
                 return
             }
 
@@ -659,6 +664,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
      */
     const handle_new_chat = useCallback( () => {
         abort()
+        pending_conversation_id_ref.current = null
         set_current_conversation_id( null )
         set_messages( [] )
         navigate( `/chat` )

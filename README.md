@@ -42,7 +42,7 @@ It works in two ways:
 | How it works | AI runs inside your browser tab | AI runs natively on your machine |
 | Setup | Just open the website | Download and install |
 | Speed | Good | Faster (uses your GPU) |
-| Model size limit | ~3 GB (browser limitation) | Only limited by your RAM |
+| Model size limit | Up to the browser's 16 GiB WASM address space; usable size depends on RAM | Only limited by your RAM |
 | Works offline | After first model download | After first model download |
 
 ## How do I use it?
@@ -61,11 +61,11 @@ The app picks the best model for your device automatically. Smaller devices get 
 
 | Model | Size | Good for |
 |---|---|---|
-| SmolLM2 | ~260 MB | Older laptops, phones |
-| DeepSeek R1 1.5B | ~1 GB | Average laptops, reasoning tasks |
-| Llama 3.2 1B | ~670 MB | General chat on modest hardware |
-| Mistral 7B | ~5 GB | Serious conversations, desktop app |
-| Mixtral 8x7B | ~26 GB | Power users with 32+ GB RAM |
+| SmolLM2 360M | ~271 MB | Older laptops, quick conversations |
+| Llama 3.2 1B | ~808 MB | General chat on modest hardware |
+| DeepSeek R1 1.5B | ~1.1 GB | Compact reasoning tasks |
+| Qwen 3.5 2B | ~1.28 GB | Current reasoning, instruction following, multilingual chat |
+| Qwen3 8B | ~5 GB | High-memory browsers and desktop systems |
 
 All models are open-source. You download them once, then everything runs locally.
 
@@ -75,7 +75,7 @@ Yes. The AI model runs entirely on your hardware — in your browser tab or in t
 
 ## Requirements
 
-- A modern browser (Chrome, Edge, Firefox, Safari) **or** the desktop app
+- A current 64-bit browser **or** the desktop app. Chrome/Edge 137+ use the Memory64 runtime; unsupported Safari versions use a slower, locally bundled compatibility runtime.
 - Enough free RAM for the model you choose (the app handles this automatically)
 - An internet connection for the first model download only
 

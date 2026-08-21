@@ -2,7 +2,7 @@
 
 > Run AI locally. Your data never leaves your device.
 
-A privacy-first chat app that runs open-source LLMs entirely on your device. Works in the browser (WASM via [wllama](https://github.com/nicoly/wllama)) or as a desktop app (native via [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) in Electron).
+A privacy-first chat app that runs open-source LLMs entirely on your device. Works in the browser (Memory64 WASM via [wllama64](https://github.com/actuallymentor/wllama64)) or as a desktop app (native via [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) in Electron).
 
 ## Quick Start
 
@@ -15,7 +15,7 @@ npm run dev
 
 ## Electron
 
-The Electron build uses native inference instead of WASM, removing the ~3.4 GB browser memory ceiling.
+The Electron build uses native inference instead of WASM, removing the browser's 16 GiB linear-memory ceiling and using the system GPU when available.
 
 ```bash
 # Dev with hot-reload
@@ -58,7 +58,6 @@ The test suite is split into fast UI tests and slower inference tests that downl
 |---------|---------|---------------|
 | `ui` | ~30s | UI interactions, routing, settings, theme — no model downloads |
 | `inference` | ~20-30 min | Multi-architecture WASM inference, model switching, abort, chat history, settings effects, deep links |
-| `heavy` | ~30+ min | Mistral 7B download + inference (nightly/optional) |
 | `smoke` | ~30s | Electron app launches, API exposed |
 | `inference` (Electron) | ~15 min | Native node-llama-cpp inference, multi-architecture, IPC model management |
 
@@ -71,8 +70,8 @@ npx playwright test --config=tests/playwright.config.js --project=ui
 # Browser inference tests (downloads real models, runs WASM inference)
 npx playwright test --config=tests/playwright.config.js --project=inference
 
-# Heavy Mistral test (optional, ~2.7 GB download)
-npx playwright test --config=tests/playwright.config.js --project=heavy
+# Re-run the researched Qwen 3.5 model gate
+RESEARCH_INFERENCE=1 npx playwright test --config=tests/playwright.config.js --project=inference tests/e2e/inference_multimodel.spec.js
 
 # Electron smoke test
 DISPLAY=:99 npx playwright test --config=tests/electron.config.js --project=smoke
@@ -83,15 +82,15 @@ DISPLAY=:99 npx playwright test --config=tests/electron.config.js --project=infe
 
 ### Architecture Coverage
 
-Inference tests cover all four chat template types the app supports:
+Wllama64 renders each model's embedded Jinja template. The real-inference suite covers these model families:
 
-| Template | Model | Test file |
-|----------|-------|-----------|
-| ChatML | SmolLM2 360M | `inference_multimodel.spec.js` |
-| Zephyr | TinyLlama 1.1B | `inference_multimodel.spec.js` |
-| Llama3 | Llama 3.2 1B | `inference_multimodel.spec.js` |
-| ChatML (Qwen) | DeepSeek R1 1.5B | `inference_multimodel.spec.js` |
-| Mistral | Mistral 7B | `inference_mistral.spec.js` |
+| Family | Model | Test file |
+|--------|-------|-----------|
+| SmolLM | SmolLM2 360M | `inference.spec.js`, `inference_multimodel.spec.js` |
+| Llama / Zephyr | TinyLlama 1.1B | `inference_multimodel.spec.js` |
+| Llama 3 | Llama 3.2 1B | `inference_multimodel.spec.js` |
+| Qwen 2 / reasoning | DeepSeek R1 1.5B | `inference_multimodel.spec.js` |
+| Qwen 3.5 hybrid | Qwen 3.5 2B | `inference_multimodel.spec.js` with `RESEARCH_INFERENCE=1` |
 
 ### Docker / CI Setup
 
@@ -111,7 +110,7 @@ bash scripts/download_test_models.sh --all     # All 5 models (~4.4 GB)
 
 ```
 tests/
-├── playwright.config.js       # Browser test config (ui, inference, heavy projects)
+├── playwright.config.js       # Browser test config (ui and inference projects)
 ├── electron.config.js         # Electron test config (smoke, inference projects)
 ├── fixtures/
 │   └── test_models.js         # Model definitions with HuggingFace URLs
@@ -121,7 +120,6 @@ tests/
 │   └── electron_helpers.js     # Electron launch, model preloading, IPC helpers
 ├── e2e/                        # Browser E2E tests (17 spec files)
 │   ├── inference_multimodel.spec.js
-│   ├── inference_mistral.spec.js
 │   ├── model_switching.spec.js
 │   ├── abort_generation.spec.js
 │   ├── chat_history_with_inference.spec.js
@@ -143,7 +141,7 @@ Both workflows trigger when a version bump lands on `main` (the `package.json` v
 
 ### Web → Cloudflare Workers (Static Assets)
 
-The `deploy-web` workflow builds with Vite and deploys to Cloudflare Workers via `wrangler deploy`. The project name and asset directory are configured in `wrangler.toml`. The `public/_headers` file sets `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` so `SharedArrayBuffer` works for multi-threaded WASM inference.
+The `deploy-web` workflow builds with Vite and deploys to Cloudflare Workers via `wrangler deploy`. The project name and asset directory are configured in `wrangler.toml`. The `public/_headers` file sets `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`; wllama64 requires cross-origin isolation for its shared Memory64 runtime.
 
 ### Electron → GitHub Releases
 
@@ -174,7 +172,7 @@ The app automatically recommends the best model for your hardware. On first laun
 | Runtime | Detection method |
 |---------|-----------------|
 | **Electron** | Calls `node-llama-cpp`'s `getLlama()` at startup to detect GPU backend (Metal, CUDA, Vulkan), VRAM, and unified memory. Falls back to OS-level `os.totalmem()` if GPU detection fails. |
-| **Browser** | Probes WebGPU adapter limits and WebGL debug info to estimate VRAM. Caps against `navigator.deviceMemory` and `performance.memory.jsHeapSizeLimit`. |
+| **Browser** | Probes shared Memory64, JSPI, cross-origin isolation, WebGPU, device memory, and WebGL. Memory64 and wasm32 compatibility runtimes receive separate conservative budgets. |
 
 ### Memory budget calculation
 
@@ -190,12 +188,12 @@ Models need roughly **1.2x their file size** once loaded (weights + KV cache + c
 
 **Browser (WASM)**
 
-| Constraint | Limit |
-|-----------|-------|
-| WASM 32-bit address space | ~3.4 GB hard ceiling (4 GB minus runtime overhead) |
-| `navigator.deviceMemory` | 60% of reported device memory |
-| `jsHeapSizeLimit` (Chrome) | 70% of heap limit |
-| Effective budget | Minimum of all three constraints |
+| Runtime | Limit |
+|---------|-------|
+| Shared Memory64 + JSPI | 15 GB model budget below wllama64's 16 GiB virtual ceiling, further capped to 85% of reported device memory |
+| wasm32 compatibility | ~3.4 GB hard ceiling, further capped to 60% of reported device memory and 70% of the JS heap limit |
+
+The inference context starts at 2,048 tokens even when a model advertises 128K or 262K. Allocating the advertised maximum at startup would waste gigabytes of KV cache before the first short chat.
 
 ### What gets recommended
 
@@ -210,16 +208,17 @@ The selector walks tiers from highest quality to lowest and picks the **first ti
 | NVIDIA RTX 4090 (24 GB) | ~24 GB | **Mistral 7B** (5.1 GB) | Mixtral needs 31.7 GB loaded — doesn't fit yet. |
 | Intel laptop (8 GB, no GPU) | ~5.6 GB | **Mistral 7B** (5.1 GB) | 70% of 8 GB = 5.6 GB. Tight but viable at CPU speed. |
 | Intel laptop (4 GB, no GPU) | ~2.8 GB | **DeepSeek R1 1.5B** (1.1 GB) | Budget fits medium-tier models only. |
-| Browser (8 GB device) | ~3.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | WASM ceiling caps at 3.4 GB regardless of device memory. |
+| Browser with Memory64 (8 GB reported) | ~6.8 GB | **Qwen3 8B** (5.0 GB) | Memory64 removes the wasm32 ceiling; device-memory headroom remains. |
+| Browser compatibility runtime (8 GB reported) | ~3.4 GB | **Qwen 3.5 2B** (1.28 GB) | wasm32 remains bounded by its 4 GiB address space. |
 
 ### Model tiers
 
 | Tier | Models | File size | Min budget |
 |------|--------|-----------|-----------|
-| **Lightweight** | SmolLM2 360M | 260 MB | ~312 MB |
-| **Medium** | TinyLlama 1.1B, Llama 3.2 1B, DeepSeek R1 1.5B | 670 MB - 1.1 GB | ~1.3 GB |
-| **Heavy** | Mistral 7B Instruct (Q5_K_M) | 5.1 GB | ~6.1 GB |
-| **Ultra** | Mixtral 8x7B Instruct (Q4_K_M) | 26.4 GB | ~31.7 GB |
+| **Lightweight** | SmolLM2 360M, Qwen3 0.6B, TinyLlama 1.1B, Llama 3.2 1B | 271–808 MB | ~0.8 GB |
+| **Medium** | DeepSeek R1 1.5B, Qwen3 1.7B, **Qwen 3.5 2B**, SmolLM3 3B, Qwen3 4B | 1.1–2.5 GB | ~1.7 GB |
+| **Heavy** | Qwen3 8B, Qwen3 14B | 5.0–9.0 GB | ~6.2 GB |
+| **Ultra** | Qwen3 32B, Llama 3.3 70B | 19.8–42.5 GB | Desktop only at these quantizations |
 
 ### Key design decisions
 
@@ -237,12 +236,12 @@ src/
 │   ├── molecules/    # Stateful components
 │   └── pages/        # Route-level pages
 ├── hooks/            # React hooks
-├── providers/        # LLM providers (wllama, electron IPC)
-├── stores/           # Zustand + IndexedDB
+├── providers/        # LLM providers (wllama64, electron IPC)
+├── stores/           # Zustand + IndexedDB metadata/history
 ├── styles/           # Theme + styled-components
 └── utils/            # Utilities
 ```
 
 ## Tech Stack
 
-React 18, Vite, styled-components, react-router, zustand, Playwright, wllama (browser), node-llama-cpp (Electron)
+React 18, Vite, styled-components, react-router, zustand, Playwright, wllama64 (browser), node-llama-cpp (Electron)

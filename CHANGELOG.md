@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.41.0] - 2026-08-21
+
+### Added
+- Qwen 3.5 2B Q4_K_M after real browser inference validation
+- Local wasm32 compatibility runtime for supported non-Memory64 browsers
+
+### Changed
+- Migrate browser inference to `wllama64` and Wllama V3 chat completions
+- Stream browser model downloads to OPFS instead of buffering full blobs
+- Use embedded GGUF Jinja templates and a practical 2K startup context
+
+### Fixed
+- Preserve visible reasoning and Qwen 3.5's non-thinking default
+- Forward configured stop sequences under the provider API's correct name
+- Synchronize generation settings immediately across open components
+- Preserve the first message while a new chat receives its routed ID
+- Unload active models before clearing OPFS-backed model data
+- Reject empty/waking placeholders in real-inference tests
+- Correct four stale catalog download sizes and exact model selection in E2E
+
+### Removed
+- Wllama V2 binaries, aliases, manual prompt formatting, and obsolete heavy test
+
 ## [0.40.0] - 2026-03-17
 
 ### Added

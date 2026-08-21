@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { log } from 'mentie'
-import { STORAGE_PREFIX } from '../utils/branding'
+import { EVENTS, STORAGE_PREFIX } from '../utils/branding'
 
 // Default values for all settings
 const DEFAULTS = {
@@ -66,6 +66,9 @@ export default function use_settings() {
         localStorage.setItem( `${ PREFIX }${ key }`, String( value ) )
         log.debug( `[settings] ${ key } = ${ value }` )
         set_settings( ( prev ) => ( { ...prev, [ key ]: value } ) )
+        window.dispatchEvent( new CustomEvent( EVENTS.settings_changed, {
+            detail: { key, value },
+        } ) )
 
     }, [] )
 
@@ -91,12 +94,14 @@ export default function use_settings() {
             frequency_penalty: settings.frequency_penalty,
             presence_penalty: settings.presence_penalty,
             seed: settings.seed === -1 ? undefined : settings.seed,
-            ... stop?.length ? { stop } : {} ,
+            ... stop?.length ? { stop_sequences: stop } : {} ,
         }
 
     }, [ settings ] )
 
-    // Sync if localStorage changes externally (e.g. another tab)
+    // localStorage's `storage` event only fires in other documents. SettingsModal
+    // and ChatPage mount separate hook instances, so also synchronize changes
+    // within this window through an app event.
     useEffect( () => {
 
         const handle_storage = ( e ) => {
@@ -110,8 +115,18 @@ export default function use_settings() {
             }
         }
 
+        const handle_local_change = ( { detail } ) => {
+            if( detail?.key && detail.key in DEFAULTS ) {
+                set_settings( ( prev ) => ( { ...prev, [ detail.key ]: detail.value } ) )
+            }
+        }
+
         window.addEventListener( `storage`, handle_storage )
-        return () => window.removeEventListener( `storage`, handle_storage )
+        window.addEventListener( EVENTS.settings_changed, handle_local_change )
+        return () => {
+            window.removeEventListener( `storage`, handle_storage )
+            window.removeEventListener( EVENTS.settings_changed, handle_local_change )
+        }
 
     }, [] )
 

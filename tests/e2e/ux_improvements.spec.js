@@ -40,7 +40,7 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await page.goto( `/select-model` )
         const toggle = page.getByTestId( `change-model-toggle` )
         await expect( toggle ).toBeVisible()
-        await expect( toggle ).toContainText( `Choose a different model` )
+        await expect( toggle ).toContainText( `Choose a different local model` )
     } )
 
     test( `model select shows step progress`, async ( { page } ) => {
