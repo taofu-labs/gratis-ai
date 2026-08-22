@@ -1,5 +1,11 @@
 # Gotchas
 
+## Application invariants
+
+- Use `mentie` with named log levels; do not replace it with direct console logging.
+- Local model IDs are catalog IDs. Cloud IDs retain their `openrouter:` or `venice:` prefix so provider routing remains unambiguous.
+- Model-specific system prompts take precedence over the global default. Preserve this order when changing settings or session initialization.
+
 ## electron-updater v6: never call setFeedURL() (2026-03-03)
 
 electron-builder auto-generates `app-update.yml` inside the packaged app's `resources/` directory.
@@ -105,6 +111,8 @@ IndexedDB, and the pre-0.41 Workbox `hf-model-cache` duplicate.
 Hugging Face/Xet responses can omit `Content-Length`. Wllama then writes zero/null as metadata
 `originalSize`, making its otherwise complete OPFS model fail `Model.validate()`. Compare the sum
 of stored OPFS file sizes to the catalog/Hugging Face API size before declaring that entry missing.
+The catalog size must win over cached metadata: interrupted downloads once persisted their own
+truncated size and could therefore validate themselves. Reject and remove any exact-size mismatch.
 
 ## Chat list overflow: min-height vs height on #root (2026-02-28)
 

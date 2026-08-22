@@ -1,5 +1,14 @@
 # Timeline
 
+## 2026-08-22 — Dependency and documentation housekeeping
+
+- Updated supported dependencies within their current lines, including Electron 43, node-llama-cpp 3.20, Playwright 1.62, and current React/Vite patch releases.
+- Cleared all reported npm vulnerabilities; deferred unrelated major toolchain upgrades for isolated validation.
+- Verified packaged Electron startup and real native SmolLM2 inference after the runtime upgrades.
+- Made the Electron architecture test work for both onboarding and persisted returning-user state.
+- Caught and fixed partial Xet downloads being accepted when their GGUF header remained intact.
+- Reconciled privacy, cloud-provider, browser-runtime, dependency, and memory documentation with the current implementation.
+
 ## 2026-08-21 — wllama64 Memory64 migration and model validation
 
 - Migrated browser inference from Wllama V2 to `wllama64` 1.0.0 / Wllama V3.

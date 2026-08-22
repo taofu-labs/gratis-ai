@@ -286,8 +286,8 @@ export default function DownloadPage() {
         const { samples } = speed_ref.current
         if( samples.length < 2 || progress.bytes_total <= 0 ) return ``
 
-        const recent = samples[ samples.length - 1 ]
-        const older = samples[ 0 ]
+        const recent = samples.at( -1 )
+        const [ older ] = samples
         const elapsed_ms = recent.time - older.time
         const bytes_transferred = recent.bytes - older.bytes
 

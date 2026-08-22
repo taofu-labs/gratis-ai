@@ -33,7 +33,7 @@
 
 ## What is this?
 
-gratisAI is a chat app — like ChatGPT — except **everything runs on your own computer**. Your conversations never leave your device. There's no account, no subscription, and no one reading your messages.
+gratisAI is a chat app — like ChatGPT — that runs open models on your own computer by default. Local chats never leave your device. There's no account or subscription.
 
 It works in two ways:
 
@@ -71,25 +71,27 @@ All models are open-source. You download them once, then everything runs locally
 
 ## Is it really private?
 
-Yes. The AI model runs entirely on your hardware — in your browser tab or in the desktop app. There is no server involved. Your prompts and responses are stored in your browser's local storage and never transmitted anywhere.
+In local mode, yes. The AI model runs entirely on your hardware — in your browser tab or in the desktop app. Your prompts and responses stay in local storage and are never transmitted.
+
+Cloud models are optional. When you configure one, prompts and responses are sent to the provider you chose under that provider's privacy policy.
 
 ## Requirements
 
-- A current 64-bit browser **or** the desktop app. Chrome/Edge 137+ use the Memory64 runtime; unsupported Safari versions use a slower, locally bundled compatibility runtime.
+- A current 64-bit browser **or** the desktop app. Chrome/Edge 137+ use the Memory64 runtime; unsupported Firefox and Safari versions use a slower, locally bundled compatibility runtime.
 - Enough free RAM for the model you choose (the app handles this automatically)
 - An internet connection for the first model download only
 
 ## Advanced: bring your own model
 
-The built-in models are just the starting point. You can run **any GGUF model from [Hugging Face](https://huggingface.co/models?library=gguf)** — just paste the download URL into the app. This means thousands of open-source models are available to you: coding assistants, roleplay models, domain-specific fine-tunes, you name it.
+The built-in models are just the starting point. You can try other **GGUF models from [Hugging Face](https://huggingface.co/models?library=gguf)** by pasting a direct download URL into the app. This includes coding assistants, roleplay models, and domain-specific fine-tunes.
 
-The only constraint is your hardware: if a model fits in your RAM, it runs.
+The model must fit your hardware and use an architecture supported by the bundled llama.cpp runtime.
 
-## Nerd Mode: cloud GPUs
+## Optional cloud models
 
-Want to run **70B+ parameter models** that don't fit on your machine? Nerd Mode deploys any HuggingFace model to [RunPod](https://runpod.io) serverless GPUs. You bring your own API key and pay only for active inference time — endpoints scale to zero when idle.
+Want a model that does not fit on your machine? Connect your own [OpenRouter](https://openrouter.ai) or [Venice](https://venice.ai) API key from the model selection screen, then choose a model offered by that provider.
 
-From the model selection screen, pick **Cloud GPU**, enter your RunPod API key and a model name, and the app handles the rest: it estimates VRAM requirements, picks the cheapest compatible GPU, and deploys a vLLM endpoint for you.
+Cloud inference is not offline: your prompts and responses are sent to the selected provider. Local conversation history remains on your device.
 
 For build instructions, architecture details, model catalog internals, and more, see **[DOCUMENTATION.md](DOCUMENTATION.md)**.
 

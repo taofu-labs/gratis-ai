@@ -336,6 +336,11 @@ export default function GetAppPage() {
 
                 const is_current = id === current_os
                 const href = download_url( filename )
+                const action = href
+                    ? <DownloadButton href={ href } onClick={ () => handle_download_click( filename ) }>
+                        { t( 'download_for', { platform: label } ) }
+                    </DownloadButton>
+                    : <DisabledButton>{ t( 'not_configured' ) }</DisabledButton>
 
                 return <Card key={ id } $active={ is_current }>
 
@@ -346,14 +351,7 @@ export default function GetAppPage() {
                     <PlatformName>{ label }</PlatformName>
                     <PlatformDetail>{ detail } ({ file_hint })</PlatformDetail>
 
-                    { href
-                        ? <DownloadButton
-                            href={ href }
-                            onClick={ () => handle_download_click( filename ) }
-                        >
-                            { t( 'download_for', { platform: label } ) }
-                        </DownloadButton>
-                        : <DisabledButton>{ t( 'not_configured' ) }</DisabledButton> }
+                    { action }
 
                 </Card>
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.41.0] - 2026-08-21
+## [0.41.0] - 2026-08-22
 
 ### Added
 - Qwen 3.5 2B Q4_K_M after real browser inference validation
@@ -10,6 +10,8 @@
 - Migrate browser inference to `wllama64` and Wllama V3 chat completions
 - Stream browser model downloads to OPFS instead of buffering full blobs
 - Use embedded GGUF Jinja templates and a practical 2K startup context
+- Refresh supported dependencies, including Electron 43 and node-llama-cpp 3.20
+- Reconcile privacy, cloud-provider, browser-runtime, and model-memory documentation
 
 ### Fixed
 - Preserve visible reasoning and Qwen 3.5's non-thinking default
@@ -26,6 +28,8 @@
 - Use the self-hosted compatibility runtime on older Firefox builds
 - Reject empty/waking placeholders in real-inference tests
 - Correct four stale catalog download sizes and exact model selection in E2E
+- Navigate Electron inference tests through both onboarding and returning-user states
+- Reject and remove partial OPFS downloads whose stored size does not match the catalog
 
 ### Removed
 - Wllama V2 binaries, aliases, manual prompt formatting, and obsolete heavy test

@@ -140,7 +140,9 @@ export const is_model_cached = async ( model_id, expected_repo, expected_file ) 
     }
 
     try {
-        const expected_size = cached.file_size_bytes || get_model_by_id( model_id )?.file_size_bytes
+        // Catalog size wins. A pre-0.41 interrupted download may have persisted
+        // its truncated byte count as metadata and must not validate itself.
+        const expected_size = get_model_by_id( model_id )?.file_size_bytes || cached.file_size_bytes
         const stored_model = await get_browser_cached_model( cached.download_url, expected_size )
 
         if( !stored_model ) {
@@ -284,13 +286,20 @@ export const download_model = async ( model, on_progress, signal ) => {
     const downloaded_files = await downloaded.open()
     const [ first_file ] = downloaded_files
     const downloaded_size = downloaded_files.reduce( ( total, file ) => total + file.size, 0 )
+    const expected_size = model.file_size_bytes
 
     on_progress( {
         progress: 1,
         bytes_loaded: downloaded_size,
-        bytes_total: downloaded_size,
+        bytes_total: expected_size || downloaded_size,
         status: `Validating model...`,
     } )
+
+    if( !first_file ||  expected_size > 0 && downloaded_size !== expected_size  ) {
+        log.warn( `[download] Size validation failed — expected ${ expected_size }, received ${ downloaded_size }` )
+        await downloaded.remove()
+        throw new Error( `The model download was incomplete. Please retry the download.` )
+    }
 
     const header = new Uint8Array( await first_file.slice( 0, 4 ).arrayBuffer() )
     const is_valid_gguf = header[ 0 ] === 0x47 && header[ 1 ] === 0x47 && header[ 2 ] === 0x55 && header[ 3 ] === 0x46
@@ -307,7 +316,7 @@ export const download_model = async ( model, on_progress, signal ) => {
         storage: `wllama64-opfs`,
         download_url: url,
         cached_at: now,
-        file_size_bytes: downloaded_size,
+        file_size_bytes: expected_size || downloaded_size,
         name: model.name,
         category: model.category,
         hugging_face_repo: model.hugging_face_repo,

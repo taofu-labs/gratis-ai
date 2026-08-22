@@ -1,28 +1,25 @@
-# Major Dependency Upgrade Research (Feb 2026)
+# Dependency Maintenance Status (August 2026)
 
-Research for upgrading 9 major dependencies. See conversation for full details.
+## Current baseline
 
-## Summary
+- Runtime: React 19.2, React Router 7.18, i18next 25.10, styled-components 6.5, Zustand 5.0.
+- Browser tooling: Vite 7.3, plugin-react 5.2, vite-plugin-pwa 1.3, Vitest 4.1, Playwright 1.62.
+- Desktop: Electron 43.4, electron-builder 26.15, electron-updater 6.8, node-llama-cpp 3.20.
+- Browser inference is intentionally pinned to `wllama64` 1.0.0 and matching `@wllama/wllama-compat` 3.6.0. Upgrade those as one tested runtime unit.
+- `npm audit` reports zero known vulnerabilities after the 2026-08-22 housekeeping pass.
 
-| Dependency | From | To | Effort | Key Risk |
-|:-----------|:-----|:---|:-------|:---------|
-| @vitejs/plugin-react | ^4 | ^5 | Low | Node 20+ required, resolve.dedupe no longer auto-configured |
-| eslint | ^9 | ^10 | Low-Medium | Config file lookup changed, new recommended rules |
-| react | ^18 | ^19 | Medium-High | Removed APIs (forwardRef optional, PropTypes gone, string refs gone) |
-| react-dom | ^18 | ^19 | Medium-High | ReactDOM.render removed, error handling changed |
-| react-markdown | ^9 | ^10 | Low | Only className prop removed |
-| react-router-dom | ^6 | ^7 | Medium | Package renamed to react-router, future flags needed first |
-| uuid | ^9 | ^13 | Low-Medium | CommonJS removed (v12), browser exports default (v13) |
-| vite | ^5 | ^7 | Medium | Two major jumps, Node 20+, Sass legacy API removed, Rolldown replaces esbuild |
-| vite-plugin-pwa | ^0.21 | ^1.2 | Low | Mainly Vite 7 compatibility, workbox 7.3.0 |
+Electron 43 and node-llama-cpp 3.20 passed a packaged Linux launch and real native SmolLM2 inference. The browser dependency batch passed unit tests, production build, full UI tests, and real Memory64 inference.
 
-## Recommended Upgrade Order
+## Deferred major upgrades
 
-1. vite ^5 -> ^7 (foundation — everything depends on this)
-2. @vitejs/plugin-react ^4 -> ^5 (must match vite)
-3. vite-plugin-pwa ^0.21 -> ^1.2 (must match vite)
-4. eslint ^9 -> ^10 (independent)
-5. uuid ^9 -> ^13 (independent, low risk)
-6. react-markdown ^9 -> ^10 (independent, trivial)
-7. react + react-dom ^18 -> ^19 (biggest change, do together)
-8. react-router-dom ^6 -> ^7 (after React 19, enable future flags first)
+| Dependency | Current line | Available line | Why deferred |
+|:-----------|:-------------|:---------------|:-------------|
+| `@vitejs/plugin-react` | 5 | 6 | Couples to the Vite 8 migration; no user benefit in this pass. |
+| `vite` | 7 | 8 | Major bundler/runtime change; evaluate with PWA and Electron builds together. |
+| `eslint` | 9 | 10 | Major rule/config lookup changes; isolate from product work. |
+| `i18next` | 25 | 26 | Major behavior surface across every locale. |
+| `react-i18next` | 16 | 17 | Upgrade with i18next 26 and translation regression tests. |
+| `lucide-react` | 0.x | 1.x | Icon package major; visually inspect all routes after adoption. |
+| `uuid` | 13 | 14 | ESM/runtime major with no current need. |
+
+Run `npm outdated` and `npm audit` before the next maintenance pass. Preserve the exact wllama runtime pairing unless upstream compatibility is revalidated with real model inference.

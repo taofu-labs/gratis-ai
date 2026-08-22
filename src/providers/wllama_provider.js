@@ -61,7 +61,9 @@ export default class WllamaProvider {
 
         try {
             if( cached.download_url ) {
-                const expected_size = cached.file_size_bytes || model?.file_size_bytes
+                // Catalog size wins over cached metadata so an interrupted
+                // download cannot validate itself using its truncated length.
+                const expected_size = model?.file_size_bytes || cached.file_size_bytes
                 stored_model = await get_browser_cached_model( cached.download_url, expected_size )
             }
         } catch ( error ) {

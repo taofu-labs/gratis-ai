@@ -201,12 +201,10 @@ The selector walks tiers from highest quality to lowest and picks the **first ti
 
 | Hardware | Budget | Recommendation | Why |
 |----------|--------|---------------|-----|
-| MacBook Air M1 (8 GB) | ~6.0 GB | **Mistral 7B** (5.1 GB) | Unified memory gives 75% of 8 GB. Mistral at 5.1 GB x 1.2 = 6.1 GB — tight but fits. |
-| MacBook Pro M2 (16 GB) | ~12 GB | **Mistral 7B** (5.1 GB) | Fits easily with room for long context. |
-| Mac Studio M2 Ultra (64 GB) | ~48 GB | **Mixtral 8x7B** (26.4 GB) | 26.4 GB x 1.2 = 31.7 GB — plenty of headroom. |
-| NVIDIA RTX 3060 (12 GB) | ~12 GB | **Mistral 7B** (5.1 GB) | Fits in VRAM with GPU acceleration. |
-| NVIDIA RTX 4090 (24 GB) | ~24 GB | **Mistral 7B** (5.1 GB) | Mixtral needs 31.7 GB loaded — doesn't fit yet. |
-| Intel laptop (8 GB, no GPU) | ~5.6 GB | **Mistral 7B** (5.1 GB) | 70% of 8 GB = 5.6 GB. Tight but viable at CPU speed. |
+| Apple Silicon (8 GB) | ~6.0 GB | **Qwen3 8B** (5.0 GB) | Unified memory lets the native runtime fit the 2K context estimate. |
+| Apple Silicon (16 GB) | ~12 GB | **Qwen3 14B** (9.0 GB) | The native runtime can use larger weights without the browser ceiling. |
+| Discrete GPU (12 GB VRAM) | ~12 GB | **Qwen3 14B** (9.0 GB) | Weights fit in VRAM with headroom for inference buffers and 2K context. |
+| CPU-only system (8 GB RAM) | ~5.6 GB | **Qwen3 8B** (5.0 GB) | The estimate fits; generation speed remains hardware-dependent. |
 | Intel laptop (4 GB, no GPU) | ~2.8 GB | **DeepSeek R1 1.5B** (1.1 GB) | Budget fits medium-tier models only. |
 | Browser with Memory64 (8 GB reported) | ~5.6 GB | **Phi-4 Mini** (2.5 GB) | Memory64 removes the wasm32 ceiling while leaving 30% device-memory headroom. |
 | Browser compatibility runtime (memory unknown) | ~2.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | Firefox/Safari omit the memory hint, so selection stays conservative below the wasm32 ceiling. |
@@ -223,7 +221,7 @@ The selector walks tiers from highest quality to lowest and picks the **first ti
 ### Key design decisions
 
 - **Single-user assumption**: This is a desktop app for one person at a time, not a server. We can safely allocate 70-75% of RAM without impacting other workloads.
-- **Apple Silicon gets special treatment**: Unified memory means the full RAM pool is available to the GPU. An 8 GB MacBook Air can run Mistral 7B — something impossible in a browser.
+- **Apple Silicon gets special treatment**: Unified memory lets the native runtime use a larger share of the machine's RAM than a browser can safely reserve.
 - **Budget-based, not threshold-based**: Instead of hardcoded "if VRAM >= 8 GB then heavy", we calculate the actual memory budget and check which models fit. This naturally adapts to any hardware configuration.
 - **Graceful fallback**: If GPU detection fails (e.g., node-llama-cpp not compiled), we fall back to platform heuristics (macOS + arm64 implies Metal) and then to conservative CPU-only estimates.
 
@@ -244,4 +242,4 @@ src/
 
 ## Tech Stack
 
-React 18, Vite, styled-components, react-router, zustand, Playwright, wllama64 (browser), node-llama-cpp (Electron)
+React 19, Vite, styled-components, react-router, zustand, Playwright, wllama64 (browser), node-llama-cpp (Electron)
