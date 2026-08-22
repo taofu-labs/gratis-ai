@@ -66,7 +66,8 @@ describe( `deployment headers`, () => {
         expect( release_workflow ).toContain( `cancel-in-progress: false` )
         expect( release_workflow ).toMatch( /Upload artifacts to release[\s\S]*?draft: true/ )
         expect( release_workflow ).toContain( `needs.build.result == 'success'` )
-        expect( release_workflow ).toContain( `release_is_published` )
+        expect( release_workflow ).toContain( `release_state` )
+        expect( release_workflow ).toContain( `Unable to determine release state` )
 
         expect( headers_file ).toContain( `Cross-Origin-Opener-Policy: same-origin` )
         expect( headers_file ).toContain( `Cross-Origin-Embedder-Policy: require-corp` )

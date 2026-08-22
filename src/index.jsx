@@ -18,13 +18,19 @@ const SERVICE_WORKER_RELOAD_DELAY = 1_000
  * @returns {Promise<boolean>}
  */
 const has_active_browser_work = async () => {
-    if( window.location.pathname === `/download` ) return true
+    if( window.location.pathname.startsWith( `/download` ) ) return true
 
     // Keep the provider graph out of the initial bundle. Service-worker
     // replacement is rare, so inspect the store only when it happens.
-    const { default: use_llm_store } = await import( `./stores/llm_store` )
-    const { is_generating, is_loading } = use_llm_store.getState()
-    return is_generating || is_loading
+    try {
+        const { default: use_llm_store } = await import( `./stores/llm_store` )
+        const { is_generating, is_loading } = use_llm_store.getState()
+        return is_generating || is_loading
+    } catch {
+        // A newly activated worker may have removed this page's old hashed
+        // chunk. Reloading is the only recovery and fetches the current graph.
+        return false
+    }
 }
 
 // A new document is required for changed COOP/COEP headers to take effect.

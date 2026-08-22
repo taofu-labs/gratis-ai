@@ -41,14 +41,32 @@ jobs:
           CURR=$(node -p "require('./package.json').version")
           echo "version=$CURR" >> "$GITHUB_OUTPUT"
 
-          release_is_published() {
-            local is_draft
-            is_draft=$(gh release view "v$CURR" --json isDraft --jq .isDraft 2>/dev/null) || return 1
-            [ "$is_draft" = "false" ]
+          release_state() {
+            local error_file is_draft
+            error_file=$(mktemp)
+
+            if is_draft=$(gh release view "v$CURR" --json isDraft --jq .isDraft 2>"$error_file"); then
+              rm -f "$error_file"
+              [ "$is_draft" = "true" ] && echo "draft" || echo "published"
+              return
+            fi
+
+            if grep --ignore-case --quiet "release not found" "$error_file"; then
+              rm -f "$error_file"
+              echo "missing"
+              return
+            fi
+
+            echo "::error::Unable to determine release state for v$CURR" >&2
+            cat "$error_file" >&2
+            rm -f "$error_file"
+            return 1
           }
 
+          RELEASE_STATE=$(release_state)
+
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            if release_is_published; then
+            if [ "$RELEASE_STATE" = "published" ]; then
               echo "::notice::v$CURR is already published; nothing to recover"
               echo "changed=false" >> "$GITHUB_OUTPUT"
             else
@@ -58,7 +76,7 @@ jobs:
           fi
 
           if ! git cat-file -e "${BEFORE_SHA}:package.json" 2>/dev/null; then
-            if release_is_published; then
+            if [ "$RELEASE_STATE" = "published" ]; then
               echo "::notice::v$CURR is already published; skipping release recreation"
               echo "changed=false" >> "$GITHUB_OUTPUT"
             else
@@ -73,7 +91,12 @@ jobs:
           echo "previous=$PREV current=$CURR"
 
           if [ "$PREV" != "$CURR" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            if [ "$RELEASE_STATE" = "published" ]; then
+              echo "::notice::v$CURR is already published; skipping release recreation"
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
