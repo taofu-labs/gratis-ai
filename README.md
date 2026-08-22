@@ -109,6 +109,8 @@ npm install && npm run dev
 ```
 
 Everything else — testing, CI/CD, Electron builds, deployment — lives in **[DOCUMENTATION.md](DOCUMENTATION.md)**.
+Maintainers of older forks can follow **[MIGRATE_WLLAMA64.md](MIGRATE_WLLAMA64.md)** for the
+complete browser-runtime and storage migration.
 
 ---
 

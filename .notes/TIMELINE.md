@@ -485,3 +485,5 @@
 - Fixed progress-bar class generation found during 8–12 GB downloads.
 - Post-commit Claude review added upstream Hugging Face HEAD/size checks, exact context/batch
   assertions, neutral weighting for missing benchmarks, and verified-only large browser choices.
+- Added `MIGRATE_WLLAMA64.md`, a fork-maintainer runbook covering headers, pinned runtimes, the
+  atomic V3 provider cutover, reliable OPFS migration, rollback, and real-browser acceptance.
