@@ -10,6 +10,7 @@ on:
   push:
     branches: [main]
     paths: [package.json]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-web
@@ -24,18 +25,38 @@ jobs:
       version: ${{ steps.diff.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Compare version with latest release
+      - name: Compare version with previous revision
         id: diff
+        shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
+          set -euo pipefail
+
           CURR=$(node -p "require('./package.json').version")
-          PREV=$(gh release view --json tagName -q .tagName 2>/dev/null | sed 's/^v//' || echo "")
-          echo "latest-release=$PREV curr=$CURR"
+          echo "version=$CURR" >> "$GITHUB_OUTPUT"
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git cat-file -e "${BEFORE_SHA}:package.json" 2>/dev/null; then
+            echo "::notice::No previous package.json; treating this as a version change"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PREV=$(git show "${BEFORE_SHA}:package.json" |
+            node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+          echo "previous=$PREV current=$CURR"
+
           if [ "$PREV" != "$CURR" ]; then
-            echo "changed=true"  >> "$GITHUB_OUTPUT"
-            echo "version=$CURR" >> "$GITHUB_OUTPUT"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
@@ -65,14 +86,22 @@ jobs:
 
       - name: Verify COOP/COEP headers file
         run: |
-          if [ ! -f dist/_headers ]; then
-            echo "::error::dist/_headers missing — SharedArrayBuffer will not work"
-            exit 1
-          fi
+          set -euo pipefail
+          cmp public/_headers dist/_headers
+          grep --fixed-strings --quiet "Cross-Origin-Opener-Policy: same-origin" dist/_headers
+          grep --fixed-strings --quiet "Cross-Origin-Embedder-Policy: require-corp" dist/_headers
 
       - name: Deploy to Cloudflare Workers
+        id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.125.0"
           command: deploy
+
+      - name: Verify deployed security headers
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs['deployment-url'] }}
+          PUBLIC_URL: https://ai.gratis.sh
+        run: node scripts/verify_deployment_headers.js "$DEPLOYMENT_URL" "$PUBLIC_URL"

@@ -38,6 +38,15 @@ export default defineConfig( ( { mode } ) => {
                     globIgnores: [ `**/*ort-wasm*.wasm` ],
                     // The self-hosted wasm32 fallback is ~16 MiB.
                     maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
+                    // A version bump must replace cached navigation responses even
+                    // when only edge headers changed. Cross-origin isolation is a
+                    // property of that cached response, not just the network route.
+                    manifestTransforms: [ entries => ( {
+                        manifest: entries.map( entry => entry.url === `index.html`
+                            ? { ...entry, revision: `${ entry.revision }-${ pkg.version }` }
+                            : entry ),
+                        warnings: [],
+                    } ) ],
                 },
             } ),
         ],

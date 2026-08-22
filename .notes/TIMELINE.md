@@ -487,3 +487,14 @@
   assertions, neutral weighting for missing benchmarks, and verified-only large browser choices.
 - Added `MIGRATE_WLLAMA64.md`, a fork-maintainer runbook covering headers, pinned runtimes, the
   atomic V3 provider cutover, reliable OPFS migration, rollback, and real-browser acceptance.
+
+## 2026-08-22 — Memory64 production deployment repair
+
+- Traced missing production COOP/COEP to `wrangler-action` silently installing Wrangler 3.90.0,
+  which predates Workers Static Assets `_headers` uploads.
+- Pinned current Wrangler, added post-deploy header receipts for both deployment origins, and added
+  a production PWA browser test covering a real 16 GiB shared Memory64 reservation before and after
+  service-worker control.
+- Versioned the Workbox navigation cache policy and added future service-worker takeover reloads so
+  cached response headers upgrade safely.
+- Hardened release gates and draft uploads so failed platform builds cannot publish partial releases.

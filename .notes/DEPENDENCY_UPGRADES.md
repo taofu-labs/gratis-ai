@@ -4,7 +4,7 @@
 
 - Runtime: React 19.2, React Router 7.18, i18next 26.4, react-i18next 17.0,
   lucide-react 1.33, uuid 14.0, styled-components 6.5, Zustand 5.0.
-- Browser tooling: Vite 7.3, plugin-react 5.2, vite-plugin-pwa 1.3, Vitest 4.1, Playwright 1.62.
+- Browser tooling: Vite 7.3, plugin-react 5.2, vite-plugin-pwa 1.3, Vitest 4.1, Playwright 1.62, Wrangler 4.125.
 - Desktop: Electron 43.4, electron-builder 26.15, electron-updater 6.8, node-llama-cpp 3.20.
 - Browser inference is intentionally pinned to `wllama64` 1.0.0 and matching `@wllama/wllama-compat` 3.6.0. Upgrade those as one tested runtime unit.
 - `npm audit` reports zero known vulnerabilities after the 2026-08-22 housekeeping pass.

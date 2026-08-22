@@ -1,7 +1,7 @@
 # Model Selection Reference
 
 > Comprehensive guide to LLM quantization, memory requirements, and model recommendations.
-> Last updated: 2026-02-23
+> Last updated: 2026-08-22
 >
 > **Audience:** Human developers and AI coding assistants working on this project.
 
@@ -155,7 +155,7 @@ For longer contexts, subtract the KV cache overhead from [Section 4](#4-kv-cache
 | 1.5B | Q8_0 | 1.6 GiB | Virtually lossless |
 | 3B | Q4_K_M | 1.8 GiB | Sweet spot |
 
-#### 3.4 GiB — WASM hard cap (browsers)
+#### 3.4 GiB — wasm32 compatibility path
 
 | Model Size | Best Quant | File Size | Quality |
 |:-----------|:-----------|----------:|:--------|
@@ -165,8 +165,8 @@ For longer contexts, subtract the KV cache overhead from [Section 4](#4-kv-cache
 | 7B | Q3_K_S | 3.0 GiB | Acceptable (significant quality loss) |
 | 8B | IQ3_XXS | 2.9 GiB | Aggressive (not recommended) |
 
-> **WASM verdict:** 3B @ Q4_K_M (1.8 GiB) is the **practical sweet spot** for browser inference.
-> Going to 7B requires aggressive quantization that negates the parameter advantage.
+> **wasm32 verdict:** 3B @ Q4_K_M (1.8 GiB) is the **practical sweet spot** for compatibility
+> browsers. Memory64 browsers use the separate 16 GiB virtual ceiling described in §7.
 
 #### 4 GiB — 32-bit systems
 

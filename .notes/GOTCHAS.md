@@ -130,6 +130,10 @@ would find the new release via `/releases/latest/` but `latest-mac.yml` wasn't u
 **Fix**: Create the release as `draft: true`. Added a `publish-release` job that runs after
 all `build` matrix jobs complete, using `gh release edit --draft=false` to publish atomically.
 
+**Follow-up (2026-08-22):** Every later `softprops/action-gh-release` upload must also pass
+`draft: true`; otherwise reusing the existing draft can publish it before the matrix finishes.
+Keep release concurrency queued rather than cancelling an in-flight platform matrix.
+
 ## ipcMain.handle swallows Error details as {} (2026-03-09)
 
 When `autoUpdater.checkForUpdates()` rejects inside an `ipcMain.handle` callback, Electron
@@ -204,6 +208,23 @@ under a unified "Applications" dashboard. Key consequences:
 - https://blog.cloudflare.com/pages-and-workers-are-converging-into-one-experience/
 - https://developers.cloudflare.com/workers/static-assets/
 - https://developers.cloudflare.com/workers/static-assets/headers/
+
+## Workers Assets `_headers` require modern Wrangler (2026-08-22)
+
+`cloudflare/wrangler-action@v3` falls back to Wrangler 3.90.0 when the project does not pin
+Wrangler. Workers Static Assets did not upload `_headers` metadata until Wrangler 3.113.0, so a
+green deployment can serve current files without COOP/COEP and silently disable transferable
+shared Memory64.
+
+**Fix**: Pin Wrangler in `package.json` and the action input. Verify COOP/COEP after deployment on
+both the action's Workers URL and the public custom domain. A local `dist/_headers` existence check
+does not prove the edge applied it.
+
+Workbox caches the entire navigation `Response`, including headers. An edge-only header repair does
+not repair the old cached response. Couple header-policy changes to an explicit versioned
+`index.html` precache revision. Controlled clients need a full navigation before
+`crossOriginIsolated` can change; reload on future `controllerchange` events, but do not force the
+first transition from old code because it can interrupt a multi-gigabyte model download.
 
 ## wllama64 OPFS and large-model traps (2026-08-22)
 

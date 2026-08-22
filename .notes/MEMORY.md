@@ -8,3 +8,4 @@
 - [`DEPENDENCY_UPGRADES.md`](DEPENDENCY_UPGRADES.md) — load before dependency maintenance or interpreting upgrade risk.
 - [`RUNPOD_API_RESEARCH.md`](RUNPOD_API_RESEARCH.md) — historical reference only; load when maintaining backward-compatible RunPod migration paths.
 - [`TIMELINE.md`](TIMELINE.md) — load when historical decisions, release chronology, or regression context matter.
+- [`HUMAN.md`](HUMAN.md) — load before publishing Electron releases or when an external account action may block CI.

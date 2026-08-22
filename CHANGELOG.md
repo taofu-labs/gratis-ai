@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.42.1] - 2026-08-22
+
+### Added
+- Production PWA coverage for COOP/COEP, service-worker navigation caching, and a real shared 16 GiB Memory64 reservation
+- Post-deploy header receipts for both the Cloudflare Workers URL and `ai.gratis.sh`
+
+### Changed
+- Pin Wrangler 4.125.0 so Workers Static Assets uploads `_headers` metadata reliably
+- Version the Workbox `index.html` cache revision and reload controlled clients after future service-worker takeovers
+- Compare release versions with the previous pushed revision and allow explicit manual workflow recovery
+
+### Fixed
+- Restore production cross-origin isolation required for transferable shared Memory64
+- Keep Electron releases in draft until every platform build, signature, and notarization succeeds
+- Prevent overlapping Electron releases from cancelling and publishing incomplete artifacts
+
 ## [0.42.0] - 2026-08-22
 
 ### Added
