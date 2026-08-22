@@ -16,20 +16,31 @@ const missing_ids = requested_ids.filter( id => !selected_models.some( model => 
 
 if( missing_ids.length ) throw new Error( `Unknown LARGE_INFERENCE_MODELS: ${ missing_ids.join( `, ` ) }` )
 
-const launch_context = async ( profile ) => chromium.launchPersistentContext( profile, {
-    headless: true,
-    viewport: { width: 1280, height: 720 },
-    ... process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? {
-        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-    } : {},
-    args: [
-        `--disable-dev-shm-usage`,
-        `--disable-setuid-sandbox`,
-        `--enable-precise-memory-info`,
-        `--no-sandbox`,
-        `--unlimited-storage`,
-    ],
-} )
+const launch_context = async profile => {
+    const context = await chromium.launchPersistentContext( profile, {
+        headless: true,
+        viewport: { width: 1280, height: 720 },
+        ... process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? {
+            executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+        } : {},
+        args: [
+            `--disable-dev-shm-usage`,
+            `--disable-setuid-sandbox`,
+            `--enable-precise-memory-info`,
+            `--no-sandbox`,
+            `--unlimited-storage`,
+        ],
+    } )
+
+    // The strict device fit gate is intentional. Headless Chromium's privacy
+    // hint is too small for the release-gated 9B–20B artifacts, so the receipt
+    // explicitly models the high-memory machine running this opt-in suite.
+    await context.addInitScript( () => {
+        Object.defineProperty( navigator, `deviceMemory`, { get: () => 32, configurable: true } )
+    } )
+
+    return context
+}
 
 const instrument_context = async ( context, events ) => {
     context.on( `console`, message => {

@@ -53,5 +53,15 @@
     "one_time_download": "{{name}} — c'est un téléchargement unique. Ensuite, tout fonctionne hors ligne.",
     "ready_to_chat": "Prêt à discuter !",
     "cancel_download": "Annuler le téléchargement",
-    "preparing": "Préparation..."
+    "preparing": "Préparation...",
+    "measuring_download_speed": "Mesure de la vitesse de téléchargement…",
+    "download_range_under_minute": "moins d’une minute",
+    "download_range_1_3_minutes": "1 à 3 minutes",
+    "download_range_3_8_minutes": "3 à 8 minutes",
+    "download_range_10_20_minutes": "10 à 20 minutes",
+    "download_range_20_40_minutes": "20 à 40 minutes",
+    "download_range_40_plus_minutes": "plus de 40 minutes",
+    "does_not_fit": "ne tient pas en mémoire",
+    "model_does_not_fit": "Ce modèle ne tient pas dans la mémoire disponible pour ce navigateur.",
+    "no_local_model_fits": "Aucun modèle local ne tient en toute sécurité dans la mémoire disponible. Fermez d’autres applications ou utilisez un modèle cloud."
 }

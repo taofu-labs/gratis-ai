@@ -204,3 +204,24 @@ browser chats; otherwise a 128-token cap can be consumed by hidden reasoning wit
 
 The vendor Ministral 3B artifact at 2,147,023,008 bytes failed with `invalid gguf type for
 tokenizer.ggml.scores`; do not switch the catalog back without retesting the pinned runtime.
+
+## WebGPU resource probing and Wllama offload (2026-08-22)
+
+- WebGPU exposes allocation limits but no authoritative free-VRAM query. A useful browser-side
+  signal is a lower bound from retained, touched buffers until allocation refusal or a safety cap.
+- `adapter.info.isFallbackAdapter` identifies software/fallback adapters and should suppress the
+  destructive allocation probe and offload attempt.
+- `wllama64` 1.0.0 already forwards llama.cpp's `n_gpu_layers`; `0` forces CPU and a positive
+  value requests WebGPU offload. No package fork or dependency update is required.
+- The GGUF remains fully resident in WASM memory during offload. Strict model eligibility must
+  remain based on RAM, KV-cache, runtime overhead, and the WASM address-space ceiling.
+- Qwen 3.5 hybrid models need separate KV-bearing `layers` and transformer `block_count` values:
+  2B has 24 blocks, 4B has 32, and 9B has 32. GPU-layer estimates use `block_count`.
+- A real-file speed sample should use one CORS-safelisted `Range` request to the selected GGUF.
+  Record rolling actual-download throughput separately and prefer it for later estimates.
+
+Primary sources:
+- https://gpuweb.github.io/gpuweb/
+- https://huggingface.co/Qwen/Qwen3.5-2B/raw/main/config.json
+- https://huggingface.co/Qwen/Qwen3.5-4B/raw/main/config.json
+- https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/config.json

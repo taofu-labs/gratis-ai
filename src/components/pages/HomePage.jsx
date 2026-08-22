@@ -14,6 +14,7 @@ import use_chat_history from '../../hooks/use_chat_history'
 import { useTranslation } from 'react-i18next'
 import { export_conversation } from '../../utils/export'
 import { DISPLAY_NAME, storage_key } from '../../utils/branding'
+import { is_model_fit_error } from '../../utils/model_fit_error'
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -216,7 +217,7 @@ export default function HomePage() {
         load_model( active_id ).catch( ( err ) => {
             if( cancelled ) return
             log.error( `[HomePage] Preload failed:`, err.message )
-            set_load_error( err.message )
+            set_load_error( { message: err.message, code: err.code } )
         } )
 
         return () => {
@@ -245,7 +246,7 @@ export default function HomePage() {
         set_load_error( null )
         load_model( active_id ).catch( ( err ) => {
             log.error( `[HomePage] Retry failed:`, err.message )
-            set_load_error( err.message )
+            set_load_error( { message: err.message, code: err.code } )
         } )
 
     }, [ active_id, load_model ] )
@@ -420,10 +421,10 @@ export default function HomePage() {
             { /* Error banner — only after loading settles, never mid-load */ }
             { !is_loading && load_error && <ErrorBanner data-testid="home-load-error">
                 <AlertCircle size={ 14 } />
-                <span>{ t( 'failed_to_load' ) }</span>
-                <ErrorAction onClick={ handle_retry } data-testid="home-retry-btn">
+                <span>{ load_error.message || t( 'failed_to_load' ) }</span>
+                { !is_model_fit_error( load_error ) && <ErrorAction onClick={ handle_retry } data-testid="home-retry-btn">
                     <RotateCcw size={ 12 } /> { t( 'common:retry' ) }
-                </ErrorAction>
+                </ErrorAction> }
                 <ErrorAction onClick={ () => navigate( `/select-model` ) } data-testid="home-choose-another-btn">
                     { t( 'choose_another' ) }
                 </ErrorAction>

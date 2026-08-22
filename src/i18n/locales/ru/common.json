@@ -58,7 +58,10 @@
     "format_just_now": "Только что",
     "format_minutes_ago": "{{count}} мин. назад",
     "format_hours_ago": "{{count}} ч. назад",
-    "format_eta_seconds": "Примерно {{count}} секунд осталось",
-    "format_eta_minutes": "Примерно {{count}} минута осталась",
-    "format_eta_minutes_plural": "Примерно {{count}} минут осталось"
+    "duration_seconds": "~{{count}} с",
+    "duration_minutes": "~{{count}} мин",
+    "duration_minutes_seconds": "~{{minutes}} мин {{seconds}} с",
+    "duration_hours": "~{{count}} ч",
+    "duration_hours_minutes": "~{{hours}} ч {{minutes}} мин",
+    "eta_remaining": "Осталось {{duration}}"
 }

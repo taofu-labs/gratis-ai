@@ -97,6 +97,8 @@ test.describe( `Vision Models — Model Select Page`, () => {
         // Wait for page to fully render
         await expect( page.getByText( `Pick a model` ) ).toBeVisible()
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeDisabled()
+        await expect( page.getByTestId( `no-fitting-local-model` ) ).toBeVisible()
 
         // Vision card should NOT appear
         await expect( page.getByText( `Handles Files` ) ).not.toBeVisible()

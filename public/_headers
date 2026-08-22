@@ -1,8 +1,3 @@
 /*
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp
-
-# Speedtest binaries need CORS so Electron (file:// origin) can fetch them
-/speedtest/*
-  Access-Control-Allow-Origin: *
-  Cross-Origin-Resource-Policy: cross-origin

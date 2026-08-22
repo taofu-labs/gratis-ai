@@ -1,118 +1,93 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-
-
-// ─── Speed-test file ladder ─────────────────────────────────────────────────────
-// Each step is tried in order. If the download finishes in < 800ms the result
-// is too noisy, so we escalate to the next file for a more reliable reading.
-
-const TEST_FILES = [
-    { path: `/speedtest/1mib.bin`,  bytes: 1 * 1024 * 1024 },
-    { path: `/speedtest/10mib.bin`, bytes: 10 * 1024 * 1024 },
-    { path: `/speedtest/25mib.bin`, bytes: 25 * 1024 * 1024 },
-]
-
-const MIN_RELIABLE_MS = 800
-
+import {
+    can_probe_network,
+    get_speed_estimate,
+    probe_download_speed,
+    record_speed_sample,
+} from '../utils/network_speed'
 
 /**
- * @typedef {Object} SpeedEstimate
- * @property {number|null}  speed_bps      - Measured speed in bytes per second
- * @property {number|null}  speed_mbps     - Measured speed in megabits per second
- * @property {boolean}      is_estimating  - True while a measurement is in progress
- * @property {Error|null}   error          - Last error, if any
- * @property {() => void}   run_estimate   - Trigger a new measurement
- */
-
-
-/**
- * Adaptive download-speed estimation hook.
+ * Measure the real model-download host with a bounded streaming request.
+ * Actual prior model downloads win over short probe samples.
  *
- * Downloads progressively larger test files until the transfer takes long enough
- * (≥ 800ms) to produce a reliable speed reading. Consumer triggers measurement
- * manually via `run_estimate()` to avoid surprise bandwidth usage.
- *
- * @returns {SpeedEstimate}
+ * @param {string|null} target_url
+ * @returns {{speed_bps: number|null, speed_mbps: number|null, source: string|null, is_estimating: boolean, error: Error|null, run_estimate: Function}}
  */
-export default function use_speed_estimate() {
+export default function use_speed_estimate( target_url ) {
 
-    const [ speed_bps, set_speed_bps ]       = useState( null )
-    const [ speed_mbps, set_speed_mbps ]     = useState( null )
-    const [ is_estimating, set_estimating ]  = useState( false )
-    const [ error, set_error ]               = useState( null )
-
-    // AbortController ref — lets us cancel in-flight fetches on unmount or re-run
+    const [ speed_bps, set_speed_bps ] = useState( null )
+    const [ source, set_source ] = useState( null )
+    const [ is_estimating, set_estimating ] = useState( false )
+    const [ error, set_error ] = useState( null )
     const abort_ref = useRef( null )
+    const request_id_ref = useRef( 0 )
 
-    // In Electron the origin is file:// — speedtest binaries live on the hosted app
-    const base_url = import.meta.env.VITE_APP_BASE_URL
-        ||  window.electronAPI?.native_inference && import.meta.env.VITE_APP_URL 
-        || window.location.origin
+    useEffect( () => {
 
+        abort_ref.current?.abort()
+        request_id_ref.current++
+
+        const cached = target_url ? get_speed_estimate( target_url ) : null
+        set_speed_bps( cached?.bps || null )
+        set_source( cached?.source || null )
+        set_error( null )
+        set_estimating( false )
+
+    }, [ target_url ] )
 
     const run_estimate = useCallback( async () => {
 
-        // Cancel any previous in-flight measurement
+        if( !target_url ) return
+
+        const cached = get_speed_estimate( target_url )
+        if( cached ) {
+            set_speed_bps( cached.bps )
+            set_source( cached.source )
+            return
+        }
+
+        if( !can_probe_network() ) {
+            set_error( new Error( navigator.onLine === false
+                ? `Offline`
+                : `Data-saving mode enabled` ) )
+            return
+        }
+
         abort_ref.current?.abort()
         const controller = new AbortController()
         abort_ref.current = controller
+        const request_id = ++request_id_ref.current
 
         set_estimating( true )
         set_error( null )
 
         try {
+            const sample = await probe_download_speed( target_url, { signal: controller.signal } )
+            if( request_id !== request_id_ref.current ) return
 
-            let measured_bps = null
-
-            for( const { path, bytes } of TEST_FILES ) {
-
-                // Cache-bust so we always measure real network speed
-                const url = `${ base_url }${ path }?_cb=${ Date.now() }`
-
-                const t0 = performance.now()
-
-                const response = await fetch( url, {
-                    cache: 'no-store',
-                    mode: base_url === window.location.origin ? 'same-origin' : 'cors',
-                    signal: controller.signal,
-                } )
-
-                if( !response.ok ) throw new Error( `Speed test failed: ${ response.status }` )
-
-                // Consume the full body before stopping the timer
-                await response.arrayBuffer()
-
-                const elapsed_ms = performance.now() - t0
-                measured_bps = bytes / ( elapsed_ms / 1000 )
-
-                // If the download took long enough, this reading is reliable
-                if( elapsed_ms >= MIN_RELIABLE_MS ) break
-
+            record_speed_sample( target_url, sample.bps, `probe` )
+            const conservative = get_speed_estimate( target_url )
+            set_speed_bps( conservative?.bps || sample.bps )
+            set_source( conservative?.source || `probe` )
+        } catch ( measurement_error ) {
+            if( measurement_error.name !== `AbortError` && request_id === request_id_ref.current ) {
+                set_error( measurement_error )
             }
-
-            // Use whatever we got — last file is always accepted
-            if( measured_bps !== null ) {
-                set_speed_bps( measured_bps )
-                set_speed_mbps(  measured_bps * 8  / 1_000_000 )
-            }
-
-        } catch ( err ) {
-
-            // Don't surface abort errors — they're intentional cancellations
-            if( err.name !== 'AbortError' ) {
-                set_error( err )
-            }
-
         } finally {
-            set_estimating( false )
+            if( request_id === request_id_ref.current ) set_estimating( false )
         }
 
-    }, [ base_url ] )
+    }, [ target_url ] )
 
-
-    // Abort any in-flight fetch when the consuming component unmounts
     useEffect( () => () => abort_ref.current?.abort(), [] )
 
-
-    return { speed_bps, speed_mbps, is_estimating, error, run_estimate }
+    return {
+        speed_bps,
+        speed_mbps: speed_bps ? speed_bps * 8 / 1_000_000 : null,
+        source,
+        is_estimating,
+        error,
+        run_estimate,
+    }
 
 }

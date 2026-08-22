@@ -58,7 +58,10 @@
     "format_just_now": "Just now",
     "format_minutes_ago": "{{count}}m ago",
     "format_hours_ago": "{{count}}h ago",
-    "format_eta_seconds": "About {{count}} seconds left",
-    "format_eta_minutes": "About {{count}} minute left",
-    "format_eta_minutes_plural": "About {{count}} minutes left"
+    "duration_seconds": "~{{count}} seconds",
+    "duration_minutes": "~{{count}} min",
+    "duration_minutes_seconds": "~{{minutes}} min {{seconds}} sec",
+    "duration_hours": "~{{count}} hr",
+    "duration_hours_minutes": "~{{hours}} hr {{minutes}} min",
+    "eta_remaining": "{{duration}} left"
 }

@@ -1,10 +1,10 @@
 import { log } from 'mentie'
 import { CacheManager, ModelManager, ModelValidationStatus } from 'wllama64'
 import { get_db } from '../stores/db'
+import { build_download_url } from './hf_url_parser'
 import { get_model_by_id } from './model_catalog'
+import { create_download_speed_tracker } from './network_speed'
 import { ReliableOPFSBackend } from './reliable_opfs_backend'
-
-const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
 
 const WLLAMA_CACHE_LOGGER = {
     debug: ( ...args ) => log.debug( `[model-cache]`, ...args ),
@@ -76,8 +76,7 @@ const remove_browser_cache_entry = async ( cached ) => {
  * @param {string} file_name - GGUF file name
  * @returns {string} Full download URL
  */
-export const build_download_url = ( repo, file_name ) =>
-    `${ HF_BASE_URL }/${ repo }/resolve/main/${ file_name }`
+export { build_download_url } from './hf_url_parser'
 
 /**
  * Checks if a model is already cached (filesystem in Electron, IndexedDB in browser).
@@ -226,11 +225,16 @@ export const clear_browser_model_cache = async () => {
 export const download_model = async ( model, on_progress, signal ) => {
 
     const url = build_download_url( model.hugging_face_repo, model.file_name )
+    const speed_tracker = create_download_speed_tracker( url )
+    const report_progress = progress => {
+        speed_tracker.update( progress )
+        on_progress( progress )
+    }
 
     const size_mb = ( model.file_size_bytes / 1e6 ).toFixed( 0 )
     log.info( `[download] Starting: ${ model.name } (${ size_mb } MB)` )
 
-    on_progress( { progress: 0, bytes_loaded: 0, bytes_total: model.file_size_bytes, status: `Starting download...` } )
+    report_progress( { progress: 0, bytes_loaded: 0, bytes_total: model.file_size_bytes, status: `Starting download...` } )
 
     // In Electron, delegate to the main process which streams directly to disk.
     // This avoids buffering multi-GB files in the renderer's V8 heap.
@@ -239,7 +243,7 @@ export const download_model = async ( model, on_progress, signal ) => {
         log.debug( `[download] Using Electron IPC download` )
 
         // Forward progress events from main process
-        const cleanup = window.electronAPI.on_download_progress( on_progress )
+        const cleanup = window.electronAPI.on_download_progress( report_progress )
 
         // Wire up abort signal to main process
         const abort_handler = () => window.electronAPI.abort_download()
@@ -281,7 +285,7 @@ export const download_model = async ( model, on_progress, signal ) => {
         signal,
         progressCallback: ( { loaded, total } ) => {
             const bytes_total = total || model.file_size_bytes
-            on_progress( {
+            report_progress( {
                 progress: bytes_total > 0 ? Math.min( loaded / bytes_total, 1 ) : 0,
                 bytes_loaded: loaded,
                 bytes_total,
@@ -295,7 +299,7 @@ export const download_model = async ( model, on_progress, signal ) => {
     const downloaded_size = downloaded_files.reduce( ( total, file ) => total + file.size, 0 )
     const expected_size = model.file_size_bytes
 
-    on_progress( {
+    report_progress( {
         progress: 1,
         bytes_loaded: downloaded_size,
         bytes_total: expected_size || downloaded_size,
@@ -337,6 +341,6 @@ export const download_model = async ( model, on_progress, signal ) => {
     } )
 
     log.info( `[download] Complete: ${ model.name } (${ ( downloaded_size / 1e6 ).toFixed( 0 ) } MB)` )
-    on_progress( { progress: 1, bytes_loaded: downloaded_size, bytes_total: downloaded_size, status: `Complete` } )
+    report_progress( { progress: 1, bytes_loaded: downloaded_size, bytes_total: downloaded_size, status: `Complete` } )
 
 }

@@ -53,5 +53,15 @@
     "one_time_download": "{{name}} — dit is een eenmalige download. Daarna werkt alles offline.",
     "ready_to_chat": "Klaar om te chatten!",
     "cancel_download": "Download annuleren",
-    "preparing": "Voorbereiden…"
+    "preparing": "Voorbereiden…",
+    "measuring_download_speed": "Downloadsnelheid meten…",
+    "download_range_under_minute": "minder dan een minuut",
+    "download_range_1_3_minutes": "1–3 minuten",
+    "download_range_3_8_minutes": "3–8 minuten",
+    "download_range_10_20_minutes": "10–20 minuten",
+    "download_range_20_40_minutes": "20–40 minuten",
+    "download_range_40_plus_minutes": "meer dan 40 minuten",
+    "does_not_fit": "past niet",
+    "model_does_not_fit": "Dit model past niet in het geheugen dat voor deze browser beschikbaar is.",
+    "no_local_model_fits": "Geen lokaal model past veilig in het beschikbare geheugen. Sluit andere apps of gebruik een cloudmodel."
 }

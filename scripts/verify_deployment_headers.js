@@ -24,15 +24,6 @@ export const DEPLOYMENT_TARGETS = [
             'cross-origin-embedder-policy': `require-corp`,
         },
     },
-    {
-        path: `/speedtest/1mib.bin`,
-        headers: {
-            'cross-origin-opener-policy': `same-origin`,
-            'cross-origin-embedder-policy': `require-corp`,
-            'access-control-allow-origin': `*`,
-            'cross-origin-resource-policy': `cross-origin`,
-        },
-    },
 ]
 
 /**

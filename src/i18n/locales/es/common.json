@@ -58,7 +58,10 @@
     "format_just_now": "Justo ahora",
     "format_minutes_ago": "Hace {{count}}m",
     "format_hours_ago": "Hace {{count}}h",
-    "format_eta_seconds": "Quedan unos {{count}} segundos",
-    "format_eta_minutes": "Queda aproximadamente {{count}} minuto",
-    "format_eta_minutes_plural": "Quedan aproximadamente {{count}} minutos"
+    "duration_seconds": "~{{count}} segundos",
+    "duration_minutes": "~{{count}} min",
+    "duration_minutes_seconds": "~{{minutes}} min {{seconds}} s",
+    "duration_hours": "~{{count}} h",
+    "duration_hours_minutes": "~{{hours}} h {{minutes}} min",
+    "eta_remaining": "Quedan {{duration}}"
 }

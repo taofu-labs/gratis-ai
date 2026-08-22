@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { log } from 'mentie'
-import { format_file_size, can_fit_in_memory } from '../../utils/model_catalog'
+import { format_file_size, can_fit_in_memory, get_model_by_id } from '../../utils/model_catalog'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_openrouter_store from '../../stores/openrouter_store'
 import use_venice_store from '../../stores/venice_store'
@@ -67,6 +67,11 @@ const ModelOption = styled.button`
 
     &:hover {
         background: ${ ( { theme } ) => theme.colors.surface_hover };
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
     }
 `
 
@@ -321,11 +326,13 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                     cached_models.map( ( model ) => {
                         const is_cloud = model.source === `openrouter` || model.source === `venice`
                         const provider_label = model.source === `venice` ? `Venice` : model.source === `openrouter` ? `OpenRouter` : null
-                        const too_large = !is_cloud && !can_fit_in_memory( model, max_model_bytes )
+                        const fit_model = get_model_by_id( model.id ) || model
+                        const too_large = !is_cloud && !can_fit_in_memory( fit_model, max_model_bytes )
                         return <ModelOption
                             key={ model.id }
                             data-testid={ `model-option-${ model.id }` }
                             onClick={ () => handle_select( model.id ) }
+                            disabled={ too_large }
                         >
                             { model.id === active_model_id ?
                                 <Check size={ 14 } style={ { flexShrink: 0 } } />
@@ -340,7 +347,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                                     { is_cloud
                                         ? provider_label
                                         : format_file_size( model.file_size_bytes ) }
-                                    { too_large ? ` — ${ t( `may_not_fit` ) }` : `` }
+                                    { too_large ? ` — ${ t( `does_not_fit` ) }` : `` }
                                 </ModelMeta>
                             </ModelInfo>
                             { too_large && <AlertTriangle size={ 12 } style={ { color: theme.colors.warning, flexShrink: 0 } } /> }

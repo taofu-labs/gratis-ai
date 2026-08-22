@@ -500,3 +500,15 @@
 - Hardened release gates and draft uploads so failed platform builds cannot publish partial releases.
 - Follow-up review made service-worker reloads wait for idle inference/download state, protected
   published releases from manual recovery, and put unit/Memory64 PWA gates directly in deploy CI.
+
+## 2026-08-22 — Empirical resource probing and graceful WebGPU offload
+
+- Replaced max-buffer-only GPU memory reporting with a retained-buffer allocation probe and clear
+  measured-lower-bound UI semantics.
+- Made every local model surface enforce the same RAM/WASM runtime fit estimate, including cached
+  and custom models, with a deterministic preflight guard at load time.
+- Enabled measured-budget `n_gpu_layers` offload in the existing wllama64 runtime, with fresh CPU
+  runtime fallback for GPU load failures, inference failures, device loss, and worker stalls.
+- Replaced static same-origin speed fixtures and optimistic connection hints with bounded range
+  sampling against the selected GGUF plus conservative actual-download history.
+- Synchronized the new fit, measurement, and duration messages across all 11 locales.

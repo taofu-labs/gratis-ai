@@ -41,7 +41,7 @@ It works in two ways:
 |---|---|---|
 | How it works | AI runs inside your browser tab | AI runs natively on your machine |
 | Setup | Just open the website | Download and install |
-| Speed | Good | Faster (uses your GPU) |
+| Speed | Good; uses WebGPU when safely available | Faster (uses your GPU) |
 | Model size limit | Up to the browser's 16 GiB WASM address space; usable size depends on RAM | Only limited by your RAM |
 | Works offline | After first model download | After first model download |
 
@@ -71,9 +71,10 @@ The app picks the best model for your device automatically. Smaller devices get 
 | Ministral 3 14B | ~8.24 GB | High-end instruction following and reasoning |
 | GPT-OSS 20B | ~12.11 GB | Near-ceiling browser reasoning with 3.6B active parameters |
 
-All models are open-source. You download them once, then everything runs locally. Automatic
-recommendations stay conservative; current Memory64 browsers also expose larger models as manual
-choices with a memory warning.
+All models are open-source. You download them once, then everything runs locally. The browser
+shows only models that fit its conservative RAM and WASM budget. When WebGPU is available, the app
+measures a safe allocation, offloads model layers for faster inference, and falls back to CPU if
+GPU acceleration fails.
 
 ## Is it really private?
 

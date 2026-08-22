@@ -53,5 +53,15 @@
     "one_time_download": "{{name}} — 仅需下载一次。之后所有功能都可离线使用。",
     "ready_to_chat": "准备就绪！",
     "cancel_download": "取消下载",
-    "preparing": "准备中..."
+    "preparing": "准备中...",
+    "measuring_download_speed": "正在测量下载速度…",
+    "download_range_under_minute": "不到一分钟",
+    "download_range_1_3_minutes": "1–3 分钟",
+    "download_range_3_8_minutes": "3–8 分钟",
+    "download_range_10_20_minutes": "10–20 分钟",
+    "download_range_20_40_minutes": "20–40 分钟",
+    "download_range_40_plus_minutes": "40 分钟以上",
+    "does_not_fit": "内存不足",
+    "model_does_not_fit": "此模型无法放入浏览器可用的内存中。",
+    "no_local_model_fits": "没有本地模型能安全放入可用内存。请关闭其他应用或使用云端模型。"
 }

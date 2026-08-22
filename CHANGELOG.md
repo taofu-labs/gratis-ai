@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.43.0] - 2026-08-22
+
+### Added
+- Measure usable WebGPU memory with retained buffer allocations
+- Offload safe layer counts to WebGPU with automatic CPU fallback
+- Estimate downloads from the selected GGUF host and prior transfers
+
+### Changed
+- Show only local models that fit the browser RAM and WASM budget
+- Use localized, granular download durations across selection and progress
+- Report measured GPU memory as an allocatable lower bound
+
+### Removed
+- Static same-origin speed-test binaries and their deployment rules
+
 ## [0.42.1] - 2026-08-22
 
 ### Added

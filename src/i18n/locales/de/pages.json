@@ -74,7 +74,7 @@
     "local": "Lokal",
 
     "device_gpu": "GPU",
-    "device_vram": "VRAM",
+    "device_vram": "Verfügbarer GPU-Speicher",
     "device_ram": "RAM",
     "device_cores": "Kerne"
 }

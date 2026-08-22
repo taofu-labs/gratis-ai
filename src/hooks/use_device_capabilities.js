@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react'
-import { detect_capabilities, estimate_max_model_bytes } from '../utils/device_detection'
+import use_llm_store from '../stores/llm_store'
+import {
+    detect_capabilities,
+    estimate_max_model_bytes,
+    get_initial_browser_capabilities,
+    probe_capabilities_gpu_memory,
+} from '../utils/device_detection'
 
 /**
  * Hook that detects device capabilities on mount
@@ -7,21 +13,34 @@ import { detect_capabilities, estimate_max_model_bytes } from '../utils/device_d
  */
 export default function use_device_capabilities() {
 
-    const [ capabilities, set_capabilities ] = useState( null )
-    const [ max_model_bytes, set_max_model_bytes ] = useState( Infinity )
+    const [ capabilities, set_capabilities ] = useState( get_initial_browser_capabilities )
     const [ is_detecting, set_is_detecting ] = useState( true )
+    const max_model_bytes = capabilities ? estimate_max_model_bytes( capabilities ) : 0
 
     useEffect( () => {
 
         let cancelled = false
 
-        detect_capabilities().then( ( result ) => {
-            if( !cancelled ) {
+        detect_capabilities()
+            .then( async result => {
+
+                if( cancelled ) return
+
                 set_capabilities( result )
-                set_max_model_bytes( estimate_max_model_bytes( result ) )
                 set_is_detecting( false )
-            }
-        } )
+
+                // Probe only while inference is idle. WllamaProvider can await
+                // the same shared probe before a first model load.
+                const llm = use_llm_store.getState()
+                if( llm.is_loading || llm.is_generating || llm.loaded_model_id ) return
+
+                const measured = await probe_capabilities_gpu_memory( result )
+                if( !cancelled ) set_capabilities( measured )
+
+            } )
+            .catch( () => {
+                if( !cancelled ) set_is_detecting( false )
+            } )
 
         return () => {
             cancelled = true

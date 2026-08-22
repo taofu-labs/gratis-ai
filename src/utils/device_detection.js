@@ -6,7 +6,12 @@
  * @property {boolean} gpu.webgl - True if WebGL2 is available
  * @property {string} gpu.renderer - GPU name from WebGL debug info
  * @property {string} gpu.vendor - GPU vendor
- * @property {number} gpu.estimated_vram - Estimated VRAM in GB (heuristic)
+ * @property {number} gpu.estimated_vram - Allocatable GPU memory hint in GiB
+ * @property {number} gpu.reported_memory_bytes - Immediate maxBufferSize-derived fallback
+ * @property {number} gpu.allocatable_bytes - Measured allocatable lower bound, or fallback hint
+ * @property {'reported'|'measured'} gpu.memory_source
+ * @property {string} gpu.memory_probe_status
+ * @property {boolean} gpu.memory_probe_capped
  * @property {boolean} [gpu.metal] - True if Metal GPU acceleration is available (Electron only)
  * @property {boolean} [gpu.cuda] - True if CUDA GPU acceleration is available (Electron only)
  * @property {boolean} [gpu.vulkan] - True if Vulkan GPU acceleration is available (Electron only)
@@ -25,6 +30,12 @@
  * @property {boolean} wasm.cross_origin_isolated - Required shared-memory headers active
  * @property {'browser' | 'electron'} runtime
  */
+
+import {
+    get_webgpu_memory_probe,
+    reported_webgpu_bytes,
+    select_webgpu_probe_target,
+} from './webgpu_memory'
 
 /**
  * Detect the exact shared Memory64 primitive used by wllama64.
@@ -74,22 +85,25 @@ const detect_webgpu = async () => {
 
         if( !navigator.gpu ) return { webgpu: false }
 
-        const adapter = await navigator.gpu.requestAdapter()
+        const adapter = await navigator.gpu.requestAdapter( { powerPreference: `high-performance` } )
         if( !adapter ) return { webgpu: false }
 
         const info = adapter.info || {}
         const max_buffer = adapter.limits?.maxBufferSize || 0
-
-        // Estimate VRAM from maxBufferSize — typically 25-50% of actual VRAM
-        const estimated_vram_gb = max_buffer > 0
-            ? Math.round(  max_buffer /  1024 ** 3   * 2 * 10 ) / 10
-            : 0
+        const reported_memory_bytes = reported_webgpu_bytes( max_buffer )
 
         return {
             webgpu: true,
             renderer: info.device || info.description || `Unknown GPU`,
             vendor: info.vendor || `Unknown`,
-            estimated_vram: estimated_vram_gb,
+            adapter_info: info,
+            fallback_adapter: info.isFallbackAdapter === true,
+            reported_memory_bytes,
+            allocatable_bytes: reported_memory_bytes,
+            estimated_vram: Math.round( reported_memory_bytes / 1024 ** 3 * 10 ) / 10,
+            memory_source: `reported`,
+            memory_probe_status: info.isFallbackAdapter ? `skipped` : `pending`,
+            memory_probe_capped: false,
         }
 
     } catch {
@@ -172,7 +186,7 @@ const estimate_vram_from_name = ( renderer ) => {
  * In browser, uses navigator APIs and WebGPU/WebGL probing.
  * @returns {Promise<DeviceCapabilities>}
  */
-export const detect_capabilities = async () => {
+const detect_capabilities_uncached = async () => {
 
     // Detect runtime
     const runtime = typeof window !== `undefined` && window.electronAPI?.native_inference
@@ -257,6 +271,13 @@ export const detect_capabilities = async () => {
             renderer,
             vendor,
             estimated_vram,
+            reported_memory_bytes: webgpu_info.reported_memory_bytes || 0,
+            allocatable_bytes: webgpu_info.allocatable_bytes || 0,
+            memory_source: `reported`,
+            memory_probe_status: webgpu_info.memory_probe_status || `unavailable`,
+            memory_probe_capped: false,
+            adapter_info: webgpu_info.adapter_info || {},
+            fallback_adapter: webgpu_info.fallback_adapter || false,
         },
         memory: {
             device_memory,
@@ -267,6 +288,66 @@ export const detect_capabilities = async () => {
         },
         wasm: detect_wasm_capabilities(),
         runtime,
+    }
+
+}
+
+let capabilities_promise = null
+
+/**
+ * Detect capabilities once per tab. WebGPU adapters are one-device objects, so
+ * sharing this promise also avoids redundant adapter requests across hooks.
+ *
+ * @returns {Promise<DeviceCapabilities>}
+ */
+export const detect_capabilities = () => {
+    capabilities_promise ??= detect_capabilities_uncached()
+    return capabilities_promise
+}
+
+/** Reset shared detection state for isolated unit tests. */
+export const reset_capability_detection = () => {
+    capabilities_promise = null
+}
+
+/**
+ * Synchronous browser capabilities for the first render. RAM/WASM fit is
+ * available immediately; descriptive GPU details arrive asynchronously.
+ *
+ * @returns {DeviceCapabilities|null}
+ */
+export const get_initial_browser_capabilities = () => {
+
+    if( typeof window === `undefined` || window.electronAPI?.native_inference ) return null
+
+    const webgl_info = detect_webgl()
+    const webgpu = !!navigator.gpu
+    const renderer = webgl_info.renderer || `Unknown`
+    const vendor = webgl_info.vendor || `Unknown`
+
+    return {
+        gpu: {
+            available: webgpu || webgl_info.webgl,
+            webgpu,
+            webgl: webgl_info.webgl || false,
+            renderer,
+            vendor,
+            estimated_vram: 0,
+            reported_memory_bytes: 0,
+            allocatable_bytes: 0,
+            memory_source: `reported`,
+            memory_probe_status: webgpu ? `pending` : `unavailable`,
+            memory_probe_capped: false,
+            adapter_info: {},
+            fallback_adapter: false,
+        },
+        memory: {
+            device_memory: navigator.deviceMemory || null,
+            js_heap_limit: performance?.memory?.jsHeapSizeLimit || null,
+        },
+        cpu: { cores: navigator.hardwareConcurrency || 4 },
+        wasm: detect_wasm_capabilities(),
+        runtime: `browser`,
     }
 
 }
@@ -353,5 +434,51 @@ export const estimate_max_model_bytes = ( capabilities ) => {
     const heap_cap = !has_memory64 && heap_limit ? heap_limit * 0.7 : Infinity
 
     return Math.floor( Math.min( wasm_ceiling, device_cap, heap_cap ) )
+
+}
+
+/**
+ * Replace the reported GPU hint with a retained-buffer allocation lower bound.
+ * The returned object is immutable from the caller's perspective.
+ *
+ * @param {DeviceCapabilities} capabilities
+ * @returns {Promise<DeviceCapabilities>}
+ */
+export const probe_capabilities_gpu_memory = async capabilities => {
+
+    if( capabilities?.runtime !== `browser`
+        || !capabilities?.gpu?.webgpu
+        || capabilities.gpu.fallback_adapter ) return capabilities
+
+    const ram_budget_bytes = estimate_max_model_bytes( capabilities )
+    const max_bytes = select_webgpu_probe_target( {
+        ram_budget_bytes,
+        device_memory_gb: capabilities.memory?.device_memory,
+        adapter_info: capabilities.gpu.adapter_info,
+    } )
+
+    const probe = await get_webgpu_memory_probe( {
+        gpu: navigator.gpu,
+        max_bytes,
+    } )
+
+    const measured = probe.status === `measured` && probe.measured_bytes > 0
+    const allocatable_bytes = measured
+        ? probe.measured_bytes
+        : capabilities.gpu.reported_memory_bytes || 0
+
+    return {
+        ...capabilities,
+        gpu: {
+            ...capabilities.gpu,
+            adapter_info: probe.adapter_info || capabilities.gpu.adapter_info,
+            allocatable_bytes,
+            estimated_vram: Math.round( allocatable_bytes / 1024 ** 3 * 10 ) / 10,
+            memory_source: measured ? `measured` : `reported`,
+            memory_probe_status: probe.status,
+            memory_probe_reason: probe.reason,
+            memory_probe_capped: probe.capped || false,
+        },
+    }
 
 }

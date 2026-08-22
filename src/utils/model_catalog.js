@@ -34,6 +34,7 @@
  * @property {number} file_size_bytes - Exact GGUF file size
  * @property {number} context_length - Max context window
  * @property {number} layers - Number of transformer layers
+ * @property {number} block_count - Transformer block count used by llama.cpp GPU offload
  * @property {number} kv_heads - Number of key-value attention heads (GQA)
  * @property {number} head_dim - Dimension per attention head
  * @property {string} hugging_face_repo - HF repo path (org/name)
@@ -229,6 +230,7 @@ export const MODEL_CATALOG = [
         // Qwen 3.5 uses three linear-attention layers per full-attention
         // layer. Only its six full-attention layers grow a traditional KV cache.
         layers: 6,
+        block_count: 24,
         kv_heads: 2,
         head_dim: 256,
 
@@ -336,6 +338,7 @@ export const MODEL_CATALOG = [
 
         // Eight of the 32 hybrid layers use standard attention and grow KV.
         layers: 8,
+        block_count: 32,
         kv_heads: 4,
         head_dim: 256,
 
@@ -897,6 +900,7 @@ export const MODEL_CATALOG = [
         // the other 24 use linear attention (constant memory, no context scaling).
         // Setting layers: 8 gives accurate KV cache estimation.
         layers: 8,
+        block_count: 32,
         kv_heads: 4,
         head_dim: 256,
 
@@ -1145,7 +1149,10 @@ export const MODEL_CATALOG = [
         license: `Apache-2.0`,
     },
 
-]
+].map( model => ( {
+    ...model,
+    block_count: model.block_count ?? model.layers,
+} ) )
 
 
 // ─── Lookup ─────────────────────────────────────────────────────────────────────
@@ -1194,8 +1201,12 @@ export const estimate_model_memory = ( model, context_length ) => {
         return model.file_size_bytes + kv_cache + RUNTIME_OVERHEAD
     }
 
-    // Fallback: crude heuristic for custom models without architecture data
-    return Math.ceil( model.file_size_bytes * 1.2 )
+    // Unknown/custom models still pay the same minimum runtime overhead. A
+    // percentage-only fallback badly underestimates small GGUFs.
+    return model.file_size_bytes + Math.max(
+        RUNTIME_OVERHEAD,
+        Math.ceil( model.file_size_bytes * 0.2 ),
+    )
 
 }
 
@@ -1366,10 +1377,10 @@ export const find_by_hf_repo = ( hf_repo ) => {
  * Select the best model that fits in the available memory.
  *
  * Strategy: highest quality score wins, then highest bpw (quant quality).
- * If nothing fits, returns the smallest model as a graceful fallback.
+ * Returns null when no local model fits.
  *
  * @param {number} available_bytes - Memory budget from estimate_max_model_bytes()
- * @returns {ModelDefinition}
+ * @returns {ModelDefinition|null}
  */
 export const select_best_model = ( available_bytes ) => {
 
@@ -1384,8 +1395,7 @@ export const select_best_model = ( available_bytes ) => {
 
     if( fitting.length > 0 ) return fitting[ 0 ]
 
-    // Nothing fits — return the smallest model as a graceful fallback
-    return [ ...safe ].sort( ( a, b ) => a.file_size_bytes - b.file_size_bytes )[ 0 ]
+    return null
 
 }
 
@@ -1462,11 +1472,12 @@ export const select_best_vision = ( available_bytes ) => {
  * to a single recommendation card.
  *
  * @param {number} available_bytes - Memory budget from estimate_max_model_bytes()
- * @returns {{ smarter: ModelDefinition, faster: ModelDefinition | null, uncensored: ModelDefinition | null, vision: ModelDefinition | null }}
+ * @returns {{ smarter: ModelDefinition|null, faster: ModelDefinition|null, uncensored: ModelDefinition|null, vision: ModelDefinition|null }}
  */
 export const select_model_options = ( available_bytes ) => {
 
     const smarter = select_best_model( available_bytes )
+    if( !smarter ) return { smarter: null, faster: null, uncensored: null, vision: null }
 
     // Find the highest-quality model that fits AND is ≤50% the smarter model's file size
     const half_size = smarter.file_size_bytes * 0.5
@@ -1482,55 +1493,6 @@ export const select_model_options = ( available_bytes ) => {
     const vision = select_best_vision( available_bytes )
 
     return { smarter, faster, uncensored, vision }
-
-}
-
-
-// ─── Download time estimation ────────────────────────────────────────────────────
-
-/**
- * Estimate download time for a model file.
- *
- * Priority chain: measured speed → navigator.connection.downlink → size-based fallback.
- * Pass `measured_speed_bps` from `use_speed_estimate` for the most accurate result.
- *
- * @param {number} file_size_bytes      - GGUF file size in bytes
- * @param {number|null} measured_speed_bps - Measured download speed in bytes/sec (from speed-test hook)
- * @returns {string} Human-readable download time estimate
- */
-export const estimate_download_time = ( file_size_bytes, measured_speed_bps = null ) => {
-
-    // Best source: real measurement from the speed-test hook
-    // Fallback: Network Information API (Chromium + Electron), with 70% efficiency factor
-    const downlink = navigator?.connection?.downlink
-    const bytes_per_second = measured_speed_bps
-        || ( downlink > 0 ? downlink * 1_000_000 / 8 * 0.7 : null )
-
-    if( bytes_per_second ) {
-
-        const seconds = file_size_bytes / bytes_per_second
-
-        if( seconds < 60 ) return `less than a minute`
-        if( seconds < 120 ) return `about 1 minute`
-
-        const minutes = Math.round( seconds / 60 )
-        if( minutes < 60 ) return `about ${ minutes } minutes`
-
-        const hours = Math.floor( minutes / 60 )
-        const remaining = minutes % 60
-        if( remaining === 0 ) return `about ${ hours }h`
-        return `about ${ hours }h ${ remaining }m`
-
-    }
-
-    // Fallback: qualitative labels for browsers without Network Information API
-    // Phrased as durations to work in "Initial download takes ..." context
-    if( file_size_bytes < 500_000_000 ) return `under a minute`
-    if( file_size_bytes < 2_000_000_000 ) return `1–3 minutes`
-    if( file_size_bytes < 5_000_000_000 ) return `3–8 minutes`
-    if( file_size_bytes < 15_000_000_000 ) return `10–20 minutes`
-    if( file_size_bytes < 30_000_000_000 ) return `20–40 minutes`
-    return `40+ minutes`
 
 }
 

@@ -114,6 +114,24 @@ of stored OPFS file sizes to the catalog/Hugging Face API size before declaring 
 The catalog size must win over cached metadata: interrupted downloads once persisted their own
 truncated size and could therefore validate themselves. Reject and remove any exact-size mismatch.
 
+## Browser WebGPU offload duplicates weights (2026-08-22)
+
+`wllama64` keeps the complete GGUF in WASM linear memory even when llama.cpp offloads layers to
+WebGPU. GPU memory therefore improves inference speed but does not make a model fit into RAM.
+Filter browser models against the conservative RAM/WASM runtime estimate before loading, then
+derive `n_gpu_layers` only from a retained-buffer allocation probe plus remaining RAM slack.
+
+`GPUAdapter.limits.maxBufferSize` is a per-buffer API limit, not available VRAM. Keep it only as
+an immediate UI fallback. The empirical probe must use a dedicated device, retain and submit work
+to every buffer, handle validation/out-of-memory scopes, and destroy all buffers and the device.
+Never attempt offload from an unmeasured reported hint. Any WebGPU load or inference failure must
+recreate Wllama with `n_gpu_layers: 0`; a dead worker also needs bounded teardown before retry.
+
+Short network probes must target the exact GGUF origin with a single bounded `Range` request.
+Hugging Face may redirect to a CDN or ignore the range, so stream/count the body and abort at the
+byte/time limit. Prefer recent throughput from actual model downloads over probe samples, scoped
+by host and the current connection fingerprint.
+
 ## Chat list overflow: min-height vs height on #root (2026-02-28)
 
 `#root` used `min-height: 100dvh` which gives an indefinite height — flex children

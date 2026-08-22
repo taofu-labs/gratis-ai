@@ -53,5 +53,15 @@
     "one_time_download": "{{name}} — 初回のみのダウンロードです。以降はすべてオフラインで動作します。",
     "ready_to_chat": "チャットの準備ができました！",
     "cancel_download": "ダウンロードをキャンセル",
-    "preparing": "準備中..."
+    "preparing": "準備中...",
+    "measuring_download_speed": "ダウンロード速度を測定中…",
+    "download_range_under_minute": "1分未満",
+    "download_range_1_3_minutes": "1～3分",
+    "download_range_3_8_minutes": "3～8分",
+    "download_range_10_20_minutes": "10～20分",
+    "download_range_20_40_minutes": "20～40分",
+    "download_range_40_plus_minutes": "40分以上",
+    "does_not_fit": "メモリ不足",
+    "model_does_not_fit": "このモデルはブラウザで利用可能なメモリに収まりません。",
+    "no_local_model_fits": "利用可能なメモリに安全に収まるローカルモデルがありません。他のアプリを閉じるか、クラウドモデルを使用してください。"
 }

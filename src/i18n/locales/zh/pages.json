@@ -74,7 +74,7 @@
     "local": "本地",
 
     "device_gpu": "GPU",
-    "device_vram": "VRAM",
+    "device_vram": "可用 GPU 内存",
     "device_ram": "RAM",
     "device_cores": "核心数"
 }

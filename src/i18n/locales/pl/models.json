@@ -53,5 +53,15 @@
     "one_time_download": "{{name}} — to jednorazowe pobieranie. Potem wszystko działa offline.",
     "ready_to_chat": "Gotowy do rozmowy!",
     "cancel_download": "Anuluj pobieranie",
-    "preparing": "Przygotowanie…"
+    "preparing": "Przygotowanie…",
+    "measuring_download_speed": "Pomiar szybkości pobierania…",
+    "download_range_under_minute": "mniej niż minuta",
+    "download_range_1_3_minutes": "1–3 minuty",
+    "download_range_3_8_minutes": "3–8 minut",
+    "download_range_10_20_minutes": "10–20 minut",
+    "download_range_20_40_minutes": "20–40 minut",
+    "download_range_40_plus_minutes": "ponad 40 minut",
+    "does_not_fit": "nie mieści się",
+    "model_does_not_fit": "Ten model nie mieści się w pamięci dostępnej dla przeglądarki.",
+    "no_local_model_fits": "Żaden model lokalny nie mieści się bezpiecznie w dostępnej pamięci. Zamknij inne aplikacje lub użyj modelu w chmurze."
 }

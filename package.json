@@ -1,6 +1,6 @@
 {
     "name": "gratisai",
-    "version": "0.42.1",
+    "version": "0.43.0",
     "description": "Privacy-first, offline-capable local LLM chat application",
     "repository": {
         "type": "git",
@@ -20,7 +20,7 @@
         "test:headed": "playwright test --headed --config=tests/playwright.config.js",
         "test:unit": "vitest run tests/unit/",
         "lint": "eslint --fix src",
-        "postinstall": "node scripts/ensure_platform_deps.js && node scripts/copy_wasm.js && node scripts/generate_speedtest_files.js",
+        "postinstall": "node scripts/ensure_platform_deps.js && node scripts/copy_wasm.js",
         "prepare": "husky"
     },
     "dependencies": {

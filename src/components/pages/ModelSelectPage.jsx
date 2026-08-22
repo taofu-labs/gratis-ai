@@ -6,14 +6,13 @@ import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, Loa
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
-import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_download_time, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
+import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
 import {
     BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
-    MEMORY64_MODEL_CEILING_BYTES,
-    WASM32_MODEL_CEILING_BYTES,
 } from '../../utils/device_detection'
-import { parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
+import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { storage_key } from '../../utils/branding'
+import { format_download_estimate } from '../../utils/network_speed'
 
 const Container = styled.div`
     display: flex;
@@ -238,6 +237,11 @@ const DownloadButton = styled.button`
     min-height: 2.75rem;
 
     &:hover { opacity: 0.85; }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+    }
 `
 
 // Toggle buttons for expanding model lists
@@ -594,14 +598,8 @@ export default function ModelSelectPage() {
     }, [ show_alternatives ] )
 
     // Device memory budget and cached model detection
-    const { capabilities, max_model_bytes } = use_device_capabilities()
+    const { capabilities, max_model_bytes, is_detecting } = use_device_capabilities()
     const { cached_models } = use_model_manager()
-
-    // Measure real download speed for accurate time estimates
-    const { speed_bps, run_estimate } = use_speed_estimate()
-    useEffect( () => {
-        run_estimate()
-    }, [ run_estimate ] )
 
     const is_cached = ( model_id ) =>
         cached_models.some( m => m.id === model_id )
@@ -618,27 +616,13 @@ export default function ModelSelectPage() {
         [ automatic_model_budget ],
     )
 
-    // The device-memory hint is rounded and inconsistent across browsers. Let
-    // users explicitly choose receipt-backed models the active WASM runtime can
-    // address; the existing warning still marks choices above their estimate.
-    const manual_model_ceiling = capabilities?.runtime === `browser`
-        ? capabilities?.wasm?.memory64
-            ? MEMORY64_MODEL_CEILING_BYTES
-            : WASM32_MODEL_CEILING_BYTES
-        : max_model_bytes
-
     // All catalog models for the alternatives list, sorted: fits-in-memory first → params desc
     const catalog_models = useMemo( () => {
 
-        return [ ...MODEL_CATALOG ].filter( m => !m.cloud_only ).sort( ( a, b ) => {
-
-            const a_fits = can_fit_in_memory( a, max_model_bytes ) ? 1 : 0
-            const b_fits = can_fit_in_memory( b, max_model_bytes ) ? 1 : 0
-            if( a_fits !== b_fits ) return b_fits - a_fits
-
-            return quality_score( b ) - quality_score( a ) || b.bpw - a.bpw
-
-        } )
+        return [ ...MODEL_CATALOG ]
+            .filter( model => !model.cloud_only )
+            .filter( model => can_fit_in_memory( model, max_model_bytes ) )
+            .sort( ( a, b ) => quality_score( b ) - quality_score( a ) || b.bpw - a.bpw )
 
     }, [ max_model_bytes ] )
 
@@ -662,6 +646,23 @@ export default function ModelSelectPage() {
             ? catalog_models.find( m => m.id === selected_model_id ) ?? smarter
             : smarter
 
+    const speed_target_url = active_model?.hugging_face_repo && active_model?.file_name
+        ? build_download_url( active_model.hugging_face_repo, active_model.file_name )
+        : null
+    const { speed_bps, is_estimating, run_estimate } = use_speed_estimate( speed_target_url )
+
+    useEffect( () => {
+        if( is_detecting || !speed_target_url ) return
+        const timer = setTimeout( run_estimate, 250 )
+        return () => clearTimeout( timer )
+    }, [ is_detecting, run_estimate, speed_target_url ] )
+
+    const download_estimate = model => is_estimating && !speed_bps
+        ? t( 'measuring_download_speed' )
+        : t( 'initial_download_takes', {
+            time: format_download_estimate( model.file_size_bytes, speed_bps, t ),
+        } )
+
     const active_is_cached = active_model && is_cached( active_model.id )
 
     // Warn Electron users when free RAM is dangerously low for the selected model
@@ -673,6 +674,10 @@ export default function ModelSelectPage() {
     const handle_download = () => {
 
         if( !active_model ) return
+        if( !can_fit_in_memory( active_model, max_model_bytes ) ) {
+            set_custom_error( t( 'model_does_not_fit' ) )
+            return
+        }
 
         // Cached models can skip the download page entirely
         if( active_is_cached ) {
@@ -736,7 +741,6 @@ export default function ModelSelectPage() {
     const shown_ids = new Set( [ smarter?.id, faster?.id, uncensored?.id, vision?.id ].filter( Boolean ) )
     const alternative_models = catalog_models.filter( model => {
         if( shown_ids.has( model.id ) ) return false
-        if( !can_fit_in_memory( model, manual_model_ceiling ) ) return false
 
         // Below the automatic ceiling, existing catalog compatibility rules
         // apply. Above it, an exact wllama64 inference receipt is mandatory.
@@ -747,7 +751,7 @@ export default function ModelSelectPage() {
     } )
 
     // Card row when we have at least 2 options to compare
-    const card_count = 1 + ( faster ? 1 : 0 ) + ( uncensored ? 1 : 0 ) + ( vision ? 1 : 0 )
+    const card_count = [ smarter, faster, uncensored, vision ].filter( Boolean ).length
     const show_card_row = card_count >= 2
 
     // Cloud models already configured by the user (from both providers)
@@ -801,7 +805,7 @@ export default function ModelSelectPage() {
                 </CardLabel>
                 { is_cached( faster.id )
                     ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                    : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( faster.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                    : <DownloadEstimate>{ download_estimate( faster ) }</DownloadEstimate> }
                 <CardDetailsToggle onClick={ ( e ) => {
                     e.stopPropagation(); toggle_details( faster.id )
                 } }
@@ -815,7 +819,7 @@ export default function ModelSelectPage() {
             </OptionCard> }
 
             { /* Smarter option */ }
-            <OptionCard
+            { smarter && <OptionCard
                 data-testid={ `model-option-${ smarter.id }` }
                 role="button"
                 tabIndex={ 0 }
@@ -830,7 +834,7 @@ export default function ModelSelectPage() {
                 </CardLabel>
                 { is_cached( smarter.id )
                     ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                    : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( smarter.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                    : <DownloadEstimate>{ download_estimate( smarter ) }</DownloadEstimate> }
                 <CardDetailsToggle onClick={ ( e ) => {
                     e.stopPropagation(); toggle_details( smarter.id )
                 } }
@@ -841,7 +845,7 @@ export default function ModelSelectPage() {
                     { smarter.name } — { format_file_size( smarter.file_size_bytes ) } — { smarter.quantization }
                     { smarter.benchmarks && <BenchmarkRow benchmarks={ smarter.benchmarks } /> }
                 </CardDetails>
-            </OptionCard>
+            </OptionCard> }
 
             { /* Uncensored option */ }
             { uncensored && <OptionCard
@@ -859,7 +863,7 @@ export default function ModelSelectPage() {
                 </CardLabel>
                 { is_cached( uncensored.id )
                     ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                    : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( uncensored.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                    : <DownloadEstimate>{ download_estimate( uncensored ) }</DownloadEstimate> }
                 <CardDetailsToggle onClick={ ( e ) => {
                     e.stopPropagation(); toggle_details( uncensored.id )
                 } }
@@ -888,7 +892,7 @@ export default function ModelSelectPage() {
                 </CardLabel>
                 { is_cached( vision.id )
                     ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                    : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( vision.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                    : <DownloadEstimate>{ download_estimate( vision ) }</DownloadEstimate> }
                 <CardDetailsToggle onClick={ ( e ) => {
                     e.stopPropagation(); toggle_details( vision.id )
                 } }
@@ -903,6 +907,11 @@ export default function ModelSelectPage() {
 
         </CardRow> }
 
+        { !is_detecting && card_count === 0 && !custom_model && <MemoryWarning data-testid="no-fitting-local-model">
+            <AlertTriangle size={ 14 } />
+            { t( 'no_local_model_fits' ) }
+        </MemoryWarning> }
+
         { /* ── Single-card fallback (no meaningfully smaller model available) ── */ }
         { !show_card_row && active_model && <RecommendedCard data-testid={ `model-option-${ active_model.id }` }>
             <RecommendedBadge>
@@ -911,7 +920,7 @@ export default function ModelSelectPage() {
             </RecommendedBadge>
             { is_cached( active_model.id )
                 ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( active_model.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                : <DownloadEstimate>{ download_estimate( active_model ) }</DownloadEstimate> }
             <CardDetailsToggle onClick={ () => toggle_details( active_model.id ) }>
                 { t( 'show_details' ) } { details_open[ active_model.id ] ? <ChevronUp size={ 12 } /> : <ChevronDown size={ 12 } /> }
             </CardDetailsToggle>
@@ -1004,7 +1013,7 @@ export default function ModelSelectPage() {
 
         { active_model && !can_fit_in_memory( active_model, max_model_bytes ) && <MemoryWarning>
             <AlertTriangle size={ 14 } />
-            { t( 'may_be_too_large_browser' ) }
+            { t( 'model_does_not_fit' ) }
         </MemoryWarning> }
 
         { /* ── Cloud Models section ── */ }
@@ -1078,6 +1087,7 @@ export default function ModelSelectPage() {
         <DownloadButton
             data-testid="model-select-confirm-btn"
             onClick={ handle_download }
+            disabled={ !active_model || !can_fit_in_memory( active_model, max_model_bytes ) }
         >
             { active_is_cached ? t( 'start_chatting' ) : t( 'download_and_start' ) } <ArrowRight size={ 18 } />
         </DownloadButton>

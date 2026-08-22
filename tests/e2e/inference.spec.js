@@ -14,7 +14,7 @@ test.describe( `E2E Inference`, () => {
         const runtime_logs = []
         page.on( `console`, message => {
             const text = message.text()
-            if( text.includes( `[wllama] Loading` ) ) runtime_logs.push( text )
+            if( text.includes( `[wllama] Loaded` ) ) runtime_logs.push( text )
         } )
 
         // Step 1 — Welcome page

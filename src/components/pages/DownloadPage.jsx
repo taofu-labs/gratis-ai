@@ -7,6 +7,7 @@ import { log } from 'mentie'
 import { download_model, is_model_cached } from '../../utils/model_download'
 import { format_file_size } from '../../utils/model_catalog'
 import { storage_key } from '../../utils/branding'
+import { format_download_duration } from '../../utils/network_speed'
 
 const Container = styled.div`
     display: flex;
@@ -146,23 +147,6 @@ const SuccessIcon = styled.div`
 `
 
 /**
- * Format seconds into a friendly time estimate
- * @param {number} seconds
- * @returns {string}
- */
-const format_eta = ( seconds, t ) => {
-    if( seconds < 0 || !isFinite( seconds ) ) return ``
-    if( t ) {
-        if( seconds < 60 ) return t( 'common:format_eta_seconds', { count: Math.ceil( seconds / 5 ) * 5 } )
-        const minutes = Math.ceil( seconds / 60 )
-        return t( minutes !== 1 ? 'common:format_eta_minutes_plural' : 'common:format_eta_minutes', { count: minutes } )
-    }
-    if( seconds < 60 ) return `About ${ Math.ceil( seconds / 5 ) * 5 } seconds left`
-    const minutes = Math.ceil( seconds / 60 )
-    return `About ${ minutes } minute${ minutes !== 1 ? `s` : `` } left`
-}
-
-/**
  * Download page - shows model download progress with friendly feedback
  * @returns {JSX.Element}
  */
@@ -238,9 +222,10 @@ export default function DownloadPage() {
                         time: Date.now(),
                         bytes: prog.bytes_loaded,
                     } )
-                    if( speed_ref.current.samples.length > 10 ) {
-                        speed_ref.current.samples.shift()
-                    }
+                    const latest_time = speed_ref.current.samples.at( -1 ).time
+                    speed_ref.current.samples = speed_ref.current.samples
+                        .filter( sample => latest_time - sample.time <= 15_000 )
+                        .slice( -120 )
                 }
 
                 // Stash latest progress, only flush to state at throttled intervals
@@ -290,17 +275,20 @@ export default function DownloadPage() {
         if( samples.length < 2 || progress.bytes_total <= 0 ) return ``
 
         const recent = samples.at( -1 )
-        const [ older ] = samples
+        const older = [ ...samples ].reverse()
+            .find( sample => recent.time - sample.time >= 2_000 ) || samples[ 0 ]
         const elapsed_ms = recent.time - older.time
         const bytes_transferred = recent.bytes - older.bytes
 
-        if( elapsed_ms <= 0 || bytes_transferred <= 0 ) return ``
+        if( elapsed_ms < 1_000 || bytes_transferred <= 0 ) return ``
 
         const speed_bps =  bytes_transferred / elapsed_ms  * 1000
         const remaining_bytes = progress.bytes_total - progress.bytes_loaded
         const remaining_seconds = remaining_bytes / speed_bps
 
-        return format_eta( remaining_seconds, t )
+        return t( `common:eta_remaining`, {
+            duration: format_download_duration( remaining_seconds, t ),
+        } )
     }
 
     if( !model ) return null

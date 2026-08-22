@@ -87,6 +87,26 @@ describe( `model selection`, () => {
         expect( WASM32_MODEL_CEILING_BYTES ).toBe( 3_400_000_000 )
     } )
 
+    test( `returns no recommendation when even the smallest runtime cannot fit`, () => {
+        expect( select_model_options( 500_000_000 ) ).toEqual( {
+            smarter: null,
+            faster: null,
+            uncensored: null,
+            vision: null,
+        } )
+    } )
+
+    test( `keeps transformer block counts separate from hybrid KV layers`, () => {
+        expect( get_model_by_id( `qwen35-2b-q4km` ) ).toMatchObject( {
+            layers: 6,
+            block_count: 24,
+        } )
+        expect( get_model_by_id( `qwen35-4b-q4km` ) ).toMatchObject( {
+            layers: 8,
+            block_count: 32,
+        } )
+    } )
+
     test( `does not let one published benchmark dominate complete coverage`, () => {
         const sparse = get_model_by_id( `qwen35-4b-q4km` )
         const complete = get_model_by_id( `qwen3-4b-q4km` )

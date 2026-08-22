@@ -53,5 +53,15 @@
     "one_time_download": "{{name}} — this is a one-time download. After this, everything works offline.",
     "ready_to_chat": "Ready to chat!",
     "cancel_download": "Cancel download",
-    "preparing": "Preparing..."
+    "preparing": "Preparing...",
+    "measuring_download_speed": "Measuring download speed…",
+    "download_range_under_minute": "under a minute",
+    "download_range_1_3_minutes": "1–3 minutes",
+    "download_range_3_8_minutes": "3–8 minutes",
+    "download_range_10_20_minutes": "10–20 minutes",
+    "download_range_20_40_minutes": "20–40 minutes",
+    "download_range_40_plus_minutes": "40+ minutes",
+    "does_not_fit": "does not fit",
+    "model_does_not_fit": "This model does not fit in the memory available to this browser.",
+    "no_local_model_fits": "No local model can safely fit in the memory available to this browser. Close other apps or use a cloud model."
 }
