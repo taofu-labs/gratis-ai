@@ -11,6 +11,12 @@ test.describe( `E2E Inference`, () => {
 
     test( `full flow: onboarding → download → chat → inference`, async ( { page } ) => {
 
+        const runtime_logs = []
+        page.on( `console`, message => {
+            const text = message.text()
+            if( text.includes( `[wllama] Loading` ) ) runtime_logs.push( text )
+        } )
+
         // Step 1 — Welcome page
         await page.goto( `/` )
 
@@ -54,6 +60,12 @@ test.describe( `E2E Inference`, () => {
 
         // Wait for the chat input to be enabled (model loaded)
         await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 180_000 } )
+
+        // SmolLM2 advertises 8K and fits the test host's budget. Prove the
+        // runtime received a grown context, not merely that the helper chose it.
+        const load_log = runtime_logs.find( message => message.includes( MODELS.smollm2.id ) )
+        const loaded_context = Number( load_log?.match( /,\s+(\d+)\s+ctx\)/ )?.[ 1 ] )
+        expect( loaded_context ).toBeGreaterThan( 2048 )
 
         // Step 5 — Send a test message
         await page.getByTestId( `chat-input` ).fill( `What is 2+2? Answer with just the number.` )

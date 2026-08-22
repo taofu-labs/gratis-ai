@@ -654,8 +654,8 @@ START: How much memory do you have?
 
 5. **Update the recommendations table** at the bottom of §8 if the best model per tier has changed
 
-6. **Cross-check** with the project's `src/providers/model_registry.js` — if the app ships preset
-   model recommendations, those should align with this document's findings
+6. **Cross-check** with the project's `src/utils/model_catalog.js` so shipped preset
+   recommendations align with this document's findings
 
 ### Procedure: Updating quantization data (§1)
 
