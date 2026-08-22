@@ -8,13 +8,15 @@
 
 ### Changed
 - Pin Wrangler 4.125.0 so Workers Static Assets uploads `_headers` metadata reliably
-- Version the Workbox `index.html` cache revision and reload controlled clients after future service-worker takeovers
+- Version the Workbox `index.html` cache revision and reload controlled clients after future service-worker takeovers become idle
 - Compare release versions with the previous pushed revision and allow explicit manual workflow recovery
+- Run unit and production Memory64 PWA receipts before each web deployment
 
 ### Fixed
 - Restore production cross-origin isolation required for transferable shared Memory64
 - Keep Electron releases in draft until every platform build, signature, and notarization succeeds
 - Prevent overlapping Electron releases from cancelling and publishing incomplete artifacts
+- Prevent manual release recovery from turning an already-published version back into a draft
 
 ## [0.42.0] - 2026-08-22
 

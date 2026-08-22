@@ -14,7 +14,7 @@ on:
 
 concurrency:
   group: deploy-web
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # ── Gate: only proceed when the version string actually changed ──
@@ -81,6 +81,15 @@ jobs:
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify production PWA
+        run: npm run test:pwa
+
       - name: Build
         run: npm run build
 
@@ -103,5 +112,6 @@ jobs:
       - name: Verify deployed security headers
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs['deployment-url'] }}
-          PUBLIC_URL: https://ai.gratis.sh
+          PUBLIC_URL: ${{ vars.PUBLIC_WEB_ORIGIN || (github.repository == 'actuallymentor/gratis-ai' && 'https://ai.gratis.sh') || '' }}
+          LOG_LEVEL: info
         run: node scripts/verify_deployment_headers.js "$DEPLOYMENT_URL" "$PUBLIC_URL"

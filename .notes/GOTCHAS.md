@@ -223,8 +223,9 @@ does not prove the edge applied it.
 Workbox caches the entire navigation `Response`, including headers. An edge-only header repair does
 not repair the old cached response. Couple header-policy changes to an explicit versioned
 `index.html` precache revision. Controlled clients need a full navigation before
-`crossOriginIsolated` can change; reload on future `controllerchange` events, but do not force the
-first transition from old code because it can interrupt a multi-gigabyte model download.
+`crossOriginIsolated` can change; reload on future `controllerchange` events only after model
+download, model load, and generation are idle. Do not force the first transition from old code
+because it can interrupt a multi-gigabyte model download.
 
 ## wllama64 OPFS and large-model traps (2026-08-22)
 

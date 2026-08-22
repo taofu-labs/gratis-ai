@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+
+const APP_VERSION = JSON.parse(
+    readFileSync( new URL( `../../package.json`, import.meta.url ), `utf8` )
+).version
 
 const expect_isolated = ( response ) => {
     const headers = response.headers()
@@ -26,7 +31,7 @@ test.describe( `production PWA`, () => {
 
         const service_worker = await request.get( `/sw.js` ).then( response => response.text() )
         expect( service_worker ).toContain( `index.html` )
-        expect( service_worker ).toContain( `-0.42.1` )
+        expect( service_worker ).toContain( `-${ APP_VERSION }` )
 
         await page.goto( `/` )
 

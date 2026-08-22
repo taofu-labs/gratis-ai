@@ -151,7 +151,7 @@ Both workflows trigger when a version bump lands on `main` (the `package.json` v
 
 ### Web → Cloudflare Workers (Static Assets)
 
-The `deploy-web` workflow builds with Vite and deploys to Cloudflare Workers via a pinned Wrangler version. The project name and asset directory are configured in `wrangler.toml`. The `public/_headers` file sets `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`; wllama64 requires cross-origin isolation for its shared Memory64 runtime. After deployment, CI polls both the Workers deployment URL and `ai.gratis.sh` and fails unless representative documents, WASM, and speed-test assets expose the required headers.
+The `deploy-web` workflow runs unit and production-PWA checks, builds with Vite, and deploys to Cloudflare Workers via a pinned Wrangler version. The project name and asset directory are configured in `wrangler.toml`. The `public/_headers` file sets `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`; wllama64 requires cross-origin isolation for its shared Memory64 runtime. After deployment, CI polls both the Workers deployment URL and the configured public origin and fails unless representative documents, WASM, and speed-test assets expose the required headers. Forks can set the `PUBLIC_WEB_ORIGIN` repository variable for their custom domain.
 
 Run `npm run test:pwa` to build the production PWA and verify the same header contract, a shared 16 GiB Memory64 reservation, and cross-origin isolation after service-worker control in real Chromium.
 

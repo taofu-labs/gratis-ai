@@ -498,3 +498,5 @@
 - Versioned the Workbox navigation cache policy and added future service-worker takeover reloads so
   cached response headers upgrade safely.
 - Hardened release gates and draft uploads so failed platform builds cannot publish partial releases.
+- Follow-up review made service-worker reloads wait for idle inference/download state, protected
+  published releases from manual recovery, and put unit/Memory64 PWA gates directly in deploy CI.

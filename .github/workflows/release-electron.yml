@@ -34,20 +34,37 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
           CURR=$(node -p "require('./package.json').version")
           echo "version=$CURR" >> "$GITHUB_OUTPUT"
 
+          release_is_published() {
+            local is_draft
+            is_draft=$(gh release view "v$CURR" --json isDraft --jq .isDraft 2>/dev/null) || return 1
+            [ "$is_draft" = "false" ]
+          }
+
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            if release_is_published; then
+              echo "::notice::v$CURR is already published; nothing to recover"
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            fi
             exit 0
           fi
 
           if ! git cat-file -e "${BEFORE_SHA}:package.json" 2>/dev/null; then
-            echo "::notice::No previous package.json; treating this as a version change"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            if release_is_published; then
+              echo "::notice::v$CURR is already published; skipping release recreation"
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "::notice::No previous package.json; treating this as a version change"
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            fi
             exit 0
           fi
 
