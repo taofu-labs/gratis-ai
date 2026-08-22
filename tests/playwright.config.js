@@ -25,9 +25,7 @@ export default defineConfig( {
             } ),
             args: [
                 `--disable-dev-shm-usage`,
-                `--disable-setuid-sandbox`,
                 `--enable-precise-memory-info`,
-                `--no-sandbox`,
                 `--unlimited-storage`,
             ],
         },

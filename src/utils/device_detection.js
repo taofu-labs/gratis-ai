@@ -279,20 +279,19 @@ export const detect_capabilities = async () => {
  * No WASM ceiling — the memory budget depends on GPU acceleration:
  *
  * - **Apple Silicon (Metal + unified memory)**: GPU and CPU share the same RAM
- *   pool. macOS allows Metal to access ~75% of physical RAM. For a single-user
- *   chat app with no other heavy processes, we budget 75% of total RAM.
- *   → 8 GB Mac ≈ 6.0 GB budget  → Mistral 7B (5.1 GB) fits
- *   → 16 GB Mac ≈ 12 GB budget  → Mistral 7B easily, larger models too
- *   → 32 GB Mac ≈ 24 GB budget  → Mixtral 8x7B (26.4 GB) is tight
+ *   pool. We budget 65% of total RAM so macOS, Electron, and other apps retain
+ *   headroom.
+ *   → 8 GB Mac ≈ 5.2 GB budget  → Mistral 7B (5.1 GB) is tight
+ *   → 16 GB Mac ≈ 10.4 GB budget → Mistral 7B easily, larger models too
+ *   → 32 GB Mac ≈ 20.8 GB budget → Qwen3 32B Q4 (19.8 GB) is tight
  *
  * - **Discrete GPU (CUDA / Vulkan)**: VRAM is the primary constraint for
  *   GPU-offloaded layers, but node-llama-cpp can spill to system RAM for
  *   partial offloading. We use max(VRAM, 60% of system RAM) to allow both
  *   pure-GPU and hybrid configurations.
  *
- * - **CPU-only (no GPU)**: System RAM is the sole constraint. This is a
- *   dedicated desktop app doing single-user inference, so 70% of total RAM
- *   is a safe budget (leaves room for OS, Electron, and small apps).
+ * - **CPU-only (no GPU)**: System RAM is the sole constraint. Budget 60% for
+ *   the model and leave the rest for the OS, Electron, and other apps.
  *
  * ## Browser (WASM)
  *
@@ -304,6 +303,7 @@ export const detect_capabilities = async () => {
  */
 export const MEMORY64_MODEL_CEILING_BYTES = 15_000_000_000
 export const WASM32_MODEL_CEILING_BYTES = 3_400_000_000
+export const BROWSER_AUTOMATIC_MODEL_CEILING_BYTES = 5_600_000_000
 
 export const estimate_max_model_bytes = ( capabilities ) => {
 
@@ -340,9 +340,10 @@ export const estimate_max_model_bytes = ( capabilities ) => {
         ? MEMORY64_MODEL_CEILING_BYTES
         : WASM32_MODEL_CEILING_BYTES
 
-    // navigator.deviceMemory is intentionally rounded and capped at 8 GB.
-    // Unknown devices get a conservative 4 GB assumption; otherwise a missing
-    // Chromium-only hint would expose the full 15 GB ceiling on small machines.
+    // navigator.deviceMemory is rounded and is absent in several browsers.
+    // Some Chromium releases clamp it while others report larger host values,
+    // so treat it as a coarse physical-memory hint, never as free memory.
+    // Unknown devices get a conservative 4 GB assumption.
     const device_mem = capabilities?.memory?.device_memory || 4
     const device_fraction = has_memory64 ? 0.7 : 0.6
     const device_cap = device_mem * device_fraction * 1_000_000_000

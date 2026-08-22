@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+    BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
     MEMORY64_MODEL_CEILING_BYTES,
     WASM32_MODEL_CEILING_BYTES,
     estimate_max_model_bytes,
@@ -8,6 +9,7 @@ import {
     MODEL_CATALOG,
     estimate_model_memory,
     get_model_by_id,
+    quality_score,
     select_model_options,
 } from '../../src/utils/model_catalog'
 
@@ -45,6 +47,7 @@ describe( `model selection`, () => {
         for( const [ id, expected ] of Object.entries( VERIFIED_MODELS ) ) {
             const model = get_model_by_id( id )
             expect( model ).toMatchObject( {
+                browser_verified: true,
                 file_size_bytes: expected.bytes,
                 hugging_face_repo: expected.repo,
             } )
@@ -67,9 +70,19 @@ describe( `model selection`, () => {
         const automatic_budget = estimate_max_model_bytes( reported_eight_gb )
 
         expect( automatic_budget ).toBe( 5_600_000_000 )
-        expect( select_model_options( automatic_budget ).smarter.id ).toBe( `qwen35-4b-q4km` )
+        expect( select_model_options( automatic_budget ).smarter.id ).toBe( `phi-4-mini-q4km` )
+        expect( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES ).toBe( automatic_budget )
         expect( MEMORY64_MODEL_CEILING_BYTES ).toBe( 15_000_000_000 )
         expect( WASM32_MODEL_CEILING_BYTES ).toBe( 3_400_000_000 )
+    } )
+
+    test( `does not let one published benchmark dominate complete coverage`, () => {
+        const sparse = get_model_by_id( `qwen35-4b-q4km` )
+        const complete = get_model_by_id( `qwen3-4b-q4km` )
+
+        expect( quality_score( sparse ) ).toBeCloseTo( 55.24 )
+        expect( quality_score( complete ) ).toBeCloseTo( 63.06 )
+        expect( quality_score( sparse ) ).toBeLessThan( quality_score( complete ) )
     } )
 
 } )

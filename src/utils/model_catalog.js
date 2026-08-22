@@ -44,6 +44,7 @@
  * @property {string} [system_prompt] - Model-specific system prompt (overrides the global default when no custom prompt is set)
  * @property {boolean} [uncensored] - Whether this model has had refusal behavior removed
  * @property {boolean} [vision] - Whether this model supports image/vision input (requires mmproj)
+ * @property {boolean} [browser_verified] - Exact GGUF passed the wllama64 Memory64 inference gate
  * @property {string} [hf_model_repo] - Base HF repo for cloud/vLLM inference (e.g. 'Qwen/Qwen3-8B') — distinct from hugging_face_repo which points to GGUF distribution
  * @property {string} [openrouter_id] - OpenRouter model ID for cloud inference (e.g. 'qwen/qwen3-8b')
  * @property {string} [venice_id] - Venice model ID for cloud inference (e.g. 'dolphin-2.9.2-qwen2.5-72b')
@@ -241,6 +242,7 @@ export const MODEL_CATALOG = [
         benchmarks: { mmlu: null, gpqa: 51.6, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
         category: `medium`,
+        browser_verified: true,
     },
 
     // ── 3B models ───────────────────────────────────────────────────────
@@ -291,6 +293,7 @@ export const MODEL_CATALOG = [
         benchmarks: { mmlu: null, gpqa: 53.4, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
         category: `medium`,
+        browser_verified: true,
     },
 
     // ── 4B models ───────────────────────────────────────────────────────
@@ -344,6 +347,7 @@ export const MODEL_CATALOG = [
         benchmarks: { mmlu: null, gpqa: 76.2, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
         category: `medium`,
+        browser_verified: true,
     },
 
     // ── 8B models ───────────────────────────────────────────────────────
@@ -419,6 +423,7 @@ export const MODEL_CATALOG = [
         benchmarks: { mmlu: null, gpqa: 71.2, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
         category: `heavy`,
+        browser_verified: true,
     },
 
     // ── Mixture-of-Experts models ─────────────────────────────────────
@@ -448,6 +453,7 @@ export const MODEL_CATALOG = [
         num_experts: 32,
         num_active_experts: 4,
         category: `ultra`,
+        browser_verified: true,
     },
 
     // ── 32B models ──────────────────────────────────────────────────────
@@ -902,9 +908,11 @@ export const MODEL_CATALOG = [
         benchmarks: { mmlu: null, gpqa: 81.7, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
 
-        // The language GGUF is text-only in this app. Qwen 3.5 vision also
+        // Keep the legacy "vision" ID for existing IndexedDB records. The
+        // language GGUF is text-only in this app. Qwen 3.5 vision also
         // needs a separate mmproj file, which the downloader does not yet load.
         vision: false,
+        browser_verified: true,
     },
 
 
@@ -1235,7 +1243,10 @@ const BENCHMARK_FIELDS = [ `mmlu`, `gpqa`, `humaneval`, `math`, `gsm8k` ]
 
 /**
  * Composite quality score from benchmark data.
- * Simple average of the comparable results a model publishes.
+ * Missing fields receive a neutral 50 once any comparable result exists. This
+ * prevents one unusually high published benchmark from outranking models with
+ * complete five-benchmark coverage. Models publishing no comparable results
+ * still return 0 and sort below scored models.
  * Custom models without benchmarks return 0 (sort below scored models).
  *
  * @param {ModelDefinition} model
@@ -1245,13 +1256,14 @@ export const quality_score = ( model ) => {
 
     if( !model.benchmarks ) return 0
 
-    const scores = BENCHMARK_FIELDS
+    const published_scores = BENCHMARK_FIELDS
         .map( k => model.benchmarks[ k ] )
         .filter( v => v != null )
 
-    if( !scores.length ) return 0
+    if( !published_scores.length ) return 0
 
-    return scores.reduce( ( sum, v ) => sum + v, 0 ) / scores.length
+    const scores = BENCHMARK_FIELDS.map( key => model.benchmarks[ key ] ?? 50 )
+    return scores.reduce( ( sum, value ) => sum + value, 0 ) / scores.length
 
 }
 

@@ -202,7 +202,7 @@ manually choose larger entries whose baseline estimate remains below the runtime
 
 | Runtime | Limit |
 |---------|-------|
-| Shared Memory64 + JSPI | Automatic cards use 70% of reported device memory; manual choices may use baseline estimates up to 15 GB below wllama64's 16 GiB virtual ceiling |
+| Shared Memory64 + JSPI | Automatic cards stay below 5.6 GB; verified manual choices may use baseline estimates up to 15 GB below wllama64's 16 GiB virtual ceiling |
 | wasm32 compatibility | ~3.4 GB hard ceiling, further capped to 60% of reported device memory and 70% of the JS heap limit |
 
 Model selection uses a 2,048-token context baseline. At load time, known catalog models grow by powers of two within the device budget, capped at 16K. Custom models stay at 2K when their architecture is unknown. Allocating an advertised 128K or 262K maximum at startup would waste gigabytes of KV cache before the first short chat.
@@ -213,12 +213,12 @@ The selector scores every eligible model that fits, then chooses the highest-qua
 
 | Hardware | Budget | Recommendation | Why |
 |----------|--------|---------------|-----|
-| Apple Silicon (8 GB) | ~5.2 GB | **Qwen 3.5 4B** (2.74 GB) | Strongest scored model whose 2K runtime estimate fits. |
-| Apple Silicon (16 GB) | ~10.4 GB | **Qwen 3.5 9B** (5.68 GB) | High quality with ample native runtime headroom. |
-| Discrete GPU (12 GB VRAM) | ~12 GB | **Qwen 3.5 9B** (5.68 GB) | Fits with room for GPU/runtime allocations. |
-| CPU-only system (8 GB RAM) | ~4.8 GB | **Qwen 3.5 4B** (2.74 GB) | Fits the conservative 2K estimate; speed remains hardware-dependent. |
+| Apple Silicon (8 GB) | ~5.2 GB | **Phi-4 Mini 3.8B** (2.49 GB) | Strongest fully covered benchmark score whose 2K estimate fits. |
+| Apple Silicon (16 GB) | ~10.4 GB | **Qwen3 14B Q4** (9.0 GB) | Complete benchmark coverage with native runtime headroom. |
+| Discrete GPU (12 GB VRAM) | ~12 GB | **Qwen3 14B Q5** (10.5 GB) | Higher-quality quant fits the native GPU/runtime budget. |
+| CPU-only system (8 GB RAM) | ~4.8 GB | **Phi-4 Mini 3.8B** (2.49 GB) | Fits the conservative 2K estimate; speed remains hardware-dependent. |
 | Intel laptop (4 GB, no GPU) | ~2.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | Budget fits medium-tier models only. |
-| Browser with Memory64 (8 GB reported) | ~5.6 GB | **Qwen 3.5 4B** (2.74 GB) | Larger verified models remain available manually with a warning. |
+| Browser with Memory64 | 5.6 GB automatic | **Phi-4 Mini 3.8B** (2.49 GB) | Larger receipt-backed models remain available manually, up to the runtime/device estimate. |
 | Browser compatibility runtime (memory unknown) | ~2.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | Firefox/Safari omit the memory hint, so selection stays conservative below the wasm32 ceiling. |
 
 ### Model tiers
@@ -235,6 +235,7 @@ The selector scores every eligible model that fits, then chooses the highest-qua
 - **Single-user assumption**: This is a desktop app for one person at a time, not a server. Native budgets still reserve 35–40% of RAM for the OS and other workloads.
 - **Apple Silicon gets special treatment**: Unified memory lets the native runtime use a larger share of the machine's RAM than a browser can safely reserve.
 - **Budget-based, not threshold-based**: Instead of hardcoded "if VRAM >= 8 GB then heavy", we calculate the actual memory budget and check which models fit. This naturally adapts to any hardware configuration.
+- **Sparse benchmark restraint**: Once a model publishes any comparable result, missing fields receive a neutral 50. One high GPQA result cannot outrank a model with strong five-benchmark coverage by itself.
 - **Graceful fallback**: If GPU detection fails (e.g., node-llama-cpp not compiled), we fall back to platform heuristics (macOS + arm64 implies Metal) and then to conservative CPU-only estimates.
 
 ## Architecture

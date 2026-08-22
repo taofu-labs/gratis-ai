@@ -94,6 +94,19 @@ const last_assistant_text = async page => {
     return messages[ messages.length - 1 ].textContent()
 }
 
+const verify_upstream_artifact = async model => {
+    const url = `https://huggingface.co/${ model.hugging_face_repo }/resolve/main/${ model.file_name }`
+    const response = await fetch( url, { method: `HEAD`, redirect: `follow` } )
+
+    expect( response.ok, `Hugging Face artifact must resolve: ${ url }` ).toBe( true )
+
+    const upstream_size = Number(
+        response.headers.get( `content-length` ) || response.headers.get( `x-linked-size` ),
+    )
+    expect( upstream_size, `Hugging Face artifact size must match the mirrored test file` )
+        .toBe( model.file_size_bytes )
+}
+
 test.describe( `Persistent Memory64 inference`, () => {
     test.skip( selected_models.length === 0, `Set LARGE_INFERENCE_MODELS to run large local inference` )
 
@@ -108,6 +121,9 @@ test.describe( `Persistent Memory64 inference`, () => {
             let context = null
 
             try {
+                await verify_upstream_artifact( model )
+                console.log( `[memory64-stage] ${ model.id }: upstream artifact verified` )
+
                 context = await launch_context( profile )
                 await instrument_context( context, events )
                 await context.addInitScript( () => {
@@ -139,6 +155,8 @@ test.describe( `Persistent Memory64 inference`, () => {
                     architecture: model.architecture,
                     compat: false,
                     has_template: true,
+                    n_batch: model.expected_n_batch,
+                    n_ctx: model.expected_n_ctx,
                 } )
                 expect( runtime.n_layer ).toBeGreaterThan( 0 )
                 expect( runtime.n_vocab ).toBeGreaterThan( 0 )

@@ -7,7 +7,11 @@ import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
 import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_download_time, estimate_model_memory, quality_score } from '../../utils/model_catalog'
-import { MEMORY64_MODEL_CEILING_BYTES, WASM32_MODEL_CEILING_BYTES } from '../../utils/device_detection'
+import {
+    BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
+    MEMORY64_MODEL_CEILING_BYTES,
+    WASM32_MODEL_CEILING_BYTES,
+} from '../../utils/device_detection'
 import { parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { storage_key } from '../../utils/branding'
 
@@ -602,16 +606,21 @@ export default function ModelSelectPage() {
     const is_cached = ( model_id ) =>
         cached_models.some( m => m.id === model_id )
 
+    // Automatic browser picks stay conservative even when Chromium reports the
+    // host's full RAM. Larger, receipt-backed models remain explicit choices.
+    const automatic_model_budget = capabilities?.runtime === `browser`
+        ? Math.min( max_model_bytes, BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
+        : max_model_bytes
+
     // Select smarter/faster/uncensored/vision options based on device memory
     const { smarter, faster, uncensored, vision } = useMemo(
-        () => select_model_options( max_model_bytes ),
-        [ max_model_bytes ],
+        () => select_model_options( automatic_model_budget ),
+        [ automatic_model_budget ],
     )
 
-    // navigator.deviceMemory is capped at 8 GB, so it remains appropriate for
-    // automatic recommendations but cannot reveal high-memory hardware. Let
-    // users explicitly choose every model the active WASM runtime can address;
-    // the existing warning still marks choices above the conservative budget.
+    // The device-memory hint is rounded and inconsistent across browsers. Let
+    // users explicitly choose receipt-backed models the active WASM runtime can
+    // address; the existing warning still marks choices above their estimate.
     const manual_model_ceiling = capabilities?.runtime === `browser`
         ? capabilities?.wasm?.memory64
             ? MEMORY64_MODEL_CEILING_BYTES
@@ -725,9 +734,15 @@ export default function ModelSelectPage() {
 
     // Alternatives exclude all models shown as recommendation cards
     const shown_ids = new Set( [ smarter?.id, faster?.id, uncensored?.id, vision?.id ].filter( Boolean ) )
-    const alternative_models = catalog_models.filter( m =>
-        !shown_ids.has( m.id ) && can_fit_in_memory( m, manual_model_ceiling )
-    )
+    const alternative_models = catalog_models.filter( model => {
+        if( shown_ids.has( model.id ) ) return false
+        if( !can_fit_in_memory( model, manual_model_ceiling ) ) return false
+
+        const needs_browser_receipt = capabilities?.runtime === `browser`
+            && estimate_model_memory( model ) > BROWSER_AUTOMATIC_MODEL_CEILING_BYTES
+
+        return !needs_browser_receipt || model.browser_verified === true
+    } )
 
     // Card row when we have at least 2 options to compare
     const card_count = 1 + ( faster ? 1 : 0 ) + ( uncensored ? 1 : 0 ) + ( vision ? 1 : 0 )
@@ -903,10 +918,6 @@ export default function ModelSelectPage() {
                 { active_model.quantization && ` — ${ active_model.quantization }` }
                 { active_model.benchmarks && <BenchmarkRow benchmarks={ active_model.benchmarks } /> }
             </CardDetails>
-            { !can_fit_in_memory( active_model, max_model_bytes ) && <MemoryWarning>
-                <AlertTriangle size={ 14 } />
-                { t( 'may_be_too_large_browser' ) }
-            </MemoryWarning> }
         </RecommendedCard> }
 
         { /* All alternatives in one list — within the local models section */ }

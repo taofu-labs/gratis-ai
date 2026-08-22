@@ -483,3 +483,5 @@
 - Completed real browser inference and cache-only reloads for Qwen 3.5 4B/9B, Ministral 3 3B/14B,
   and GPT-OSS 20B; the 12.11 GB GPT-OSS run proved near-ceiling Harmony inference.
 - Fixed progress-bar class generation found during 8–12 GB downloads.
+- Post-commit Claude review added upstream Hugging Face HEAD/size checks, exact context/batch
+  assertions, neutral weighting for missing benchmarks, and verified-only large browser choices.

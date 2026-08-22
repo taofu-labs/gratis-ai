@@ -215,7 +215,8 @@ under a unified "Applications" dashboard. Key consequences:
   rejected by wllama64's pinned llama.cpp. The equivalent Unsloth GGUF files load and infer.
 - A 16 GiB linear-memory ceiling is not 16 GiB of weights. Keep the catalog model-file ceiling
   at 15 GB, use a 2K baseline, and shrink `n_batch` above 8 GB.
-- `navigator.deviceMemory` is capped and unsuitable for exposing the full Memory64 catalog.
-  Keep automatic recommendations conservative; expose ceiling-fitting models as explicit choices.
+- `navigator.deviceMemory` is rounded, may be missing, and differs across Chromium releases (the
+  test host reports 32 GB). It is unsuitable as free-memory proof. Cap automatic browser cards at
+  5.6 GB; expose only receipt-backed larger models as explicit choices.
 - Dynamic styled-components rules leak classes during multi-GB progress updates. Put frequently
   changing widths in an inline style via `.attrs()`.

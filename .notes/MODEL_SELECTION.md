@@ -439,7 +439,12 @@ Five benchmarks were selected for maximum cross-model coverage:
 | Qwen3 32B | 83.6 | 49.5 | 72.1 | 61.6 | 93.4 | **72.0** |
 | Llama 3.3 70B | 86.0 | 50.5 | 88.4 | 77.0 | — | **75.5** |
 
-**Quality Score** = simple average of the comparable benchmark fields a model publishes. Different quant variants of the same base model share identical scores. Used as the primary sort key in `select_best_model()`, `get_fitting_models()`, and `select_model_pair()`. Never substitute a different benchmark merely to fill a missing field; extend the schema when cross-model coverage justifies it.
+**Quality Score** = average of the five comparable fields. After at least one result exists, missing
+fields receive a neutral 50; models with no comparable results remain at 0. This prevents a lone
+high result from dominating complete coverage. Different quant variants of the same base model
+share identical scores. Used as the primary sort key in `select_best_model()`,
+`get_fitting_models()`, and `select_model_pair()`. Never substitute a different benchmark merely to
+fill a missing field; extend the schema when cross-model coverage justifies it.
 
 #### Data sources
 
@@ -554,16 +559,16 @@ Selection estimates every model at 2K. At load time, known catalog models grow t
 |:--------------|-----:|:-------------------------|
 | SmolLM2 360M Q4_K_M | 270,590,880 B | Memory64 download, load, Jinja chat, and semantic response passed |
 | **Qwen 3.5 2B Q4_K_M** | **1,280,835,840 B** | **Added: full browser UI inference passed** |
-| Qwen 3.5 4B Q4_K_M | 2,740,937,888 B | Deferred: download passed but model load failed in the available test host |
-| Ministral 3 3B Q4_K_M | 2,147,023,008 B | Deferred: download did not complete within 15 minutes; no inference result |
-| Ministral 3 14B Q4_K_M | 8,239,593,024 B | Deferred: no successful >4 GiB inference proof yet |
+| Qwen 3.5 4B Q4_K_M | 2,740,937,888 B | Added: exact UI inference and cache-only reload passed |
+| Ministral 3 3B Q4_K_M (Unsloth) | 2,146,497,824 B | Added: exact UI inference and cache-only reload passed |
+| Qwen 3.5 9B Q4_K_M | 5,680,522,464 B | Existing entry corrected to text-only; >4 GiB inference passed |
+| Ministral 3 14B Q4_K_M (Unsloth) | 8,239,067,840 B | Added: Memory64 inference and cache-only reload passed |
+| GPT-OSS 20B MXFP4 | 12,109,566,624 B | Added: Harmony final-channel inference and reload passed |
 
 ### Model research cut (2026-08-21)
 
-- Add Qwen 3.5 2B Q4_K_M. It is Apache-2.0, a useful quality step at 1.28 GB, and passed real inference.
-- Reconsider Qwen 3.5 4B and Ministral 3 3B/14B only after each completes the same app-level test on a host with ample free memory and download bandwidth.
+- Keep the verified Qwen 3.5 2B/4B/9B, Ministral 3 3B/14B, and GPT-OSS 20B ladder. All are permissively licensed and passed the same app-level Memory64 gate.
 - Defer LFM2.5 defaults: its license restricts commercial use by entities at or above $10M annual revenue.
-- Defer gpt-oss-20b: its 12.1 GB file needs measured Memory64 headroom plus verified Harmony channel parsing.
 - Never copy non-equivalent benchmarks into the five-field schema (for example, MMLU-Pro is not MMLU and LiveCodeBench is not HumanEval).
 
 
