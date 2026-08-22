@@ -193,7 +193,7 @@ Models need roughly **1.2x their file size** once loaded (weights + KV cache + c
 | Shared Memory64 + JSPI | 15 GB model budget below wllama64's 16 GiB virtual ceiling, further capped to 70% of reported device memory |
 | wasm32 compatibility | ~3.4 GB hard ceiling, further capped to 60% of reported device memory and 70% of the JS heap limit |
 
-The inference context starts at 2,048 tokens even when a model advertises 128K or 262K. Allocating the advertised maximum at startup would waste gigabytes of KV cache before the first short chat.
+Model selection uses a 2,048-token context baseline. At load time, known catalog models grow by powers of two within the device budget, capped at 16K. Custom models stay at 2K when their architecture is unknown. Allocating an advertised 128K or 262K maximum at startup would waste gigabytes of KV cache before the first short chat.
 
 ### What gets recommended
 

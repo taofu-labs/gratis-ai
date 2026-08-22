@@ -1050,6 +1050,7 @@ const RUNTIME_OVERHEAD = 500_000_000
 // 262K, but allocating that maximum would reject—or crash—otherwise usable
 // local models before the first short conversation.
 export const DEFAULT_RUNTIME_CONTEXT = 2048
+export const MAX_BROWSER_CONTEXT = 16_384
 
 /**
  * Estimate total runtime memory for a model (weights + KV cache + overhead).
@@ -1089,6 +1090,33 @@ export const estimate_model_memory = ( model, context_length ) => {
  */
 export const can_fit_in_memory = ( model, max_bytes, context_length ) =>
     estimate_model_memory( model, context_length ) <= max_bytes
+
+/**
+ * Select a practical browser context without exceeding the memory budget.
+ * Grow by powers of two from the safe baseline, stop at 16K, and
+ * keep custom models at the baseline when architecture data is unavailable.
+ *
+ * @param {ModelDefinition} model - Catalog model with architecture metadata
+ * @param {number} max_bytes - Browser memory budget
+ * @returns {number} Context size to allocate
+ */
+export const select_browser_context = ( model, max_bytes ) => {
+
+    const advertised_context = model?.context_length || DEFAULT_RUNTIME_CONTEXT
+    const max_context = Math.min( advertised_context, MAX_BROWSER_CONTEXT )
+    let context = Math.min( DEFAULT_RUNTIME_CONTEXT, max_context )
+
+    if( !model?.layers || !model?.kv_heads || !model?.head_dim ) return context
+
+    while( context * 2 <= max_context ) {
+        const candidate = context * 2
+        if( estimate_model_memory( model, candidate ) > max_bytes ) break
+        context = candidate
+    }
+
+    return context
+
+}
 
 
 // ─── Quality scoring ─────────────────────────────────────────────────────────────

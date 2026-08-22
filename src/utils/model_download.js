@@ -53,9 +53,14 @@ export const get_browser_cached_model = async ( download_url, expected_size ) =>
 const remove_browser_cache_entry = async ( cached ) => {
 
     if( cached?.download_url ) {
-        const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
-        const stored_model = models.find( model => model.url === cached.download_url )
-        if( stored_model ) await stored_model.remove()
+        try {
+            const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
+            const stored_model = models.find( model => model.url === cached.download_url )
+            if( stored_model ) await stored_model.remove()
+        } catch ( error ) {
+            // Metadata must still be cleared when OPFS itself is unavailable.
+            log.warn( `[download] Could not remove OPFS cache entry:`, error )
+        }
     }
 
     const db = await get_db()

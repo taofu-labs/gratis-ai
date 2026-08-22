@@ -542,12 +542,13 @@ This section is directly relevant to the browser runtime (`wllama64` 1.0.0, base
 
 | Runtime | Project behavior |
 |:--------|:-----------------|
-| Shared Memory64 + JSPI | Primary runtime. Budget is the lesser of 15 GB and 85% of reported device memory. |
-| Supported Safari without Memory64/JSPI | Locally bundled `@wllama/wllama-compat`; no CDN executable fetch. |
-| Firefox without required primitives | Not forced onto the documented near-unusable compatibility mode. |
+| Shared Memory64 + JSPI | Primary runtime. Budget is the lesser of 15 GB and 70% of reported device memory. |
+| Firefox/Safari without Memory64/JSPI | Locally bundled `@wllama/wllama-compat`; no CDN executable fetch. |
 | Electron | Uses native `node-llama-cpp`; wllama64 is not involved. |
 
-### What fits in the browser (2K runtime context)
+### What fits in the browser (2K selection baseline)
+
+Selection estimates every model at 2K. At load time, known catalog models grow to the largest fitting power-of-two context up to 16K; custom models remain at 2K without architecture metadata.
 
 | Configuration | File | Status in this migration |
 |:--------------|-----:|:-------------------------|

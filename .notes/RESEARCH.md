@@ -9,28 +9,28 @@ All architecture configs from `/resolve/main/config.json` on source/mirror repos
 ### SmolLM2 360M Instruct Q4_K_M
 - **Repo:** `bartowski/SmolLM2-360M-Instruct-GGUF`
 - **File:** `SmolLM2-360M-Instruct-Q4_K_M.gguf`
-- **Size:** 259,915,680 bytes (248 MiB)
+- **Size:** 270,590,880 bytes (258 MiB)
 - **Parameters:** 361,821,120 (0.362B)
 - **Architecture:** LlamaForCausalLM, 32 layers, 15 attn heads, 5 KV heads, head_dim=64, hidden=960, intermediate=2560, context=8192, vocab=49152
 
 ### TinyLlama 1.1B Chat v1.0 Q4_K_M
 - **Repo:** `TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF`
 - **File:** `tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf`
-- **Size:** 643,728,768 bytes (614 MiB)
+- **Size:** 668,788,096 bytes (638 MiB)
 - **Parameters:** 1,100,048,384 (1.100B)
 - **Architecture:** LlamaForCausalLM, 22 layers, 32 attn heads, 4 KV heads, head_dim=64, hidden=2048, intermediate=5632, context=2048, vocab=32000
 
 ### Llama 3.2 1B Instruct Q4_K_M
 - **Repo:** `bartowski/Llama-3.2-1B-Instruct-GGUF`
 - **File:** `Llama-3.2-1B-Instruct-Q4_K_M.gguf`
-- **Size:** 775,647,360 bytes (740 MiB)
+- **Size:** 807,694,464 bytes (770 MiB)
 - **Parameters:** 1,235,814,400 (1.236B)
 - **Architecture:** LlamaForCausalLM, 16 layers, 32 attn heads, 8 KV heads, head_dim=64, hidden=2048, intermediate=8192, context=131072, vocab=128256
 
 ### DeepSeek R1 Distill Qwen 1.5B Q4_K_M
 - **Repo:** `bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF`
 - **File:** `DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf`
-- **Size:** 1,071,584,864 bytes (1,022 MiB)
+- **Size:** 1,117,320,800 bytes (1,066 MiB)
 - **Parameters:** 1,777,030,656 (1.777B)
 - **Architecture:** Qwen2ForCausalLM, 28 layers, 12 attn heads, 2 KV heads, head_dim=128, hidden=1536, intermediate=8960, context=131072, vocab=151936
 

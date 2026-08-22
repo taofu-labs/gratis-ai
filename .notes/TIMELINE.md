@@ -7,6 +7,7 @@
 - Verified packaged Electron startup and real native SmolLM2 inference after the runtime upgrades.
 - Made the Electron architecture test work for both onboarding and persisted returning-user state.
 - Caught and fixed partial Xet downloads being accepted when their GGUF header remained intact.
+- Replaced the fixed 2K browser context with conservative budget-derived growth up to 16K.
 - Reconciled privacy, cloud-provider, browser-runtime, dependency, and memory documentation with the current implementation.
 
 ## 2026-08-21 — wllama64 Memory64 migration and model validation

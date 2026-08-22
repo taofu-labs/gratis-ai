@@ -96,7 +96,7 @@ For example: 14B Q4_K_M often outperforms 7B FP16 on benchmarks.
 - **Compatibility**: the self-hosted `@wllama/wllama-compat` runtime uses wasm32, has a ~3.4 GiB practical ceiling, and is much slower. It never fetches executable assets from a CDN.
 - **Storage**: model downloads stream to OPFS. wllama64 reads large Blob-backed files in bounded chunks, so a single GGUF can exceed 2 GiB on the Memory64 path.
 - **Portability**: ~512 MiB GGUF shards remain useful for wasm32, constrained browsers, recovery, and parallel transfer.
-- **Total allocation**: weights, F16 KV cache, compute buffers, and runtime overhead all share the WASM limit. gratisAI therefore starts at 2K context and applies a conservative device-memory budget.
+- **Total allocation**: weights, F16 KV cache, compute buffers, and runtime overhead all share the WASM limit. gratisAI selects at a 2K baseline, then grows known models within budget up to 16K.
 
 ### Sources
 - V8 blog: https://v8.dev/blog/4gb-wasm-memory

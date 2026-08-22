@@ -1,7 +1,8 @@
 import { Wllama, WllamaError } from 'wllama64'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
-import { DEFAULT_RUNTIME_CONTEXT, get_model_by_id } from '../utils/model_catalog'
+import { estimate_max_model_bytes } from '../utils/device_detection'
+import { DEFAULT_RUNTIME_CONTEXT, get_model_by_id, select_browser_context } from '../utils/model_catalog'
 import { get_browser_cached_model } from '../utils/model_download'
 
 // Memory64 is the primary runtime. The matching wasm32 build remains local so
@@ -93,7 +94,17 @@ export default class WllamaProvider {
         const hardware_threads = navigator.hardwareConcurrency || 1
         const n_threads = Math.min( 8, Math.max( 1, Math.floor( hardware_threads / 2 ) ) )
         const n_batch = n_threads > 1 ? 512 : 256
-        const n_ctx = Math.min( cached.context_length || DEFAULT_RUNTIME_CONTEXT, DEFAULT_RUNTIME_CONTEXT )
+        const memory_budget = estimate_max_model_bytes( {
+            runtime: `browser`,
+            wasm: { memory64: !compat },
+            memory: {
+                device_memory: navigator.deviceMemory || null,
+                js_heap_limit: performance.memory?.jsHeapSizeLimit || null,
+            },
+        } )
+        const n_ctx = model
+            ? select_browser_context( model, memory_budget )
+            : DEFAULT_RUNTIME_CONTEXT
         const reasoning_enabled = cached.reasoning_enabled ?? model?.reasoning_enabled
         const file_size_mb = ( cached.file_size_bytes / 1_000_000 ).toFixed( 0 )
 

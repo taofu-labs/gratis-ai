@@ -7,10 +7,10 @@
  * correct timeouts based on real file sizes.
  *
  * Architecture coverage:
- * - SmolLM2 360M  → ChatML template (Q4_K_M, ~248 MB)
- * - TinyLlama 1.1B → Zephyr template (Q4_K_M, ~614 MB)
- * - Llama 3.2 1B  → Llama3 template (Q4_K_M, ~740 MB)
- * - DeepSeek R1 Qwen 1.5B → ChatML+think template (Q4_K_M, ~1.0 GB)
+ * - SmolLM2 360M  → ChatML template (Q4_K_M, ~271 MB)
+ * - TinyLlama 1.1B → Zephyr template (Q4_K_M, ~669 MB)
+ * - Llama 3.2 1B  → Llama3 template (Q4_K_M, ~808 MB)
+ * - DeepSeek R1 Qwen 1.5B → ChatML+think template (Q4_K_M, ~1.12 GB)
  * - Qwen 3.5 2B → embedded hybrid Qwen template
  */
 

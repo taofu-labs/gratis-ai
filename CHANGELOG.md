@@ -9,7 +9,8 @@
 ### Changed
 - Migrate browser inference to `wllama64` and Wllama V3 chat completions
 - Stream browser model downloads to OPFS instead of buffering full blobs
-- Use embedded GGUF Jinja templates and a practical 2K startup context
+- Use embedded GGUF Jinja templates and a practical 2K selection baseline
+- Grow known browser models from the 2K selection baseline to a budget-fitting context up to 16K
 - Refresh supported dependencies, including Electron 43 and node-llama-cpp 3.20
 - Reconcile privacy, cloud-provider, browser-runtime, and model-memory documentation
 
@@ -30,6 +31,7 @@
 - Correct four stale catalog download sizes and exact model selection in E2E
 - Navigate Electron inference tests through both onboarding and returning-user states
 - Reject and remove partial OPFS downloads whose stored size does not match the catalog
+- Clear stale browser metadata even when OPFS cannot be opened
 
 ### Removed
 - Wllama V2 binaries, aliases, manual prompt formatting, and obsolete heavy test
