@@ -7,9 +7,11 @@ import {
 } from '../../src/utils/device_detection'
 import {
     MODEL_CATALOG,
+    benchmark_coverage,
     estimate_model_memory,
     get_model_by_id,
     quality_score,
+    select_browser_batch,
     select_model_options,
 } from '../../src/utils/model_catalog'
 
@@ -35,6 +37,15 @@ const VERIFIED_MODELS = {
         repo: `ggml-org/gpt-oss-20b-GGUF`,
     },
 }
+
+const ALL_BROWSER_VERIFIED_IDS = [
+    `gpt-oss-20b-mxfp4`,
+    `ministral3-14b-q4km`,
+    `ministral3-3b-q4km`,
+    `qwen35-2b-q4km`,
+    `qwen35-4b-q4km`,
+    `qwen35-9b-vision-q4km`,
+]
 
 describe( `model selection`, () => {
 
@@ -83,6 +94,23 @@ describe( `model selection`, () => {
         expect( quality_score( sparse ) ).toBeCloseTo( 55.24 )
         expect( quality_score( complete ) ).toBeCloseTo( 63.06 )
         expect( quality_score( sparse ) ).toBeLessThan( quality_score( complete ) )
+        expect( benchmark_coverage( sparse ) ).toBe( 1 )
+        expect( benchmark_coverage( complete ) ).toBe( 5 )
+    } )
+
+    test( `tracks the complete browser-verified artifact set`, () => {
+        const verified_ids = MODEL_CATALOG
+            .filter( model => model.browser_verified === true )
+            .map( model => model.id )
+            .sort()
+
+        expect( verified_ids ).toEqual( ALL_BROWSER_VERIFIED_IDS )
+    } )
+
+    test( `shrinks prompt batches at the measured large-model thresholds`, () => {
+        expect( select_browser_batch( 2_740_937_888, 2 ) ).toBe( 512 )
+        expect( select_browser_batch( 5_680_522_464, 2 ) ).toBe( 256 )
+        expect( select_browser_batch( 12_109_566_624, 2 ) ).toBe( 128 )
     } )
 
 } )

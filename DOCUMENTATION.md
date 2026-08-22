@@ -235,7 +235,7 @@ The selector scores every eligible model that fits, then chooses the highest-qua
 - **Single-user assumption**: This is a desktop app for one person at a time, not a server. Native budgets still reserve 35–40% of RAM for the OS and other workloads.
 - **Apple Silicon gets special treatment**: Unified memory lets the native runtime use a larger share of the machine's RAM than a browser can safely reserve.
 - **Budget-based, not threshold-based**: Instead of hardcoded "if VRAM >= 8 GB then heavy", we calculate the actual memory budget and check which models fit. This naturally adapts to any hardware configuration.
-- **Sparse benchmark restraint**: Once a model publishes any comparable result, missing fields receive a neutral 50. One high GPQA result cannot outrank a model with strong five-benchmark coverage by itself.
+- **Sparse benchmark restraint**: Once a model publishes any comparable result, missing fields receive a neutral 50 for sorting. One high GPQA result cannot outrank strong five-benchmark coverage by itself, and the UI shows a composite score only when all five real results exist.
 - **Graceful fallback**: If GPU detection fails (e.g., node-llama-cpp not compiled), we fall back to platform heuristics (macOS + arm64 implies Metal) and then to conservative CPU-only estimates.
 
 ## Architecture

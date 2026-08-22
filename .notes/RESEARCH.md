@@ -186,7 +186,9 @@ Each exact artifact was fetched from its catalog Hugging Face URL into the local
 completed a real Chromium UI download, exact OPFS byte validation, native Memory64 load
 (`compat: false`), embedded-template streaming inference (`17 × 19 = 323`), browser restart,
 network-blocked cache-only reload, and a second semantic response. The durable gate also HEAD-checks
-the upstream URL and exact byte count before consuming the local mirror:
+the upstream URL and exact byte count before consuming the local mirror. These receipts came from
+Chromium reporting 32 GB device memory and four logical cores; the gate derives context and batch
+expectations from each test host instead of hard-coding those values:
 
 | Model | Artifact bytes | Runtime | First / cached output |
 |:------|---------------:|:--------|:----------------------|

@@ -62,23 +62,42 @@ const configure_page = async ( context, page, model ) => {
     expect( quota.quota ).toBeGreaterThan( model.file_size_bytes )
 }
 
-const read_runtime = page => page.evaluate( async () => {
+const read_runtime = ( page, model_id ) => page.evaluate( async id => {
     const { default: use_llm_store } = await import( `/src/stores/llm_store.js` )
+    const { estimate_max_model_bytes } = await import( `/src/utils/device_detection.js` )
+    const catalog = await import( `/src/utils/model_catalog.js` )
     const provider = use_llm_store.getState()._provider
     const runtime = provider?._wllama
     const context = runtime?.getLoadedContextInfo()
     const metadata = runtime?.getModelMetadata()?.meta || {}
+    const model = catalog.get_model_by_id( id )
+    const device_memory = navigator.deviceMemory || null
+    const hardware_concurrency = navigator.hardwareConcurrency || 1
+    const n_threads = Math.min( 8, Math.max( 1, Math.floor( hardware_concurrency / 2 ) ) )
+    const memory_budget = estimate_max_model_bytes( {
+        runtime: `browser`,
+        wasm: { memory64: true },
+        memory: {
+            device_memory,
+            js_heap_limit: performance.memory?.jsHeapSizeLimit || null,
+        },
+    } )
 
     return {
         architecture: metadata[`general.architecture`] || null,
         compat: runtime?.getWorkerResources().compat ?? null,
+        device_memory,
+        expected_n_batch: catalog.select_browser_batch( model.file_size_bytes, n_threads ),
+        expected_n_ctx: catalog.select_browser_context( model, memory_budget ),
+        hardware_concurrency,
         has_template: !!runtime?.getChatTemplate(),
+        memory_budget,
         n_batch: context?.n_batch || 0,
         n_ctx: context?.n_ctx || 0,
         n_layer: context?.n_layer || 0,
         n_vocab: context?.n_vocab || 0,
     }
-} )
+}, model_id )
 
 const read_cached_bytes = ( page, file_name ) => page.evaluate( async expected_file => {
     const downloads = await import( `/src/utils/model_download.js` )
@@ -95,6 +114,9 @@ const last_assistant_text = async page => {
 }
 
 const verify_upstream_artifact = async model => {
+    // The release gate is intentionally online: inference consumes a bounded
+    // local mirror, while this HEAD proves that mirror still matches the
+    // catalog's live Hugging Face path and exact byte count.
     const url = `https://huggingface.co/${ model.hugging_face_repo }/resolve/main/${ model.file_name }`
     const response = await fetch( url, { method: `HEAD`, redirect: `follow` } )
 
@@ -150,14 +172,14 @@ test.describe( `Persistent Memory64 inference`, () => {
                 expect( await read_cached_bytes( page, model.file_name ) ).toBe( model.file_size_bytes )
                 console.log( `[memory64-stage] ${ model.id }: exact cache` )
 
-                const runtime = await read_runtime( page )
+                const runtime = await read_runtime( page, model.id )
                 expect( runtime ).toMatchObject( {
                     architecture: model.architecture,
                     compat: false,
                     has_template: true,
-                    n_batch: model.expected_n_batch,
-                    n_ctx: model.expected_n_ctx,
                 } )
+                expect( runtime.n_batch ).toBe( runtime.expected_n_batch )
+                expect( runtime.n_ctx ).toBe( runtime.expected_n_ctx )
                 expect( runtime.n_layer ).toBeGreaterThan( 0 )
                 expect( runtime.n_vocab ).toBeGreaterThan( 0 )
                 console.log( `[memory64-stage] ${ model.id }: runtime` )

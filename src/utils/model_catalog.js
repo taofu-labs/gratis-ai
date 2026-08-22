@@ -1236,10 +1236,28 @@ export const select_browser_context = ( model, max_bytes ) => {
 
 }
 
+/**
+ * Keep compute-graph allocations below the headroom left by large weights.
+ * @param {number} model_size - GGUF size in bytes
+ * @param {number} n_threads - Runtime thread count
+ * @returns {number} Prompt batch size
+ */
+export const select_browser_batch = ( model_size, n_threads ) =>
+    model_size > 8_000_000_000
+        ? 128
+        : model_size > 4_000_000_000
+            ? 256
+            : n_threads > 1 ? 512 : 256
+
 
 // ─── Quality scoring ─────────────────────────────────────────────────────────────
 
 const BENCHMARK_FIELDS = [ `mmlu`, `gpqa`, `humaneval`, `math`, `gsm8k` ]
+
+/** Number of real comparable benchmark results published for this model. */
+export const benchmark_coverage = model => BENCHMARK_FIELDS
+    .filter( key => model.benchmarks?.[ key ] != null )
+    .length
 
 /**
  * Composite quality score from benchmark data.

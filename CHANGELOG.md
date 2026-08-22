@@ -6,7 +6,7 @@
 - Browser-verified Qwen 3.5 4B, Ministral 3 3B/14B, and GPT-OSS 20B catalog options
 - Persistent-profile Memory64 inference gate with exact OPFS bytes and network-blocked reloads
 - Unit coverage for verified artifacts, model IDs, and conservative browser recommendations
-- Upstream Hugging Face identity and runtime context/batch assertions in the large-model gate
+- Upstream Hugging Face identity and host-derived runtime context/batch assertions in the large-model gate
 
 ### Changed
 - Expose models fitting the 15 GB Memory64 runtime budget as manual browser choices

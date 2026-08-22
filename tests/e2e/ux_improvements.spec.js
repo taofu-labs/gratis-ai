@@ -43,6 +43,14 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( toggle ).toContainText( `Choose a different local model` )
     } )
 
+    test( `large browser alternatives require an inference receipt`, async ( { page } ) => {
+        await page.goto( `/select-model` )
+        await page.getByTestId( `change-model-toggle` ).click()
+
+        await expect( page.getByTestId( `model-option-qwen35-9b-vision-q4km` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-option-qwen3-14b-q4km` ) ).toHaveCount( 0 )
+    } )
+
     test( `model select shows step progress`, async ( { page } ) => {
         await page.goto( `/select-model` )
         await expect( page.getByTestId( `step-indicator` ) ).toBeVisible()

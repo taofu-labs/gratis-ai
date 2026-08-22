@@ -2,7 +2,12 @@ import { Wllama, WllamaError } from 'wllama64'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
 import { estimate_max_model_bytes } from '../utils/device_detection'
-import { DEFAULT_RUNTIME_CONTEXT, get_model_by_id, select_browser_context } from '../utils/model_catalog'
+import {
+    DEFAULT_RUNTIME_CONTEXT,
+    get_model_by_id,
+    select_browser_batch,
+    select_browser_context,
+} from '../utils/model_catalog'
 import { get_browser_cached_model } from '../utils/model_download'
 
 // Memory64 is the primary runtime. The matching wasm32 build remains local so
@@ -99,11 +104,7 @@ export default class WllamaProvider {
         // Near-ceiling models need compute-graph headroom more than prompt
         // throughput. A 512-token batch can add a large transient allocation
         // on top of 8–12 GB of weights.
-        const n_batch = model_size > 8_000_000_000
-            ? 128
-            : model_size > 4_000_000_000
-                ? 256
-                : n_threads > 1 ? 512 : 256
+        const n_batch = select_browser_batch( model_size, n_threads )
         const memory_budget = estimate_max_model_bytes( {
             runtime: `browser`,
             wasm: { memory64: !compat },

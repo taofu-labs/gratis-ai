@@ -437,7 +437,7 @@ Five benchmarks were selected for maximum cross-model coverage:
 | Qwen3 8B | 76.9 | 44.4 | 67.7 | 60.8 | 89.8 | **67.9** |
 | Qwen3 14B | 81.1 | 39.9 | 72.2 | 62.0 | 92.5 | **69.5** |
 | Qwen3 32B | 83.6 | 49.5 | 72.1 | 61.6 | 93.4 | **72.0** |
-| Llama 3.3 70B | 86.0 | 50.5 | 88.4 | 77.0 | — | **75.5** |
+| Llama 3.3 70B | 86.0 | 50.5 | 88.4 | 77.0 | — | **70.4** |
 
 **Quality Score** = average of the five comparable fields. After at least one result exists, missing
 fields receive a neutral 50; models with no comparable results remain at 0. This prevents a lone

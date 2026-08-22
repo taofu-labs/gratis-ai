@@ -6,7 +6,7 @@ import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, Loa
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
-import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_download_time, estimate_model_memory, quality_score } from '../../utils/model_catalog'
+import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_download_time, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
 import {
     BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
     MEMORY64_MODEL_CEILING_BYTES,
@@ -738,6 +738,8 @@ export default function ModelSelectPage() {
         if( shown_ids.has( model.id ) ) return false
         if( !can_fit_in_memory( model, manual_model_ceiling ) ) return false
 
+        // Below the automatic ceiling, existing catalog compatibility rules
+        // apply. Above it, an exact wllama64 inference receipt is mandatory.
         const needs_browser_receipt = capabilities?.runtime === `browser`
             && estimate_model_memory( model ) > BROWSER_AUTOMATIC_MODEL_CEILING_BYTES
 
@@ -948,7 +950,7 @@ export default function ModelSelectPage() {
                                 </OptionName>
                                 <OptionMeta>
                                     { model.parameters_label } — { format_file_size( model.file_size_bytes ) } — { model.quantization }
-                                    { model.benchmarks && <> — <QualityBadge>Score { quality_score( model ).toFixed( 0 ) }/100</QualityBadge></> }
+                                    { benchmark_coverage( model ) === 5 && <> — <QualityBadge>Score { quality_score( model ).toFixed( 0 ) }/100</QualityBadge></> }
                                     { is_cached( model.id ) ? ` — ✓ ${ t( 'downloaded' ) }` : `` }
                                 </OptionMeta>
                             </OptionInfo>

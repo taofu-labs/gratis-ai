@@ -80,8 +80,6 @@ export const MODELS = {
         size_mb: 2147,
         file_name: `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf`,
         file_size_bytes: 2_146_497_824,
-        expected_n_batch: 512,
-        expected_n_ctx: 16_384,
         tier: `large`,
     },
 
@@ -94,8 +92,6 @@ export const MODELS = {
         size_mb: 2741,
         file_name: `Qwen3.5-4B-Q4_K_M.gguf`,
         file_size_bytes: 2_740_937_888,
-        expected_n_batch: 512,
-        expected_n_ctx: 16_384,
         tier: `large`,
     },
 
@@ -108,8 +104,6 @@ export const MODELS = {
         size_mb: 5681,
         file_name: `Qwen3.5-9B-Q4_K_M.gguf`,
         file_size_bytes: 5_680_522_464,
-        expected_n_batch: 256,
-        expected_n_ctx: 16_384,
         tier: `large`,
     },
 
@@ -122,8 +116,6 @@ export const MODELS = {
         size_mb: 8240,
         file_name: `Ministral-3-14B-Instruct-2512-Q4_K_M.gguf`,
         file_size_bytes: 8_239_067_840,
-        expected_n_batch: 128,
-        expected_n_ctx: 16_384,
         tier: `large`,
     },
 
@@ -136,8 +128,6 @@ export const MODELS = {
         size_mb: 12_110,
         file_name: `gpt-oss-20b-MXFP4.gguf`,
         file_size_bytes: 12_109_566_624,
-        expected_n_batch: 128,
-        expected_n_ctx: 16_384,
         tier: `large`,
     },
 
