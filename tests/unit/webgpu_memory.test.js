@@ -5,6 +5,7 @@ import {
     measure_webgpu_allocatable_bytes,
     reset_webgpu_memory_probe,
     select_webgpu_probe_target,
+    wait_for_existing_webgpu_memory_probe,
 } from '../../src/utils/webgpu_memory'
 
 const MIB = 1024 ** 2
@@ -150,6 +151,33 @@ describe( `WebGPU memory probing`, () => {
             capped: true,
         } )
         expect( fake.destroy_device ).toHaveBeenCalledOnce()
+    } )
+
+    test( `keeps confirmed allocations when the overall probe budget expires`, async () => {
+        const fake = create_fake_gpu()
+        const times = [ 0, 1, 2, 3, 4 ]
+        const result = await measure_webgpu_allocatable_bytes( {
+            gpu: fake.gpu,
+            max_bytes: 512 * MIB,
+            timeout_ms: 4,
+            now: () => times.shift() ?? 4,
+        } )
+
+        expect( result ).toMatchObject( {
+            measured_bytes: 256 * MIB,
+            status: `measured`,
+            reason: `budget_exhausted`,
+            capped: true,
+        } )
+    } )
+
+    test( `lets model loading join an in-flight probe without starting one`, async () => {
+        const fake = create_fake_gpu()
+        const running = get_webgpu_memory_probe( { gpu: fake.gpu, max_bytes: 256 * MIB } )
+        const existing = wait_for_existing_webgpu_memory_probe()
+
+        await expect( existing ).resolves.toBe( await running )
+        expect( fake.gpu.requestAdapter ).toHaveBeenCalledOnce()
     } )
 
     test( `uses the shared-memory cap unless an adapter is positively discrete`, () => {

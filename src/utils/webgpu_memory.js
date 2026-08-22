@@ -166,7 +166,7 @@ export const measure_webgpu_allocatable_bytes = async ( {
             while( measured_bytes + chunk_size <= max_bytes ) {
 
                 if( now() - started_at >= timeout_ms ) {
-                    stop_reason = `timeout`
+                    stop_reason = `budget_exhausted`
                     capped = true
                     break probe
                 }
@@ -213,6 +213,8 @@ export const measure_webgpu_allocatable_bytes = async ( {
                         : /timed out/i.test( failure_message )
                             ? `timeout`
                             : `allocation_refused`
+
+                    if( [ `device_lost`, `timeout` ].includes( stop_reason ) ) break probe
                     break
                 }
 
@@ -284,6 +286,10 @@ export const get_webgpu_memory_probe = async options => {
 
 /** Return a finished tab-local probe without starting an allocation. */
 export const get_cached_webgpu_memory_probe = () => cached_probe
+
+/** Join a probe already in flight without starting a new allocation. */
+export const wait_for_existing_webgpu_memory_probe = async () =>
+    probe_promise ? probe_promise : cached_probe
 
 /** Reset module state for isolated unit tests. */
 export const reset_webgpu_memory_probe = () => {

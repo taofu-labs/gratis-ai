@@ -132,6 +132,12 @@ llama.cpp's `n_gpu_layers: N` offloads the final N repeating blocks. It does not
 layer first; the output layer moves only when N exceeds the transformer block count. Partial-offload
 budgeting must therefore return the exact affordable block count, not `count + 1`.
 
+Keep the probe's overall time budget distinct from a single stalled GPU operation. Confirmed
+buffers before overall budget exhaustion remain a valid measured lower bound; a device loss or
+per-operation timeout invalidates the sample. Custom/legacy models cannot derive `n_gpu_layers`,
+but their load must still join any probe already in flight so retained UMA buffers do not overlap
+with WASM model allocation.
+
 Short network probes must target the exact GGUF origin with a single bounded `Range` request.
 Hugging Face may redirect to a CDN or ignore the range, so stream/count the body and abort at the
 byte/time limit. Prefer recent throughput from actual model downloads over probe samples, scoped

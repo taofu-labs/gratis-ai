@@ -8,6 +8,7 @@ import {
 } from '../utils/device_detection'
 import { select_gpu_offload_layers } from '../utils/gpu_offload'
 import { ModelFitError } from '../utils/model_fit_error'
+import { wait_for_existing_webgpu_memory_probe } from '../utils/webgpu_memory'
 import {
     DEFAULT_RUNTIME_CONTEXT,
     estimate_model_memory,
@@ -154,9 +155,16 @@ export default class WllamaProvider {
         const source = cached.blob ? [ cached.blob ] : stored_model
         let probed_capabilities = capabilities
 
-        if( !this._gpu_disabled && capabilities.gpu?.webgpu && model?.block_count ) {
-            if( on_progress ) on_progress( { progress: 0, status: `Measuring GPU memory...` } )
-            probed_capabilities = await probe_capabilities_gpu_memory( capabilities )
+        if( !this._gpu_disabled && capabilities.gpu?.webgpu ) {
+            if( model?.block_count ) {
+                if( on_progress ) on_progress( { progress: 0, status: `Measuring GPU memory...` } )
+                probed_capabilities = await probe_capabilities_gpu_memory( capabilities )
+            } else {
+                // A capability hook may already hold large buffers on UMA.
+                // Join it before loading a custom/legacy GGUF, but never start
+                // a probe that cannot produce an offload layer count.
+                await wait_for_existing_webgpu_memory_probe()
+            }
         }
 
         let gpu_layers = this._gpu_disabled ? 0 : select_gpu_offload_layers( {

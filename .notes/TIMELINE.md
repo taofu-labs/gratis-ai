@@ -514,3 +514,5 @@
 - Synchronized the new fit, measurement, and duration messages across all 11 locales.
 - Post-commit review corrected partial-offload block counting, rejected device-loss probe results,
   limited CPU demotion to GPU/runtime failures, and cleared stale loaded-model state after recovery.
+- Final review separated healthy probe-budget exhaustion from stalled operations and made custom
+  model loads join, without starting, any allocation probe already in flight.
