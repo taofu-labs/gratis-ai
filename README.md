@@ -65,9 +65,15 @@ The app picks the best model for your device automatically. Smaller devices get 
 | Llama 3.2 1B | ~808 MB | General chat on modest hardware |
 | DeepSeek R1 1.5B | ~1.1 GB | Compact reasoning tasks |
 | Qwen 3.5 2B | ~1.28 GB | Current reasoning, instruction following, multilingual chat |
-| Qwen3 8B | ~5 GB | High-memory browsers and desktop systems |
+| Ministral 3 3B | ~2.15 GB | Compact multilingual instruction following |
+| Qwen 3.5 4B | ~2.74 GB | Strong mid-size reasoning, coding, and chat |
+| Qwen 3.5 9B | ~5.68 GB | High-quality chat on high-memory systems |
+| Ministral 3 14B | ~8.24 GB | High-end instruction following and reasoning |
+| GPT-OSS 20B | ~12.11 GB | Near-ceiling browser reasoning with 3.6B active parameters |
 
-All models are open-source. You download them once, then everything runs locally.
+All models are open-source. You download them once, then everything runs locally. Automatic
+recommendations stay conservative; current Memory64 browsers also expose larger models as manual
+choices with a memory warning.
 
 ## Is it really private?
 

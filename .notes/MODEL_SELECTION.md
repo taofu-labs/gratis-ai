@@ -731,3 +731,19 @@ START: How much memory do you have?
 | 16 | https://huggingface.co/cognitivecomputations | Cognitive Computations — Dolphin series creator |
 | 17 | https://huggingface.co/mlabonne | mlabonne — abliteration specialist |
 | 18 | https://erichartford.com/uncensored-models | Eric Hartford — "Uncensored Models" methodology blog |
+
+## 2026-08-22 Memory64 browser additions
+
+The current verified ladder adds Qwen 3.5 4B, text-only Qwen 3.5 9B, Ministral 3 3B/14B, and
+GPT-OSS 20B. All use permissive Apache-2.0 upstream licenses and passed exact-artifact inference.
+LFM2.5 remains excluded from generic recommendations because its license restricts commercial use
+for entities above its revenue threshold.
+
+The browser UI uses two budgets deliberately:
+
+- automatic cards: reported device memory with headroom;
+- manual alternatives: models whose baseline runtime estimate fits below the 15 GB file ceiling.
+
+Do not mark Qwen 3.5 language GGUFs as operational vision models. Vision needs the separate mmproj
+artifact and a working multimodal input path. Benchmark fields remain evaluation-specific; never
+map MMLU-Pro to MMLU, LiveCodeBench to HumanEval, or AIME/MATH-500 to the catalog's MATH field.

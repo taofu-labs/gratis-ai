@@ -473,3 +473,13 @@
 - CTA button uses accent color + pill shape, matching standard app buttons
 - Dismiss button uses background color with hex-alpha opacity
 - Bumped to v0.13.0
+
+## 2026-08-22 — Memory64 large-model catalog proof
+
+- Added a reliable OPFS backend that handles and verifies partial synchronous writes.
+- Exposed models below the 15 GB Memory64 file ceiling as explicit browser choices while keeping
+  automatic recommendations constrained by reported device memory.
+- Replaced broken vendor Ministral GGUF sources with inference-verified Unsloth builds.
+- Completed real browser inference and cache-only reloads for Qwen 3.5 4B/9B, Ministral 3 3B/14B,
+  and GPT-OSS 20B; the 12.11 GB GPT-OSS run proved near-ceiling Harmony inference.
+- Fixed progress-bar class generation found during 8–12 GB downloads.

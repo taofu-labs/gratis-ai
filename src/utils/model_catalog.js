@@ -267,6 +267,32 @@ export const MODEL_CATALOG = [
         category: `medium`,
     },
 
+    {
+        id: `ministral3-3b-q4km`,
+        name: `Ministral 3 3B Instruct`,
+        description: `Compact Mistral instruct model with strong reasoning and multilingual performance.`,
+        family: `mistral3`,
+        parameters: 3_849_090_048,
+        parameters_label: `3B`,
+        quantization: `Q4_K_M`,
+        bpw: 4.85,
+        file_size_bytes: 2_146_497_824,
+        context_length: 262_144,
+        layers: 26,
+        kv_heads: 8,
+        head_dim: 128,
+        // The vendor GGUF stores tokenizer scores with a type rejected by the
+        // llama.cpp revision in wllama64 1.0.0. This equivalent build passes
+        // the browser runtime's metadata and inference checks.
+        hugging_face_repo: `unsloth/Ministral-3-3B-Instruct-2512-GGUF`,
+        file_name: `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf`,
+        hf_model_repo: `mistralai/Ministral-3-3B-Instruct-2512`,
+        reasoning: false,
+        benchmarks: { mmlu: null, gpqa: 53.4, humaneval: null, math: null, gsm8k: null },
+        license: `Apache-2.0`,
+        category: `medium`,
+    },
+
     // ── 4B models ───────────────────────────────────────────────────────
 
     {
@@ -289,6 +315,33 @@ export const MODEL_CATALOG = [
         openrouter_id: `qwen/qwen3-4b:free`,
         reasoning: true,
         benchmarks: { mmlu: 73.0, gpqa: 36.9, humaneval: 63.5, math: 54.1, gsm8k: 87.8 },
+        license: `Apache-2.0`,
+        category: `medium`,
+    },
+
+    {
+        id: `qwen35-4b-q4km`,
+        name: `Qwen 3.5 4B`,
+        description: `Current mid-size Qwen with excellent reasoning, coding, and instruction following.`,
+        family: `qwen35`,
+        parameters: 4_659_865_088,
+        parameters_label: `4B`,
+        quantization: `Q4_K_M`,
+        bpw: 4.85,
+        file_size_bytes: 2_740_937_888,
+        context_length: 262_144,
+
+        // Eight of the 32 hybrid layers use standard attention and grow KV.
+        layers: 8,
+        kv_heads: 4,
+        head_dim: 256,
+
+        hugging_face_repo: `unsloth/Qwen3.5-4B-GGUF`,
+        file_name: `Qwen3.5-4B-Q4_K_M.gguf`,
+        hf_model_repo: `Qwen/Qwen3.5-4B`,
+        reasoning: true,
+        reasoning_enabled: false,
+        benchmarks: { mmlu: null, gpqa: 76.2, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
         category: `medium`,
     },
@@ -343,6 +396,58 @@ export const MODEL_CATALOG = [
         benchmarks: { mmlu: 81.1, gpqa: 39.9, humaneval: 72.2, math: 62.0, gsm8k: 92.5 },
         license: `Apache-2.0`,
         category: `heavy`,
+    },
+
+    {
+        id: `ministral3-14b-q4km`,
+        name: `Ministral 3 14B Instruct`,
+        description: `High-quality Mistral instruct model for capable Memory64 browsers and desktops.`,
+        family: `mistral3`,
+        parameters: 13_945_032_240,
+        parameters_label: `14B`,
+        quantization: `Q4_K_M`,
+        bpw: 4.85,
+        file_size_bytes: 8_239_067_840,
+        context_length: 262_144,
+        layers: 40,
+        kv_heads: 8,
+        head_dim: 128,
+        hugging_face_repo: `unsloth/Ministral-3-14B-Instruct-2512-GGUF`,
+        file_name: `Ministral-3-14B-Instruct-2512-Q4_K_M.gguf`,
+        hf_model_repo: `mistralai/Ministral-3-14B-Instruct-2512`,
+        reasoning: false,
+        benchmarks: { mmlu: null, gpqa: 71.2, humaneval: null, math: null, gsm8k: null },
+        license: `Apache-2.0`,
+        category: `heavy`,
+    },
+
+    // ── Mixture-of-Experts models ─────────────────────────────────────
+
+    {
+        id: `gpt-oss-20b-mxfp4`,
+        name: `GPT-OSS 20B`,
+        description: `OpenAI's efficient reasoning MoE, with 3.6B active parameters per token.`,
+        family: `gpt-oss`,
+        parameters: 21_511_953_984,
+        parameters_label: `20B`,
+        quantization: `MXFP4`,
+        bpw: 4.00,
+        file_size_bytes: 12_109_566_624,
+        context_length: 131_072,
+        layers: 24,
+        kv_heads: 8,
+        head_dim: 64,
+        hugging_face_repo: `ggml-org/gpt-oss-20b-GGUF`,
+        file_name: `gpt-oss-20b-MXFP4.gguf`,
+        hf_model_repo: `openai/gpt-oss-20b`,
+        reasoning: true,
+        benchmarks: { mmlu: null, gpqa: 71.5, humaneval: null, math: null, gsm8k: null },
+        license: `Apache-2.0`,
+        moe: true,
+        active_parameters: 3_600_000_000,
+        num_experts: 32,
+        num_active_experts: 4,
+        category: `ultra`,
     },
 
     // ── 32B models ──────────────────────────────────────────────────────
@@ -772,9 +877,9 @@ export const MODEL_CATALOG = [
     {
         id: `qwen35-9b-vision-q4km`,
         name: `Qwen 3.5 9B`,
-        description: `Natively multimodal — best-in-class vision, documents, and charts at any size.`,
+        description: `High-quality current Qwen for reasoning, coding, multilingual chat, and instruction following.`,
         family: `qwen35`,
-        parameters: 9_000_000_000,
+        parameters: 9_653_104_368,
         parameters_label: `9B`,
         quantization: `Q4_K_M`,
         bpw: 4.85,
@@ -791,10 +896,15 @@ export const MODEL_CATALOG = [
 
         hugging_face_repo: `unsloth/Qwen3.5-9B-GGUF`,
         file_name: `Qwen3.5-9B-Q4_K_M.gguf`,
+        hf_model_repo: `Qwen/Qwen3.5-9B`,
         reasoning: true,
+        reasoning_enabled: false,
         benchmarks: { mmlu: null, gpqa: 81.7, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
-        vision: true,
+
+        // The language GGUF is text-only in this app. Qwen 3.5 vision also
+        // needs a separate mmproj file, which the downloader does not yet load.
+        vision: false,
     },
 
 

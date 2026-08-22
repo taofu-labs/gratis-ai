@@ -46,6 +46,7 @@ Web users see a slim accent-colored banner encouraging them to try the desktop a
 | `npm run dev:electron` | Electron dev with hot-reload |
 | `npm run build:electron` | Package Electron app |
 | `npm run test` | Playwright E2E tests |
+| `npm run test:unit` | Vitest model and service unit tests |
 | `npm run lint` | ESLint with auto-fix |
 
 ## Testing
@@ -73,6 +74,11 @@ npx playwright test --config=tests/playwright.config.js --project=inference
 # Re-run the researched Qwen 3.5 model gate
 RESEARCH_INFERENCE=1 npx playwright test --config=tests/playwright.config.js --project=inference tests/e2e/inference_multimodel.spec.js
 
+# Run one pre-downloaded large-model Memory64 gate through the real browser UI
+LARGE_INFERENCE_MODELS=gpt-oss-20b-mxfp4 \
+LARGE_INFERENCE_ARTIFACT_DIR=/path/to/exact/gguf/files \
+npx playwright test --config=tests/playwright.config.js --project=inference tests/e2e/inference_large.spec.js
+
 # Electron smoke test
 DISPLAY=:99 npx playwright test --config=tests/electron.config.js --project=smoke
 
@@ -91,6 +97,9 @@ Wllama64 renders each model's embedded Jinja template. The real-inference suite 
 | Llama 3 | Llama 3.2 1B | `inference_multimodel.spec.js` |
 | Qwen 2 / reasoning | DeepSeek R1 1.5B | `inference_multimodel.spec.js` |
 | Qwen 3.5 hybrid | Qwen 3.5 2B | `inference_multimodel.spec.js` with `RESEARCH_INFERENCE=1` |
+| Qwen 3.5 hybrid | Qwen 3.5 4B / 9B | `inference_large.spec.js` |
+| Mistral 3 | Ministral 3 3B / 14B | `inference_large.spec.js` |
+| GPT-OSS / Harmony | GPT-OSS 20B MXFP4 | `inference_large.spec.js` |
 
 ### Docker / CI Setup
 
@@ -118,7 +127,8 @@ tests/
 │   ├── wait_for_inference.js   # Poll for assistant response
 │   ├── download_model.js       # UI download flow + model selection helpers
 │   └── electron_helpers.js     # Electron launch, model preloading, IPC helpers
-├── e2e/                        # Browser E2E tests (17 spec files)
+├── e2e/                        # Browser UI and real-inference specs
+│   ├── inference_large.spec.js # Persistent Memory64 + cache-only large-model gate
 │   ├── inference_multimodel.spec.js
 │   ├── model_switching.spec.js
 │   ├── abort_generation.spec.js
@@ -176,37 +186,39 @@ The app automatically recommends the best model for your hardware. On first laun
 
 ### Memory budget calculation
 
-Models need roughly **1.2x their file size** once loaded (weights + KV cache + compute buffers). The memory budget determines which models are eligible:
+Known models use their exact file size plus architecture-specific FP16 KV cache and 500 MB of
+runtime headroom. The memory budget determines automatic recommendations; Memory64 users may also
+manually choose larger entries whose baseline estimate remains below the runtime ceiling.
 
 **Electron (native inference)**
 
 | GPU type | Budget formula | Rationale |
 |----------|---------------|-----------|
-| Apple Silicon (Metal) | 75% of total RAM | Unified memory — GPU and CPU share the same pool. macOS allows Metal to access ~75% of physical RAM. |
+| Apple Silicon (Metal) | 65% of total RAM | Unified memory with headroom for macOS, Electron, and other applications. |
 | Discrete GPU (CUDA/Vulkan) | max(VRAM, 60% of system RAM) | Weights load to VRAM; partial offloading spills to system RAM. The larger of the two gives the real budget. |
-| CPU-only | 70% of system RAM | No GPU acceleration, but this is a dedicated single-user app — most of system RAM is available. |
+| CPU-only | 60% of system RAM | Leaves headroom for the OS, Electron, and other applications. |
 
 **Browser (WASM)**
 
 | Runtime | Limit |
 |---------|-------|
-| Shared Memory64 + JSPI | 15 GB model budget below wllama64's 16 GiB virtual ceiling, further capped to 70% of reported device memory |
+| Shared Memory64 + JSPI | Automatic cards use 70% of reported device memory; manual choices may use baseline estimates up to 15 GB below wllama64's 16 GiB virtual ceiling |
 | wasm32 compatibility | ~3.4 GB hard ceiling, further capped to 60% of reported device memory and 70% of the JS heap limit |
 
 Model selection uses a 2,048-token context baseline. At load time, known catalog models grow by powers of two within the device budget, capped at 16K. Custom models stay at 2K when their architecture is unknown. Allocating an advertised 128K or 262K maximum at startup would waste gigabytes of KV cache before the first short chat.
 
 ### What gets recommended
 
-The selector walks tiers from highest quality to lowest and picks the **first tier where a model fits** within the budget:
+The selector scores every eligible model that fits, then chooses the highest-quality result:
 
 | Hardware | Budget | Recommendation | Why |
 |----------|--------|---------------|-----|
-| Apple Silicon (8 GB) | ~6.0 GB | **Qwen3 8B** (5.0 GB) | Unified memory lets the native runtime fit the 2K context estimate. |
-| Apple Silicon (16 GB) | ~12 GB | **Qwen3 14B** (9.0 GB) | The native runtime can use larger weights without the browser ceiling. |
-| Discrete GPU (12 GB VRAM) | ~12 GB | **Qwen3 14B** (9.0 GB) | Weights fit in VRAM with headroom for inference buffers and 2K context. |
-| CPU-only system (8 GB RAM) | ~5.6 GB | **Qwen3 8B** (5.0 GB) | The estimate fits; generation speed remains hardware-dependent. |
-| Intel laptop (4 GB, no GPU) | ~2.8 GB | **DeepSeek R1 1.5B** (1.1 GB) | Budget fits medium-tier models only. |
-| Browser with Memory64 (8 GB reported) | ~5.6 GB | **Phi-4 Mini** (2.5 GB) | Memory64 removes the wasm32 ceiling while leaving 30% device-memory headroom. |
+| Apple Silicon (8 GB) | ~5.2 GB | **Qwen 3.5 4B** (2.74 GB) | Strongest scored model whose 2K runtime estimate fits. |
+| Apple Silicon (16 GB) | ~10.4 GB | **Qwen 3.5 9B** (5.68 GB) | High quality with ample native runtime headroom. |
+| Discrete GPU (12 GB VRAM) | ~12 GB | **Qwen 3.5 9B** (5.68 GB) | Fits with room for GPU/runtime allocations. |
+| CPU-only system (8 GB RAM) | ~4.8 GB | **Qwen 3.5 4B** (2.74 GB) | Fits the conservative 2K estimate; speed remains hardware-dependent. |
+| Intel laptop (4 GB, no GPU) | ~2.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | Budget fits medium-tier models only. |
+| Browser with Memory64 (8 GB reported) | ~5.6 GB | **Qwen 3.5 4B** (2.74 GB) | Larger verified models remain available manually with a warning. |
 | Browser compatibility runtime (memory unknown) | ~2.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | Firefox/Safari omit the memory hint, so selection stays conservative below the wasm32 ceiling. |
 
 ### Model tiers
@@ -214,13 +226,13 @@ The selector walks tiers from highest quality to lowest and picks the **first ti
 | Tier | Models | File size | Min budget |
 |------|--------|-----------|-----------|
 | **Lightweight** | SmolLM2 360M, Qwen3 0.6B, TinyLlama 1.1B, Llama 3.2 1B | 271–808 MB | ~0.8 GB |
-| **Medium** | DeepSeek R1 1.5B, Qwen3 1.7B, **Qwen 3.5 2B**, SmolLM3 3B, Qwen3 4B | 1.1–2.5 GB | ~1.7 GB |
-| **Heavy** | Qwen3 8B, Qwen3 14B | 5.0–9.0 GB | ~6.2 GB |
-| **Ultra** | Qwen3 32B, Llama 3.3 70B | 19.8–42.5 GB | Desktop only at these quantizations |
+| **Medium** | DeepSeek R1 1.5B, Qwen3 1.7B, Qwen 3.5 2B/4B, SmolLM3 3B, Ministral 3 3B | 1.1–2.74 GB | ~1.7 GB |
+| **Heavy** | Qwen3 8B/14B, Qwen 3.5 9B, Ministral 3 14B | 5.0–9.0 GB | ~6.2 GB |
+| **Ultra** | GPT-OSS 20B; Qwen3 32B and Llama 70B variants | 12.1–42.5 GB | GPT-OSS is Memory64-verified; larger weights require desktop RAM |
 
 ### Key design decisions
 
-- **Single-user assumption**: This is a desktop app for one person at a time, not a server. We can safely allocate 70-75% of RAM without impacting other workloads.
+- **Single-user assumption**: This is a desktop app for one person at a time, not a server. Native budgets still reserve 35–40% of RAM for the OS and other workloads.
 - **Apple Silicon gets special treatment**: Unified memory lets the native runtime use a larger share of the machine's RAM than a browser can safely reserve.
 - **Budget-based, not threshold-based**: Instead of hardcoded "if VRAM >= 8 GB then heavy", we calculate the actual memory budget and check which models fit. This naturally adapts to any hardware configuration.
 - **Graceful fallback**: If GPU detection fails (e.g., node-llama-cpp not compiled), we fall back to platform heuristics (macOS + arm64 implies Metal) and then to conservative CPU-only estimates.

@@ -7,6 +7,7 @@ import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
 import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_download_time, estimate_model_memory, quality_score } from '../../utils/model_catalog'
+import { MEMORY64_MODEL_CEILING_BYTES, WASM32_MODEL_CEILING_BYTES } from '../../utils/device_detection'
 import { parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { storage_key } from '../../utils/branding'
 
@@ -607,6 +608,16 @@ export default function ModelSelectPage() {
         [ max_model_bytes ],
     )
 
+    // navigator.deviceMemory is capped at 8 GB, so it remains appropriate for
+    // automatic recommendations but cannot reveal high-memory hardware. Let
+    // users explicitly choose every model the active WASM runtime can address;
+    // the existing warning still marks choices above the conservative budget.
+    const manual_model_ceiling = capabilities?.runtime === `browser`
+        ? capabilities?.wasm?.memory64
+            ? MEMORY64_MODEL_CEILING_BYTES
+            : WASM32_MODEL_CEILING_BYTES
+        : max_model_bytes
+
     // All catalog models for the alternatives list, sorted: fits-in-memory first → params desc
     const catalog_models = useMemo( () => {
 
@@ -715,7 +726,7 @@ export default function ModelSelectPage() {
     // Alternatives exclude all models shown as recommendation cards
     const shown_ids = new Set( [ smarter?.id, faster?.id, uncensored?.id, vision?.id ].filter( Boolean ) )
     const alternative_models = catalog_models.filter( m =>
-        !shown_ids.has( m.id ) && can_fit_in_memory( m, max_model_bytes )
+        !shown_ids.has( m.id ) && can_fit_in_memory( m, manual_model_ceiling )
     )
 
     // Card row when we have at least 2 options to compare
@@ -977,6 +988,11 @@ export default function ModelSelectPage() {
 
             </ExpandPanel>
         </> }
+
+        { active_model && !can_fit_in_memory( active_model, max_model_bytes ) && <MemoryWarning>
+            <AlertTriangle size={ 14 } />
+            { t( 'may_be_too_large_browser' ) }
+        </MemoryWarning> }
 
         { /* ── Cloud Models section ── */ }
         <SectionHeader>

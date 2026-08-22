@@ -30,7 +30,11 @@
  * Detect the exact shared Memory64 primitive used by wllama64.
  * @returns {{ memory64: boolean, jspi: boolean, cross_origin_isolated: boolean }}
  */
+let cached_wasm_capabilities = null
+
 export const detect_wasm_capabilities = () => {
+
+    if( cached_wasm_capabilities ) return cached_wasm_capabilities
 
     const jspi = !!WebAssembly.Suspending
     const cross_origin_isolated = globalThis.crossOriginIsolated === true
@@ -40,7 +44,9 @@ export const detect_wasm_capabilities = () => {
         const memory = new WebAssembly.Memory( {
             address: `i64`,
             initial: 1n,
-            maximum: 1n,
+            // Probe the same 16 GiB shared reservation requested by wllama64,
+            // not merely the Memory64 syntax accepted by the engine.
+            maximum: 262_144n,
             shared: true,
         } )
         shared_memory64 = memory.grow( 0n ) === 1n
@@ -48,11 +54,13 @@ export const detect_wasm_capabilities = () => {
         shared_memory64 = false
     }
 
-    return {
+    cached_wasm_capabilities = {
         memory64: cross_origin_isolated && jspi && shared_memory64,
         jspi,
         cross_origin_isolated,
     }
+
+    return cached_wasm_capabilities
 
 }
 
@@ -294,6 +302,9 @@ export const detect_capabilities = async () => {
  * @param {DeviceCapabilities} capabilities
  * @returns {number} Max model file size in bytes
  */
+export const MEMORY64_MODEL_CEILING_BYTES = 15_000_000_000
+export const WASM32_MODEL_CEILING_BYTES = 3_400_000_000
+
 export const estimate_max_model_bytes = ( capabilities ) => {
 
     if( capabilities?.runtime === `electron` && capabilities?.memory?.total_bytes ) {
@@ -325,7 +336,9 @@ export const estimate_max_model_bytes = ( capabilities ) => {
     const has_memory64 = capabilities?.wasm?.memory64 === true
 
     // Leave runtime and KV-cache headroom beneath each linear-memory ceiling.
-    const wasm_ceiling = has_memory64 ? 15_000_000_000 : 3_400_000_000
+    const wasm_ceiling = has_memory64
+        ? MEMORY64_MODEL_CEILING_BYTES
+        : WASM32_MODEL_CEILING_BYTES
 
     // navigator.deviceMemory is intentionally rounded and capped at 8 GB.
     // Unknown devices get a conservative 4 GB assumption; otherwise a missing

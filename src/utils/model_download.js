@@ -1,7 +1,8 @@
 import { log } from 'mentie'
-import { ModelManager, ModelValidationStatus } from 'wllama64'
+import { CacheManager, ModelManager, ModelValidationStatus } from 'wllama64'
 import { get_db } from '../stores/db'
 import { get_model_by_id } from './model_catalog'
+import { ReliableOPFSBackend } from './reliable_opfs_backend'
 
 const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
 
@@ -22,6 +23,7 @@ export const get_browser_model_manager = () => {
     if( !browser_model_manager ) {
         browser_model_manager = new ModelManager( {
             allowOffline: true,
+            cacheManager: new CacheManager( [ new ReliableOPFSBackend() ] ),
             logger: WLLAMA_CACHE_LOGGER,
         } )
     }
@@ -274,7 +276,7 @@ export const download_model = async ( model, on_progress, signal ) => {
     }
 
     // Browser path: Wllama streams directly into OPFS. This avoids keeping a
-    // second multi-GB copy in V8 while assembling a Blob and supports resume.
+    // second multi-GB copy in V8 while assembling a Blob.
     const downloaded = await get_browser_model_manager().downloadModel( url, {
         signal,
         progressCallback: ( { loaded, total } ) => {

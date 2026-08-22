@@ -12,6 +12,7 @@ const COMPAT_PATHS = {
     worker: `/wasm/compat/wllama.js`,
     wasm: `/wasm/compat/wllama.wasm`,
 }
+const INFERENCE_DIAGNOSTICS = import.meta.env.VITE_INFERENCE_DIAGNOSTICS === `1`
 
 const WLLAMA_LOGGER = {
     debug: ( ...args ) => log.debug( `[wllama64]`, ...args ),
@@ -80,7 +81,7 @@ export default class WllamaProvider {
         this._wllama = new Wllama( CONFIG_PATHS, {
             allowOffline: true,
             logger: WLLAMA_LOGGER,
-            suppressNativeLog: true,
+            suppressNativeLog: !INFERENCE_DIAGNOSTICS,
         } )
         // The second argument permits Firefox to use the local wasm32 fallback
         // when its Memory64/JSPI path is unavailable.
@@ -93,7 +94,16 @@ export default class WllamaProvider {
         // otherwise create a wasteful pthread pool in desktop-class browsers.
         const hardware_threads = navigator.hardwareConcurrency || 1
         const n_threads = Math.min( 8, Math.max( 1, Math.floor( hardware_threads / 2 ) ) )
-        const n_batch = n_threads > 1 ? 512 : 256
+        const model_size = cached.file_size_bytes || model?.file_size_bytes || 0
+
+        // Near-ceiling models need compute-graph headroom more than prompt
+        // throughput. A 512-token batch can add a large transient allocation
+        // on top of 8–12 GB of weights.
+        const n_batch = model_size > 8_000_000_000
+            ? 128
+            : model_size > 4_000_000_000
+                ? 256
+                : n_threads > 1 ? 512 : 256
         const memory_budget = estimate_max_model_bytes( {
             runtime: `browser`,
             wasm: { memory64: !compat },

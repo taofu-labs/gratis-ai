@@ -47,12 +47,15 @@ const ProgressBar = styled.div`
     overflow: hidden;
 `
 
-const ProgressFill = styled.div`
+// Width changes hundreds of times during a multi-gigabyte download. Keep it
+// inline so styled-components does not mint a new generated class per update.
+const ProgressFill = styled.div.attrs( ( { $progress } ) => ( {
+    style: { width: `${ $progress * 100 }%` },
+} ) )`
     height: 100%;
     background: ${ ( { theme } ) => theme.colors.accent };
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
     transition: width 0.3s ease;
-    width: ${ ( { $progress } ) => `${ $progress * 100 }%` };
 `
 
 const ProgressDetails = styled.div`

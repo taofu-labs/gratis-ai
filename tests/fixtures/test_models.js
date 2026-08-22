@@ -71,6 +71,61 @@ export const MODELS = {
         tier: `medium`,
     },
 
+    ministral3_3b: {
+        id: `ministral3-3b-q4km`,
+        name: `Ministral 3 3B Instruct`,
+        architecture: `mistral3`,
+        template: `jinja`,
+        size_mb: 2147,
+        file_name: `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf`,
+        file_size_bytes: 2_146_497_824,
+        tier: `large`,
+    },
+
+    qwen35_4b: {
+        id: `qwen35-4b-q4km`,
+        name: `Qwen 3.5 4B`,
+        architecture: `qwen35`,
+        template: `jinja`,
+        size_mb: 2741,
+        file_name: `Qwen3.5-4B-Q4_K_M.gguf`,
+        file_size_bytes: 2_740_937_888,
+        tier: `large`,
+    },
+
+    qwen35_9b: {
+        id: `qwen35-9b-vision-q4km`,
+        name: `Qwen 3.5 9B`,
+        architecture: `qwen35`,
+        template: `jinja`,
+        size_mb: 5681,
+        file_name: `Qwen3.5-9B-Q4_K_M.gguf`,
+        file_size_bytes: 5_680_522_464,
+        tier: `large`,
+    },
+
+    ministral3_14b: {
+        id: `ministral3-14b-q4km`,
+        name: `Ministral 3 14B Instruct`,
+        architecture: `mistral3`,
+        template: `jinja`,
+        size_mb: 8240,
+        file_name: `Ministral-3-14B-Instruct-2512-Q4_K_M.gguf`,
+        file_size_bytes: 8_239_067_840,
+        tier: `large`,
+    },
+
+    gpt_oss_20b: {
+        id: `gpt-oss-20b-mxfp4`,
+        name: `GPT-OSS 20B`,
+        architecture: `gpt-oss`,
+        template: `harmony`,
+        size_mb: 12_110,
+        file_name: `gpt-oss-20b-MXFP4.gguf`,
+        file_size_bytes: 12_109_566_624,
+        tier: `large`,
+    },
+
     // OpenRouter cloud model — free model for zero-cost E2E tests
     openrouter_dolphin: {
         id: `openrouter-dolphin-mistral-24b`,
@@ -86,6 +141,13 @@ export const MODELS = {
 export const DEFAULT_MODELS = [ MODELS.smollm2, MODELS.tinyllama ]
 export const ALL_INFERENCE_MODELS = [ MODELS.smollm2, MODELS.tinyllama, MODELS.llama32, MODELS.deepseek ]
 export const RESEARCH_MODELS = [ MODELS.qwen35_2b ]
+export const LARGE_INFERENCE_MODELS = [
+    MODELS.qwen35_4b,
+    MODELS.qwen35_9b,
+    MODELS.ministral3_3b,
+    MODELS.ministral3_14b,
+    MODELS.gpt_oss_20b,
+]
 
 // Test prompt designed to produce short, verifiable responses across all architectures
 export const TEST_PROMPT = `What is 2+2? Answer with just the number.`

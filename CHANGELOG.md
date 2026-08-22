@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.42.0] - 2026-08-22
+
+### Added
+- Browser-verified Qwen 3.5 4B, Ministral 3 3B/14B, and GPT-OSS 20B catalog options
+- Persistent-profile Memory64 inference gate with exact OPFS bytes and network-blocked reloads
+- Unit coverage for verified artifacts, model IDs, and conservative browser recommendations
+
+### Changed
+- Expose models fitting the 15 GB Memory64 runtime budget as manual browser choices
+- Treat Qwen 3.5 9B language weights as text-only until mmproj support exists
+- Default Qwen 3.5 4B/9B to practical non-thinking browser chat
+- Reduce inference batches for models above 4 GB and 8 GB to preserve runtime headroom
+- Use inference-compatible Unsloth Ministral GGUFs instead of rejected vendor artifacts
+- Refresh i18next/react-i18next, lucide-react, and UUID major versions
+
+### Fixed
+- Handle partial OPFS synchronous writes and verify flushed byte counts
+- Probe the actual shared 16 GiB Memory64 reservation and cache the result
+- Warn on manually selected models above the conservative device-memory estimate
+- Stop generating hundreds of styled-components classes during large downloads
+
 ## [0.41.0] - 2026-08-22
 
 ### Added

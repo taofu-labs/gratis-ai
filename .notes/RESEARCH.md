@@ -159,11 +159,12 @@ Primary source: https://github.com/actuallymentor/wllama64/tree/v1.0.0
 | Candidate | Exact Q4_K_M file | License | Decision |
 |:----------|------------------:|:--------|:---------|
 | Qwen 3.5 2B | 1,280,835,840 B | Apache-2.0 | Added; real Memory64 UI inference passed |
-| Qwen 3.5 4B | 2,740,937,888 B | Apache-2.0 | Deferred; download passed but load failed on test host |
-| Ministral 3 3B Instruct 2512 | 2,147,023,008 B | Apache-2.0 | Deferred; download did not complete within 15 minutes |
-| Ministral 3 14B Instruct 2512 | 8,239,593,024 B | Apache-2.0 | Deferred pending actual >4 GiB inference proof |
+| Qwen 3.5 4B | 2,740,937,888 B | Apache-2.0 | Added; exact UI inference and cache-only reload passed |
+| Qwen 3.5 9B | 5,680,522,464 B | Apache-2.0 | Added as text-only; exact >4 GiB Memory64 proof passed |
+| Ministral 3 3B Instruct 2512 (Unsloth) | 2,146,497,824 B | Apache-2.0 | Added; vendor GGUF rejected, Unsloth build passed |
+| Ministral 3 14B Instruct 2512 (Unsloth) | 8,239,067,840 B | Apache-2.0 | Added; exact UI inference and cache-only reload passed |
 | LFM2.5 1.2B / 8B-A1B | 730,895,168 / 5,155,564,768 B | LFM Open License 1.0 | Do not recommend by default; >=$10M revenue restriction |
-| gpt-oss-20b MXFP4 | 12,109,566,624 B | Apache-2.0 | Deferred pending Harmony parsing and 16 GiB headroom proof |
+| GPT-OSS 20B MXFP4 | 12,109,566,624 B | Apache-2.0 | Added; Harmony final-channel and near-ceiling proof passed |
 
 Qwen documents the 2B model as non-thinking by default. Keep `reasoning: true` as capability
 metadata but use `reasoning_enabled: false` for its default template/runtime behavior; otherwise
@@ -178,3 +179,24 @@ Quant source: https://huggingface.co/unsloth/Qwen3.5-2B-GGUF
 Add a browser model only after the exact catalog GGUF completes download, load, embedded-template
 chat, non-empty streamed inference, and a semantic assertion through the real Playwright UI flow.
 Build success or Electron-native inference does not validate wllama64.
+
+### Verified Memory64 ladder (2026-08-22)
+
+Each exact artifact completed real Chromium UI download, exact OPFS byte validation, native
+Memory64 load (`compat: false`), embedded-template streaming inference (`17 × 19 = 323`), browser
+restart, network-blocked cache-only reload, and a second semantic response:
+
+| Model | Artifact bytes | Runtime | First / cached output |
+|:------|---------------:|:--------|:----------------------|
+| Ministral 3 3B Q4_K_M (Unsloth) | 2,146,497,824 | mistral3, batch 512, ctx 16K | `323` / `Hello.` |
+| Qwen 3.5 4B Q4_K_M | 2,740,937,888 | qwen35, batch 512, ctx 16K | `323` / `hello` |
+| Qwen 3.5 9B Q4_K_M | 5,680,522,464 | qwen35, batch 256, ctx 16K | `323` / `hello` |
+| Ministral 3 14B Q4_K_M (Unsloth) | 8,239,067,840 | mistral3, batch 128, ctx 16K | `323` / `Hello! …` |
+| GPT-OSS 20B MXFP4 | 12,109,566,624 | gpt-oss, batch 128, ctx 16K | `323` / `hello` |
+
+GPT-OSS generated 62 tokens before its first one-token final answer. Harmony parsing correctly hid
+analysis/control channels from the UI. Qwen 3.5 4B/9B must default to non-thinking mode for short
+browser chats; otherwise a 128-token cap can be consumed by hidden reasoning with no final answer.
+
+The vendor Ministral 3B artifact at 2,147,023,008 bytes failed with `invalid gguf type for
+tokenizer.ggml.scores`; do not switch the catalog back without retesting the pinned runtime.
