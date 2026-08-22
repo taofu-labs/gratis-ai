@@ -139,7 +139,7 @@ export const measure_webgpu_allocatable_bytes = async ( {
         }
 
         const adapter = await wait_with_timeout(
-            gpu.requestAdapter( { powerPreference: `high-performance` } ),
+            gpu.requestAdapter(),
             operation_timeout_ms,
             `WebGPU adapter request`,
         )
@@ -204,9 +204,13 @@ export const measure_webgpu_allocatable_bytes = async ( {
 
                 if( operation_error || validation_error || memory_error ) {
                     buffer?.destroy()
-                    stop_reason = operation_error?.message?.includes( `lost` )
+                    const failure_message = [ operation_error, validation_error, memory_error ]
+                        .map( error => error?.message || `` )
+                        .join( ` ` )
+
+                    stop_reason = /device lost/i.test( failure_message )
                         ? `device_lost`
-                        : operation_error?.message?.includes( `timed out` )
+                        : /timed out/i.test( failure_message )
                             ? `timeout`
                             : `allocation_refused`
                     break
@@ -232,11 +236,13 @@ export const measure_webgpu_allocatable_bytes = async ( {
 
         if( measured_bytes >= max_bytes - WEBGPU_PROBE_CHUNKS.at( -1 ) ) capped = true
 
+        const unreliable = [ `device_lost`, `timeout` ].includes( stop_reason )
+
         return {
             measured_bytes,
-            status: measured_bytes > 0 ? `measured` : `unavailable`,
+            status: measured_bytes > 0 && !unreliable ? `measured` : `unavailable`,
             reason: stop_reason,
-            capped,
+            capped: capped || unreliable,
             adapter_info: adapter.info || {},
         }
 
@@ -275,6 +281,9 @@ export const get_webgpu_memory_probe = async options => {
     }
     return probe_promise
 }
+
+/** Return a finished tab-local probe without starting an allocation. */
+export const get_cached_webgpu_memory_probe = () => cached_probe
 
 /** Reset module state for isolated unit tests. */
 export const reset_webgpu_memory_probe = () => {

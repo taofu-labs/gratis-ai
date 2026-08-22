@@ -124,8 +124,13 @@ derive `n_gpu_layers` only from a retained-buffer allocation probe plus remainin
 `GPUAdapter.limits.maxBufferSize` is a per-buffer API limit, not available VRAM. Keep it only as
 an immediate UI fallback. The empirical probe must use a dedicated device, retain and submit work
 to every buffer, handle validation/out-of-memory scopes, and destroy all buffers and the device.
-Never attempt offload from an unmeasured reported hint. Any WebGPU load or inference failure must
-recreate Wllama with `n_gpu_layers: 0`; a dead worker also needs bounded teardown before retry.
+Never attempt offload from an unmeasured reported hint. Any GPU-specific runtime/device failure
+must recreate Wllama with `n_gpu_layers: 0`; ordinary inference errors such as KV-cache exhaustion
+must propagate without an expensive reload. A dead worker also needs bounded teardown before retry.
+
+llama.cpp's `n_gpu_layers: N` offloads the final N repeating blocks. It does not count the output
+layer first; the output layer moves only when N exceeds the transformer block count. Partial-offload
+budgeting must therefore return the exact affordable block count, not `count + 1`.
 
 Short network probes must target the exact GGUF origin with a single bounded `Range` request.
 Hugging Face may redirect to a CDN or ignore the range, so stream/count the body and abort at the

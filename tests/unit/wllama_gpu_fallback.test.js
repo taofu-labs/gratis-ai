@@ -5,6 +5,7 @@ const mocks = vi.hoisted( () => ( {
     fail_gpu: false,
     fail_cpu: false,
     fail_gpu_inference: false,
+    fail_benign_inference: false,
     probed: true,
     memory64: true,
     put: vi.fn(),
@@ -25,6 +26,13 @@ vi.mock( `wllama64`, () => {
         constructor( message, type = `unknown_error` ) {
             super( message )
             this.type = type
+        }
+    }
+
+    class WllamaRuntimeError extends Error {
+        constructor( message ) {
+            super( message )
+            this.name = `WllamaRuntimeError`
         }
     }
 
@@ -56,6 +64,9 @@ vi.mock( `wllama64`, () => {
             return { meta: { 'general.name': `Test model`, 'general.architecture': `test` } }
         }
         async createChatCompletion() {
+            if( this.load_options.n_gpu_layers > 0 && mocks.fail_benign_inference ) {
+                throw new WllamaError( `KV cache full`, `kv_cache_full` )
+            }
             if( this.load_options.n_gpu_layers > 0 && mocks.fail_gpu_inference ) {
                 throw new Error( `GPU device lost` )
             }
@@ -69,7 +80,7 @@ vi.mock( `wllama64`, () => {
         }
     }
 
-    return { Wllama, WllamaError }
+    return { Wllama, WllamaError, WllamaRuntimeError }
 
 } )
 
@@ -112,6 +123,7 @@ describe( `Wllama WebGPU fallback`, () => {
         mocks.fail_gpu = false
         mocks.fail_cpu = false
         mocks.fail_gpu_inference = false
+        mocks.fail_benign_inference = false
         mocks.probed = true
         mocks.memory64 = true
         mocks.put.mockClear()
@@ -177,6 +189,29 @@ describe( `Wllama WebGPU fallback`, () => {
             .resolves.toBe( `cpu answer` )
         expect( mocks.instances ).toHaveLength( 2 )
         expect( mocks.instances[ 1 ].load_options.n_gpu_layers ).toBe( 0 )
+    } )
+
+    test( `does not demote WebGPU for a normal inference validation error`, async () => {
+        mocks.fail_benign_inference = true
+        const provider = new WllamaProvider()
+        await provider.load_model( `smollm2-360m-q4km` )
+
+        await expect( provider.chat( [ { role: `user`, content: `hello` } ] ) )
+            .rejects.toMatchObject( { type: `kv_cache_full` } )
+        expect( mocks.instances ).toHaveLength( 1 )
+        expect( provider.is_ready() ).toBe( true )
+    } )
+
+    test( `clears provider readiness when the emergency CPU reload also fails`, async () => {
+        mocks.fail_gpu_inference = true
+        mocks.fail_cpu = true
+        const provider = new WllamaProvider()
+        await provider.load_model( `smollm2-360m-q4km` )
+
+        await expect( provider.chat( [ { role: `user`, content: `hello` } ] ) )
+            .rejects.toThrow( `could not be loaded by the browser runtime` )
+        expect( provider.is_ready() ).toBe( false )
+        expect( provider.get_loaded_model() ).toBeNull()
     } )
 
 } )

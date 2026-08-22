@@ -43,8 +43,8 @@ export const select_gpu_offload_layers = ( {
         Math.floor( gpu_budget / bytes_per_block ),
     )
 
-    // llama.cpp counts the output layer first. One means output-only and is
-    // rarely worth the extra backend overhead, so require a transformer block.
-    return transformer_blocks >= 1 ? 1 + transformer_blocks : 0
+    // llama.cpp offloads the final N repeating blocks. The output layer moves
+    // only when N exceeds block_count, which the all-layers sentinel handles.
+    return transformer_blocks
 
 }

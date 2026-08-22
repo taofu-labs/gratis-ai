@@ -151,7 +151,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
     const navigate = useNavigate()
     const theme = useTheme()
     const { t } = useTranslation( `models` )
-    const { max_model_bytes } = use_device_capabilities()
+    const { max_model_bytes, is_detecting } = use_device_capabilities()
 
     // Close dropdown on click outside or Escape key
     useEffect( () => {
@@ -327,7 +327,9 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                         const is_cloud = model.source === `openrouter` || model.source === `venice`
                         const provider_label = model.source === `venice` ? `Venice` : model.source === `openrouter` ? `OpenRouter` : null
                         const fit_model = get_model_by_id( model.id ) || model
-                        const too_large = !is_cloud && !can_fit_in_memory( fit_model, max_model_bytes )
+                        const too_large = !is_detecting
+                            && !is_cloud
+                            && !can_fit_in_memory( fit_model, max_model_bytes )
                         return <ModelOption
                             key={ model.id }
                             data-testid={ `model-option-${ model.id }` }

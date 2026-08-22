@@ -512,3 +512,5 @@
 - Replaced static same-origin speed fixtures and optimistic connection hints with bounded range
   sampling against the selected GGUF plus conservative actual-download history.
 - Synchronized the new fit, measurement, and duration messages across all 11 locales.
+- Post-commit review corrected partial-offload block counting, rejected device-loss probe results,
+  limited CPU demotion to GPU/runtime failures, and cleared stale loaded-model state after recovery.

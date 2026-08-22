@@ -212,7 +212,8 @@ tokenizer.ggml.scores`; do not switch the catalog back without retesting the pin
 - `adapter.info.isFallbackAdapter` identifies software/fallback adapters and should suppress the
   destructive allocation probe and offload attempt.
 - `wllama64` 1.0.0 already forwards llama.cpp's `n_gpu_layers`; `0` forces CPU and a positive
-  value requests WebGPU offload. No package fork or dependency update is required.
+  value requests that many final repeating blocks on WebGPU. The output layer moves only when the
+  value exceeds `block_count`. No package fork or dependency update is required.
 - The GGUF remains fully resident in WASM memory during offload. Strict model eligibility must
   remain based on RAM, KV-cache, runtime overhead, and the WASM address-space ceiling.
 - Qwen 3.5 hybrid models need separate KV-bearing `layers` and transformer `block_count` values:

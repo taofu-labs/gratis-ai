@@ -215,6 +215,7 @@ export const probe_download_speed = async ( url, {
 
     } catch ( error ) {
         if( externally_aborted ) throw abort_error()
+        if( cutoff_fired && !reader ) throw new Error( `Network measurement timed out` )
         throw error
     } finally {
         clearTimeout( sample_timer )

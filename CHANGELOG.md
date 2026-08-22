@@ -12,6 +12,11 @@
 - Use localized, granular download durations across selection and progress
 - Report measured GPU memory as an allocatable lower bound
 
+### Fixed
+- Count partial GPU-offload blocks without exceeding the measured budget
+- Reject probe samples that lose or stall the WebGPU device
+- Retry transient capability detection and clear failed GPU-recovery state
+
 ### Removed
 - Static same-origin speed-test binaries and their deployment rules
 

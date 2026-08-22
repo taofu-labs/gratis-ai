@@ -67,6 +67,17 @@ describe( `network speed evidence`, () => {
         } )
     } )
 
+    test( `distinguishes a connection timeout from caller cancellation`, async () => {
+        const fetch_impl = vi.fn( ( _, { signal } ) => new Promise( ( _, reject ) => {
+            signal.addEventListener( `abort`, () => reject( new DOMException( `Aborted`, `AbortError` ) ) )
+        } ) )
+
+        await expect( probe_download_speed( `https://cdn.example/model.gguf`, {
+            fetch_impl,
+            connect_timeout_ms: 1,
+        } ) ).rejects.toThrow( `Network measurement timed out` )
+    } )
+
     test( `invalidates stale evidence when the connection class changes`, () => {
         const storage = new MemoryStorage()
         const url = `https://cdn.example/model.gguf`

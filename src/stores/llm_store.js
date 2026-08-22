@@ -139,7 +139,9 @@ const use_llm_store = create( ( set, get ) => ( {
         const state = get()
 
         // Already loaded — nothing to do
-        if( state.loaded_model_id === model_id && !state.is_loading ) return
+        if( state.loaded_model_id === model_id
+            && !state.is_loading
+            && state._provider?.is_ready() ) return
 
         // Already loading this exact model — return existing promise
         if( state._load_promise && state._loading_model_id === model_id ) {
@@ -261,7 +263,10 @@ const use_llm_store = create( ( set, get ) => ( {
 
             // Real error — log, set state, and re-throw so callers can display it
             log.error( `[use_llm] Generation error:`, err.message )
-            set( { error: err.message } )
+            set( {
+                error: err.message,
+                ... provider.is_ready() ? {} : { loaded_model_id: null },
+            } )
             throw err
 
         } finally {

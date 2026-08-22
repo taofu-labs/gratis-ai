@@ -203,6 +203,9 @@ export default function HomePage() {
     const active_model = cached_models.find( ( m ) => m.id === active_id )
     const model_name = active_model?.name || active_id || `Unknown`
     const is_cloud = active_model?.source === 'openrouter'
+    const load_error_message = is_model_fit_error( load_error )
+        ? t( `models:model_does_not_fit` )
+        : t( `failed_to_load` )
 
     // ── Preload model on mount ──────────────────────────────────────
 
@@ -421,7 +424,7 @@ export default function HomePage() {
             { /* Error banner — only after loading settles, never mid-load */ }
             { !is_loading && load_error && <ErrorBanner data-testid="home-load-error">
                 <AlertCircle size={ 14 } />
-                <span>{ load_error.message || t( 'failed_to_load' ) }</span>
+                <span>{ load_error_message }</span>
                 { !is_model_fit_error( load_error ) && <ErrorAction onClick={ handle_retry } data-testid="home-retry-btn">
                     <RotateCcw size={ 12 } /> { t( 'common:retry' ) }
                 </ErrorAction> }

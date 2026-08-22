@@ -32,6 +32,7 @@
  */
 
 import {
+    get_cached_webgpu_memory_probe,
     get_webgpu_memory_probe,
     reported_webgpu_bytes,
     select_webgpu_probe_target,
@@ -85,7 +86,7 @@ const detect_webgpu = async () => {
 
         if( !navigator.gpu ) return { webgpu: false }
 
-        const adapter = await navigator.gpu.requestAdapter( { powerPreference: `high-performance` } )
+        const adapter = await navigator.gpu.requestAdapter()
         if( !adapter ) return { webgpu: false }
 
         const info = adapter.info || {}
@@ -301,7 +302,12 @@ let capabilities_promise = null
  * @returns {Promise<DeviceCapabilities>}
  */
 export const detect_capabilities = () => {
-    capabilities_promise ??= detect_capabilities_uncached()
+
+    capabilities_promise ??= detect_capabilities_uncached().catch( error => {
+        capabilities_promise = null
+        throw error
+    } )
+
     return capabilities_promise
 }
 
@@ -442,9 +448,11 @@ export const estimate_max_model_bytes = ( capabilities ) => {
  * The returned object is immutable from the caller's perspective.
  *
  * @param {DeviceCapabilities} capabilities
+ * @param {Object} [options]
+ * @param {boolean} [options.cached_only] - Never start a new allocation probe
  * @returns {Promise<DeviceCapabilities>}
  */
-export const probe_capabilities_gpu_memory = async capabilities => {
+export const probe_capabilities_gpu_memory = async ( capabilities, { cached_only = false } = {} ) => {
 
     if( capabilities?.runtime !== `browser`
         || !capabilities?.gpu?.webgpu
@@ -457,10 +465,14 @@ export const probe_capabilities_gpu_memory = async capabilities => {
         adapter_info: capabilities.gpu.adapter_info,
     } )
 
-    const probe = await get_webgpu_memory_probe( {
-        gpu: navigator.gpu,
-        max_bytes,
-    } )
+    const probe = cached_only
+        ? get_cached_webgpu_memory_probe()
+        : await get_webgpu_memory_probe( {
+            gpu: navigator.gpu,
+            max_bytes,
+        } )
+
+    if( !probe ) return capabilities
 
     const measured = probe.status === `measured` && probe.measured_bytes > 0
     const allocatable_bytes = measured

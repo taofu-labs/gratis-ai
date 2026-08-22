@@ -30,11 +30,12 @@ export default function use_device_capabilities() {
                 set_is_detecting( false )
 
                 // Probe only while inference is idle. WllamaProvider can await
-                // the same shared probe before a first model load.
+                // the same shared probe before a first model load. Busy hooks
+                // may still consume an already-finished probe without allocating.
                 const llm = use_llm_store.getState()
-                if( llm.is_loading || llm.is_generating || llm.loaded_model_id ) return
+                const cached_only = !!( llm.is_loading || llm.is_generating || llm.loaded_model_id )
 
-                const measured = await probe_capabilities_gpu_memory( result )
+                const measured = await probe_capabilities_gpu_memory( result, { cached_only } )
                 if( !cancelled ) set_capabilities( measured )
 
             } )

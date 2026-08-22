@@ -30,8 +30,7 @@ describe( `GPU layer selection`, () => {
             context_length: 2048,
         } )
 
-        expect( layers ).toBeGreaterThan( 1 )
-        expect( layers ).toBeLessThan( MODEL.block_count + 2 )
+        expect( layers ).toBe( 6 )
     } )
 
     test( `never trusts reported hints or unknown block counts`, () => {

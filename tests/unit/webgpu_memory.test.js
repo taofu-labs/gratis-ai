@@ -10,7 +10,11 @@ import {
 const MIB = 1024 ** 2
 const GIB = 1024 ** 3
 
-const create_fake_gpu = ( { allocation_limit = Infinity, fallback = false } = {} ) => {
+const create_fake_gpu = ( {
+    allocation_limit = Infinity,
+    fallback = false,
+    lose_after_submissions = null,
+} = {} ) => {
 
     let allocated = 0
     let pending_memory_error = null
@@ -18,9 +22,13 @@ const create_fake_gpu = ( { allocation_limit = Infinity, fallback = false } = {}
     const buffers = []
     const destroy_device = vi.fn()
     const request_device = vi.fn()
+    let lose_device
+    let submission_count = 0
 
     const device = {
-        lost: new Promise( () => {} ),
+        lost: new Promise( resolve => {
+            lose_device = resolve
+        } ),
         pushErrorScope: vi.fn(),
         popErrorScope: vi.fn( async () => {
             if( pending_validation_error ) {
@@ -52,7 +60,12 @@ const create_fake_gpu = ( { allocation_limit = Infinity, fallback = false } = {}
         } ) ),
         queue: {
             submit: vi.fn(),
-            onSubmittedWorkDone: vi.fn( async () => {} ),
+            onSubmittedWorkDone: vi.fn( async () => {
+                submission_count++
+                if( submission_count === lose_after_submissions ) {
+                    lose_device( { reason: `unknown` } )
+                }
+            } ),
         },
         destroy: destroy_device,
     }
@@ -121,6 +134,22 @@ describe( `WebGPU memory probing`, () => {
         expect( first ).toBe( second )
         expect( third ).toBe( first )
         expect( fake.gpu.requestAdapter ).toHaveBeenCalledOnce()
+    } )
+
+    test( `does not trust allocations that destabilize the device`, async () => {
+        const fake = create_fake_gpu( { lose_after_submissions: 2 } )
+        const result = await measure_webgpu_allocatable_bytes( {
+            gpu: fake.gpu,
+            max_bytes: 512 * MIB,
+        } )
+
+        expect( result ).toMatchObject( {
+            measured_bytes: 256 * MIB,
+            status: `unavailable`,
+            reason: `device_lost`,
+            capped: true,
+        } )
+        expect( fake.destroy_device ).toHaveBeenCalledOnce()
     } )
 
     test( `uses the shared-memory cap unless an adapter is positively discrete`, () => {

@@ -1,4 +1,4 @@
-import { Wllama, WllamaError } from 'wllama64'
+import { Wllama, WllamaError, WllamaRuntimeError } from 'wllama64'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
 import {
@@ -154,7 +154,7 @@ export default class WllamaProvider {
         const source = cached.blob ? [ cached.blob ] : stored_model
         let probed_capabilities = capabilities
 
-        if( !this._gpu_disabled && capabilities.gpu?.webgpu ) {
+        if( !this._gpu_disabled && capabilities.gpu?.webgpu && model?.block_count ) {
             if( on_progress ) on_progress( { progress: 0, status: `Measuring GPU memory...` } )
             probed_capabilities = await probe_capabilities_gpu_memory( capabilities )
         }
@@ -265,7 +265,7 @@ export default class WllamaProvider {
                 ...this._build_completion_options( opts ),
             } )
         } catch ( error ) {
-            if( this._gpu_layers <= 0 ) throw error
+            if( this._gpu_layers <= 0 || !this._should_reload_on_cpu( error ) ) throw error
             await this._reload_on_cpu( error )
             response = await this._create_chat_completion( {
                 messages,
@@ -340,7 +340,7 @@ export default class WllamaProvider {
         } catch ( error ) {
             if( error.name === `AbortError` || error.message?.includes( `abort` ) ) return
 
-            if( this._gpu_layers > 0 ) {
+            if( this._gpu_layers > 0 && this._should_reload_on_cpu( error ) ) {
                 await this._reload_on_cpu( error )
                 if( abort_controller.signal.aborted ) return
 
@@ -552,6 +552,16 @@ export default class WllamaProvider {
         } finally {
             clearTimeout( timeout_id )
         }
+
+    }
+
+    /** Distinguish backend/worker failure from normal inference validation. */
+    _should_reload_on_cpu( error ) {
+
+        if( error instanceof WllamaRuntimeError ) return true
+
+        return /gpu inference stopped responding|webgpu|wgpu|gpu device|device lost|worker (?:crashed|stopped responding)/i
+            .test( error?.message || `` )
 
     }
 
