@@ -13,6 +13,8 @@
     "custom_instructions": "Własne instrukcje",
     "custom_instructions_description": "Powiedz AI, jak ma się zachowywać. Na przykład: \"Zawsze odpowiadaj po polsku\" lub \"Wyjaśniaj rzeczy prosto\".",
     "custom_instructions_placeholder": "np. Jesteś przyjaznym asystentem, który wyjaśnia rzeczy w prosty sposób…",
+    "thinking_mode": "Tryb myślenia",
+    "thinking_mode_description": "Pozwala modelom rozumującym używać dodatkowych tokenów przed odpowiedzią. Wyłącz, aby uzyskać szybsze lokalne odpowiedzi.",
 
     "keyboard_shortcuts": "Skróty klawiszowe",
     "shortcut_new_chat": "Nowa rozmowa",

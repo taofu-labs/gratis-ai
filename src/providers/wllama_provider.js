@@ -1,14 +1,60 @@
-import { Wllama } from '@wllama/wllama'
+import { Wllama } from 'wllama64'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
+import {
+    apply_thinking_preference_to_messages,
+    get_thinking_chat_template_kwargs,
+    supports_thinking_control,
+} from '../utils/thinking_mode'
 
 // WASM paths — served from public/wasm/ (copied there by postinstall script)
 const CONFIG_PATHS = {
-    'single-thread/wllama.wasm': `/wasm/single-thread/wllama.wasm`,
-    'multi-thread/wllama.wasm': `/wasm/multi-thread/wllama.wasm`,
+    default: `/wasm/wllama.wasm`,
 }
 
 const DEFAULT_BROWSER_CONTEXT = 2048
+const BROWSER_LOAD_TIMEOUT_MS = 120_000
+const FIRST_TOKEN_TIMEOUT_MS = 120_000
+
+const delay = ( ms ) => new Promise( resolve => setTimeout( resolve, ms ) )
+
+const timeout_error = ( message, name ) => Object.assign( new Error( message ), { name } )
+
+const with_timeout = async ( promise, ms, message, name ) => {
+
+    let timer = null
+    const timeout = new Promise( ( _, reject ) => {
+        timer = setTimeout( () => reject( timeout_error( message, name ) ), ms )
+    } )
+
+    try {
+        return await Promise.race( [ promise, timeout ] )
+    } finally {
+        if( timer ) clearTimeout( timer )
+    }
+
+}
+
+const extract_chat_chunk_text = ( chunk ) => {
+
+    const choice = chunk?.choices?.[ 0 ] || {}
+    const delta = choice.delta || {}
+
+    const content = delta.content ?? choice.text ?? chunk.content ?? chunk.text ?? chunk.response
+    if( typeof content === `string` && content ) return { text: content, kind: `content` }
+
+    const reasoning = delta.reasoning_content
+        ?? delta.reasoning
+        ?? choice.reasoning_content
+        ?? choice.reasoning
+        ?? chunk.reasoning_content
+        ?? chunk.reasoning
+
+    if( typeof reasoning === `string` && reasoning ) return { text: reasoning, kind: `reasoning` }
+
+    return { text: ``, kind: null }
+
+}
 
 /**
  * Detect which chat template family a Jinja template belongs to.
@@ -158,11 +204,6 @@ export default class WllamaProvider {
         // Unload any existing model first
         if( this._wllama ) await this.unload_model()
 
-        // Create new wllama instance
-        this._wllama = new Wllama( CONFIG_PATHS, {
-            suppressNativeLog: true,
-        } )
-
         // Retrieve model blob from IndexedDB
         const db = await get_db()
         const cached = await db.get( `models`, model_id )
@@ -170,6 +211,12 @@ export default class WllamaProvider {
         if( !cached?.blob ) {
             throw new Error( `Model ${ model_id } not found in cache` )
         }
+
+        // Create new wllama instance
+        this._wllama = new Wllama( CONFIG_PATHS, {
+            suppressNativeLog: true,
+        } )
+        this._wllama.setCompat?.( null )
 
         // Report initial progress
         if( on_progress ) {
@@ -189,22 +236,60 @@ export default class WllamaProvider {
         const context_ceiling = has_context_override ? requested_context : DEFAULT_BROWSER_CONTEXT
         const n_ctx = Math.min( requested_context, cached.context_length || requested_context, context_ceiling )
         const n_batch = n_threads > 1 ? 512 : 128
+        // Keep browser loads on the proven WASM path for now. WebGPU offload can
+        // make large custom models freeze during init on integrated GPUs.
+        const n_gpu_layers = 0
 
         const file_size_mb = ( cached.blob.size / 1_000_000 ).toFixed( 0 )
-        log.info( `[wllama] Loading model ${ model_id } (${ file_size_mb } MB, ${ n_threads } threads, ctx ${ n_ctx }, batch ${ n_batch })` )
+        log.info( `[wllama] Loading model ${ model_id } (${ file_size_mb } MB, ${ n_threads } threads, ctx ${ n_ctx }, batch ${ n_batch }, gpu ${ n_gpu_layers > 0 ? `on` : `off` })` )
+
+        const cleanup_timers = ( timers ) => {
+            timers.forEach( timer => clearTimeout( timer ) )
+            timers.length = 0
+        }
+
+        const schedule_load_status = ( timers, status, ms ) => {
+            if( !on_progress ) return
+            timers.push( setTimeout( () => {
+                on_progress( { progress: 0, status } )
+            }, ms ) )
+        }
 
         const load_with_options = async ( options ) => {
-            await this._wllama.loadModel( [ cached.blob ], {
-                n_ctx: options.n_ctx,
-                n_batch: options.n_batch,
-                n_threads: options.n_threads,
+            const timers = []
+            if( on_progress ) {
+                on_progress( { progress: 0, status: `Loading ${ n_ctx.toLocaleString() } context into browser memory...` } )
+            }
 
-                // Quantize the KV cache from FP16 → Q8_0.  Halves cache memory
-                // with near-zero quality loss (+0.002 ppl), freeing headroom for
-                // longer contexts or larger models within the WASM ceiling.
-                cache_type_k: `q8_0`,
-                cache_type_v: `q8_0`,
+            schedule_load_status( timers, `Still loading the model into WebAssembly...`, 10_000 )
+            schedule_load_status( timers, `Large browser models can pause the tab while memory is prepared...`, 30_000 )
+            schedule_load_status( timers, `Still waiting on the browser runtime. If this continues, pick a smaller quantization or context.`, 60_000 )
+
+            const timeout = new Promise( ( _, reject ) => {
+                timers.push( setTimeout( () => {
+                    reject( timeout_error(
+                        `The browser did not finish loading this model after 2 minutes. Pick a smaller quantization or lower context, then try again.`,
+                        `LoadTimeoutError`
+                    ) )
+                }, BROWSER_LOAD_TIMEOUT_MS ) )
             } )
+
+            try {
+                await Promise.race( [ this._wllama.loadModel( [ cached.blob ], {
+                    n_ctx: options.n_ctx,
+                    n_batch: options.n_batch,
+                    n_threads: options.n_threads,
+                    n_gpu_layers,
+
+                    // Quantize the KV cache from FP16 → Q8_0.  Halves cache memory
+                    // with near-zero quality loss (+0.002 ppl), freeing headroom for
+                    // longer contexts or larger models within the WASM ceiling.
+                    cache_type_k: `q8_0`,
+                    cache_type_v: `q8_0`,
+                } ), timeout ] )
+            } finally {
+                cleanup_timers( timers )
+            }
         }
 
         try {
@@ -219,8 +304,21 @@ export default class WllamaProvider {
             // will surface its result to all callers.
             if( load_err.message?.includes( `already initialized` ) ) {
                 log.warn( `[wllama] Module already initialized — concurrent load detected, deferring` )
+                await this.unload_model()
+                throw new Error( `Model load was interrupted by another load. Try again.` )
+            }
+
+            if( load_err.name === `LoadTimeoutError` ) {
+                log.error( `[wllama] Timed out loading ${ model_id } (${ file_size_mb } MB, ctx ${ n_ctx })` )
+                const stuck_runtime = this._wllama
                 this._wllama = null
-                return
+                if( stuck_runtime ) {
+                    await Promise.race( [
+                        stuck_runtime.exit().catch( () => {} ),
+                        delay( 1_000 ),
+                    ] )
+                }
+                throw load_err
             }
 
             // WASM heap overflow produces a RangeError when the model is too large
@@ -239,6 +337,7 @@ export default class WllamaProvider {
                         this._wllama = new Wllama( CONFIG_PATHS, {
                             suppressNativeLog: true,
                         } )
+                        this._wllama.setCompat?.( null )
                         if( on_progress ) {
                             on_progress( { progress: 0, status: `Retrying ${ n_ctx.toLocaleString() } context in safe mode...` } )
                         }
@@ -264,7 +363,15 @@ export default class WllamaProvider {
 
                 if( is_glue_error ) {
                     log.error( `[wllama] WASM worker protocol error loading ${ model_id } (${ file_size_mb } MB)` )
-                    throw new Error( `Failed to load this model in the browser — it's likely too large for WebAssembly memory. Try a smaller quantization or use the desktop app.` )
+                    throw new Error( `The browser runtime crashed while loading this model. It may be too large for WebAssembly memory or use an unsupported GGUF architecture. Try lower context, smaller quantization, or another model.` )
+                }
+
+                const message = load_err.message || ``
+                const is_unsupported_model = /unsupported|unknown architecture|unknown model|not supported|tensor.+not found|unknown tensor|gated.?delta|ssm/i.test( message )
+
+                if( is_unsupported_model ) {
+                    log.error( `[wllama] Unsupported browser model loading ${ model_id } (${ file_size_mb } MB): ${ message }` )
+                    throw new Error( `This model is not supported by the browser runtime yet. Try another GGUF model or use the desktop app.` )
                 }
 
                 log.error( `[wllama] Failed to load model:`, load_err )
@@ -276,38 +383,11 @@ export default class WllamaProvider {
         this._loaded_model_id = model_id
         this._loaded_context_length = requested_context_override
 
-        // Verify the tokenizer works — some GGUF files (e.g. QuantFactory conversions)
-        // have broken tokenizer data that crashes the WASM runtime. Catching this
-        // early gives the user a clear message instead of silent 0-token outputs.
-        try {
-            const probe_tokens = await this._wllama.tokenize( `Hello`, true )
-            if( !probe_tokens?.length ) throw new Error( `empty` )
-        } catch {
-            await this.unload_model()
-            throw new Error( `This model file has an incompatible tokenizer. Please delete it and re-download.` )
-        }
-
-        // Detect the chat template type and cache EOS/BOS token strings
-        // so we can format prompts ourselves (wllama's formatChat has a bug
-        // where eos_token is not provided to the Jinja template engine)
+        // Detect chat template type for diagnostics. Prompt rendering itself is
+        // handled by Wllama v3's chat-completion API.
         const template = this._wllama.getChatTemplate()
         this._template_type = detect_template_type( template )
         log.info( `[wllama] Detected template type: ${ this._template_type }` )
-
-        // Get EOS and BOS token strings by detokenizing their IDs
-        // detokenize returns Uint8Array so we need to decode to string
-        const decoder = new TextDecoder()
-        try {
-            const eos_id = this._wllama.getEOS()
-            const bos_id = this._wllama.getBOS()
-            const eot_id = this._wllama.getEOT()
-            if( eos_id >= 0 ) this._eos_str = decoder.decode( await this._wllama.detokenize( [ eos_id ] ) )
-            if( bos_id >= 0 ) this._bos_str = decoder.decode( await this._wllama.detokenize( [ bos_id ] ) )
-            if( eot_id >= 0 ) this._eot_str = decoder.decode( await this._wllama.detokenize( [ eot_id ] ) )
-            log.info( `[wllama] Tokens — EOS: ${ JSON.stringify( this._eos_str ) }, BOS: ${ JSON.stringify( this._bos_str ) }, EOT: ${ JSON.stringify( this._eot_str ) }` )
-        } catch ( token_err ) {
-            log.warn( `[wllama] Could not resolve special tokens, using defaults`, token_err )
-        }
 
         // Update last_used_at timestamp — non-critical, don't fail the load if storage is full
         try {
@@ -333,6 +413,23 @@ export default class WllamaProvider {
     }
 
     /**
+     * Apply Qwen thinking controls only for models that understand them.
+     * @param {import('./types').ChatMessage[]} messages
+     * @param {import('./types').GenerateOptions} opts
+     * @returns {{messages: import('./types').ChatMessage[], chat_template_kwargs?: Object}}
+     */
+    _build_thinking_request( messages, opts ) {
+
+        if( !this._supports_thinking_control() ) return { messages }
+
+        return {
+            messages: apply_thinking_preference_to_messages( messages, opts.thinking_enabled === true ),
+            chat_template_kwargs: get_thinking_chat_template_kwargs( messages, opts.thinking_enabled === true ),
+        }
+
+    }
+
+    /**
      * Single-shot chat completion
      * @param {import('./types').ChatMessage[]} messages
      * @param {import('./types').GenerateOptions} [opts]
@@ -345,25 +442,26 @@ export default class WllamaProvider {
         }
 
         const sampling = this._build_sampling( opts )
-        const prompt = this._format_chat( messages )
+        const thinking_request = this._build_thinking_request( messages, opts )
 
         const t0 = performance.now()
 
-        const response = await this._wllama.createCompletion( prompt, {
-            nPredict: opts.max_tokens || 2048,
-            sampling,
+        const response = await this._wllama.createChatCompletion( {
+            ...thinking_request,
+            max_tokens: opts.max_tokens || 2048,
             stream: false,
-            useCache: true,
+            cache_prompt: true,
+            ...sampling,
         } )
 
-        // Rough token estimate — wllama doesn't expose token count for non-streaming
+        const text = response.choices[ 0 ]?.message?.content || ``
         const elapsed_s = ( performance.now() - t0 ) / 1000
-        const approx_tokens = response.split( /\s+/ ).length
+        const approx_tokens = response.usage?.completion_tokens || text.split( /\s+/ ).length
 
         const [ model_name, model_arch ] = this._model_identity()
         log.info( `[wllama] [${ model_name } (${ model_arch })] Chat complete — ~${ approx_tokens } tokens in ${ elapsed_s.toFixed( 1 ) }s (~${ ( approx_tokens / elapsed_s ).toFixed( 1 ) } tk/s)` )
 
-        return response
+        return text
 
     }
 
@@ -382,45 +480,55 @@ export default class WllamaProvider {
 
         this._abort_controller = new AbortController()
         const sampling = this._build_sampling( opts )
-
-        // Use our own chat formatter which correctly includes EOS/BOS tokens
-        // (wllama's formatChat has a bug where eos_token is not provided to the Jinja engine)
-        const prompt = this._format_chat( messages )
-        log.insane( `[wllama] Prompt (${ this._template_type }):\n`, prompt )
-
-        const utf8 = new TextDecoder()
+        const thinking_request = this._build_thinking_request( messages, opts )
         let token_count = 0
         const t0 = performance.now()
         let ttft = null // time to first token
+        let reasoning_open = false
 
-        const stream = await this._wllama.createCompletion( prompt, {
-            nPredict: opts.max_tokens || 2048,
-            sampling,
+        const first_token_timeout_message = `The model did not start responding after 2 minutes. Try a smaller context, smaller quantization, or a shorter prompt.`
+
+        const stream = await with_timeout( this._wllama.createChatCompletion( {
+            ...thinking_request,
+            max_tokens: opts.max_tokens || 2048,
             stream: true,
-            useCache: true,
+            cache_prompt: true,
             abortSignal: this._abort_controller.signal,
-        } )
+            ...sampling,
+        } ), FIRST_TOKEN_TIMEOUT_MS, first_token_timeout_message, `GenerationTimeoutError` )
 
         try {
 
-            for await ( const chunk of stream ) {
+            const iterator = stream[ Symbol.asyncIterator ]()
 
-                token_count++
+            while( true ) {
 
-                // Decode raw token bytes in streaming mode — holds back incomplete
-                // multi-byte UTF-8 sequences instead of emitting replacement chars
-                const text = utf8.decode( chunk.piece, { stream: true } )
+                const next = token_count === 0
+                    ? await with_timeout( iterator.next(), FIRST_TOKEN_TIMEOUT_MS, first_token_timeout_message, `GenerationTimeoutError` )
+                    : await iterator.next()
+
+                if( next.done ) break
+
+                const chunk = next.value
+                const { text, kind } = extract_chat_chunk_text( chunk )
+
                 if( text ) {
 
+                    const visible_text = kind === `reasoning`
+                        ? `${ reasoning_open ? `` : `<think>` }${ text }`
+                        : `${ reasoning_open ? `</think>\n\n` : `` }${ text }`
+
+                    if( kind === `reasoning` ) reasoning_open = true
+                    else reasoning_open = false
+
+                    token_count++
                     if( ttft === null ) ttft = performance.now() - t0
-                    yield text
+                    yield visible_text
                 }
 
             }
 
-            // Flush any bytes the streaming decoder held back
-            const trailing = utf8.decode()
-            if( trailing ) yield trailing
+            if( reasoning_open ) yield `</think>\n\n`
 
             // Performance summary for this generation
             const elapsed_ms = performance.now() - t0
@@ -435,7 +543,7 @@ export default class WllamaProvider {
                 const tks = decode_ms > 0 ? ( token_count / ( decode_ms / 1000 ) ).toFixed( 1 ) : `∞`
 
                 log.info(
-                    `[wllama] [${ model_name } (${ model_arch })] ${ token_count } tokens — ttft ${ ttft.toFixed( 0 ) }ms, ${ tks } tk/s (${ ( elapsed_ms / 1000 ).toFixed( 1 ) }s total)`
+                    `[wllama] [${ model_name } (${ model_arch })] ${ token_count } chunks — ttft ${ ttft.toFixed( 0 ) }ms, ${ tks } chunk/s (${ ( elapsed_ms / 1000 ).toFixed( 1 ) }s total)`
                 )
 
             } else {
@@ -509,6 +617,23 @@ export default class WllamaProvider {
             meta[`general.name`] || this._loaded_model_id || `unknown`,
             meta[`general.architecture`] || `?`,
         ]
+    }
+
+    /**
+     * Check whether the loaded model should receive Qwen thinking controls.
+     * @returns {boolean}
+     */
+    _supports_thinking_control() {
+
+        const meta = this._wllama?.getModelMetadata()?.meta || {}
+
+        return supports_thinking_control( {
+            model_id: this._loaded_model_id,
+            name: meta[`general.name`],
+            architecture: meta[`general.architecture`],
+            chat_template: this._wllama?.getChatTemplate?.(),
+        } )
+
     }
 
     /**

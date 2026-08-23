@@ -8,6 +8,7 @@
     "hide_device_details": "Nascondi dettagli dispositivo",
 
     "model_ready": "{{name}} — Pronto",
+    "model_selected": "{{name}} — Selezionato",
     "loading_model": "Caricamento di {{name}}…",
     "switch_model": "Cambia modello",
     "failed_to_load": "Impossibile caricare il modello",

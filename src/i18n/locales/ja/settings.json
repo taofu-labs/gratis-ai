@@ -13,6 +13,8 @@
     "custom_instructions": "カスタム指示",
     "custom_instructions_description": "AIの振る舞いを設定できます。例:「常にフランス語で返答して」「わかりやすく説明して」など。",
     "custom_instructions_placeholder": "例: あなたは親切なアシスタントで、物事をわかりやすく説明します...",
+    "thinking_mode": "思考モード",
+    "thinking_mode_description": "推論モデルが回答前に追加トークンを使って考えることを許可します。ローカル応答を速くするにはオフにします。",
 
     "keyboard_shortcuts": "キーボードショートカット",
     "shortcut_new_chat": "新しいチャット",

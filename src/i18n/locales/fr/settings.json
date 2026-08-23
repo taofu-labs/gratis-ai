@@ -13,6 +13,8 @@
     "custom_instructions": "Instructions personnalisées",
     "custom_instructions_description": "Indiquez à l'IA comment se comporter. Par exemple : « Réponds toujours en anglais » ou « Explique les choses simplement ».",
     "custom_instructions_placeholder": "ex. Tu es un assistant bienveillant qui explique les choses simplement...",
+    "thinking_mode": "Mode réflexion",
+    "thinking_mode_description": "Autorise les modèles de raisonnement à utiliser des tokens supplémentaires avant de répondre. Désactivez-le pour des réponses locales plus rapides.",
 
     "keyboard_shortcuts": "Raccourcis clavier",
     "shortcut_new_chat": "Nouvelle discussion",

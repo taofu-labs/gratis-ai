@@ -13,6 +13,8 @@
     "custom_instructions": "自定义指令",
     "custom_instructions_description": "设定 AI 的行为方式。例如：「始终用法语回复」或「用简单的语言解释」。",
     "custom_instructions_placeholder": "例如：你是一个友好的助手，擅长用简单的方式解释事物...",
+    "thinking_mode": "思考模式",
+    "thinking_mode_description": "允许推理模型在回答前使用额外 token。关闭后本地回复更快。",
 
     "keyboard_shortcuts": "键盘快捷键",
     "shortcut_new_chat": "新对话",

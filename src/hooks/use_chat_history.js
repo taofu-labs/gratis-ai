@@ -46,11 +46,12 @@ export default function use_chat_history() {
      * Create a new conversation
      * @param {string} title - Conversation title (first user message, truncated)
      * @param {string} [model_id] - Model used for this conversation
+     * @param {string} [id_override] - Existing conversation ID to persist
      * @returns {Promise<string>} New conversation ID
      */
-    const create_conversation = useCallback( async ( title, model_id ) => {
+    const create_conversation = useCallback( async ( title, model_id, id_override ) => {
 
-        const id = uuid()
+        const id = id_override || uuid()
         const now = Date.now()
         const conversation = {
             id,

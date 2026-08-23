@@ -13,6 +13,8 @@
     "custom_instructions": "Custom Instructions",
     "custom_instructions_description": "Tell the AI how to behave. For example: \"Always reply in French\" or \"Explain things simply\".",
     "custom_instructions_placeholder": "e.g. You are a friendly assistant who explains things simply...",
+    "thinking_mode": "Thinking mode",
+    "thinking_mode_description": "Let reasoning models spend extra tokens before they answer. Turn off for faster local replies.",
 
     "keyboard_shortcuts": "Keyboard Shortcuts",
     "shortcut_new_chat": "New Chat",

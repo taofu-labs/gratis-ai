@@ -12,6 +12,28 @@
 
 const os = require( `os` )
 
+const THINKING_DIRECTIVE_RE = /(^|\s)\/(no[\s_-]?think|think)(?=$|\s|[.!?,;:])/i
+
+const get_explicit_thinking_preference = ( prompt ) => {
+
+    const match = ( prompt || `` ).match( THINKING_DIRECTIVE_RE )
+    if( !match ) return null
+
+    const directive = match[ 2 ].toLowerCase().replace( /[\s_-]/g, `` )
+    return directive === `nothink` ? false : true
+
+}
+
+const apply_thinking_preference_to_prompt = ( prompt, thinking_enabled ) => {
+
+    if( get_explicit_thinking_preference( prompt ) !== null ) return prompt
+
+    const directive = thinking_enabled ? `/think` : `/no_think`
+    const separator = prompt.endsWith( `\n` ) || !prompt ? `` : `\n\n`
+    return `${ prompt }${ separator }${ directive }`
+
+}
+
 // ---------------------------------------------------
 // Console forwarding — relay worker logs to the main
 // process so they can reach the browser DevTools
@@ -177,7 +199,10 @@ class NativeInference {
         this._ensure_system_prompt( messages )
 
         const last_user_message = [ ...messages ].reverse().find( ( m ) => m.role === `user` )
-        const prompt = last_user_message?.content || ``
+        const raw_prompt = last_user_message?.content || ``
+        const prompt = this._supports_thinking_control()
+            ? apply_thinking_preference_to_prompt( raw_prompt, opts.thinking_enabled === true )
+            : raw_prompt
 
         const t0 = performance.now()
 
@@ -218,6 +243,24 @@ class NativeInference {
     }
 
     /**
+     * Qwen hybrid reasoning models understand /think and /no_think controls.
+     * @returns {boolean}
+     */
+    _supports_thinking_control() {
+
+        const general = this._model?.fileInfo?.metadata?.general || {}
+        const haystack = [
+            this._model_path,
+            general.name,
+            general.architecture,
+            this._model?.typeDescription,
+        ].filter( Boolean ).join( ` ` ).toLowerCase()
+
+        return haystack.includes( `qwen` )
+
+    }
+
+    /**
      * Streaming chat completion — calls on_text for each text chunk
      * @param {Array} messages - Chat messages
      * @param {Object} opts - Generation options
@@ -230,7 +273,10 @@ class NativeInference {
         this._abort_controller = new AbortController()
 
         const last_user_message = [ ...messages ].reverse().find( ( m ) => m.role === `user` )
-        const prompt = last_user_message?.content || ``
+        const raw_prompt = last_user_message?.content || ``
+        const prompt = this._supports_thinking_control()
+            ? apply_thinking_preference_to_prompt( raw_prompt, opts.thinking_enabled === true )
+            : raw_prompt
 
         let token_count = 0
         const t0 = performance.now()

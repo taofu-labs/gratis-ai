@@ -8,6 +8,7 @@
     "hide_device_details": "Hide device details",
 
     "model_ready": "{{name}} — Ready",
+    "model_selected": "{{name}} — Selected",
     "loading_model": "Loading {{name}}...",
     "switch_model": "Switch model",
     "failed_to_load": "Failed to load model",

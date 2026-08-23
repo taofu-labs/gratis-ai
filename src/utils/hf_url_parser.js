@@ -13,6 +13,9 @@ export const extract_quantization = ( file_name ) => {
 const normalize_quantization = ( quantization ) =>
     ( quantization || `` ).toUpperCase().replace( /[-.]/g, `_` )
 
+const has_base_quant = ( quant, prefix ) =>
+    quant === prefix || quant.startsWith( `${ prefix }_` ) || quant.includes( `_${ prefix }_` )
+
 const quantization_rank = ( quantization ) => {
 
     const quant = normalize_quantization( quantization )
@@ -23,13 +26,13 @@ const quantization_rank = ( quantization ) => {
     if( quant.includes( `Q4_K_S` ) ) return 2
     if( quant.includes( `Q4_0` ) ) return 3
     if( quant.includes( `IQ4` ) ) return 4
-    if( quant.includes( `Q5` ) ) return 10
-    if( quant.includes( `Q3` ) ) return 20
+    if( has_base_quant( quant, `Q5` ) ) return 10
+    if( has_base_quant( quant, `Q3` ) ) return 20
     if( quant.includes( `IQ3` ) ) return 25
-    if( quant.includes( `Q2` ) ) return 30
+    if( has_base_quant( quant, `Q2` ) ) return 30
     if( quant.includes( `IQ2` ) ) return 35
-    if( quant.includes( `Q6` ) ) return 40
-    if( quant.includes( `Q8` ) ) return 50
+    if( has_base_quant( quant, `Q6` ) ) return 40
+    if( has_base_quant( quant, `Q8` ) ) return 50
     if( quant.includes( `BF16` ) || quant.includes( `F16` ) || quant.includes( `F32` ) ) return 60
     if( quant.includes( `IQ1` ) || quant.includes( `Q1` ) ) return 90
 

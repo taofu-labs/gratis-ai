@@ -151,6 +151,8 @@ export default function SettingsModal( { is_open, on_close, theme_preference, on
                         on_theme_change={ on_theme_change }
                         system_prompt={ settings.system_prompt }
                         on_system_prompt_change={ ( v ) => update_setting( `system_prompt`, v ) }
+                        thinking_enabled={ settings.thinking_enabled === true }
+                        on_thinking_enabled_change={ ( v ) => update_setting( `thinking_enabled`, v ) }
                     /> }
 
                 { active_tab === `advanced` &&

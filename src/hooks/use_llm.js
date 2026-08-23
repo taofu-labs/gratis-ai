@@ -14,6 +14,7 @@ export default function use_llm() {
     const is_generating = use_llm_store( ( s ) => s.is_generating )
     const is_endpoint_warming = use_llm_store( ( s ) => s.is_endpoint_warming )
     const loaded_model_id = use_llm_store( ( s ) => s.loaded_model_id )
+    const load_status = use_llm_store( ( s ) => s.load_status )
     const stats = use_llm_store( ( s ) => s.stats )
     const error = use_llm_store( ( s ) => s.error )
 
@@ -41,6 +42,7 @@ export default function use_llm() {
         is_generating,
         is_endpoint_warming,
         loaded_model_id,
+        load_status,
         stats,
         error,
     }

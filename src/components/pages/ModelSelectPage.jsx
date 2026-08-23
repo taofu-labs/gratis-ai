@@ -8,6 +8,10 @@ import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
 import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_download_time, estimate_model_memory, quality_score } from '../../utils/model_catalog'
 import { parse_hf_url, resolve_hf_models } from '../../utils/hf_url_parser'
+import {
+    get_browser_model_incompatibility,
+    get_browser_model_warning,
+} from '../../utils/model_compatibility'
 import { storage_key } from '../../utils/branding'
 
 const Container = styled.div`
@@ -84,7 +88,7 @@ const variant_color = ( theme, $variant ) =>
         : $variant === `vision` ? theme.colors.info
             : theme.colors.accent
 
-const OptionCard = styled.button`
+const OptionCard = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -247,7 +251,8 @@ const DownloadButton = styled.button`
     gap: ${ ( { theme } ) => theme.spacing.sm };
     min-height: 2.75rem;
 
-    &:hover { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
+    &:hover:not(:disabled) { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
 `
 
 // Toggle buttons for expanding model lists
@@ -378,6 +383,13 @@ const LowMemoryWarning = styled.div`
     margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
 
     svg { flex-shrink: 0; color: ${ ( { theme } ) => theme.colors.warning || `#c49660` }; }
+`
+
+const CompatibilityWarning = styled( LowMemoryWarning )`
+    background: ${ ( { theme } ) => `${ theme.colors.error || `#b85c5c` }18` };
+    border-color: ${ ( { theme } ) => theme.colors.error || `#b85c5c` };
+
+    svg { color: ${ ( { theme } ) => theme.colors.error || `#b85c5c` }; }
 `
 
 // Custom model input section
@@ -634,14 +646,20 @@ export default function ModelSelectPage() {
 
     // Warn Electron users when free RAM is dangerously low for the selected model
     const is_electron = capabilities?.runtime === 'electron'
+    const browser_model_incompatibility = !is_electron && active_model
+        ? get_browser_model_incompatibility( active_model )
+        : null
+    const browser_model_warning = !is_electron && active_model && !browser_model_incompatibility
+        ? get_browser_model_warning( active_model )
+        : null
     const free_bytes = capabilities?.memory?.free_bytes
     const model_needs = active_model ? estimate_model_memory( active_model ) : 0
     const low_memory = is_electron && free_bytes && model_needs > 0 && free_bytes < model_needs * 1.2
-    const browser_large_custom_model = !is_electron && active_model?.is_custom && active_model.file_size_bytes > 2_000_000_000
 
     const handle_download = () => {
 
         if( !active_model ) return
+        if( browser_model_incompatibility ) return
 
         if( active_model.is_custom ) {
             localStorage.setItem(
@@ -668,6 +686,13 @@ export default function ModelSelectPage() {
         set_selected_model_id( model_id )
     }
 
+    const handle_card_key_down = ( event, model_id ) => {
+        if( event.target !== event.currentTarget ) return
+        if( event.key !== `Enter` && event.key !== ` ` ) return
+        event.preventDefault()
+        handle_select( model_id )
+    }
+
     // Resolve a custom HuggingFace URL into a model definition
     const handle_custom_load = async ( e ) => {
 
@@ -687,8 +712,11 @@ export default function ModelSelectPage() {
 
         try {
             const models = await resolve_hf_models( parsed )
+            const preferred_model = models.find( model => !get_browser_model_incompatibility( model ) )
+                || models[ 0 ]
+
             set_custom_model_options( models )
-            set_selected_custom_file( models[ 0 ]?.file_name ?? null )
+            set_selected_custom_file( preferred_model?.file_name ?? null )
         } catch ( err ) {
             set_custom_error( err.message )
         } finally {
@@ -736,6 +764,11 @@ export default function ModelSelectPage() {
             } ) }</span>
         </LowMemoryWarning> }
 
+        { browser_model_incompatibility && <CompatibilityWarning>
+            <AlertTriangle size={ 16 } />
+            <span>{ browser_model_incompatibility }</span>
+        </CompatibilityWarning> }
+
         { /* ── Multi-card layout ── */ }
         { show_card_row && <CardRow>
 
@@ -743,7 +776,10 @@ export default function ModelSelectPage() {
             { faster && <OptionCard
                 $active={ active_model?.id === faster.id }
                 $variant="faster"
+                role="button"
+                tabIndex={ 0 }
                 onClick={ () => handle_select( faster.id ) }
+                onKeyDown={ ( event ) => handle_card_key_down( event, faster.id ) }
             >
                 <CardLabel $variant="faster">
                     <Zap size={ 18 } />
@@ -768,7 +804,10 @@ export default function ModelSelectPage() {
             <OptionCard
                 $active={ active_model?.id === smarter.id }
                 $variant="smarter"
+                role="button"
+                tabIndex={ 0 }
                 onClick={ () => handle_select( smarter.id ) }
+                onKeyDown={ ( event ) => handle_card_key_down( event, smarter.id ) }
             >
                 <CardLabel $variant="smarter">
                     <Sparkles size={ 18 } />
@@ -793,7 +832,10 @@ export default function ModelSelectPage() {
             { uncensored && <OptionCard
                 $active={ active_model?.id === uncensored.id }
                 $variant="uncensored"
+                role="button"
+                tabIndex={ 0 }
                 onClick={ () => handle_select( uncensored.id ) }
+                onKeyDown={ ( event ) => handle_card_key_down( event, uncensored.id ) }
             >
                 <CardLabel $variant="uncensored">
                     <ShieldOff size={ 18 } />
@@ -818,7 +860,10 @@ export default function ModelSelectPage() {
             { vision && <OptionCard
                 $active={ active_model?.id === vision.id }
                 $variant="vision"
+                role="button"
+                tabIndex={ 0 }
                 onClick={ () => handle_select( vision.id ) }
+                onKeyDown={ ( event ) => handle_card_key_down( event, vision.id ) }
             >
                 <CardLabel $variant="vision">
                     <Eye size={ 18 } />
@@ -970,9 +1015,12 @@ export default function ModelSelectPage() {
                         <Check size={ 12 } /> { custom_model.name } - { custom_model.quantization }, { custom_model.context_length.toLocaleString() } ctx
                     </CustomModelStatus> }
 
-                    { /* Warn browser users about large custom models that may exceed WASM limits */ }
-                    { custom_model && !custom_loading && browser_large_custom_model && <CustomModelStatus $error>
-                        <AlertTriangle size={ 12 } /> { t( 'large_model_warning' ) }
+                    { custom_model && !custom_loading && browser_model_incompatibility && <CustomModelStatus $error>
+                        <AlertTriangle size={ 12 } /> { browser_model_incompatibility }
+                    </CustomModelStatus> }
+
+                    { custom_model && !custom_loading && browser_model_warning && <CustomModelStatus $error>
+                        <AlertTriangle size={ 12 } /> { browser_model_warning }
                     </CustomModelStatus> }
 
                 </CustomModelSection>
@@ -984,6 +1032,7 @@ export default function ModelSelectPage() {
         <DownloadButton
             data-testid="model-select-confirm-btn"
             onClick={ handle_download }
+            disabled={ !!browser_model_incompatibility }
         >
             { active_is_cached ? t( 'start_chatting' ) : t( 'download_and_start' ) } <ArrowRight size={ 18 } />
         </DownloadButton>

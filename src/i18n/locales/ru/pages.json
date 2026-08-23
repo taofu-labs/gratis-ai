@@ -8,6 +8,7 @@
     "hide_device_details": "Скрыть характеристики устройства",
 
     "model_ready": "{{name}} — Готова",
+    "model_selected": "{{name}} — Выбрана",
     "loading_model": "Загрузка {{name}}...",
     "switch_model": "Сменить модель",
     "failed_to_load": "Не удалось загрузить модель",

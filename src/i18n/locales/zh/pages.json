@@ -8,6 +8,7 @@
     "hide_device_details": "隐藏设备详情",
 
     "model_ready": "{{name}} — 就绪",
+    "model_selected": "{{name}} — 已选择",
     "loading_model": "正在加载 {{name}}...",
     "switch_model": "切换模型",
     "failed_to_load": "模型加载失败",

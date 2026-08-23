@@ -8,6 +8,7 @@
     "hide_device_details": "デバイスの詳細を非表示",
 
     "model_ready": "{{name}} — 準備完了",
+    "model_selected": "{{name}} — 選択済み",
     "loading_model": "{{name}}を読み込み中...",
     "switch_model": "モデルを切り替え",
     "failed_to_load": "モデルの読み込みに失敗しました",

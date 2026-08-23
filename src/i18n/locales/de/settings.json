@@ -13,6 +13,8 @@
     "custom_instructions": "Eigene Anweisungen",
     "custom_instructions_description": "Sag der KI, wie sie sich verhalten soll. Zum Beispiel: \u201EAntworte immer auf Deutsch\u201C oder \u201EErkläre Dinge einfach\u201C.",
     "custom_instructions_placeholder": "z. B. Du bist ein freundlicher Assistent, der Dinge einfach erklärt…",
+    "thinking_mode": "Denkmodus",
+    "thinking_mode_description": "Lässt Reasoning-Modelle vor der Antwort zusätzliche Tokens verwenden. Ausschalten für schnellere lokale Antworten.",
 
     "keyboard_shortcuts": "Tastenkürzel",
     "shortcut_new_chat": "Neuer Chat",

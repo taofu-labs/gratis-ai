@@ -57,6 +57,73 @@ const Textarea = styled.textarea`
     line-height: 1.5;
 `
 
+const ToggleRow = styled.label`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: ${ ( { theme } ) => theme.spacing.md };
+    cursor: pointer;
+`
+
+const ToggleText = styled.div`
+    min-width: 0;
+`
+
+const ToggleTitle = styled.span`
+    display: block;
+    font-weight: 500;
+    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
+    font-size: 0.9rem;
+`
+
+const ToggleDescription = styled.span`
+    display: block;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+`
+
+const ToggleSwitch = styled.input.attrs( { type: `checkbox`, role: `switch` } )`
+    flex: 0 0 2.75rem;
+    width: 2.75rem;
+    height: 1.5rem;
+    margin: 0;
+    appearance: none;
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    border-radius: 999px;
+    background: ${ ( { theme } ) => theme.colors.border_subtle };
+    position: relative;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 1.125rem;
+        height: 1.125rem;
+        border-radius: 999px;
+        background: ${ ( { theme } ) => theme.colors.background };
+        box-shadow: 0 1px 3px rgba( 0, 0, 0, 0.18 );
+        transition: transform 0.15s;
+    }
+
+    &:checked {
+        border-color: ${ ( { theme } ) => theme.colors.accent };
+        background: ${ ( { theme } ) => theme.colors.accent };
+    }
+
+    &:checked::before {
+        transform: translateX( 1.25rem );
+    }
+
+    &:focus-visible {
+        outline: 2px solid ${ ( { theme } ) => theme.colors.accent };
+        outline-offset: 2px;
+    }
+`
+
 const ShortcutsSection = styled.div`
     border-top: 1px solid ${ ( { theme } ) => theme.colors.border_subtle };
     padding-top: ${ ( { theme } ) => theme.spacing.md };
@@ -85,6 +152,8 @@ const ShortcutKey = styled.code`
  * @param {Function} props.on_theme_change - Handler for theme changes
  * @param {string} props.system_prompt - Current system prompt
  * @param {Function} props.on_system_prompt_change - Handler for system prompt changes
+ * @param {boolean} props.thinking_enabled - Whether reasoning mode is enabled
+ * @param {Function} props.on_thinking_enabled_change - Handler for reasoning mode changes
  * @returns {JSX.Element}
  */
 export default function BasicSettings( {
@@ -92,6 +161,8 @@ export default function BasicSettings( {
     on_theme_change,
     system_prompt,
     on_system_prompt_change,
+    thinking_enabled,
+    on_thinking_enabled_change,
 } ) {
 
     const { t } = useTranslation( `settings` )
@@ -134,6 +205,21 @@ export default function BasicSettings( {
                 onChange={ ( e ) => on_system_prompt_change( e.target.value ) }
                 placeholder={ t( `custom_instructions_placeholder` ) }
             />
+        </Section>
+
+        { /* Thinking Mode */ }
+        <Section>
+            <ToggleRow>
+                <ToggleText>
+                    <ToggleTitle>{ t( `thinking_mode` ) }</ToggleTitle>
+                    <ToggleDescription>{ t( `thinking_mode_description` ) }</ToggleDescription>
+                </ToggleText>
+                <ToggleSwitch
+                    data-testid="thinking-mode-toggle"
+                    checked={ thinking_enabled }
+                    onChange={ ( e ) => on_thinking_enabled_change( e.target.checked ) }
+                />
+            </ToggleRow>
         </Section>
 
         { /* Keyboard Shortcuts Reference */ }

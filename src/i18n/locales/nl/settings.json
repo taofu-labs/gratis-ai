@@ -13,6 +13,8 @@
     "custom_instructions": "Aangepaste instructies",
     "custom_instructions_description": "Vertel de AI hoe die zich moet gedragen. Bijvoorbeeld: \"Antwoord altijd in het Nederlands\" of \"Leg dingen eenvoudig uit\".",
     "custom_instructions_placeholder": "bijv. Je bent een vriendelijke assistent die dingen eenvoudig uitlegt…",
+    "thinking_mode": "Denkmodus",
+    "thinking_mode_description": "Laat redeneermodellen extra tokens gebruiken voordat ze antwoorden. Zet uit voor snellere lokale reacties.",
 
     "keyboard_shortcuts": "Sneltoetsen",
     "shortcut_new_chat": "Nieuw gesprek",

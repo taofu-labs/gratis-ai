@@ -16,6 +16,7 @@ const DEFAULTS = {
     presence_penalty: 0,
     seed: -1,
     stop_sequences: ``,
+    thinking_enabled: false,
 }
 
 const PREFIX = STORAGE_PREFIX
@@ -29,6 +30,8 @@ const PREFIX = STORAGE_PREFIX
 const read_setting = ( key, default_value ) => {
     const stored = localStorage.getItem( `${ PREFIX }${ key }` )
     if( stored === null ) return default_value
+    if( stored === `true` ) return true
+    if( stored === `false` ) return false
     const num = Number( stored )
     return isNaN( num ) ? stored : num
 }
@@ -91,6 +94,7 @@ export default function use_settings() {
             frequency_penalty: settings.frequency_penalty,
             presence_penalty: settings.presence_penalty,
             seed: settings.seed === -1 ? undefined : settings.seed,
+            thinking_enabled: settings.thinking_enabled === true,
             ... stop?.length ? { stop } : {} ,
         }
 
@@ -104,7 +108,7 @@ export default function use_settings() {
                 const setting_key = e.key.slice( PREFIX.length )
                 if( setting_key in DEFAULTS ) {
                     log.debug( `[settings] Cross-tab sync: ${ setting_key }` )
-                    const val = e.newValue === null ? DEFAULTS[ setting_key ] :  isNaN( Number( e.newValue ) ) ? e.newValue : Number( e.newValue )
+                    const val = e.newValue === null ? DEFAULTS[ setting_key ] : read_setting( setting_key, DEFAULTS[ setting_key ] )
                     set_settings( ( prev ) => ( { ...prev, [ setting_key ]: val } ) )
                 }
             }

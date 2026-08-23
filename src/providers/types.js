@@ -19,6 +19,7 @@
  * @property {number} [min_p] - Min-p sampling, 0.0 - 1.0
  * @property {number} [frequency_penalty] - 0.0 - 2.0
  * @property {number} [presence_penalty] - 0.0 - 2.0
+ * @property {boolean} [thinking_enabled] - Allow hybrid reasoning models to think before answering
  */
 
 /**

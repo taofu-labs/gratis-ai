@@ -242,28 +242,6 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
     const active_model = cached_models.find( ( m ) => m.id === active_id )
     const model_name = active_model?.name || active_id || `Unknown`
 
-    // ── Preload model on mount ──────────────────────────────────────
-
-    useEffect( () => {
-
-        if( !active_id ) return
-
-        // Cleanup flag prevents the superseded first call (StrictMode double-mount)
-        // from flashing the error banner before the real call completes
-        let cancelled = false
-
-        load_model( active_id ).catch( ( err ) => {
-            if( cancelled ) return
-            log.error( `[HomePage] Preload failed:`, err.message )
-            set_load_error( err.message )
-        } )
-
-        return () => {
-            cancelled = true
-        }
-
-    }, [] )
-
     // Clear stale error if the model loaded via a concurrent path
     // (e.g. StrictMode double-mount or navigation race)
     useEffect( () => {
@@ -362,6 +340,8 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
 
     // ── Render ──────────────────────────────────────────────────────
 
+    const is_active_model_loaded = !!active_id && loaded_model_id === active_id
+
     return <PageWrapper>
 
         <ConvergenceCanvas centerX={ 0.5 } count={ 44 } ambient={ 0.0009 } />
@@ -452,8 +432,22 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
                     </SwitchIcon>
                 </> }
 
-                { !is_loading && loaded_model_id && <>
+                { !is_loading && is_active_model_loaded && <>
                     <span>{ t( 'model_ready', { name: model_name } ) }</span>
+                    <ModelTag>
+                        <HardDrive size={ 10 } /> { t( 'local' ) }
+                    </ModelTag>
+                    <SwitchIcon
+                        onClick={ handle_switch_model }
+                        title={ t( 'switch_model' ) }
+                        data-testid="home-switch-model"
+                    >
+                        <ArrowLeftRight size={ 14 } />
+                    </SwitchIcon>
+                </> }
+
+                { !is_loading && active_id && !is_active_model_loaded && !load_error && <>
+                    <span>{ t( 'model_selected', { name: model_name } ) }</span>
                     <ModelTag>
                         <HardDrive size={ 10 } /> { t( 'local' ) }
                     </ModelTag>

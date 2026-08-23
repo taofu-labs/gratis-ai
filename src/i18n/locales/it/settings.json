@@ -13,6 +13,8 @@
     "custom_instructions": "Istruzioni personalizzate",
     "custom_instructions_description": "Indica all'IA come comportarsi. Ad esempio: \"Rispondi sempre in italiano\" o \"Spiega le cose in modo semplice\".",
     "custom_instructions_placeholder": "es. Sei un assistente amichevole che spiega le cose in modo semplice…",
+    "thinking_mode": "Modalità ragionamento",
+    "thinking_mode_description": "Consente ai modelli di ragionamento di usare token extra prima di rispondere. Disattivala per risposte locali più rapide.",
 
     "keyboard_shortcuts": "Scorciatoie da tastiera",
     "shortcut_new_chat": "Nuova chat",

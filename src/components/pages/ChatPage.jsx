@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import styled, { keyframes } from 'styled-components'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import { log } from 'mentie'
 import toast from 'react-hot-toast'
-import { ArrowRight, LoaderCircle } from 'lucide-react'
+import { AlertTriangle, ArrowRight, LoaderCircle, RefreshCw } from 'lucide-react'
 import AppLayout from '../molecules/AppLayout'
 import MessageList from '../molecules/MessageList'
 import ChatInput from '../molecules/ChatInput'
@@ -20,6 +21,17 @@ import { parse_model_param, resolve_cached_model } from '../../utils/model_param
 import { get_model_by_id, format_file_size } from '../../utils/model_catalog'
 import { useTranslation } from 'react-i18next'
 import { storage_key, EVENTS, DISPLAY_NAME, APP_VERSION } from '../../utils/branding'
+
+const wait_for_ui_update = () => new Promise( resolve => {
+    if( typeof window === `undefined` || typeof window.requestAnimationFrame !== `function` ) {
+        setTimeout( resolve, 0 )
+        return
+    }
+
+    window.requestAnimationFrame( () => {
+        window.requestAnimationFrame( resolve )
+    } )
+} )
 
 const Container = styled.div`
     display: flex;
@@ -104,6 +116,41 @@ const NoModelText = styled.p`
     line-height: 1.5;
 `
 
+const LoadErrorContainer = styled( NoModelContainer )`
+    max-width: 520px;
+    margin: 0 auto;
+`
+
+const LoadErrorIcon = styled.div`
+    color: ${ ( { theme } ) => theme.colors.error };
+    margin-bottom: ${ ( { theme } ) => theme.spacing.md };
+`
+
+const LoadErrorText = styled.p`
+    color: ${ ( { theme } ) => theme.colors.text_secondary };
+    margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
+    line-height: 1.5;
+`
+
+const LoadErrorDetail = styled.p`
+    width: 100%;
+    color: ${ ( { theme } ) => theme.colors.error };
+    background: ${ ( { theme } ) => theme.colors.surface };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    padding: ${ ( { theme } ) => theme.spacing.md };
+    margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+`
+
+const LoadErrorActions = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: ${ ( { theme } ) => theme.spacing.sm };
+`
+
 const SetupButton = styled.button`
     display: flex;
     align-items: center;
@@ -118,6 +165,12 @@ const SetupButton = styled.button`
     min-height: 2.75rem;
 
     &:hover { opacity: 0.85; }
+`
+
+const SecondaryButton = styled( SetupButton )`
+    background: ${ ( { theme } ) => theme.colors.surface };
+    color: ${ ( { theme } ) => theme.colors.text };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
 `
 
 // Loading state while model initializes
@@ -171,13 +224,26 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     const [ messages, set_messages ] = useState( [] )
     // Initialize as null = "haven't tried loading yet" to distinguish from "tried and failed"
     const [ model_loaded, set_model_loaded ] = useState( null )
+    const [ model_load_error, set_model_load_error ] = useState( null )
     // Start as null even with a URL param — we validate it exists before accepting it
     const [ current_conversation_id, set_current_conversation_id ] = useState( null )
     const chat_input_ref = useRef( null )
     const is_generating_ref = useRef( false )
     const query_processed_ref = useRef( false )
+    const auto_load_started_ref = useRef( null )
+    const creating_conversation_ref = useRef( null )
 
-    const { load_model, chat_stream, abort, is_generating, is_endpoint_warming, is_loading: is_model_loading, loaded_model_id } = use_llm()
+    const {
+        load_model,
+        chat_stream,
+        abort,
+        is_generating,
+        is_endpoint_warming,
+        is_loading: is_model_loading,
+        loaded_model_id,
+        load_status,
+        error: llm_error,
+    } = use_llm()
     const {
         conversations,
         create_conversation,
@@ -221,10 +287,13 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     const pending_model_id = localStorage.getItem( storage_key( `active_model_id` ) )
     const has_model = ( model_loaded === true || !!loaded_model_id )
         && ( !pending_model_id || loaded_model_id === pending_model_id )
+    const active_load_error = !has_model && pending_model_id
+        ? model_load_error || llm_error
+        : model_load_error
 
     // Whether we're in the process of loading a model (includes the initial mount gap)
     const has_pending_model = !!pending_model_id
-    const is_loading_model = is_model_loading ||  model_loaded === null && has_pending_model
+    const is_loading_model = is_model_loading ||  model_loaded === null && has_pending_model && !active_load_error
 
     // Try loading the active model on mount.
     // The store deduplicates — if HomePage already started a load, this is a no-op.
@@ -235,6 +304,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         // Store already has the correct model loaded — sync local flag
         if( loaded_model_id && loaded_model_id === active_id ) {
             set_model_loaded( true )
+            set_model_load_error( null )
             return
         }
 
@@ -243,18 +313,28 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
 
         if( active_id ) {
 
+            if( auto_load_started_ref.current === active_id ) return
+            auto_load_started_ref.current = active_id
+
             log.info( `[ChatPage] Auto-loading saved model: ${ active_id }` )
+            set_model_load_error( null )
             load_model( active_id )
-                .then( () => set_model_loaded( true ) )
+                .then( () => {
+                    set_model_loaded( true )
+                    set_model_load_error( null )
+                } )
                 .catch( ( err ) => {
+                    const message = err.message || t( 'common:failed_to_load_model' )
                     log.error( `[ChatPage] Auto-load failed:`, err.message )
                     set_model_loaded( false )
-                    toast.error( err.message || t( 'common:failed_to_load_model' ) )
+                    set_model_load_error( message )
+                    toast.error( message )
                 } )
 
         } else {
             // No model configured — transition from null (unknown) to false (no model)
             set_model_loaded( false )
+            set_model_load_error( null )
         }
 
     }, [] )
@@ -267,8 +347,42 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         const target = localStorage.getItem( storage_key( `active_model_id` ) )
         if( loaded_model_id && loaded_model_id === target && model_loaded !== true ) {
             set_model_loaded( true )
+            set_model_load_error( null )
         }
     }, [ loaded_model_id ] )
+
+    useEffect( () => {
+
+        if( !is_model_loading && model_loaded === null && pending_model_id && llm_error ) {
+            set_model_loaded( false )
+            set_model_load_error( llm_error )
+        }
+
+    }, [ is_model_loading, llm_error, model_loaded, pending_model_id ] )
+
+    const handle_model_retry = useCallback( async () => {
+
+        const active_id = localStorage.getItem( storage_key( `active_model_id` ) )
+
+        if( !active_id ) {
+            navigate( `/` )
+            return
+        }
+
+        try {
+            set_model_loaded( null )
+            set_model_load_error( null )
+            await load_model( active_id )
+            set_model_loaded( true )
+        } catch ( err ) {
+            const message = err.message || t( 'common:failed_to_load_model' )
+            log.error( `[ChatPage] Retry load failed:`, message )
+            set_model_loaded( false )
+            set_model_load_error( message )
+            toast.error( message )
+        }
+
+    }, [ load_model, navigate, t ] )
 
     // Listen for global stop-generation shortcut (Ctrl+Shift+Backspace)
     useEffect( () => {
@@ -283,6 +397,10 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     useEffect( () => {
 
         if( conversation_id && conversation_id !== current_conversation_id ) {
+
+            // A new local chat can exist in React state before IndexedDB catches up.
+            // Do not redirect it as "missing" while the first message is being saved.
+            if( conversation_id === creating_conversation_ref.current ) return
 
             // Validate that the conversation exists before loading messages
             load_messages( conversation_id ).then( ( msgs ) => {
@@ -308,6 +426,8 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
 
         // Reset state when navigating to /chat (no id)
         if( !conversation_id && current_conversation_id ) {
+            if( current_conversation_id === creating_conversation_ref.current ) return
+
             set_current_conversation_id( null )
             set_messages( [] )
         }
@@ -443,6 +563,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
             `- **Device memory:** ${ navigator.deviceMemory ? `${ navigator.deviceMemory } GB` : `unknown` }`,
             `- **Temperature:** ${ opts.temperature }`,
             `- **Max tokens:** ${ opts.max_tokens }`,
+            `- **Thinking mode:** ${ opts.thinking_enabled ? `on` : `off` }`,
             `- **Top-p:** ${ opts.top_p }  |  Top-k: ${ opts.top_k }  |  Min-p: ${ opts.min_p }`,
         ]
 
@@ -463,22 +584,40 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         }
 
         const user_msg = { id: uuid(), role: `user`, content: text }
-        set_messages( prev => [ ...prev, user_msg ] )
+        const assistant_msg = { id: uuid(), role: `assistant`, content: `` }
 
-        // Create conversation if this is the first message
+        // Create the conversation before the route changes. Slow local models can
+        // otherwise keep working while the UI briefly reloads an empty chat.
         let conv_id = current_conversation_id
+        let created_conversation = false
         if( !conv_id ) {
-            conv_id = await create_conversation( text )
-            set_current_conversation_id( conv_id )
-            navigate( `/chat/${ conv_id }`, { replace: true } )
+            conv_id = uuid()
+            created_conversation = true
+            creating_conversation_ref.current = conv_id
+
+            try {
+                await create_conversation( text, loaded_model_id, conv_id )
+            } catch ( err ) {
+                log.warn( `[ChatPage] Could not create conversation:`, err.message )
+            }
         }
 
-        // Save user message to IndexedDB
-        await save_message( conv_id, user_msg )
+        flushSync( () => {
+            if( created_conversation ) set_current_conversation_id( conv_id )
+            set_messages( prev => [ ...prev, user_msg, assistant_msg ] )
+        } )
 
-        // Add placeholder assistant message
-        const assistant_msg = { id: uuid(), role: `assistant`, content: `` }
-        set_messages( prev => [ ...prev, assistant_msg ] )
+        if( created_conversation ) navigate( `/chat/${ conv_id }`, { replace: true } )
+        await wait_for_ui_update()
+
+        const persist_user_message = async () => {
+            try {
+                await save_message( conv_id, user_msg )
+                await refresh()
+            } catch ( err ) {
+                log.warn( `[ChatPage] Could not persist user message:`, err.message )
+            }
+        }
 
         // Model-specific system prompt takes priority (e.g. uncensored personas),
         // falling back to user settings → env default
@@ -490,7 +629,25 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         // Build generation options from settings hook
         const opts = get_generate_options()
 
+        let persist_user_promise = Promise.resolve()
+
+        const persist_assistant_message = async ( message ) => {
+            try {
+                await persist_user_promise
+                await save_message( conv_id, message )
+                await refresh()
+            } catch ( err ) {
+                log.warn( `[ChatPage] Could not persist assistant message:`, err.message )
+            } finally {
+                if( creating_conversation_ref.current === conv_id ) {
+                    creating_conversation_ref.current = null
+                }
+            }
+        }
+
         try {
+
+            persist_user_promise = persist_user_message()
 
             const result = await chat_stream( history, opts, ( full_text ) => {
                 set_messages( prev => {
@@ -513,26 +670,29 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
                 return updated
             } )
 
-            // Save assistant message to IndexedDB
-            await save_message( conv_id, final_assistant )
-            await refresh()
+            persist_assistant_message( final_assistant )
 
         } catch ( err ) {
             if( err.name !== `AbortError` ) {
 
                 // Show error inline as an assistant message so the user sees it in context
                 const error_content = `**Error:** ${ err.message }`
+                const error_assistant = {
+                    ...assistant_msg,
+                    content: error_content,
+                    is_error: true,
+                }
 
                 set_messages( prev => {
                     const updated = [ ...prev ]
-                    updated[ updated.length - 1 ] = {
-                        ...updated[ updated.length - 1 ],
-                        content: error_content,
-                        is_error: true,
-                    }
+                    updated[ updated.length - 1 ] = error_assistant
                     return updated
                 } )
 
+                persist_assistant_message( error_assistant )
+
+            } else if( creating_conversation_ref.current === conv_id ) {
+                creating_conversation_ref.current = null
             }
         }
 
@@ -630,6 +790,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
      */
     const handle_new_chat = useCallback( () => {
         abort()
+        creating_conversation_ref.current = null
         set_current_conversation_id( null )
         set_messages( [] )
         navigate( `/chat` )
@@ -750,8 +911,26 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         if( !has_model && is_loading_model ) {
             return <LoadingContainer data-testid="model-loading">
                 <SpinnerIcon><LoaderCircle size={ 32 } /></SpinnerIcon>
-                <LoadingText>{ t( 'loading_your_model' ) }</LoadingText>
+                <LoadingText>{ load_status || t( 'loading_your_model' ) }</LoadingText>
             </LoadingContainer>
+        }
+
+        if( !has_model && active_load_error ) {
+            return <LoadErrorContainer data-testid="model-load-error">
+                <LoadErrorIcon><AlertTriangle size={ 34 } /></LoadErrorIcon>
+                <NoModelTitle>{ t( 'model_load_failed' ) }</NoModelTitle>
+                <LoadErrorText>{ t( 'model_load_failed_description' ) }</LoadErrorText>
+                <LoadErrorDetail>{ active_load_error }</LoadErrorDetail>
+                <LoadErrorActions>
+                    <SetupButton onClick={ handle_model_retry }>
+                        <RefreshCw size={ 16 } />
+                        { t( 'try_again' ) }
+                    </SetupButton>
+                    <SecondaryButton onClick={ () => navigate( `/select-model` ) }>
+                        { t( 'choose_another_model' ) } <ArrowRight size={ 16 } />
+                    </SecondaryButton>
+                </LoadErrorActions>
+            </LoadErrorContainer>
         }
 
         // No model loaded — show a helpful, actionable CTA

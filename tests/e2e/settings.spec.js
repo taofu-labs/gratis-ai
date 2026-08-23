@@ -22,6 +22,22 @@ test.describe( `Settings Modal`, () => {
         await expect( page.getByTestId( `system-prompt-input` ) ).toBeVisible()
     } )
 
+    test( `basic tab toggles thinking mode`, async ( { page } ) => {
+        await page.goto( `/chat` )
+        await page.getByTestId( `settings-btn` ).click()
+
+        const toggle = page.getByTestId( `thinking-mode-toggle` )
+        await expect( toggle ).toBeVisible()
+        await expect( toggle ).not.toBeChecked()
+
+        await toggle.check()
+        await expect( toggle ).toBeChecked()
+
+        const stored = await page.evaluate( () => Object.entries( localStorage )
+            .find( ( [ key ] ) => key.endsWith( `:settings:thinking_enabled` ) )?.[ 1 ] )
+        expect( stored ).toBe( `true` )
+    } )
+
     test( `basic tab does NOT show temperature slider (moved to advanced)`, async ( { page } ) => {
         await page.goto( `/chat` )
         await page.getByTestId( `settings-btn` ).click()

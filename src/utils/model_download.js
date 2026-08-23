@@ -1,5 +1,6 @@
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
+import { get_browser_model_incompatibility } from './model_compatibility'
 
 const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
 
@@ -156,6 +157,9 @@ export const download_model = async ( model, on_progress, signal ) => {
     }
 
     // Browser path: download in renderer and store in IndexedDB
+    const browser_incompatibility = get_browser_model_incompatibility( model )
+    if( browser_incompatibility ) throw new Error( browser_incompatibility )
+
     const response = await fetch( url, { signal } )
 
     if( !response.ok ) {
@@ -189,8 +193,15 @@ export const download_model = async ( model, on_progress, signal ) => {
 
     on_progress( { progress: 1, bytes_loaded, bytes_total: content_length, status: `Saving to cache...` } )
 
-    // Combine chunks into a single blob
-    const blob = new Blob( chunks )
+    // Combine chunks into a single blob. Large browser downloads can fail here
+    // before IndexedDB sees the file, so convert low-level allocation errors.
+    let blob
+    try {
+        blob = new Blob( chunks )
+    } catch ( err ) {
+        log.error( `[download] Could not prepare browser model blob`, err )
+        throw new Error( `Could not prepare this model in browser memory. Try a smaller quantization or use the desktop app.` )
+    }
 
     // Validate GGUF magic number — catches corrupt downloads, HTML error pages, or redirect bodies
     const header = new Uint8Array( await blob.slice( 0, 4 ).arrayBuffer() )
@@ -202,20 +213,32 @@ export const download_model = async ( model, on_progress, signal ) => {
 
     const now = Date.now()
     const db = await get_db()
-    await db.put( `models`, {
-        id: model.id,
-        blob,
-        cached_at: now,
-        file_size_bytes: blob.size,
-        name: model.name,
-        category: model.category,
-        hugging_face_repo: model.hugging_face_repo,
-        file_name: model.file_name,
-        parameters_label: model.parameters_label,
-        quantization: model.quantization,
-        context_length: model.context_length,
-        last_used_at: now,
-    } )
+    try {
+        await db.put( `models`, {
+            id: model.id,
+            blob,
+            cached_at: now,
+            file_size_bytes: blob.size,
+            name: model.name,
+            category: model.category,
+            hugging_face_repo: model.hugging_face_repo,
+            file_name: model.file_name,
+            parameters_label: model.parameters_label,
+            quantization: model.quantization,
+            context_length: model.context_length,
+            last_used_at: now,
+        } )
+    } catch ( err ) {
+        const message = err.message || ``
+        const is_storage_error = /quota|storage|memory|alloc|too large|large|transaction/i.test( message )
+
+        if( is_storage_error ) {
+            log.error( `[download] Could not save browser model blob`, err )
+            throw new Error( `Could not save this model in browser storage. Free some space, choose a smaller quantization, or use the desktop app.` )
+        }
+
+        throw err
+    }
 
     log.info( `[download] Complete: ${ model.name } (${ ( blob.size / 1e6 ).toFixed( 0 ) } MB)` )
     on_progress( { progress: 1, bytes_loaded: blob.size, bytes_total: blob.size, status: `Complete` } )

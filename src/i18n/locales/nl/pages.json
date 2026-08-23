@@ -8,6 +8,7 @@
     "hide_device_details": "Apparaatdetails verbergen",
 
     "model_ready": "{{name}} — Gereed",
+    "model_selected": "{{name}} — Geselecteerd",
     "loading_model": "{{name}} laden…",
     "switch_model": "Model wisselen",
     "failed_to_load": "Model laden mislukt",
