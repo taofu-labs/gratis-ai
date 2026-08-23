@@ -50,7 +50,7 @@ export default function WakingUpIndicator( { show_hint = false } = {} ) {
 
     const { t } = useTranslation( `chat` )
 
-    return <Wrapper>
+    return <Wrapper data-testid="waking-up-indicator">
 
         <Indicator>
             { t( `waking_up` ) }

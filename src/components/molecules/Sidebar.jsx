@@ -350,7 +350,7 @@ export default function Sidebar( {
 
     const handle_new_chat = () => {
         if( on_new_chat ) on_new_chat()
-        navigate( active_model_id ? `/chat` : `/select-model` )
+        navigate( `/chat` )
         close_on_mobile()
     }
 
@@ -420,7 +420,6 @@ export default function Sidebar( {
                     on_open_settings={ on_settings_open }
                     on_after_select={ close_on_mobile }
                     on_models_purged={ on_models_purged }
-                    test_id="sidebar-model-selector-dropdown"
                 />
             </MobileModelSection>
 

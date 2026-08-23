@@ -1,13 +1,14 @@
-// Copy wllama WASM binaries to public/ so Vite can serve them as static assets
-import { cpSync, mkdirSync } from 'fs'
+// Copy Wllama runtimes to public/ so inference stays available offline.
+import { cpSync, mkdirSync, rmSync } from 'fs'
 
-const src = `node_modules/@wllama/wllama/esm`
 const dst = `public/wasm`
 
-mkdirSync( `${ dst }/single-thread`, { recursive: true } )
-mkdirSync( `${ dst }/multi-thread`, { recursive: true } )
+// Remove obsolete Wllama v2 thread-specific artifacts after upgrades.
+rmSync( dst, { recursive: true, force: true } )
+mkdirSync( `${ dst }/compat`, { recursive: true } )
 
-cpSync( `${ src }/single-thread/wllama.wasm`, `${ dst }/single-thread/wllama.wasm` )
-cpSync( `${ src }/multi-thread/wllama.wasm`, `${ dst }/multi-thread/wllama.wasm` )
+cpSync( `node_modules/wllama64/esm/wasm/wllama.wasm`, `${ dst }/wllama.wasm` )
+cpSync( `node_modules/@wllama/wllama-compat/wasm/wllama.js`, `${ dst }/compat/wllama.js` )
+cpSync( `node_modules/@wllama/wllama-compat/wasm/wllama.wasm`, `${ dst }/compat/wllama.wasm` )
 
-console.log( `Copied WASM binaries to ${ dst }/` )
+console.log( `Copied Memory64 and compatibility runtimes to ${ dst }/` )

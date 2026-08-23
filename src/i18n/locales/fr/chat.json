@@ -1,24 +1,35 @@
 {
     "placeholder": "Écrivez un message...",
     "placeholder_ask": "Posez une question...",
+
     "thinking": "Réflexion...",
     "show_thinking": "Afficher le raisonnement",
     "hide_thinking": "Masquer le raisonnement",
     "show_all_thinking": "Afficher tout le raisonnement",
     "collapse": "Réduire",
+
     "what_can_i_help_with": "Comment puis-je vous aider ?",
     "privacy_local": "Vous utilisez un modèle local. Personne ne peut voir ce que vous faites.",
+    "privacy_openrouter": "Vous utilisez un modèle cloud OpenRouter. OpenRouter peut voir ce que vous faites.",
+    "privacy_venice": "Vous utilisez un modèle cloud Venice. Personne ne peut voir ce que vous faites.",
     "loading_your_model": "Chargement de votre modèle...",
+
     "lets_get_you_set_up": "Commençons la configuration",
     "no_model_description": "Vous devez télécharger un modèle d'IA avant de pouvoir commencer à discuter. Cela ne prend qu'une minute.",
     "set_up_a_model": "Configurer un modèle",
+
     "waking_up": "Réveil de l'IA",
     "waking_up_hint": "Les IA cloud peuvent mettre 1 à 5 minutes à démarrer. Elles se rendorment aussi après 5 minutes d'inactivité.",
     "slow_device_warning": "Votre appareil semble assez lent. Nous recommandons l'application de bureau pour de meilleures performances.",
     "get_the_desktop_app": "Télécharger l'app de bureau",
+
     "recording": "Enregistrement",
     "transcribing": "Transcription",
     "loading_voice_model": "Chargement du modèle vocal",
+
+    "offline_cloud_message": "Vous êtes hors ligne — les modèles cloud nécessitent une connexion internet",
+    "offline_switch_model": "Changer de modèle",
+
     "image_requires_vision": "L'entrée d'images nécessite un modèle de vision (bientôt disponible)",
     "unsupported_file_type": "Ce type de fichier n'est pas pris en charge",
     "file_too_large": "Le fichier est trop volumineux (max 100 Ko)"

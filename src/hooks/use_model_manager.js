@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
+import { delete_browser_model } from '../utils/model_download'
 import { storage_key } from '../utils/branding'
 
 const active_model_key = storage_key( `active_model_id` )
@@ -92,9 +93,10 @@ export default function use_model_manager() {
                 // Electron path: delete via IPC
                 await window.electronAPI.delete_model( model_id )
             } else {
-                // Browser path: delete from IndexedDB
+                // Browser path: delete both OPFS data and IndexedDB metadata.
                 const db = await get_db()
-                await db.delete( `models`, model_id )
+                const cached = await db.get( `models`, model_id )
+                await delete_browser_model( cached || model_id )
             }
 
             log.info( `[models] Deleted model ${ model_id }` )

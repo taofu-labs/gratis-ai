@@ -52,6 +52,7 @@ test.describe( `Chat History with Inference`, () => {
 
         // Start a fresh conversation
         await page.getByTestId( `new-chat-btn` ).click()
+        await expect( page.getByTestId( `user-message` ) ).toHaveCount( 0, { timeout: 5_000 } )
         await expect( page.locator( `[data-testid="assistant-message"]` ) ).toHaveCount( 0, { timeout: 5_000 } )
 
         // Send a message and wait for response
@@ -69,7 +70,8 @@ test.describe( `Chat History with Inference`, () => {
         // Click new chat button
         await page.getByTestId( `new-chat-btn` ).click()
 
-        // Messages should be cleared — no assistant messages visible
+        // Messages should be cleared before reading or sending in the new route.
+        await expect( page.getByTestId( `user-message` ) ).toHaveCount( 0, { timeout: 5_000 } )
         await expect( page.locator( `[data-testid="assistant-message"]` ) ).toHaveCount( 0, { timeout: 5_000 } )
 
         // Click on the previous conversation in the sidebar to restore it
@@ -86,6 +88,7 @@ test.describe( `Chat History with Inference`, () => {
 
         // Start fresh — go to a new chat so we have a clean state
         await page.getByTestId( `new-chat-btn` ).click()
+        await expect( page.getByTestId( `user-message` ) ).toHaveCount( 0, { timeout: 5_000 } )
         await expect( page.locator( `[data-testid="assistant-message"]` ) ).toHaveCount( 0, { timeout: 5_000 } )
 
         // Send a message and wait for response

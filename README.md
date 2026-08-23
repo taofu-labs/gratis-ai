@@ -22,7 +22,7 @@
 </p>
 
 <h3 align="center">
-  <a href="https://gratis.trueperformancenetwork.com">gratis.trueperformancenetwork.com</a> - public PoC by True Performance Network
+  <a href="https://ai.gratis.sh">ai.gratis.sh</a> — use it free, right now, in your browser
 </h3>
 
 <p align="center">
@@ -33,7 +33,7 @@
 
 ## What is this?
 
-Gratis is a chat app - like ChatGPT - except **everything runs on your own computer**. Your conversations never leave your device. There's no account, no subscription, and no one reading your messages.
+gratisAI is a chat app — like ChatGPT — that runs open models on your own computer by default. Local chats never leave your device. There's no account or subscription.
 
 It works in two ways:
 
@@ -41,19 +41,19 @@ It works in two ways:
 |---|---|---|
 | How it works | AI runs inside your browser tab | AI runs natively on your machine |
 | Setup | Just open the website | Download and install |
-| Speed | Good | Faster (uses your GPU) |
-| Model size limit | ~3 GB (browser limitation) | Only limited by your RAM |
+| Speed | Good; uses WebGPU when safely available | Faster (uses your GPU) |
+| Model size limit | Up to the browser's 16 GiB WASM address space; usable size depends on RAM | Only limited by your RAM |
 | Works offline | After first model download | After first model download |
 
 ## How do I use it?
 
 **Option 1 — Open the website**
 
-Go to **[gratis.trueperformancenetwork.com](https://gratis.trueperformancenetwork.com)** and start chatting. The app will recommend a model for your hardware and download it. After that first download, it works offline.
+Go to **[ai.gratis.sh](https://ai.gratis.sh)** and start chatting. The app will recommend a model for your hardware and download it. After that first download, it works offline.
 
 **Option 2 — Install the desktop app**
 
-Download the latest release from [GitHub Releases](https://github.com/taofu-labs/gratis-ai/releases) for macOS, Windows, or Linux. The desktop app runs models faster and can handle much larger models.
+Download the latest release from [GitHub Releases](https://github.com/actuallymentor/gratis-ai/releases) for macOS, Windows, or Linux. The desktop app runs models faster and can handle much larger models.
 
 ## What models can I run?
 
@@ -61,35 +61,44 @@ The app picks the best model for your device automatically. Smaller devices get 
 
 | Model | Size | Good for |
 |---|---|---|
-| SmolLM2 | ~260 MB | Older laptops, phones |
-| DeepSeek R1 1.5B | ~1 GB | Average laptops, reasoning tasks |
-| Llama 3.2 1B | ~670 MB | General chat on modest hardware |
-| Mistral 7B | ~5 GB | Serious conversations, desktop app |
-| Mixtral 8x7B | ~26 GB | Power users with 32+ GB RAM |
+| SmolLM2 360M | ~271 MB | Older laptops, quick conversations |
+| Llama 3.2 1B | ~808 MB | General chat on modest hardware |
+| DeepSeek R1 1.5B | ~1.1 GB | Compact reasoning tasks |
+| Qwen 3.5 2B | ~1.28 GB | Current reasoning, instruction following, multilingual chat |
+| Ministral 3 3B | ~2.15 GB | Compact multilingual instruction following |
+| Qwen 3.5 4B | ~2.74 GB | Strong mid-size reasoning, coding, and chat |
+| Qwen 3.5 9B | ~5.68 GB | High-quality chat on high-memory systems |
+| Ministral 3 14B | ~8.24 GB | High-end instruction following and reasoning |
+| GPT-OSS 20B | ~12.11 GB | Near-ceiling browser reasoning with 3.6B active parameters |
 
-All models are open-source. You download them once, then everything runs locally.
+All models are open-source. You download them once, then everything runs locally. The browser
+shows only models that fit its conservative RAM and WASM budget. When WebGPU is available, the app
+measures a safe allocation, offloads model layers for faster inference, and falls back to CPU if
+GPU acceleration fails.
 
 ## Is it really private?
 
-Yes. The AI model runs entirely on your hardware — in your browser tab or in the desktop app. There is no server involved. Your prompts and responses are stored in your browser's local storage and never transmitted anywhere.
+In local mode, yes. The AI model runs entirely on your hardware — in your browser tab or in the desktop app. Your prompts and responses stay in local storage and are never transmitted.
+
+Cloud models are optional. When you configure one, prompts and responses are sent to the provider you chose under that provider's privacy policy.
 
 ## Requirements
 
-- A modern browser (Chrome, Edge, Firefox, Safari) **or** the desktop app
+- A current 64-bit browser **or** the desktop app. Chrome/Edge 137+ use the Memory64 runtime; unsupported Firefox and Safari versions use a slower, locally bundled compatibility runtime.
 - Enough free RAM for the model you choose (the app handles this automatically)
 - An internet connection for the first model download only
 
 ## Advanced: bring your own model
 
-The built-in models are just the starting point. You can run **any GGUF model from [Hugging Face](https://huggingface.co/models?library=gguf)** — just paste the download URL into the app. This means thousands of open-source models are available to you: coding assistants, roleplay models, domain-specific fine-tunes, you name it.
+The built-in models are just the starting point. You can try other **GGUF models from [Hugging Face](https://huggingface.co/models?library=gguf)** by pasting a direct download URL into the app. This includes coding assistants, roleplay models, and domain-specific fine-tunes.
 
-The only constraint is your hardware: if a model fits in your RAM, it runs.
+The model must fit your hardware and use an architecture supported by the bundled llama.cpp runtime.
 
-## Nerd Mode: cloud GPUs
+## Optional cloud models
 
-Want to run **70B+ parameter models** that don't fit on your machine? Nerd Mode deploys any HuggingFace model to [RunPod](https://runpod.io) serverless GPUs. You bring your own API key and pay only for active inference time — endpoints scale to zero when idle.
+Want a model that does not fit on your machine? Connect your own [OpenRouter](https://openrouter.ai) or [Venice](https://venice.ai) API key from the model selection screen, then choose a model offered by that provider.
 
-From the model selection screen, pick **Cloud GPU**, enter your RunPod API key and a model name, and the app handles the rest: it estimates VRAM requirements, picks the cheapest compatible GPU, and deploys a vLLM endpoint for you.
+Cloud inference is not offline: your prompts and responses are sent to the selected provider. Local conversation history remains on your device.
 
 For build instructions, architecture details, model catalog internals, and more, see **[DOCUMENTATION.md](DOCUMENTATION.md)**.
 
@@ -101,6 +110,8 @@ npm install && npm run dev
 ```
 
 Everything else — testing, CI/CD, Electron builds, deployment — lives in **[DOCUMENTATION.md](DOCUMENTATION.md)**.
+Maintainers of older forks can follow **[MIGRATE_WLLAMA64.md](MIGRATE_WLLAMA64.md)** for the
+complete browser-runtime and storage migration.
 
 ---
 

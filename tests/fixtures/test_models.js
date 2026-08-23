@@ -7,11 +7,11 @@
  * correct timeouts based on real file sizes.
  *
  * Architecture coverage:
- * - SmolLM2 360M  → ChatML template (Q4_K_M, ~248 MB)
- * - TinyLlama 1.1B → Zephyr template (Q4_K_M, ~614 MB)
- * - Llama 3.2 1B  → Llama3 template (Q4_K_M, ~740 MB)
- * - DeepSeek R1 Qwen 1.5B → ChatML+think template (Q4_K_M, ~1.0 GB)
- * - Mistral 7B    → Mistral template (Q5_K_M, ~5.1 GB)
+ * - SmolLM2 360M  → ChatML template (Q4_K_M, ~271 MB)
+ * - TinyLlama 1.1B → Zephyr template (Q4_K_M, ~669 MB)
+ * - Llama 3.2 1B  → Llama3 template (Q4_K_M, ~808 MB)
+ * - DeepSeek R1 Qwen 1.5B → ChatML+think template (Q4_K_M, ~1.12 GB)
+ * - Qwen 3.5 2B → embedded hybrid Qwen template
  */
 
 export const MODELS = {
@@ -21,9 +21,9 @@ export const MODELS = {
         name: `SmolLM2 360M Instruct`,
         architecture: `smollm`,
         template: `chatml`,
-        size_mb: 248,
+        size_mb: 271,
         file_name: `SmolLM2-360M-Instruct-Q4_K_M.gguf`,
-        file_size_bytes: 259_915_680,
+        file_size_bytes: 270_590_880,
         tier: `fast`,
     },
 
@@ -32,9 +32,9 @@ export const MODELS = {
         name: `TinyLlama 1.1B Chat`,
         architecture: `llama`,
         template: `zephyr`,
-        size_mb: 614,
+        size_mb: 669,
         file_name: `tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf`,
-        file_size_bytes: 643_728_768,
+        file_size_bytes: 668_788_096,
         tier: `medium`,
     },
 
@@ -43,9 +43,9 @@ export const MODELS = {
         name: `Llama 3.2 1B Instruct`,
         architecture: `llama`,
         template: `llama3`,
-        size_mb: 740,
+        size_mb: 808,
         file_name: `Llama-3.2-1B-Instruct-Q4_K_M.gguf`,
-        file_size_bytes: 775_647_360,
+        file_size_bytes: 807_694_464,
         tier: `medium`,
     },
 
@@ -54,21 +54,81 @@ export const MODELS = {
         name: `DeepSeek R1 Distill Qwen 1.5B`,
         architecture: `qwen`,
         template: `chatml`,
-        size_mb: 1022,
+        size_mb: 1118,
         file_name: `DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf`,
-        file_size_bytes: 1_071_584_864,
+        file_size_bytes: 1_117_320_800,
         tier: `medium`,
     },
 
-    mistral: {
-        id: `mistral-7b-instruct`,
-        name: `Mistral 7B Instruct`,
-        architecture: `mistral`,
-        template: `mistral`,
-        size_mb: 5130,
-        file_name: `mistral-7b-instruct-v0.2.Q5_K_M.gguf`,
-        file_size_bytes: 5_131_000_000,
-        tier: `heavy`,
+    qwen35_2b: {
+        id: `qwen35-2b-q4km`,
+        name: `Qwen 3.5 2B`,
+        architecture: `qwen35`,
+        template: `jinja`,
+        size_mb: 1281,
+        file_name: `Qwen3.5-2B-Q4_K_M.gguf`,
+        file_size_bytes: 1_280_835_840,
+        tier: `medium`,
+    },
+
+    ministral3_3b: {
+        id: `ministral3-3b-q4km`,
+        name: `Ministral 3 3B Instruct`,
+        architecture: `mistral3`,
+        template: `jinja`,
+        hugging_face_repo: `unsloth/Ministral-3-3B-Instruct-2512-GGUF`,
+        size_mb: 2147,
+        file_name: `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf`,
+        file_size_bytes: 2_146_497_824,
+        tier: `large`,
+    },
+
+    qwen35_4b: {
+        id: `qwen35-4b-q4km`,
+        name: `Qwen 3.5 4B`,
+        architecture: `qwen35`,
+        template: `jinja`,
+        hugging_face_repo: `unsloth/Qwen3.5-4B-GGUF`,
+        size_mb: 2741,
+        file_name: `Qwen3.5-4B-Q4_K_M.gguf`,
+        file_size_bytes: 2_740_937_888,
+        tier: `large`,
+    },
+
+    qwen35_9b: {
+        id: `qwen35-9b-vision-q4km`,
+        name: `Qwen 3.5 9B`,
+        architecture: `qwen35`,
+        template: `jinja`,
+        hugging_face_repo: `unsloth/Qwen3.5-9B-GGUF`,
+        size_mb: 5681,
+        file_name: `Qwen3.5-9B-Q4_K_M.gguf`,
+        file_size_bytes: 5_680_522_464,
+        tier: `large`,
+    },
+
+    ministral3_14b: {
+        id: `ministral3-14b-q4km`,
+        name: `Ministral 3 14B Instruct`,
+        architecture: `mistral3`,
+        template: `jinja`,
+        hugging_face_repo: `unsloth/Ministral-3-14B-Instruct-2512-GGUF`,
+        size_mb: 8240,
+        file_name: `Ministral-3-14B-Instruct-2512-Q4_K_M.gguf`,
+        file_size_bytes: 8_239_067_840,
+        tier: `large`,
+    },
+
+    gpt_oss_20b: {
+        id: `gpt-oss-20b-mxfp4`,
+        name: `GPT-OSS 20B`,
+        architecture: `gpt-oss`,
+        template: `harmony`,
+        hugging_face_repo: `ggml-org/gpt-oss-20b-GGUF`,
+        size_mb: 12_110,
+        file_name: `gpt-oss-20b-MXFP4.gguf`,
+        file_size_bytes: 12_109_566_624,
+        tier: `large`,
     },
 
 }
@@ -77,7 +137,14 @@ export const MODELS = {
 // Set FULL_INFERENCE=1 for all 4 architectures (~40+ min).
 export const DEFAULT_MODELS = [ MODELS.smollm2, MODELS.tinyllama ]
 export const ALL_INFERENCE_MODELS = [ MODELS.smollm2, MODELS.tinyllama, MODELS.llama32, MODELS.deepseek ]
-export const HEAVY_MODELS = [ MODELS.mistral ]
+export const RESEARCH_MODELS = [ MODELS.qwen35_2b ]
+export const LARGE_INFERENCE_MODELS = [
+    MODELS.qwen35_4b,
+    MODELS.qwen35_9b,
+    MODELS.ministral3_3b,
+    MODELS.ministral3_14b,
+    MODELS.gpt_oss_20b,
+]
 
 // Test prompt designed to produce short, verifiable responses across all architectures
 export const TEST_PROMPT = `What is 2+2? Answer with just the number.`

@@ -14,7 +14,7 @@ on:
 
 concurrency:
   group: release-electron
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # ── Gate: only proceed when the version string actually changed ──
@@ -25,18 +25,78 @@ jobs:
       version: ${{ steps.diff.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Compare version with latest release
+      - name: Compare version with previous revision
         id: diff
+        shell: bash
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+
           CURR=$(node -p "require('./package.json').version")
-          PREV=$(gh release view --json tagName -q .tagName 2>/dev/null | sed 's/^v//' || echo "")
-          echo "latest-release=$PREV curr=$CURR"
+          echo "version=$CURR" >> "$GITHUB_OUTPUT"
+
+          release_state() {
+            local error_file is_draft
+            error_file=$(mktemp)
+
+            if is_draft=$(gh release view "v$CURR" --json isDraft --jq .isDraft 2>"$error_file"); then
+              rm -f "$error_file"
+              [ "$is_draft" = "true" ] && echo "draft" || echo "published"
+              return
+            fi
+
+            if grep --ignore-case --quiet "release not found" "$error_file"; then
+              rm -f "$error_file"
+              echo "missing"
+              return
+            fi
+
+            echo "::error::Unable to determine release state for v$CURR" >&2
+            cat "$error_file" >&2
+            rm -f "$error_file"
+            return 1
+          }
+
+          RELEASE_STATE=$(release_state)
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$RELEASE_STATE" = "published" ]; then
+              echo "::notice::v$CURR is already published; nothing to recover"
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            fi
+            exit 0
+          fi
+
+          if ! git cat-file -e "${BEFORE_SHA}:package.json" 2>/dev/null; then
+            if [ "$RELEASE_STATE" = "published" ]; then
+              echo "::notice::v$CURR is already published; skipping release recreation"
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "::notice::No previous package.json; treating this as a version change"
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            fi
+            exit 0
+          fi
+
+          PREV=$(git show "${BEFORE_SHA}:package.json" |
+            node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+          echo "previous=$PREV current=$CURR"
+
           if [ "$PREV" != "$CURR" ]; then
-            echo "changed=true"  >> "$GITHUB_OUTPUT"
-            echo "version=$CURR" >> "$GITHUB_OUTPUT"
+            if [ "$RELEASE_STATE" = "published" ]; then
+              echo "::notice::v$CURR is already published; skipping release recreation"
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
@@ -56,21 +116,22 @@ jobs:
         with:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: v${{ needs.check-version.outputs.version }}
+          target_commitish: ${{ github.sha }}
           draft: true
           prerelease: false
           generate_release_notes: true
           body: |
-            ## Download Gratis
+            ## Download gratisAI
 
             Click the link for your device to start downloading:
 
-            - 🍎 [**Mac (Apple Silicon)**](https://github.com/${{ github.repository }}/releases/latest/download/Gratis-mac.dmg) — M1, M2, M3, M4 Macs
-            - 🪟 [**Windows**](https://github.com/${{ github.repository }}/releases/latest/download/Gratis-win.exe)
-            - 🐧 [**Linux**](https://github.com/${{ github.repository }}/releases/latest/download/Gratis-linux.AppImage)
+            - 🍎 [**Mac (Apple Silicon)**](https://github.com/${{ github.repository }}/releases/latest/download/gratisAI-mac.dmg) — M1, M2, M3, M4 Macs
+            - 🪟 [**Windows**](https://github.com/${{ github.repository }}/releases/latest/download/gratisAI-win.exe)
+            - 🐧 [**Linux**](https://github.com/${{ github.repository }}/releases/latest/download/gratisAI-linux.AppImage)
 
             <details><summary>Intel Mac</summary>
 
-            - 🍎 [**Mac (Intel)**](https://github.com/${{ github.repository }}/releases/latest/download/Gratis-mac-intel.dmg) — older Intel-based Macs
+            - 🍎 [**Mac (Intel)**](https://github.com/${{ github.repository }}/releases/latest/download/gratisAI-mac-intel.dmg) — older Intel-based Macs
 
             </details>
 
@@ -191,18 +252,19 @@ jobs:
         if: matrix.platform == 'mac'
         run: |
           cd release
-          mv Gratis-mac-arm64.dmg Gratis-mac.dmg
-          mv Gratis-mac-x64.dmg Gratis-mac-intel.dmg
-          mv Gratis-mac-arm64.zip Gratis-mac.zip
-          mv Gratis-mac-x64.zip Gratis-mac-intel.zip
-          mv Gratis-mac-arm64.dmg.blockmap Gratis-mac.dmg.blockmap 2>/dev/null || true
-          mv Gratis-mac-x64.dmg.blockmap Gratis-mac-intel.dmg.blockmap 2>/dev/null || true
-          sed -i '' 's/Gratis-mac-arm64/Gratis-mac/g; s/Gratis-mac-x64/Gratis-mac-intel/g' latest*.yml
+          mv gratisAI-mac-arm64.dmg gratisAI-mac.dmg
+          mv gratisAI-mac-x64.dmg gratisAI-mac-intel.dmg
+          mv gratisAI-mac-arm64.zip gratisAI-mac.zip
+          mv gratisAI-mac-x64.zip gratisAI-mac-intel.zip
+          mv gratisAI-mac-arm64.dmg.blockmap gratisAI-mac.dmg.blockmap 2>/dev/null || true
+          mv gratisAI-mac-x64.dmg.blockmap gratisAI-mac-intel.dmg.blockmap 2>/dev/null || true
+          sed -i '' 's/gratisAI-mac-arm64/gratisAI-mac/g; s/gratisAI-mac-x64/gratisAI-mac-intel/g' latest*.yml
 
       - name: Upload artifacts to release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.check-version.outputs.version }}
+          draft: true
           files: |
             release/*.dmg
             release/*.zip
@@ -214,7 +276,7 @@ jobs:
   # ── Publish: un-draft the release once all platform builds have uploaded ──
   publish-release:
     needs: [check-version, build]
-    if: needs.check-version.outputs.changed == 'true'
+    if: ${{ needs.check-version.outputs.changed == 'true' && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -47,16 +47,33 @@ test.describe( `Electron Multi-Architecture Inference`, () => {
             // Pre-load the model into Electron's models directory
             await preload_model( app, model, CACHE_DIR )
 
-            // Navigate through onboarding to get to chat
-            // (or navigate directly if already past onboarding)
-            await page.goto( `/` )
-            await expect( page.getByTestId( `get-started-btn` ) ).toBeEnabled( { timeout: 15_000 } )
-            await page.getByTestId( `get-started-btn` ).click()
+            // Reload the packaged entry point so the renderer sees the updated
+            // native manifest. Returning users keep their current route, so use
+            // whichever real switch-model affordance that route exposes.
+            await page.reload()
+
+            const get_started = page.getByTestId( `get-started-btn` )
+            const home_switch = page.getByTestId( `home-switch-model` )
+            const chat_switch = page.getByTestId( `change-model-btn` )
+
+            // Route restoration and lazy chunks settle asynchronously after a
+            // production reload. Wait for one valid entry point before branching.
+            await expect( get_started.or( home_switch ).or( chat_switch ) ).toBeVisible( { timeout: 15_000 } )
+
+            if( await get_started.isVisible() ) {
+                await expect( get_started ).toBeEnabled( { timeout: 15_000 } )
+                await get_started.click()
+            } else if( await home_switch.isVisible() ) {
+                await home_switch.click()
+            } else {
+                await expect( chat_switch ).toBeVisible( { timeout: 15_000 } )
+                await chat_switch.click()
+            }
 
             // Select the pre-loaded model
             await expect( page ).toHaveURL( /\/select-model/ )
             await page.getByTestId( `change-model-toggle` ).click()
-            const option = page.locator( `button`, { hasText: model.name } )
+            const option = page.getByTestId( `model-option-${ model.id }` )
             await expect( option ).toBeVisible( { timeout: 5_000 } )
             await option.click()
             await page.getByTestId( `model-select-confirm-btn` ).click()
@@ -74,7 +91,9 @@ test.describe( `Electron Multi-Architecture Inference`, () => {
             // Verify response
             const messages = await page.locator( `[data-testid="assistant-message"]` ).all()
             const text = await messages[ messages.length - 1 ].textContent()
-            expect( text?.length ).toBeGreaterThan( 0 )
+            await expect( page.getByTestId( `generation-stats` ) ).toBeVisible()
+            expect( text ).toMatch( /\b4\b/ )
+            expect( text ).not.toContain( `empty response` )
 
         } )
 

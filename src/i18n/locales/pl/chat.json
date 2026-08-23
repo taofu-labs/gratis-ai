@@ -1,24 +1,35 @@
 {
     "placeholder": "Napisz wiadomość…",
     "placeholder_ask": "Zapytaj o cokolwiek…",
+
     "thinking": "Myślę…",
     "show_thinking": "Pokaż tok myślenia",
     "hide_thinking": "Ukryj tok myślenia",
     "show_all_thinking": "Pokaż cały tok myślenia",
     "collapse": "Zwiń",
+
     "what_can_i_help_with": "W czym mogę pomóc?",
     "privacy_local": "Używasz modelu lokalnego. Nikt nie widzi, co robisz.",
+    "privacy_openrouter": "Używasz modelu chmurowego OpenRouter. OpenRouter widzi, co robisz.",
+    "privacy_venice": "Używasz modelu chmurowego Venice. Nikt nie widzi, co robisz.",
     "loading_your_model": "Ładowanie modelu…",
+
     "lets_get_you_set_up": "Przygotujmy wszystko",
     "no_model_description": "Zanim zaczniesz rozmawiać, musisz pobrać model AI. To zajmie tylko chwilę.",
     "set_up_a_model": "Skonfiguruj model",
+
     "waking_up": "Budzenie AI",
     "waking_up_hint": "AI w chmurze może potrzebować 1–5 minut na uruchomienie. Usypia też po 5 minutach bezczynności.",
     "slow_device_warning": "Twoje urządzenie wydaje się dość wolne. Zalecamy pobranie aplikacji desktopowej dla lepszej wydajności.",
     "get_the_desktop_app": "Pobierz aplikację desktopową",
+
     "recording": "Nagrywanie",
     "transcribing": "Transkrybowanie",
     "loading_voice_model": "Ładowanie modelu głosowego",
+
+    "offline_cloud_message": "Jesteś offline — modele w chmurze wymagają połączenia z internetem",
+    "offline_switch_model": "Zmień model",
+
     "image_requires_vision": "Wprowadzanie obrazów wymaga obsługi modelu wizyjnego (wkrótce)",
     "unsupported_file_type": "Ten typ pliku nie jest obsługiwany",
     "file_too_large": "Plik jest za duży (maks. 100 KB)"

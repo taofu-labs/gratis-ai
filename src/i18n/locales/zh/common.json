@@ -58,7 +58,10 @@
     "format_just_now": "刚刚",
     "format_minutes_ago": "{{count}}分钟前",
     "format_hours_ago": "{{count}}小时前",
-    "format_eta_seconds": "大约还剩 {{count}} 秒",
-    "format_eta_minutes": "大约还剩 {{count}} 分钟",
-    "format_eta_minutes_plural": "大约还剩 {{count}} 分钟"
+    "duration_seconds": "约{{count}}秒",
+    "duration_minutes": "约{{count}}分钟",
+    "duration_minutes_seconds": "约{{minutes}}分{{seconds}}秒",
+    "duration_hours": "约{{count}}小时",
+    "duration_hours_minutes": "约{{hours}}小时{{minutes}}分钟",
+    "eta_remaining": "还剩{{duration}}"
 }

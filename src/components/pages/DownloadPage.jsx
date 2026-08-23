@@ -7,6 +7,7 @@ import { log } from 'mentie'
 import { download_model, is_model_cached } from '../../utils/model_download'
 import { format_file_size } from '../../utils/model_catalog'
 import { storage_key } from '../../utils/branding'
+import { format_download_duration } from '../../utils/network_speed'
 
 const Container = styled.div`
     display: flex;
@@ -16,27 +17,13 @@ const Container = styled.div`
     flex: 1;
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
-    background: ${ ( { theme } ) => theme.colors.background };
 `
 
 const Title = styled.h1`
-    position: relative;
-    font-size: clamp( 2rem, 4vw, 2.625rem );
+    font-size: clamp( 1.5rem, 1.2rem + 1.5vw, 2rem );
     color: ${ ( { theme } ) => theme.colors.text };
+    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-bottom: 2rem;
-    padding-bottom: ${ ( { theme } ) => theme.spacing.md };
-
-    &::after {
-        content: '';
-        position: absolute;
-        left: 50%;
-        bottom: 0;
-        width: 5.5rem;
-        height: 3px;
-        border-radius: ${ ( { theme } ) => theme.border_radius.full };
-        background: ${ ( { theme } ) => theme.colors.accent };
-        transform: translateX( -50% );
-    }
 `
 
 const StatusMessage = styled.p`
@@ -56,18 +43,20 @@ const ProgressContainer = styled.div`
 const ProgressBar = styled.div`
     width: 100%;
     height: 8px;
-    background: ${ ( { theme } ) => theme.colors.surface };
-    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    background: ${ ( { theme } ) => theme.colors.border_subtle };
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
     overflow: hidden;
 `
 
-const ProgressFill = styled.div`
+// Width changes hundreds of times during a multi-gigabyte download. Keep it
+// inline so styled-components does not mint a new generated class per update.
+const ProgressFill = styled.div.attrs( ( { $progress } ) => ( {
+    style: { width: `${ $progress * 100 }%` },
+} ) )`
     height: 100%;
     background: ${ ( { theme } ) => theme.colors.accent };
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
     transition: width 0.3s ease;
-    width: ${ ( { $progress } ) => `${ $progress * 100 }%` };
 `
 
 const ProgressDetails = styled.div`
@@ -76,14 +65,12 @@ const ProgressDetails = styled.div`
     margin-top: ${ ( { theme } ) => theme.spacing.sm };
     font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
-    font-family: ${ ( { theme } ) => theme.fonts.mono };
     font-variant-numeric: tabular-nums;
 `
 
 const PercentText = styled.span`
     font-weight: 600;
-    font-size: 2.625rem;
-    font-family: ${ ( { theme } ) => theme.fonts.heading };
+    font-size: 1.5rem;
     color: ${ ( { theme } ) => theme.colors.text };
     margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
     font-variant-numeric: tabular-nums;
@@ -94,7 +81,6 @@ const PercentText = styled.span`
 const ETAText = styled.p`
     font-size: 0.85rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
-    font-family: ${ ( { theme } ) => theme.fonts.mono };
     margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
     min-height: 1.3em;
 `
@@ -159,23 +145,6 @@ const SuccessIcon = styled.div`
         animation: none;
     }
 `
-
-/**
- * Format seconds into a friendly time estimate
- * @param {number} seconds
- * @returns {string}
- */
-const format_eta = ( seconds, t ) => {
-    if( seconds < 0 || !isFinite( seconds ) ) return ``
-    if( t ) {
-        if( seconds < 60 ) return t( 'common:format_eta_seconds', { count: Math.ceil( seconds / 5 ) * 5 } )
-        const minutes = Math.ceil( seconds / 60 )
-        return t( minutes !== 1 ? 'common:format_eta_minutes_plural' : 'common:format_eta_minutes', { count: minutes } )
-    }
-    if( seconds < 60 ) return `About ${ Math.ceil( seconds / 5 ) * 5 } seconds left`
-    const minutes = Math.ceil( seconds / 60 )
-    return `About ${ minutes } minute${ minutes !== 1 ? `s` : `` } left`
-}
 
 /**
  * Download page - shows model download progress with friendly feedback
@@ -253,9 +222,10 @@ export default function DownloadPage() {
                         time: Date.now(),
                         bytes: prog.bytes_loaded,
                     } )
-                    if( speed_ref.current.samples.length > 10 ) {
-                        speed_ref.current.samples.shift()
-                    }
+                    const latest_time = speed_ref.current.samples.at( -1 ).time
+                    speed_ref.current.samples = speed_ref.current.samples
+                        .filter( sample => latest_time - sample.time <= 15_000 )
+                        .slice( -120 )
                 }
 
                 // Stash latest progress, only flush to state at throttled intervals
@@ -304,18 +274,21 @@ export default function DownloadPage() {
         const { samples } = speed_ref.current
         if( samples.length < 2 || progress.bytes_total <= 0 ) return ``
 
-        const [ older ] = samples
         const recent = samples.at( -1 )
+        const older = [ ...samples ].reverse()
+            .find( sample => recent.time - sample.time >= 2_000 ) || samples[ 0 ]
         const elapsed_ms = recent.time - older.time
         const bytes_transferred = recent.bytes - older.bytes
 
-        if( elapsed_ms <= 0 || bytes_transferred <= 0 ) return ``
+        if( elapsed_ms < 1_000 || bytes_transferred <= 0 ) return ``
 
         const speed_bps =  bytes_transferred / elapsed_ms  * 1000
         const remaining_bytes = progress.bytes_total - progress.bytes_loaded
         const remaining_seconds = remaining_bytes / speed_bps
 
-        return format_eta( remaining_seconds, t )
+        return t( `common:eta_remaining`, {
+            duration: format_download_duration( remaining_seconds, t ),
+        } )
     }
 
     if( !model ) return null

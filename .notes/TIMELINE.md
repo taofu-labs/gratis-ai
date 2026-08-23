@@ -1,5 +1,27 @@
 # Timeline
 
+## 2026-08-22 — Dependency and documentation housekeeping
+
+- Updated supported dependencies within their current lines, including Electron 43, node-llama-cpp 3.20, Playwright 1.62, and current React/Vite patch releases.
+- Cleared all reported npm vulnerabilities; deferred unrelated major toolchain upgrades for isolated validation.
+- Verified packaged Electron startup and real native SmolLM2 inference after the runtime upgrades.
+- Made the Electron architecture test work for both onboarding and persisted returning-user state.
+- Caught and fixed partial Xet downloads being accepted when their GGUF header remained intact.
+- Replaced the fixed 2K browser context with conservative budget-derived growth up to 16K.
+- Reconciled privacy, cloud-provider, browser-runtime, dependency, and memory documentation with the current implementation.
+
+## 2026-08-21 — wllama64 Memory64 migration and model validation
+
+- Migrated browser inference from Wllama V2 to `wllama64` 1.0.0 / Wllama V3.
+- Replaced manual family prompt formatting with embedded Jinja and OpenAI-compatible chat streaming.
+- Streamed browser model downloads to OPFS; retained legacy IndexedDB Blob loading and local wasm32 compatibility assets.
+- Added Qwen 3.5 2B Q4_K_M after real Chromium Memory64 inference passed through the full UI.
+- Deferred Qwen 3.5 4B and Ministral 3 candidates because the exact acceptance run did not complete successfully.
+- Aligned browser load/selection context at 2K and kept Qwen 3.5 2B in its documented non-thinking default.
+- Strengthened inference tests to reject waking/empty fallbacks and assert semantic output.
+- Fixed same-window settings propagation, first-message route transitions, OPFS clearing, and E2E completion races found by the full browser matrix.
+- Follow-up review fixed selector purge leakage, Firefox fallback selection, storage validation, and an unintended global recommendation-score change.
+
 ## 2026-03-13 — Purge All Models button in model selector (v0.38.0)
 
 - "Purge All Models" button in ModelSelector dropdown (both TopBar desktop + Sidebar mobile)
@@ -451,3 +473,46 @@
 - CTA button uses accent color + pill shape, matching standard app buttons
 - Dismiss button uses background color with hex-alpha opacity
 - Bumped to v0.13.0
+
+## 2026-08-22 — Memory64 large-model catalog proof
+
+- Added a reliable OPFS backend that handles and verifies partial synchronous writes.
+- Exposed models below the 15 GB Memory64 file ceiling as explicit browser choices while keeping
+  automatic recommendations constrained by reported device memory.
+- Replaced broken vendor Ministral GGUF sources with inference-verified Unsloth builds.
+- Completed real browser inference and cache-only reloads for Qwen 3.5 4B/9B, Ministral 3 3B/14B,
+  and GPT-OSS 20B; the 12.11 GB GPT-OSS run proved near-ceiling Harmony inference.
+- Fixed progress-bar class generation found during 8–12 GB downloads.
+- Post-commit Claude review added upstream Hugging Face HEAD/size checks, exact context/batch
+  assertions, neutral weighting for missing benchmarks, and verified-only large browser choices.
+- Added `MIGRATE_WLLAMA64.md`, a fork-maintainer runbook covering headers, pinned runtimes, the
+  atomic V3 provider cutover, reliable OPFS migration, rollback, and real-browser acceptance.
+
+## 2026-08-22 — Memory64 production deployment repair
+
+- Traced missing production COOP/COEP to `wrangler-action` silently installing Wrangler 3.90.0,
+  which predates Workers Static Assets `_headers` uploads.
+- Pinned current Wrangler, added post-deploy header receipts for both deployment origins, and added
+  a production PWA browser test covering a real 16 GiB shared Memory64 reservation before and after
+  service-worker control.
+- Versioned the Workbox navigation cache policy and added future service-worker takeover reloads so
+  cached response headers upgrade safely.
+- Hardened release gates and draft uploads so failed platform builds cannot publish partial releases.
+- Follow-up review made service-worker reloads wait for idle inference/download state, protected
+  published releases from manual recovery, and put unit/Memory64 PWA gates directly in deploy CI.
+
+## 2026-08-22 — Empirical resource probing and graceful WebGPU offload
+
+- Replaced max-buffer-only GPU memory reporting with a retained-buffer allocation probe and clear
+  measured-lower-bound UI semantics.
+- Made every local model surface enforce the same RAM/WASM runtime fit estimate, including cached
+  and custom models, with a deterministic preflight guard at load time.
+- Enabled measured-budget `n_gpu_layers` offload in the existing wllama64 runtime, with fresh CPU
+  runtime fallback for GPU load failures, inference failures, device loss, and worker stalls.
+- Replaced static same-origin speed fixtures and optimistic connection hints with bounded range
+  sampling against the selected GGUF plus conservative actual-download history.
+- Synchronized the new fit, measurement, and duration messages across all 11 locales.
+- Post-commit review corrected partial-offload block counting, rejected device-loss probe results,
+  limited CPU demotion to GPU/runtime failures, and cleared stale loaded-model state after recovery.
+- Final review separated healthy probe-budget exhaustion from stalled operations and made custom
+  model loads join, without starting, any allocation probe already in flight.

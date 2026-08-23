@@ -1,24 +1,35 @@
 {
     "placeholder": "Nachricht eingeben…",
     "placeholder_ask": "Frag einfach drauflos…",
+
     "thinking": "Denkt nach…",
     "show_thinking": "Denkprozess anzeigen",
     "hide_thinking": "Denkprozess ausblenden",
     "show_all_thinking": "Gesamten Denkprozess anzeigen",
     "collapse": "Einklappen",
+
     "what_can_i_help_with": "Wie kann ich helfen?",
     "privacy_local": "Du verwendest ein lokales Modell. Niemand kann sehen, was du tust.",
+    "privacy_openrouter": "Du verwendest ein OpenRouter-Cloud-Modell. OpenRouter kann sehen, was du tust.",
+    "privacy_venice": "Du verwendest ein Venice-Cloud-Modell. Niemand kann sehen, was du tust.",
     "loading_your_model": "Dein Modell wird geladen…",
+
     "lets_get_you_set_up": "Lass uns loslegen",
     "no_model_description": "Du musst zuerst ein KI-Modell herunterladen, bevor du chatten kannst. Das dauert nur eine Minute.",
     "set_up_a_model": "Modell einrichten",
+
     "waking_up": "KI wird geweckt",
     "waking_up_hint": "Cloud-KIs können 1–5 Minuten zum Starten brauchen. Sie schlafen auch nach 5 Minuten Inaktivität wieder ein.",
     "slow_device_warning": "Dein Gerät scheint recht langsam zu sein. Wir empfehlen die Desktop-App für bessere Leistung.",
     "get_the_desktop_app": "Desktop-App herunterladen",
+
     "recording": "Aufnahme",
     "transcribing": "Wird transkribiert",
     "loading_voice_model": "Sprachmodell wird geladen",
+
+    "offline_cloud_message": "Du bist offline — Cloud-Modelle benötigen eine Internetverbindung",
+    "offline_switch_model": "Modell wechseln",
+
     "image_requires_vision": "Bildeingabe erfordert ein Vision-Modell (kommt bald)",
     "unsupported_file_type": "Dieser Dateityp wird nicht unterstützt",
     "file_too_large": "Die Datei ist zu groß (max. 100 KB)"

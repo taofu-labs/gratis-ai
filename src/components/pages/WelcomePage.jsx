@@ -2,59 +2,26 @@ import { useState } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, ChevronDown, ChevronUp, Settings, ShieldCheck, WifiOff } from 'lucide-react'
+import { ArrowRight, Shield, WifiOff, ChevronDown, ChevronUp } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import DeviceInfo from '../atoms/DeviceInfo'
 import LanguageSelector from '../molecules/LanguageSelector'
-import SettingsModal from '../molecules/SettingsModal'
-import BrandMark from '../atoms/BrandMark'
-import ConvergenceCanvas from '../atoms/ConvergenceCanvas'
 import { DISPLAY_NAME } from '../../utils/branding'
 
 const PageWrapper = styled.div`
     position: relative;
     display: flex;
     flex: 1;
-    overflow: hidden;
-    background: ${ ( { theme } ) => theme.colors.background };
-    isolation: isolate;
-
-    &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        background: radial-gradient( ellipse 58% 52% at 50% 44%, transparent 24%, ${ ( { theme } ) => theme.colors.background } 82% );
-        pointer-events: none;
-    }
 `
 
 const TopRight = styled.div`
     position: absolute;
     top: ${ ( { theme } ) => theme.spacing.md };
     right: ${ ( { theme } ) => theme.spacing.md };
-    z-index: 4;
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
+    z-index: 10;
 `
 
-const IconButton = styled.button`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    transition: color 0.15s;
-
-    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
-`
-
-const Container = styled.main`
-    position: relative;
-    z-index: 2;
+const Container = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -64,61 +31,30 @@ const Container = styled.main`
     text-align: center;
 `
 
-const HeroStack = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.lg };
-    width: 100%;
-    max-width: 37.5rem;
-`
-
-const Eyebrow = styled.p`
-    margin: 0;
-    font-family: ${ ( { theme } ) => theme.fonts.mono };
-    font-size: 0.72rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: ${ ( { theme } ) => theme.colors.accent };
-`
-
-const TitleGroup = styled.div`
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.md };
-`
-
 const Title = styled.h1`
-    margin: 0;
-    font-size: clamp( 3rem, 7vw, 5.125rem );
-    line-height: 1;
+    font-size: clamp( 2rem, 1.5rem + 2.5vw, 3rem );
     color: ${ ( { theme } ) => theme.colors.text };
-`
-
-const SignalRule = styled.span`
-    display: block;
-    width: 7.25rem;
-    height: 3px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme } ) => theme.colors.accent };
+    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
+    margin-bottom: 2rem;
 `
 
 const Tagline = styled.p`
-    margin: 0;
-    max-width: 32rem;
-    font-size: 1.08rem;
-    line-height: 1.6;
+    font-size: clamp( 1.1rem, 1rem + 0.3vw, 1.35rem );
     color: ${ ( { theme } ) => theme.colors.text_secondary };
-    text-wrap: pretty;
+    margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
+    max-width: 500px;
+    line-height: 1.6;
+    text-align: center;
 `
 
+// Simple value props that anyone can understand
 const ValueProps = styled.div`
     display: flex;
     flex-direction: column;
     gap: ${ ( { theme } ) => theme.spacing.md };
+    margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
+    max-width: 380px;
     width: 100%;
-    max-width: 29rem;
 `
 
 const ValueProp = styled.div`
@@ -126,80 +62,84 @@ const ValueProp = styled.div`
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.md };
     text-align: left;
+    font-size: 0.95rem;
     color: ${ ( { theme } ) => theme.colors.text_secondary };
-    line-height: 1.45;
+    line-height: 1.4;
 `
 
-const IconTile = styled.span`
-    display: grid;
-    place-items: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    flex-shrink: 0;
-    border: 1px solid ${ ( { theme } ) => theme.colors.border };
-    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
-    background: ${ ( { theme } ) => theme.colors.surface };
-    color: ${ ( { theme } ) => theme.colors.accent };
+const IconCircle = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    background: ${ ( { theme } ) => theme.colors.code_background };
+    color: ${ ( { theme } ) => theme.colors.text };
 `
 
 const StartButton = styled.button`
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    min-height: 3.25rem;
-    margin-top: ${ ( { theme } ) => theme.spacing.xs };
-    padding: 0 ${ ( { theme } ) => theme.spacing.xl };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
     background: ${ ( { theme } ) => theme.colors.accent };
-    color: ${ ( { theme } ) => theme.colors.accent_ink };
-    font-weight: 700;
-    transition: background 0.15s, opacity 0.15s;
+    color: white;
+    padding: ${ ( { theme } ) => `${ theme.spacing.md } ${ theme.spacing.xl }` };
+    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: opacity 0.15s;
+    display: flex;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.sm };
+    min-height: 2.75rem;
 
-    &:hover { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
+    &:hover { opacity: 0.85; }
 
     &:disabled {
-        opacity: 0.55;
+        opacity: 0.5;
         cursor: not-allowed;
     }
 `
 
+// Step indicator showing the 3-step onboarding
 const StepIndicator = styled.div`
     display: flex;
     align-items: center;
-    margin-top: ${ ( { theme } ) => theme.spacing.sm };
+    gap: ${ ( { theme } ) => theme.spacing.xs };
+    margin-top: ${ ( { theme } ) => theme.spacing.lg };
+    font-size: 0.8rem;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
 `
 
-const StepDot = styled.span`
-    width: ${ ( { $active } ) => $active ? `10px` : `8px` };
-    height: ${ ( { $active } ) => $active ? `10px` : `8px` };
+const StepDot = styled.div`
+    width: 8px;
+    height: 8px;
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme, $active, $done } ) => $active || $done ? theme.colors.accent : theme.colors.border_control };
-    box-shadow: ${ ( { $active } ) => $active ? `0 0 0 4px rgba( 255, 90, 31, 0.18 )` : `none` };
+    background: ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
 `
 
-const StepLine = styled.span`
-    width: 2.625rem;
+const StepLine = styled.div`
+    width: 24px;
     height: 2px;
-    background: ${ ( { theme, $done } ) => $done ? theme.colors.accent : theme.colors.border_control };
+    background: ${ ( { theme } ) => theme.colors.border };
 `
 
+// Expandable device details
 const DetailsToggle = styled.button`
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.xs };
-    min-height: 2.75rem;
-    margin-top: ${ ( { theme } ) => theme.spacing.xs };
+    margin-top: ${ ( { theme } ) => theme.spacing.md };
+    font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
-    font-size: 0.86rem;
     transition: color 0.15s;
+    min-height: 2.75rem;
 
     &:hover { color: ${ ( { theme } ) => theme.colors.text_secondary }; }
 `
 
 const DetailsPanel = styled.div`
     overflow: hidden;
-    max-height: ${ ( { $expanded } ) => $expanded ? `15rem` : `0` };
+    max-height: ${ ( { $expanded } ) => $expanded ? `200px` : `0px` };
     opacity: ${ ( { $expanded } ) => $expanded ? 1 : 0 };
     visibility: ${ ( { $expanded } ) => $expanded ? `visible` : `hidden` };
     transition: max-height 0.3s ease, opacity 0.2s ease, visibility 0.3s ease;
@@ -209,17 +149,20 @@ const DetailsPanel = styled.div`
     }
 `
 
+// Pulsing dot for "detecting" state
 const pulse = keyframes`
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
 `
 
 const DetectingDot = styled.span`
+    display: inline-block;
     width: 8px;
     height: 8px;
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme } ) => theme.colors.accent_ink };
+    background: ${ ( { theme } ) => theme.colors.accent };
     animation: ${ pulse } 1.5s ease-in-out infinite;
+    margin-right: ${ ( { theme } ) => theme.spacing.xs };
 
     @media ( prefers-reduced-motion: reduce ) {
         animation: none;
@@ -228,15 +171,15 @@ const DetectingDot = styled.span`
 
 /**
  * Landing page with app intro and device detection.
+ * Designed to be warm and approachable — technical specs hidden behind "details".
  * @returns {JSX.Element}
  */
-export default function WelcomePage( { theme_preference, on_theme_toggle } ) {
+export default function WelcomePage() {
 
     const { t } = useTranslation( 'pages' )
     const navigate = useNavigate()
     const { capabilities, is_detecting } = use_device_capabilities()
     const [ show_details, set_show_details ] = useState( false )
-    const [ settings_open, set_settings_open ] = useState( false )
 
     const handle_start = () => {
         if( !is_detecting ) navigate( `/select-model`, { state: { capabilities } } )
@@ -244,81 +187,63 @@ export default function WelcomePage( { theme_preference, on_theme_toggle } ) {
 
     return <PageWrapper>
 
-        <ConvergenceCanvas centerX={ 0.5 } />
-
         <TopRight>
             <LanguageSelector />
-            <IconButton
-                data-testid="settings-btn"
-                onClick={ () => set_settings_open( true ) }
-                aria-label={ t( `common:aria_open_settings` ) }
-            >
-                <Settings size={ 18 } />
-            </IconButton>
         </TopRight>
 
         <Container>
-            <HeroStack>
-                <BrandMark size="3.25rem" />
-                <Eyebrow>True Performance Network</Eyebrow>
 
-                <TitleGroup>
-                    <Title>{ DISPLAY_NAME }</Title>
-                    <SignalRule />
-                </TitleGroup>
+            <Title>{ DISPLAY_NAME }</Title>
+            <Tagline>
+                { t( 'tagline' ) }
+            </Tagline>
 
-                <Tagline>{ t( 'tagline' ) }</Tagline>
+            { /* Simple value propositions anyone can understand */ }
+            <ValueProps>
+                <ValueProp>
+                    <IconCircle><Shield size={ 18 } /></IconCircle>
+                    <span>{ t( 'value_prop_privacy' ) }</span>
+                </ValueProp>
+                <ValueProp>
+                    <IconCircle><WifiOff size={ 18 } /></IconCircle>
+                    <span>{ t( 'value_prop_offline' ) }</span>
+                </ValueProp>
+            </ValueProps>
 
-                <ValueProps>
-                    <ValueProp>
-                        <IconTile><ShieldCheck size={ 20 } /></IconTile>
-                        <span>{ t( 'value_prop_privacy' ) }</span>
-                    </ValueProp>
-                    <ValueProp>
-                        <IconTile><WifiOff size={ 20 } /></IconTile>
-                        <span>{ t( 'value_prop_offline' ) }</span>
-                    </ValueProp>
-                </ValueProps>
+            <StartButton
+                data-testid="get-started-btn"
+                onClick={ handle_start }
+                disabled={ is_detecting }
+            >
+                { is_detecting
+                    ? <><DetectingDot /> { t( 'checking_device' ) }</>
+                    : <>{ t( 'get_started' ) } <ArrowRight size={ 18 } /></> }
+            </StartButton>
 
-                <StartButton
-                    data-testid="get-started-btn"
-                    onClick={ handle_start }
-                    disabled={ is_detecting }
+            { /* Step progress indicator */ }
+            <StepIndicator data-testid="step-indicator">
+                <StepDot $active />
+                <StepLine />
+                <StepDot />
+                <StepLine />
+                <StepDot />
+            </StepIndicator>
+
+            { /* Device details — hidden by default (progressive disclosure) */ }
+            { capabilities && <>
+                <DetailsToggle
+                    data-testid="device-details-toggle"
+                    onClick={ () => set_show_details( !show_details ) }
                 >
-                    { is_detecting
-                        ? <><DetectingDot /> { t( 'checking_device' ) }</>
-                        : <>{ t( 'get_started' ) } <ArrowRight size={ 18 } /></> }
-                </StartButton>
+                    { show_details ? t( 'hide_device_details' ) : t( 'show_device_details' ) }
+                    { show_details ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
+                </DetailsToggle>
+                <DetailsPanel $expanded={ show_details }>
+                    <DeviceInfo capabilities={ capabilities } />
+                </DetailsPanel>
+            </> }
 
-                <StepIndicator data-testid="step-indicator">
-                    <StepDot $active />
-                    <StepLine />
-                    <StepDot />
-                    <StepLine />
-                    <StepDot />
-                </StepIndicator>
-
-                { capabilities && <>
-                    <DetailsToggle
-                        data-testid="device-details-toggle"
-                        onClick={ () => set_show_details( !show_details ) }
-                    >
-                        { show_details ? t( 'hide_device_details' ) : t( 'show_device_details' ) }
-                        { show_details ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
-                    </DetailsToggle>
-                    <DetailsPanel $expanded={ show_details }>
-                        <DeviceInfo capabilities={ capabilities } />
-                    </DetailsPanel>
-                </> }
-            </HeroStack>
         </Container>
-
-        <SettingsModal
-            is_open={ settings_open }
-            on_close={ () => set_settings_open( false ) }
-            theme_preference={ theme_preference }
-            on_theme_change={ on_theme_toggle }
-        />
 
     </PageWrapper>
 

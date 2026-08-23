@@ -152,7 +152,6 @@ const SpinnerIcon = styled.div`
 `
 
 
-
 /**
  * Main chat interface page with layout shell
  * @param {Object} props
@@ -176,6 +175,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     const chat_input_ref = useRef( null )
     const is_generating_ref = useRef( false )
     const query_processed_ref = useRef( false )
+    const pending_conversation_id_ref = useRef( null )
 
     const { load_model, chat_stream, abort, is_generating, is_endpoint_warming, is_loading: is_model_loading, loaded_model_id } = use_llm()
     const {
@@ -216,7 +216,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     const [ voice_text, set_voice_text ] = useState( null )
 
     // Whether the correct model is available for inference.
-    // If a different model is pending (e.g. cloud after local), the stale loaded model
+    // If a different model is pending, the stale loaded model
     // must not count — otherwise we'd show the chat as ready with the wrong model.
     const pending_model_id = localStorage.getItem( storage_key( `active_model_id` ) )
     const has_model = ( model_loaded === true || !!loaded_model_id )
@@ -282,6 +282,10 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     // Load conversation messages when navigating to /chat/:id
     useEffect( () => {
 
+        if( conversation_id === pending_conversation_id_ref.current ) {
+            pending_conversation_id_ref.current = null
+        }
+
         if( conversation_id && conversation_id !== current_conversation_id ) {
 
             // Validate that the conversation exists before loading messages
@@ -307,7 +311,9 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         }
 
         // Reset state when navigating to /chat (no id)
-        if( !conversation_id && current_conversation_id ) {
+        if( !conversation_id
+            && current_conversation_id
+            && pending_conversation_id_ref.current !== current_conversation_id ) {
             set_current_conversation_id( null )
             set_messages( [] )
         }
@@ -469,6 +475,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
         let conv_id = current_conversation_id
         if( !conv_id ) {
             conv_id = await create_conversation( text )
+            pending_conversation_id_ref.current = conv_id
             set_current_conversation_id( conv_id )
             navigate( `/chat/${ conv_id }`, { replace: true } )
         }
@@ -585,11 +592,13 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
             // Handle ?q= parameter — auto-send message once model is ready
             if( q_param && ( model_loaded || loaded_model_id ) ) {
                 query_processed_ref.current = true
-                set_search_params( {}, { replace: true } )
-                setTimeout( () => {
-                    send_message( q_param )
-                    chat_input_ref.current?.focus()
-                }, 100 )
+                set_search_params( ( prev ) => {
+                    const next = new URLSearchParams( prev )
+                    next.delete( `q` )
+                    return next
+                }, { replace: true } )
+                await send_message( q_param )
+                chat_input_ref.current?.focus()
                 return
             }
 
@@ -630,6 +639,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
      */
     const handle_new_chat = useCallback( () => {
         abort()
+        pending_conversation_id_ref.current = null
         set_current_conversation_id( null )
         set_messages( [] )
         navigate( `/chat` )
@@ -779,6 +789,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
             messages={ messages }
             is_streaming={ is_generating }
             is_endpoint_warming={ is_endpoint_warming }
+            is_cloud_model={ false }
             on_regenerate={ handle_regenerate }
             on_edit={ handle_edit }
         />
@@ -810,7 +821,7 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
 
                 <WelcomeContent $visible={ should_center }>
                     <WelcomeTitle>{ t( 'what_can_i_help_with' ) }</WelcomeTitle>
-                    <PrivacyHint>{ t( 'privacy_local' ) }</PrivacyHint>
+                    <PrivacyHint>{ t( `privacy_local` ) }</PrivacyHint>
                     { is_endpoint_warming && <WakingUpIndicator /> }
                 </WelcomeContent>
 

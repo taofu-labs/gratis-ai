@@ -1,24 +1,35 @@
 {
     "placeholder": "メッセージを入力...",
     "placeholder_ask": "何でも聞いてください...",
+
     "thinking": "考え中...",
     "show_thinking": "思考過程を表示",
     "hide_thinking": "思考過程を非表示",
     "show_all_thinking": "すべての思考過程を表示",
     "collapse": "折りたたむ",
+
     "what_can_i_help_with": "何かお手伝いできますか？",
     "privacy_local": "ローカルモデルを使用中です。あなたの操作は誰にも見えません。",
+    "privacy_openrouter": "OpenRouterのクラウドモデルを使用中です。OpenRouterはあなたの操作を閲覧できます。",
+    "privacy_venice": "Veniceのクラウドモデルを使用中です。あなたの操作は誰にも見えません。",
     "loading_your_model": "モデルを読み込み中...",
+
     "lets_get_you_set_up": "セットアップを始めましょう",
     "no_model_description": "チャットを始めるにはAIモデルのダウンロードが必要です。1分ほどで完了します。",
     "set_up_a_model": "モデルをセットアップ",
+
     "waking_up": "AIを起動中",
     "waking_up_hint": "クラウドAIの起動には1〜5分かかることがあります。また、5分間操作がないとスリープ状態になります。",
     "slow_device_warning": "お使いのデバイスはかなり遅いようです。より良いパフォーマンスのためにデスクトップアプリをお勧めします。",
     "get_the_desktop_app": "デスクトップアプリを入手",
+
     "recording": "録音中",
     "transcribing": "文字起こし中",
     "loading_voice_model": "音声モデルを読み込み中",
+
+    "offline_cloud_message": "オフラインです — クラウドモデルにはインターネット接続が必要です",
+    "offline_switch_model": "モデルを切り替え",
+
     "image_requires_vision": "画像入力にはビジョンモデルのサポートが必要です（近日対応予定）",
     "unsupported_file_type": "このファイル形式はサポートされていません",
     "file_too_large": "ファイルが大きすぎます（最大100 KB）"

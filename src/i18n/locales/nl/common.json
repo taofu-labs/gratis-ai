@@ -58,7 +58,10 @@
     "format_just_now": "Zojuist",
     "format_minutes_ago": "{{count}}m geleden",
     "format_hours_ago": "{{count}}u geleden",
-    "format_eta_seconds": "Nog ongeveer {{count}} seconden",
-    "format_eta_minutes": "Nog ongeveer {{count}} minuut",
-    "format_eta_minutes_plural": "Nog ongeveer {{count}} minuten"
+    "duration_seconds": "~{{count}} seconden",
+    "duration_minutes": "~{{count}} min",
+    "duration_minutes_seconds": "~{{minutes}} min {{seconds}} sec",
+    "duration_hours": "~{{count}} uur",
+    "duration_hours_minutes": "~{{hours}} uur {{minutes}} min",
+    "eta_remaining": "Nog {{duration}}"
 }

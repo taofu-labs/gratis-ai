@@ -74,7 +74,7 @@
     "local": "ローカル",
 
     "device_gpu": "GPU",
-    "device_vram": "VRAM",
+    "device_vram": "利用可能なGPUメモリ",
     "device_ram": "RAM",
     "device_cores": "コア数"
 }

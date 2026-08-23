@@ -12,10 +12,11 @@ test.describe( `Chat History`, () => {
         await expect( page.getByTestId( `new-chat-btn` ) ).toBeVisible()
     } )
 
-    test( `new chat button opens model setup when no model is active`, async ( { page } ) => {
+    test( `new chat button navigates to empty chat`, async ( { page } ) => {
         await page.goto( `/chat` )
         await page.getByTestId( `new-chat-btn` ).click()
-        await expect( page ).toHaveURL( /\/select-model/ )
+        // Without a model loaded, shows the setup CTA
+        await expect( page.getByText( `Let's get you set up` ) ).toBeVisible()
     } )
 
 } )

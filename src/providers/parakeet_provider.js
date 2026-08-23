@@ -3,7 +3,7 @@
  * Manages model lifecycle, IndexedDB metadata tracking, and transcription.
  *
  * The actual model files are cached internally by parakeet.js (its own IndexedDB).
- * We only store a lightweight metadata record in the Gratis `models` store so
+ * We only store a lightweight metadata record in the gratisAI `models` store so
  * the app knows "has the user downloaded this before" without duplicating ~640MB.
  */
 import { log } from 'mentie'
@@ -77,7 +77,7 @@ export default class ParakeetProvider {
 
             on_progress?.( { progress: 1, status: `Ready` } )
 
-            // Store lightweight metadata in the Gratis models store
+            // Store lightweight metadata in the gratisAI models store
             await this._save_metadata()
 
         } catch ( err ) {

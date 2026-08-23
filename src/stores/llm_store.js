@@ -35,23 +35,24 @@ const use_llm_store = create( ( set, get ) => ( {
      * Ensure the provider is initialised (handles async creation).
      * Uses a shared promise so all concurrent callers get the same instance.
      *
-     * Cloud model IDs from previous versions are cleared; Gratis now loads
-     * local models only.
+     * Stale cloud-provider model IDs from earlier builds are cleared so users
+     * land back on the local model picker.
      */
     ensure_provider: async ( model_id ) => {
 
         const state = get()
         const target_id = model_id || localStorage.getItem( storage_key( `active_model_id` ) ) || ``
-
         const target_type = `local`
 
         const current_type = state._provider_type
 
-        // Gracefully handle stale cloud prefixes from previous versions.
-        if( target_id.startsWith( `runpod:` ) || target_id.startsWith( `openrouter:` ) || target_id.startsWith( `venice:` ) ) {
-            log.warn( `[use_llm] Stale cloud model prefix — clearing active model` )
+        // Gracefully handle stale cloud prefixes from previous versions
+        if( target_id.startsWith( `runpod:` )
+            || target_id.startsWith( `openrouter:` )
+            || target_id.startsWith( `venice:` ) ) {
+            log.warn( `[use_llm] Stale unsupported model prefix — clearing active model` )
             localStorage.removeItem( storage_key( `active_model_id` ) )
-            throw new Error( `This cloud model configuration is no longer supported. Choose a local model to continue.` )
+            throw new Error( `This model connection is no longer supported. Choose a local model to continue.` )
         }
 
         // If we have a provider of the correct type, reuse it
@@ -94,7 +95,9 @@ const use_llm_store = create( ( set, get ) => ( {
         const state = get()
 
         // Already loaded — nothing to do
-        if( state.loaded_model_id === model_id && !state.is_loading ) return
+        if( state.loaded_model_id === model_id
+            && !state.is_loading
+            && state._provider?.is_ready() ) return
 
         // Already loading this exact model — return existing promise
         if( state._load_promise && state._loading_model_id === model_id ) {
@@ -216,7 +219,10 @@ const use_llm_store = create( ( set, get ) => ( {
 
             // Real error — log, set state, and re-throw so callers can display it
             log.error( `[use_llm] Generation error:`, err.message )
-            set( { error: err.message } )
+            set( {
+                error: err.message,
+                ... provider.is_ready() ? {} : { loaded_model_id: null },
+            } )
             throw err
 
         } finally {

@@ -5,9 +5,10 @@
     "add_model": "Ajouter un modèle",
     "manage_models": "Gérer les modèles",
     "purge_models": "Purger tous les modèles",
-    "purge_confirm": "Supprimer tous les modèles locaux ? Cette action est irréversible.",
+    "purge_confirm": "Supprimer tous les modèles locaux et toutes les configurations de modèles cloud ? Cette action est irréversible.",
     "purge_success": "Tous les modèles purgés",
     "purge_error": "Échec de la purge : {{error}}",
+
     "pick_a_model": "Choisissez un modèle",
     "subtitle_two_cards": "Nous avons sélectionné deux options selon votre appareil. Choisissez l'équilibre qui vous convient.",
     "subtitle_three_cards": "Nous avons sélectionné trois options selon votre appareil. Choisissez l'équilibre qui vous convient.",
@@ -32,13 +33,35 @@
     "may_be_too_large_browser": "Risque d'être trop volumineux pour ce navigateur",
     "large_model_warning": "Les modèles volumineux peuvent échouer au chargement dans le navigateur. Envisagez une quantification plus petite ou l'application de bureau.",
     "low_memory_warning": "Seulement {{free}} de mémoire libre — ce modèle a besoin d'environ {{needed}}. Essayez de fermer d'autres apps ou de choisir un modèle plus petit pour éviter les ralentissements et plantages éventuels.",
+
     "local_models_section": "Modèles locaux",
     "local_models_subtitle": "S'exécutent sur votre appareil",
     "cloud_models_section": "Modèles cloud",
     "cloud_models_subtitle": "Les modèles cloud sont plus puissants, mais ne s'exécutent pas sur votre appareil. Ils nécessitent une clé API d'un fournisseur cloud.",
+    "openrouter_setup_card": "OpenRouter",
+    "openrouter_setup_subtitle": "Des centaines de modèles gratuits et payants",
+    "venice_setup_card": "Venice",
+    "venice_setup_subtitle": "Modèles non censurés — aucune restriction de contenu",
+    "add_openrouter_model": "Ajouter un modèle OpenRouter",
+    "add_venice_model": "Ajouter un modèle Venice",
+
+    "nerd_option": "GPU cloud",
+    "nerd_option_subtitle": "OpenRouter — modèles gratuits et payants",
+    "nerd_continue": "Continuer",
+
     "downloading_your_model": "Téléchargement de votre modèle",
     "one_time_download": "{{name}} — c'est un téléchargement unique. Ensuite, tout fonctionne hors ligne.",
     "ready_to_chat": "Prêt à discuter !",
     "cancel_download": "Annuler le téléchargement",
-    "preparing": "Préparation..."
+    "preparing": "Préparation...",
+    "measuring_download_speed": "Mesure de la vitesse de téléchargement…",
+    "download_range_under_minute": "moins d’une minute",
+    "download_range_1_3_minutes": "1 à 3 minutes",
+    "download_range_3_8_minutes": "3 à 8 minutes",
+    "download_range_10_20_minutes": "10 à 20 minutes",
+    "download_range_20_40_minutes": "20 à 40 minutes",
+    "download_range_40_plus_minutes": "plus de 40 minutes",
+    "does_not_fit": "ne tient pas en mémoire",
+    "model_does_not_fit": "Ce modèle ne tient pas dans la mémoire disponible pour ce navigateur.",
+    "no_local_model_fits": "Aucun modèle local ne tient en toute sécurité dans la mémoire disponible. Fermez d’autres applications ou utilisez un modèle cloud."
 }
