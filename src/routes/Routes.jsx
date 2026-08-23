@@ -17,8 +17,6 @@ const ModelSelectPage = lazy( maybe_prefetch( () => import( '../components/pages
 const DownloadPage = lazy( maybe_prefetch( () => import( '../components/pages/DownloadPage' ) ) )
 const ChatPage = lazy( maybe_prefetch( () => import( '../components/pages/ChatPage' ) ) )
 const GetAppPage = lazy( maybe_prefetch( () => import( '../components/pages/GetAppPage' ) ) )
-const NerdSetupPage = lazy( maybe_prefetch( () => import( '../components/pages/NerdSetupPage' ) ) )
-const CloudSetupPage = lazy( maybe_prefetch( () => import( '../components/pages/CloudSetupPage' ) ) )
 const NotFoundPage = lazy( maybe_prefetch( () => import( '../components/pages/NotFoundPage' ) ) )
 
 /**
@@ -49,8 +47,6 @@ export default function Routes( { theme_preference, theme_mode, on_theme_toggle 
             <Route path="/select-model" element={ <ModelSelectPage /> } />
             <Route path="/download" element={ <DownloadPage /> } />
             <Route path="/chat/:id?" element={ <ChatPage { ...layout_props } /> } />
-            <Route path="/nerd-setup" element={ <NerdSetupPage /> } />
-            <Route path="/cloud-setup" element={ <CloudSetupPage /> } />
             <Route path="/get-app" element={ <GetAppPage /> } />
             <Route path="*" element={ <NotFoundPage /> } />
         </RouterRoutes>

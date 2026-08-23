@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import styled, { useTheme } from 'styled-components'
-import { ChevronDown, Check, Plus, Settings, LoaderCircle, AlertTriangle, Cloud, Trash2 } from 'lucide-react'
+import { ChevronDown, Check, Plus, Settings, LoaderCircle, AlertTriangle, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { log } from 'mentie'
 import { format_file_size, can_fit_in_memory, get_model_by_id } from '../../utils/model_catalog'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
-import use_openrouter_store from '../../stores/openrouter_store'
-import use_venice_store from '../../stores/venice_store'
 import use_llm_store from '../../stores/llm_store'
 import { clear_browser_model_cache } from '../../utils/model_download'
 
@@ -116,18 +114,6 @@ const NoModelHint = styled.div`
     line-height: 1.4;
 `
 
-const CloudTag = styled.span`
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.info };
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-left: 4px;
-`
-
 /**
  * Model selector dropdown in the TopBar.
  * Shows just model name and download size — technical details
@@ -221,8 +207,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
     }
 
     /**
-     * Purge all models — delete local cached models and clear OpenRouter
-     * cloud model entries. Requires confirmation via browser confirm().
+     * Purge all models. Requires confirmation via browser confirm().
      */
     const handle_purge = useCallback( async () => {
 
@@ -239,27 +224,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                 await llm.unload_model()
             }
 
-            // 2. Clear OpenRouter cloud model entries from the store
-            const openrouter = use_openrouter_store.getState()
-
-            if( openrouter.models.length > 0 ) {
-                for( const m of [ ...openrouter.models ] ) {
-                    openrouter.remove_model( m.openrouter_id )
-                }
-                log.info( `[purge] Cleared OpenRouter cloud models` )
-            }
-
-            // 3. Clear Venice cloud model entries from the store
-            const venice = use_venice_store.getState()
-
-            if( venice.models.length > 0 ) {
-                for( const m of [ ...venice.models ] ) {
-                    venice.remove_model( m.venice_id )
-                }
-                log.info( `[purge] Cleared Venice cloud models` )
-            }
-
-            // 4. Delete all local cached models
+            // 2. Delete all local cached models
             const is_electron = !!window.electronAPI?.native_inference
 
             if( is_electron ) {
@@ -285,7 +250,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
 
             }
 
-            // 5. Clear active model from localStorage
+            // 3. Clear active model from localStorage
             const { storage_key } = await import( `../../utils/branding.js` )
             localStorage.removeItem( storage_key( `active_model_id` ) )
 
@@ -324,11 +289,8 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                     </NoModelHint>
                     :
                     cached_models.map( ( model ) => {
-                        const is_cloud = model.source === `openrouter` || model.source === `venice`
-                        const provider_label = model.source === `venice` ? `Venice` : model.source === `openrouter` ? `OpenRouter` : null
                         const fit_model = get_model_by_id( model.id ) || model
                         const too_large = !is_detecting
-                            && !is_cloud
                             && !can_fit_in_memory( fit_model, max_model_bytes )
                         return <ModelOption
                             key={ model.id }
@@ -343,12 +305,9 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                             <ModelInfo>
                                 <ModelLabel>
                                     { model.name }
-                                    { is_cloud && <CloudTag><Cloud size={ 10 } /> Cloud</CloudTag> }
                                 </ModelLabel>
                                 <ModelMeta>
-                                    { is_cloud
-                                        ? provider_label
-                                        : format_file_size( model.file_size_bytes ) }
+                                    { format_file_size( model.file_size_bytes ) }
                                     { too_large ? ` — ${ t( `does_not_fit` ) }` : `` }
                                 </ModelMeta>
                             </ModelInfo>

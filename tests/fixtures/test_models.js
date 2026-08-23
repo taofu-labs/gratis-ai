@@ -131,14 +131,6 @@ export const MODELS = {
         tier: `large`,
     },
 
-    // OpenRouter cloud model — free model for zero-cost E2E tests
-    openrouter_dolphin: {
-        id: `openrouter-dolphin-mistral-24b`,
-        name: `Dolphin Mistral 24B Venice`,
-        openrouter_id: `cognitivecomputations/dolphin-mistral-24b-venice-edition:free`,
-        tier: `cloud`,
-    },
-
 }
 
 // Default: SmolLM2 + TinyLlama covers two different template types in reasonable time (~15 min).

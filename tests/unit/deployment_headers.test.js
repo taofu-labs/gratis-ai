@@ -56,10 +56,11 @@ describe( `deployment headers`, () => {
         const headers_file = readFileSync( `public/_headers`, `utf8` )
 
         expect( deploy_workflow ).toContain( `workflow_dispatch:` )
-        expect( deploy_workflow ).toContain( `cancel-in-progress: false` )
+        expect( deploy_workflow ).toContain( `cancel-in-progress: true` )
         expect( deploy_workflow ).toContain( `wranglerVersion: "4.125.0"` )
         expect( deploy_workflow ).toContain( `verify_deployment_headers.js` )
-        expect( deploy_workflow ).toContain( `Compare version with previous revision` )
+        expect( deploy_workflow ).toContain( `src/**` )
+        expect( deploy_workflow ).toContain( `public/**` )
         expect( deploy_workflow ).toContain( `npm run test:pwa` )
         expect( deploy_workflow ).toContain( `PUBLIC_WEB_ORIGIN` )
 

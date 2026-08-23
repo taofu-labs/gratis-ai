@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye, Cloud, Plus } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
@@ -437,7 +437,7 @@ const Spinner = styled( LoaderCircle )`
     @keyframes spin { to { transform: rotate( 360deg ); } }
 `
 
-// ─── Section headers for local / cloud split ──────────────────────────────────
+// ─── Section headers ──────────────────────────────────────────────────────────
 
 const SectionHeader = styled.div`
     text-align: center;
@@ -460,99 +460,6 @@ const SectionSubtitle = styled.p`
     font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
 `
-
-// Subtle links for adding cloud providers when models already exist
-const AddProviderLinks = styled.div`
-    display: flex;
-    justify-content: center;
-    gap: ${ ( { theme } ) => theme.spacing.lg };
-    margin-top: ${ ( { theme } ) => theme.spacing.sm };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.md };
-`
-
-const AddProviderLink = styled.button`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    transition: color 0.15s;
-
-    &:hover { color: ${ ( { theme } ) => theme.colors.info }; }
-`
-
-const CloudSetupCard = styled.button`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: ${ ( { theme } ) => theme.spacing.lg };
-    border: 2px dashed ${ ( { theme } ) => theme.colors.border };
-    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
-    text-align: center;
-    transition: border-color 0.15s;
-    cursor: pointer;
-    background: transparent;
-
-    &:hover {
-        border-color: ${ ( { theme } ) => theme.colors.info };
-    }
-`
-
-const CloudSetupLabel = styled.h3`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-    font-size: 1rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.info };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
-`
-
-const CloudSetupSubtitle = styled.p`
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-`
-
-const CloudModelCard = styled.button`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: ${ ( { theme } ) => theme.spacing.lg };
-    border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.info : theme.colors.border };
-    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
-    text-align: center;
-    transition: border-color 0.15s;
-    cursor: pointer;
-    background: transparent;
-
-    &:hover {
-        border-color: ${ ( { theme } ) => theme.colors.text_muted };
-    }
-`
-
-const CloudModelName = styled.div`
-    font-weight: 500;
-    font-size: 0.9rem;
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
-`
-
-const CloudModelMeta = styled.div`
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-`
-
-const CloudTag = styled.span`
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.info };
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-left: 6px;
-`
-
 
 // ─── Benchmark display ────────────────────────────────────────────────────────
 
@@ -690,14 +597,6 @@ export default function ModelSelectPage() {
 
     }
 
-    /**
-     * Handle clicking on an already-configured cloud model — activate and go to chat.
-     */
-    const handle_cloud_model_click = ( cloud_model_id ) => {
-        localStorage.setItem( storage_key( `active_model_id` ), cloud_model_id )
-        navigate( `/chat` )
-    }
-
     const handle_select = ( model_id ) => {
         set_custom_model( null )
         set_custom_error( null )
@@ -753,9 +652,6 @@ export default function ModelSelectPage() {
     // Card row when we have at least 2 options to compare
     const card_count = [ smarter, faster, uncensored, vision ].filter( Boolean ).length
     const show_card_row = card_count >= 2
-
-    // Cloud models already configured by the user (from both providers)
-    const cloud_models = cached_models.filter( m => m.source === `openrouter` || m.source === `venice` )
 
     return <Container>
 
@@ -1015,73 +911,6 @@ export default function ModelSelectPage() {
             <AlertTriangle size={ 14 } />
             { t( 'model_does_not_fit' ) }
         </MemoryWarning> }
-
-        { /* ── Cloud Models section ── */ }
-        <SectionHeader>
-            <SectionTitle>{ t( 'cloud_models_section' ) }</SectionTitle>
-            <SectionSubtitle>{ t( 'cloud_models_subtitle' ) }</SectionSubtitle>
-        </SectionHeader>
-
-        { /* No existing cloud models → show setup cards */ }
-        { cloud_models.length === 0 && <CardRow>
-
-            <CloudSetupCard
-                data-testid="openrouter-setup-card"
-                onClick={ () => navigate( `/cloud-setup?provider=openrouter` ) }
-            >
-                <CloudSetupLabel>
-                    <Plus size={ 16 } />
-                    { t( 'openrouter_setup_card' ) }
-                </CloudSetupLabel>
-                <CloudSetupSubtitle>{ t( 'openrouter_setup_subtitle' ) }</CloudSetupSubtitle>
-            </CloudSetupCard>
-
-            <CloudSetupCard
-                data-testid="venice-setup-card"
-                onClick={ () => navigate( `/cloud-setup?provider=venice` ) }
-            >
-                <CloudSetupLabel>
-                    <Plus size={ 16 } />
-                    { t( 'venice_setup_card' ) }
-                </CloudSetupLabel>
-                <CloudSetupSubtitle>{ t( 'venice_setup_subtitle' ) }</CloudSetupSubtitle>
-            </CloudSetupCard>
-
-        </CardRow> }
-
-        { /* Existing cloud models → show model cards + subtle add links */ }
-        { cloud_models.length > 0 && <>
-
-            <CardRow>
-                { cloud_models.map( ( model ) => {
-
-                    const provider_label = model.source === `venice` ? `Venice` : `OpenRouter`
-
-                    return <CloudModelCard
-                        key={ model.id }
-                        data-testid={ `cloud-model-${ model.id }` }
-                        onClick={ () => handle_cloud_model_click( model.id ) }
-                    >
-                        <CloudModelName>
-                            { model.name }
-                            <CloudTag><Cloud size={ 10 } /> { provider_label }</CloudTag>
-                        </CloudModelName>
-                        <CloudModelMeta>{ t( 'common:ready' ) || `ready to chat` }</CloudModelMeta>
-                    </CloudModelCard>
-
-                } ) }
-            </CardRow>
-
-            <AddProviderLinks>
-                <AddProviderLink onClick={ () => navigate( `/cloud-setup?provider=openrouter` ) }>
-                    <Plus size={ 12 } /> { t( 'add_openrouter_model' ) }
-                </AddProviderLink>
-                <AddProviderLink onClick={ () => navigate( `/cloud-setup?provider=venice` ) }>
-                    <Plus size={ 12 } /> { t( 'add_venice_model' ) }
-                </AddProviderLink>
-            </AddProviderLinks>
-
-        </> }
 
         { /* ── Download action + step progress (below all model sections) ── */ }
         <DownloadButton

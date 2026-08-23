@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { log } from 'mentie'
-import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, Cloud, HardDrive } from 'lucide-react'
+import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, HardDrive } from 'lucide-react'
 import ChatInput from '../molecules/ChatInput'
 import VoiceModelDialog from '../molecules/VoiceModelDialog'
 import LanguageSelector from '../molecules/LanguageSelector'
@@ -94,7 +94,7 @@ const ModelTag = styled.span`
     gap: 3px;
     font-size: 0.65rem;
     font-weight: 600;
-    color: ${ ( { $cloud, theme } ) => $cloud ? theme.colors.info : theme.colors.text_muted };
+    color: ${ ( { theme } ) => theme.colors.text_muted };
     text-transform: uppercase;
     letter-spacing: 0.03em;
 `
@@ -202,7 +202,6 @@ export default function HomePage() {
     const active_id = localStorage.getItem( storage_key( `active_model_id` ) )
     const active_model = cached_models.find( ( m ) => m.id === active_id )
     const model_name = active_model?.name || active_id || `Unknown`
-    const is_cloud = active_model?.source === 'openrouter'
 
     // ── Preload model on mount ──────────────────────────────────────
 
@@ -390,8 +389,8 @@ export default function HomePage() {
                 { is_loading && <>
                     <LoadingDot />
                     <span>{ t( 'loading_model', { name: model_name } ) }</span>
-                    <ModelTag $cloud={ is_cloud }>
-                        { is_cloud ? <><Cloud size={ 10 } /> { t( 'cloud' ) }</> : <><HardDrive size={ 10 } /> { t( 'local' ) }</> }
+                    <ModelTag>
+                        <HardDrive size={ 10 } /> { t( 'local' ) }
                     </ModelTag>
                     <SwitchIcon
                         onClick={ handle_switch_model }
@@ -404,8 +403,8 @@ export default function HomePage() {
 
                 { !is_loading && loaded_model_id && <>
                     <span>{ t( 'model_ready', { name: model_name } ) }</span>
-                    <ModelTag $cloud={ is_cloud }>
-                        { is_cloud ? <><Cloud size={ 10 } /> { t( 'cloud' ) }</> : <><HardDrive size={ 10 } /> { t( 'local' ) }</> }
+                    <ModelTag>
+                        <HardDrive size={ 10 } /> { t( 'local' ) }
                     </ModelTag>
                     <SwitchIcon
                         onClick={ handle_switch_model }

@@ -4,7 +4,7 @@
     "description": "Privacy-first, offline-capable local LLM chat application",
     "repository": {
         "type": "git",
-        "url": "https://github.com/actuallymentor/gratis-ai.git"
+        "url": "https://github.com/taofu-labs/gratis-ai.git"
     },
     "main": "out/main/main.js",
     "type": "module",
