@@ -4,7 +4,7 @@ test.describe( `Welcome Page`, () => {
 
     test( `loads and displays app name`, async ( { page } ) => {
         await page.goto( `/` )
-        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: `Gratis` } ) ).toBeVisible()
     } )
 
     test( `shows Get Started button`, async ( { page } ) => {
@@ -56,7 +56,7 @@ test.describe( `Welcome Page`, () => {
 
         // Welcome page
         await page.goto( `/` )
-        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: `Gratis` } ) ).toBeVisible()
 
         // Model select page
         await page.goto( `/select-model` )

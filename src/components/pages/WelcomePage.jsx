@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import styled, { keyframes } from 'styled-components'
+import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Shield, WifiOff, ChevronDown, ChevronUp } from 'lucide-react'
@@ -149,26 +149,6 @@ const DetailsPanel = styled.div`
     }
 `
 
-// Pulsing dot for "detecting" state
-const pulse = keyframes`
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-`
-
-const DetectingDot = styled.span`
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme } ) => theme.colors.accent };
-    animation: ${ pulse } 1.5s ease-in-out infinite;
-    margin-right: ${ ( { theme } ) => theme.spacing.xs };
-
-    @media ( prefers-reduced-motion: reduce ) {
-        animation: none;
-    }
-`
-
 /**
  * Landing page with app intro and device detection.
  * Designed to be warm and approachable — technical specs hidden behind "details".
@@ -178,11 +158,11 @@ export default function WelcomePage() {
 
     const { t } = useTranslation( 'pages' )
     const navigate = useNavigate()
-    const { capabilities, is_detecting } = use_device_capabilities()
+    const { capabilities } = use_device_capabilities()
     const [ show_details, set_show_details ] = useState( false )
 
     const handle_start = () => {
-        if( !is_detecting ) navigate( `/select-model`, { state: { capabilities } } )
+        navigate( `/select-model`, { state: { capabilities } } )
     }
 
     return <PageWrapper>
@@ -213,11 +193,8 @@ export default function WelcomePage() {
             <StartButton
                 data-testid="get-started-btn"
                 onClick={ handle_start }
-                disabled={ is_detecting }
             >
-                { is_detecting
-                    ? <><DetectingDot /> { t( 'checking_device' ) }</>
-                    : <>{ t( 'get_started' ) } <ArrowRight size={ 18 } /></> }
+                { t( 'get_started' ) } <ArrowRight size={ 18 } />
             </StartButton>
 
             { /* Step progress indicator */ }
