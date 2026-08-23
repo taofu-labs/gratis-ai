@@ -2,11 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { log } from 'mentie'
-import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, HardDrive, Settings } from 'lucide-react'
+import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, HardDrive } from 'lucide-react'
 import ChatInput from '../molecules/ChatInput'
 import VoiceModelDialog from '../molecules/VoiceModelDialog'
 import LanguageSelector from '../molecules/LanguageSelector'
-import SettingsModal from '../molecules/SettingsModal'
 import Sidebar from '../molecules/Sidebar'
 import use_llm from '../../hooks/use_llm'
 import use_model_manager from '../../hooks/use_model_manager'
@@ -15,8 +14,7 @@ import use_chat_history from '../../hooks/use_chat_history'
 import { useTranslation } from 'react-i18next'
 import { export_conversation } from '../../utils/export'
 import { DISPLAY_NAME, storage_key } from '../../utils/branding'
-import BrandMark from '../atoms/BrandMark'
-import ConvergenceCanvas from '../atoms/ConvergenceCanvas'
+import { is_model_fit_error } from '../../utils/model_fit_error'
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -25,22 +23,9 @@ const PageWrapper = styled.div`
     flex: 1;
     position: relative;
     overflow: hidden;
-    background: ${ ( { theme } ) => theme.colors.background };
-    isolation: isolate;
-
-    &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        background: radial-gradient( ellipse 54% 50% at 50% 44%, transparent 16%, ${ ( { theme } ) => theme.colors.background } 78% );
-        pointer-events: none;
-    }
 `
 
 const Container = styled.div`
-    position: relative;
-    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -74,29 +59,14 @@ const TopRight = styled.div`
     top: ${ ( { theme } ) => theme.spacing.md };
     right: ${ ( { theme } ) => theme.spacing.md };
     z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-`
-
-const IconButton = styled.button`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    transition: color 0.15s;
-
-    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
 const Title = styled.h1`
-    font-size: clamp( 2.75rem, 6vw, 4.75rem );
+    font-size: clamp( 2.5rem, 2rem + 3vw, 4rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    margin: ${ ( { theme } ) => theme.spacing.md } 0 ${ ( { theme } ) => theme.spacing.md };
-    line-height: 1;
+    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
+    margin-bottom: 2rem;
+    letter-spacing: -0.02em;
 `
 
 const Tagline = styled.p`
@@ -104,14 +74,6 @@ const Tagline = styled.p`
     color: ${ ( { theme } ) => theme.colors.text_secondary };
     margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
-`
-
-const SignalRule = styled.span`
-    width: 6.5rem;
-    height: 3px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme } ) => theme.colors.accent };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
 `
 
 // ── Model status ────────────────────────────────────────────────────
@@ -132,7 +94,7 @@ const ModelTag = styled.span`
     gap: 3px;
     font-size: 0.65rem;
     font-weight: 600;
-    color: ${ ( { $cloud, theme } ) => $cloud ? theme.colors.info : theme.colors.text_muted };
+    color: ${ ( { theme } ) => theme.colors.text_muted };
     text-transform: uppercase;
     letter-spacing: 0.03em;
 `
@@ -204,7 +166,7 @@ const ErrorAction = styled.button`
  * Google-style search home for returning users.
  * Preloads the active model on mount so chat is instant.
  */
-export default function HomePage( { theme_preference, on_theme_toggle } ) {
+export default function HomePage() {
 
     const { t } = useTranslation( 'pages' )
     const navigate = useNavigate()
@@ -215,7 +177,6 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
 
     const [ load_error, set_load_error ] = useState( null )
     const [ sidebar_collapsed, set_sidebar_collapsed ] = useState( true )
-    const [ settings_open, set_settings_open ] = useState( false )
 
     // Voice input hook
     const {
@@ -255,7 +216,7 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
         load_model( active_id ).catch( ( err ) => {
             if( cancelled ) return
             log.error( `[HomePage] Preload failed:`, err.message )
-            set_load_error( err.message )
+            set_load_error( { message: err.message, code: err.code } )
         } )
 
         return () => {
@@ -284,7 +245,7 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
         set_load_error( null )
         load_model( active_id ).catch( ( err ) => {
             log.error( `[HomePage] Retry failed:`, err.message )
-            set_load_error( err.message )
+            set_load_error( { message: err.message, code: err.code } )
         } )
 
     }, [ active_id, load_model ] )
@@ -344,8 +305,8 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
     }, [] )
 
     const handle_new_chat = useCallback( () => {
-        navigate( active_id ? `/chat` : `/select-model` )
-    }, [ active_id, navigate ] )
+        navigate( `/chat` )
+    }, [ navigate ] )
 
     const handle_export = useCallback( async ( conversation ) => {
         const msgs = await load_messages( conversation.id )
@@ -364,8 +325,6 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
 
     return <PageWrapper>
 
-        <ConvergenceCanvas centerX={ 0.5 } count={ 44 } ambient={ 0.0009 } />
-
         <Sidebar
             collapsed={ sidebar_collapsed }
             on_toggle={ handle_sidebar_toggle }
@@ -374,19 +333,11 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
             on_export={ handle_export }
             on_delete={ handle_delete }
             on_delete_all={ handle_delete_all }
-            active_model_id={ active_id }
         />
 
         { /* Language selector — top right corner */ }
         <TopRight>
             <LanguageSelector />
-            <IconButton
-                data-testid="settings-btn"
-                onClick={ () => set_settings_open( true ) }
-                aria-label={ t( `common:aria_open_settings` ) }
-            >
-                <Settings size={ 18 } />
-            </IconButton>
         </TopRight>
 
         { /* Toggle button — only visible when sidebar is closed */ }
@@ -400,9 +351,7 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
 
         <Container>
 
-            <BrandMark size="2.75rem" />
             <Title>{ DISPLAY_NAME }</Title>
-            <SignalRule />
             <Tagline>
                 { t( 'tagline' ) }
             </Tagline>
@@ -471,23 +420,18 @@ export default function HomePage( { theme_preference, on_theme_toggle } ) {
             { /* Error banner — only after loading settles, never mid-load */ }
             { !is_loading && load_error && <ErrorBanner data-testid="home-load-error">
                 <AlertCircle size={ 14 } />
-                <span>{ t( 'failed_to_load' ) }</span>
-                <ErrorAction onClick={ handle_retry } data-testid="home-retry-btn">
+                <span>{ is_model_fit_error( load_error )
+                    ? t( `models:model_does_not_fit` )
+                    : load_error.message || t( 'failed_to_load' ) }</span>
+                { !is_model_fit_error( load_error ) && <ErrorAction onClick={ handle_retry } data-testid="home-retry-btn">
                     <RotateCcw size={ 12 } /> { t( 'common:retry' ) }
-                </ErrorAction>
+                </ErrorAction> }
                 <ErrorAction onClick={ () => navigate( `/select-model` ) } data-testid="home-choose-another-btn">
                     { t( 'choose_another' ) }
                 </ErrorAction>
             </ErrorBanner> }
 
         </Container>
-
-        <SettingsModal
-            is_open={ settings_open }
-            on_close={ () => set_settings_open( false ) }
-            theme_preference={ theme_preference }
-            on_theme_change={ on_theme_toggle }
-        />
 
     </PageWrapper>
 

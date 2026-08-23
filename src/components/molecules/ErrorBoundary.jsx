@@ -103,25 +103,25 @@ export default class ErrorBoundary extends Component {
         const error_message = this.state.error?.message || `An unexpected error occurred`
         const error_stack = this.state.error?.stack || ``
 
-        return <Translation ns="pages">
-            { ( t ) => <Container>
-                <IconWrapper><AlertTriangle size={ 40 } /></IconWrapper>
-                <Title>{ t( `error_title` ) }</Title>
-                <Description>
-                    { t( `error_description` ) }
-                </Description>
+        const render_error = ( t ) => <Container>
+            <IconWrapper><AlertTriangle size={ 40 } /></IconWrapper>
+            <Title>{ t( `error_title` ) }</Title>
+            <Description>
+                { t( `error_description` ) }
+            </Description>
 
-                <Details>
-                    <summary>{ t( `error_details` ) }</summary>
-                    <ErrorMessage>{ error_message }{ `\n\n` }{ error_stack }</ErrorMessage>
-                </Details>
+            <Details>
+                <summary>{ t( `error_details` ) }</summary>
+                <ErrorMessage>{ error_message }{ `\n\n` }{ error_stack }</ErrorMessage>
+            </Details>
 
-                <ReloadButton onClick={ this.handle_reload }>
-                    <RotateCcw size={ 16 } />
-                    { t( `reload_the_app` ) }
-                </ReloadButton>
-            </Container> }
-        </Translation>
+            <ReloadButton onClick={ this.handle_reload }>
+                <RotateCcw size={ 16 } />
+                { t( `reload_the_app` ) }
+            </ReloadButton>
+        </Container>
+
+        return <Translation ns="pages">{ render_error }</Translation>
 
     }
 

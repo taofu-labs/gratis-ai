@@ -58,7 +58,10 @@
     "format_just_now": "Proprio ora",
     "format_minutes_ago": "{{count}}m fa",
     "format_hours_ago": "{{count}}h fa",
-    "format_eta_seconds": "Circa {{count}} secondi rimanenti",
-    "format_eta_minutes": "Circa {{count}} minuto rimanente",
-    "format_eta_minutes_plural": "Circa {{count}} minuti rimanenti"
+    "duration_seconds": "~{{count}} secondi",
+    "duration_minutes": "~{{count}} min",
+    "duration_minutes_seconds": "~{{minutes}} min {{seconds}} s",
+    "duration_hours": "~{{count}} h",
+    "duration_hours_minutes": "~{{hours}} h {{minutes}} min",
+    "eta_remaining": "{{duration}} rimanenti"
 }

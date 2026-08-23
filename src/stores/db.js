@@ -3,15 +3,33 @@ import { log } from 'mentie'
 import { DB_NAME } from '../utils/branding'
 
 const DB_VERSION = 1
-const LEGACY_DB_NAMES = [ `gratisai-db` ]
+const LEGACY_MODEL_CACHE = `hf-model-cache`
+let legacy_cache_cleanup = null
+
+const clear_legacy_model_cache = async () => {
+
+    if( !( `caches` in globalThis ) ) return
+
+    const removed = await caches.delete( LEGACY_MODEL_CACHE )
+    if( removed ) log.info( `[db] Removed legacy duplicate model cache` )
+
+}
 
 /**
- * Opens (or creates) the Gratis IndexedDB database
+ * Opens (or creates) the gratisAI IndexedDB database
  * @returns {Promise<import('idb').IDBPDatabase>}
  */
 export const get_db = async () => {
 
     log.debug( `[db] Opening "${ DB_NAME }" v${ DB_VERSION }` )
+
+    // Versions before OPFS also cached every Hugging Face response through
+    // Workbox. Removing the obsolete route does not delete those multi-GB
+    // duplicates, so clean the named cache once per app session.
+    legacy_cache_cleanup ||= clear_legacy_model_cache().catch( error => {
+        log.warn( `[db] Could not remove legacy model cache:`, error )
+    } )
+    await legacy_cache_cleanup
 
     return openDB( DB_NAME, DB_VERSION, {
 
@@ -31,7 +49,8 @@ export const get_db = async () => {
                 msg_store.createIndex( `conversation_id`, `conversation_id` )
             }
 
-            // Models store (cached GGUF blobs + metadata)
+            // Model metadata. Legacy entries may contain GGUF blobs; new browser
+            // downloads keep weights in wllama64's streaming OPFS cache.
             if( !db.objectStoreNames.contains( `models` ) ) {
                 const model_store = db.createObjectStore( `models`, { keyPath: `id` } )
                 model_store.createIndex( `last_used_at`, `last_used_at` )
@@ -59,46 +78,5 @@ export const clear_all_data = async () => {
         tx.objectStore( `models` ).clear(),
         tx.done,
     ] )
-
-}
-
-const delete_database = ( name ) => new Promise( ( resolve ) => {
-
-    if( typeof indexedDB === `undefined` ) {
-        resolve()
-        return
-    }
-
-    const request = indexedDB.deleteDatabase( name )
-    request.onsuccess = () => resolve()
-    request.onerror = () => resolve()
-    request.onblocked = () => resolve()
-
-} )
-
-/**
- * Clear legacy IndexedDB databases from previous branding.
- * @returns {Promise<void>}
- */
-export const clear_legacy_data = async () => {
-
-    await Promise.all(
-        LEGACY_DB_NAMES
-            .filter( name => name !== DB_NAME )
-            .map( delete_database ),
-    )
-
-}
-
-/**
- * Clear Cache Storage entries owned by this origin.
- * @returns {Promise<void>}
- */
-export const clear_browser_caches = async () => {
-
-    if( typeof caches === `undefined` ) return
-
-    const keys = await caches.keys()
-    await Promise.all( keys.map( key => caches.delete( key ) ) )
 
 }

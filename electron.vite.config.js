@@ -40,11 +40,6 @@ export default defineConfig( {
                 input: path.resolve( `index.html` ),
             },
         },
-        resolve: {
-            alias: {
-                '@wllama/wllama': path.resolve( `node_modules/@wllama/wllama/esm/index.js` ),
-            },
-        },
         server: {
             port: 5173,
             headers: {

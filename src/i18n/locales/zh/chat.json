@@ -1,24 +1,35 @@
 {
     "placeholder": "输入消息...",
     "placeholder_ask": "随便问点什么...",
+
     "thinking": "思考中...",
     "show_thinking": "显示思考过程",
     "hide_thinking": "隐藏思考过程",
     "show_all_thinking": "显示所有思考过程",
     "collapse": "收起",
+
     "what_can_i_help_with": "有什么我可以帮你的？",
     "privacy_local": "你正在使用本地模型。没有人能看到你的操作。",
+    "privacy_openrouter": "你正在使用 OpenRouter 云端模型。OpenRouter 可以看到你的操作。",
+    "privacy_venice": "你正在使用 Venice 云端模型。没有人能看到你的操作。",
     "loading_your_model": "正在加载模型...",
+
     "lets_get_you_set_up": "让我们开始设置",
     "no_model_description": "开始聊天前需要下载一个 AI 模型，只需一分钟即可完成。",
     "set_up_a_model": "设置模型",
+
     "waking_up": "正在唤醒 AI",
     "waking_up_hint": "云端 AI 可能需要 1–5 分钟启动，闲置 5 分钟后也会进入休眠。",
     "slow_device_warning": "你的设备似乎比较慢。建议下载桌面应用以获得更好的性能。",
     "get_the_desktop_app": "获取桌面应用",
+
     "recording": "录音中",
     "transcribing": "正在转录",
     "loading_voice_model": "正在加载语音模型",
+
+    "offline_cloud_message": "你已离线 — 云端模型需要网络连接",
+    "offline_switch_model": "切换模型",
+
     "image_requires_vision": "图片输入需要视觉模型支持（即将推出）",
     "unsupported_file_type": "不支持此文件类型",
     "file_too_large": "文件过大（最大 100 KB）"

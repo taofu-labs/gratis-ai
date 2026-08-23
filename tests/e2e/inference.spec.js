@@ -7,13 +7,34 @@ import { wait_for_inference } from '../helpers/wait_for_inference'
 test.describe( `E2E Inference`, () => {
 
     // Long timeout for model download (~260MB) + inference
-    test.setTimeout( 300_000 )
+    test.setTimeout( 600_000 )
 
     test( `full flow: onboarding → download → chat → inference`, async ( { page } ) => {
 
+        const runtime_logs = []
+        page.on( `console`, message => {
+            const text = message.text()
+            if( text.includes( `[wllama] Loaded` ) ) runtime_logs.push( text )
+        } )
+
         // Step 1 — Welcome page
         await page.goto( `/` )
-        await expect( page.getByRole( `heading`, { name: `Gratis` } ) ).toBeVisible()
+
+        // This project runs current Chromium, so it must exercise wllama64's
+        // Memory64 runtime rather than silently dropping to wasm32 compatibility.
+        const memory64 = await page.evaluate( () => {
+            try {
+                const memory = new WebAssembly.Memory( { address: `i64`, initial: 1n, maximum: 1n, shared: true } )
+                return globalThis.crossOriginIsolated === true
+                    && !!WebAssembly.Suspending
+                    && memory.grow( 0n ) === 1n
+            } catch {
+                return false
+            }
+        } )
+        expect( memory64 ).toBe( true )
+
+        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
 
         // Wait for device detection to finish so button is enabled
         await expect( page.getByTestId( `get-started-btn` ) ).toBeEnabled( { timeout: 15_000 } )
@@ -38,7 +59,13 @@ test.describe( `E2E Inference`, () => {
         await expect( page.getByText( `What can I help with?` ) ).toBeVisible()
 
         // Wait for the chat input to be enabled (model loaded)
-        await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 60_000 } )
+        await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 180_000 } )
+
+        // SmolLM2 advertises 8K and fits the test host's budget. Prove the
+        // runtime received a grown context, not merely that the helper chose it.
+        const load_log = runtime_logs.find( message => message.includes( MODELS.smollm2.id ) )
+        const loaded_context = Number( load_log?.match( /,\s+(\d+)\s+ctx\)/ )?.[ 1 ] )
+        expect( loaded_context ).toBeGreaterThan( 2048 )
 
         // Step 5 — Send a test message
         await page.getByTestId( `chat-input` ).fill( `What is 2+2? Answer with just the number.` )
@@ -47,8 +74,12 @@ test.describe( `E2E Inference`, () => {
         // Step 6 — Wait for assistant response with content
         await wait_for_inference( page, 1, 120_000 )
 
-        // Step 7 — Verify generation stats are shown
+        // Completion stats appear only after streaming has finished.
         await expect( page.getByTestId( `generation-stats` ) ).toBeVisible( { timeout: 120_000 } )
+
+        const response = await page.getByTestId( `assistant-message` ).last().textContent()
+        expect( response ).toMatch( /\b4\b/ )
+        expect( response ).not.toContain( `empty response` )
 
     } )
 

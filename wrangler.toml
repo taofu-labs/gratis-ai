@@ -1,5 +1,5 @@
 # Cloudflare Workers Static Assets — serves the built web app.
-# Deployed by the "Deploy Web" GitHub Action on version bumps.
+# Deployed by the "Deploy Web" GitHub Action when web files change.
 #
 # The project name here must match the application name in the
 # Cloudflare dashboard (Workers & Pages → Applications).

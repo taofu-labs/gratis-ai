@@ -5,9 +5,10 @@
     "add_model": "Dodaj model",
     "manage_models": "Zarządzaj modelami",
     "purge_models": "Usuń wszystkie modele",
-    "purge_confirm": "Usunąć wszystkie modele lokalne? Tej czynności nie można cofnąć.",
+    "purge_confirm": "Usunąć wszystkie lokalne modele i wszystkie konfiguracje modeli chmurowych? Tej operacji nie można cofnąć.",
     "purge_success": "Wszystkie modele usunięte",
     "purge_error": "Usuwanie nie powiodło się: {{error}}",
+
     "pick_a_model": "Wybierz model",
     "subtitle_two_cards": "Wybraliśmy dwie opcje dopasowane do Twojego urządzenia. Wybierz równowagę, która Ci odpowiada.",
     "subtitle_three_cards": "Wybraliśmy trzy opcje dopasowane do Twojego urządzenia. Wybierz równowagę, która Ci odpowiada.",
@@ -32,13 +33,35 @@
     "may_be_too_large_browser": "Może być za duży dla tej przeglądarki",
     "large_model_warning": "Duże modele mogą się nie załadować w przeglądarce. Rozważ mniejszą kwantyzację lub aplikację desktopową.",
     "low_memory_warning": "Tylko {{free}} wolnej pamięci — ten model potrzebuje około {{needed}}. Spróbuj zamknąć inne aplikacje lub wybrać mniejszy model, aby uniknąć spowolnień i ewentualnych awarii.",
+
     "local_models_section": "Modele lokalne",
     "local_models_subtitle": "Działa na Twoim urządzeniu",
     "cloud_models_section": "Modele w chmurze",
     "cloud_models_subtitle": "Modele w chmurze są wydajniejsze, ale nie działają na Twoim urządzeniu. Wymagają klucza API od dostawcy chmury.",
+    "openrouter_setup_card": "OpenRouter",
+    "openrouter_setup_subtitle": "Setki darmowych i płatnych modeli",
+    "venice_setup_card": "Venice",
+    "venice_setup_subtitle": "Modele bez cenzury — brak ograniczeń treści",
+    "add_openrouter_model": "Dodaj model OpenRouter",
+    "add_venice_model": "Dodaj model Venice",
+
+    "nerd_option": "Cloud GPU",
+    "nerd_option_subtitle": "OpenRouter — darmowe i płatne modele",
+    "nerd_continue": "Kontynuuj",
+
     "downloading_your_model": "Pobieranie modelu",
     "one_time_download": "{{name}} — to jednorazowe pobieranie. Potem wszystko działa offline.",
     "ready_to_chat": "Gotowy do rozmowy!",
     "cancel_download": "Anuluj pobieranie",
-    "preparing": "Przygotowanie…"
+    "preparing": "Przygotowanie…",
+    "measuring_download_speed": "Pomiar szybkości pobierania…",
+    "download_range_under_minute": "mniej niż minuta",
+    "download_range_1_3_minutes": "1–3 minuty",
+    "download_range_3_8_minutes": "3–8 minut",
+    "download_range_10_20_minutes": "10–20 minut",
+    "download_range_20_40_minutes": "20–40 minut",
+    "download_range_40_plus_minutes": "ponad 40 minut",
+    "does_not_fit": "nie mieści się",
+    "model_does_not_fit": "Ten model nie mieści się w pamięci dostępnej dla przeglądarki.",
+    "no_local_model_fits": "Żaden model lokalny nie mieści się bezpiecznie w dostępnej pamięci. Zamknij inne aplikacje lub użyj modelu w chmurze."
 }

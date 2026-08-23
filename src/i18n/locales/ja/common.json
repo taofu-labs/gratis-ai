@@ -58,7 +58,10 @@
     "format_just_now": "たった今",
     "format_minutes_ago": "{{count}}分前",
     "format_hours_ago": "{{count}}時間前",
-    "format_eta_seconds": "残り約{{count}}秒",
-    "format_eta_minutes": "残り約{{count}}分",
-    "format_eta_minutes_plural": "残り約{{count}}分"
+    "duration_seconds": "約{{count}}秒",
+    "duration_minutes": "約{{count}}分",
+    "duration_minutes_seconds": "約{{minutes}}分{{seconds}}秒",
+    "duration_hours": "約{{count}}時間",
+    "duration_hours_minutes": "約{{hours}}時間{{minutes}}分",
+    "eta_remaining": "残り{{duration}}"
 }

@@ -48,10 +48,12 @@ export default function DeviceInfo( { capabilities } ) {
             { t( `device_gpu` ) }: <Value>{ gpu.renderer }</Value>
         </InfoCard>
 
-        { /* VRAM */ }
+        { /* Empirical lower bound once probing completes; reported hint before it does. */ }
         { gpu.estimated_vram > 0 && <InfoCard>
             <HardDrive size={ 14 } />
-            { t( `device_vram` ) }: <Value>~{ gpu.estimated_vram } GB</Value>
+            { t( `device_vram` ) }: <Value>
+                { gpu.memory_source === `measured` ? `≥` : `~` }{ gpu.estimated_vram } GiB
+            </Value>
         </InfoCard> }
 
         { /* RAM */ }

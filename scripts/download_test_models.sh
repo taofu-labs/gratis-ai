@@ -24,8 +24,8 @@ MODELS[tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf]="https://huggingface.co/TheBloke/Ti
 MODELS[Llama-3.2-1B-Instruct-Q4_K_M.gguf]="https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf"
 MODELS[DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf]="https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf"
 
-# 7B (heavy)
-MODELS[mistral-7b-instruct-v0.2.Q5_K_M.gguf]="https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q5_K_M.gguf"
+# Current browser-runtime research model
+MODELS[Qwen3.5-2B-Q4_K_M.gguf]="https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/main/Qwen3.5-2B-Q4_K_M.gguf"
 
 
 # ── Tier definitions ─────────────────────────────────────────────────────────
@@ -51,11 +51,11 @@ case "$TIER" in
         ;;
     --medium)
         DOWNLOAD_LIST=("${MEDIUM_MODELS[@]}")
-        echo "==> Downloading medium tier models (no Mistral)"
+        echo "==> Downloading medium tier architecture fixtures"
         ;;
     --all)
         DOWNLOAD_LIST=("${!MODELS[@]}")
-        echo "==> Downloading all test models (including Mistral 7B)"
+        echo "==> Downloading all test models (including Qwen 3.5 2B)"
         ;;
     *)
         echo "Usage: $0 [--fast | --medium | --all]"

@@ -40,12 +40,40 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await page.goto( `/select-model` )
         const toggle = page.getByTestId( `change-model-toggle` )
         await expect( toggle ).toBeVisible()
-        await expect( toggle ).toContainText( `Choose a different model` )
+        await expect( toggle ).toContainText( `Choose a different local model` )
+    } )
+
+    test( `large browser alternatives obey the current device memory budget`, async ( { page } ) => {
+        await page.goto( `/select-model` )
+        const toggle = page.getByTestId( `change-model-toggle` )
+        if( await toggle.isVisible() ) await toggle.click()
+
+        await expect( page.getByTestId( `model-option-qwen35-9b-vision-q4km` ) ).toHaveCount( 0 )
+        await expect( page.getByTestId( `model-option-qwen3-14b-q4km` ) ).toHaveCount( 0 )
     } )
 
     test( `model select shows step progress`, async ( { page } ) => {
         await page.goto( `/select-model` )
         await expect( page.getByTestId( `step-indicator` ) ).toBeVisible()
+    } )
+
+    test( `download estimate samples the real GGUF path with one range`, async ( { page } ) => {
+        await page.route( `https://huggingface.co/**`, route => route.fulfill( {
+            status: 206,
+            headers: {
+                'Access-Control-Allow-Origin': `*`,
+                'Content-Type': `application/octet-stream`,
+            },
+            body: Buffer.alloc( 8 * 1024 ** 2 ),
+        } ) )
+
+        const request = page.waitForRequest( request =>
+            request.url().includes( `/resolve/main/` ) && !!request.headers().range )
+
+        await page.goto( `/select-model` )
+        expect( ( await request ).headers().range ).toMatch( /^bytes=0-\d+$/ )
+        await expect( page.getByText( `Measuring download speed…` ) ).toHaveCount( 0, { timeout: 10_000 } )
+        await expect( page.getByText( /Initial download takes/ ).first() ).toBeVisible()
     } )
 
     // ── Chat Page ─────────────────────────────────────────────────────
@@ -116,7 +144,7 @@ test.describe( `UX Improvements - Mobile & Touch`, () => {
 
     test( `welcome page is usable on mobile`, async ( { page } ) => {
         await page.goto( `/` )
-        await expect( page.getByRole( `heading`, { name: `Gratis` } ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
         await expect( page.getByTestId( `get-started-btn` ) ).toBeVisible()
     } )
 

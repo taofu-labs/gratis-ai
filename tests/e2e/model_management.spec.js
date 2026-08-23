@@ -4,18 +4,18 @@ test.describe( `Model Management`, () => {
 
     test( `model selector shows no model state`, async ( { page } ) => {
         await page.goto( `/chat` )
-        await expect( page.getByTestId( `model-selector-dropdown` ) ).toContainText( `No model` )
+        await expect( page.getByTestId( `model-selector-dropdown` ).filter( { visible: true } ) ).toContainText( `No model` )
     } )
 
     test( `model selector dropdown opens on click`, async ( { page } ) => {
         await page.goto( `/chat` )
-        await page.getByTestId( `model-selector-dropdown` ).click()
+        await page.getByTestId( `model-selector-dropdown` ).filter( { visible: true } ).click()
         await expect( page.getByText( `Add Model` ) ).toBeVisible()
     } )
 
     test( `add model navigates to model select page`, async ( { page } ) => {
         await page.goto( `/chat` )
-        await page.getByTestId( `model-selector-dropdown` ).click()
+        await page.getByTestId( `model-selector-dropdown` ).filter( { visible: true } ).click()
         await page.getByText( `Add Model` ).click()
         await expect( page ).toHaveURL( /select-model/ )
     } )

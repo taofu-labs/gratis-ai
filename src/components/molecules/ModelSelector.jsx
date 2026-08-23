@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { log } from 'mentie'
-import { format_file_size, can_fit_in_memory } from '../../utils/model_catalog'
+import { format_file_size, can_fit_in_memory, get_model_by_id } from '../../utils/model_catalog'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_llm_store from '../../stores/llm_store'
+import { clear_browser_model_cache } from '../../utils/model_download'
 
 const Container = styled.div`
     position: relative;
@@ -65,6 +66,11 @@ const ModelOption = styled.button`
     &:hover {
         background: ${ ( { theme } ) => theme.colors.surface_hover };
     }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
 `
 
 const ModelInfo = styled.div`
@@ -119,10 +125,9 @@ const NoModelHint = styled.div`
  * @param {Function} props.on_switch - Handler for switching models
  * @param {Function} props.on_open_settings - Handler for opening models settings
  * @param {Function} [props.on_after_select] - Optional callback fired after a model is selected (e.g. to close sidebar)
- * @param {string} [props.test_id] - Test id for the trigger button
  * @returns {JSX.Element}
  */
-export default function ModelSelector( { cached_models = [], active_model_id, is_switching, on_switch, on_open_settings, on_after_select, on_models_purged, test_id = `model-selector-dropdown` } ) {
+export default function ModelSelector( { cached_models = [], active_model_id, is_switching, on_switch, on_open_settings, on_after_select, on_models_purged } ) {
 
     const [ is_open, set_is_open ] = useState( false )
     const [ dropdown_max_height, set_dropdown_max_height ] = useState( undefined )
@@ -132,7 +137,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
     const navigate = useNavigate()
     const theme = useTheme()
     const { t } = useTranslation( `models` )
-    const { max_model_bytes } = use_device_capabilities()
+    const { max_model_bytes, is_detecting } = use_device_capabilities()
 
     // Close dropdown on click outside or Escape key
     useEffect( () => {
@@ -202,7 +207,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
     }
 
     /**
-     * Purge all local models. Requires confirmation via browser confirm().
+     * Purge all models. Requires confirmation via browser confirm().
      */
     const handle_purge = useCallback( async () => {
 
@@ -236,7 +241,9 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
 
             } else {
 
-                // Browser: clear the models IndexedDB store
+                // Browser weights live in OPFS; IndexedDB contains metadata.
+                // Clear both or multi-GB orphan files remain invisible on disk.
+                await clear_browser_model_cache()
                 const { get_db } = await import( `../../stores/db.js` )
                 const db = await get_db()
                 await db.clear( `models` )
@@ -265,7 +272,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
     return <Container ref={ container_ref }>
 
         <Trigger
-            data-testid={ test_id }
+            data-testid="model-selector-dropdown"
             onClick={ () => set_is_open( !is_open ) }
         >
             { is_switching ? <LoaderCircle size={ 14 } /> : null }
@@ -282,11 +289,14 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                     </NoModelHint>
                     :
                     cached_models.map( ( model ) => {
-                        const too_large = !can_fit_in_memory( model, max_model_bytes )
+                        const fit_model = get_model_by_id( model.id ) || model
+                        const too_large = !is_detecting
+                            && !can_fit_in_memory( fit_model, max_model_bytes )
                         return <ModelOption
                             key={ model.id }
                             data-testid={ `model-option-${ model.id }` }
                             onClick={ () => handle_select( model.id ) }
+                            disabled={ too_large }
                         >
                             { model.id === active_model_id ?
                                 <Check size={ 14 } style={ { flexShrink: 0 } } />
@@ -298,7 +308,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                                 </ModelLabel>
                                 <ModelMeta>
                                     { format_file_size( model.file_size_bytes ) }
-                                    { too_large ? ` — ${ t( `may_not_fit` ) }` : `` }
+                                    { too_large ? ` — ${ t( `does_not_fit` ) }` : `` }
                                 </ModelMeta>
                             </ModelInfo>
                             { too_large && <AlertTriangle size={ 12 } style={ { color: theme.colors.warning, flexShrink: 0 } } /> }

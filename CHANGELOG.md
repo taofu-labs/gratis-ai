@@ -1,5 +1,104 @@
 # Changelog
 
+## [0.43.0] - 2026-08-22
+
+### Added
+- Measure usable WebGPU memory with retained buffer allocations
+- Offload safe layer counts to WebGPU with automatic CPU fallback
+- Estimate downloads from the selected GGUF host and prior transfers
+
+### Changed
+- Show only local models that fit the browser RAM and WASM budget
+- Use localized, granular download durations across selection and progress
+- Report measured GPU memory as an allocatable lower bound
+
+### Fixed
+- Count partial GPU-offload blocks without exceeding the measured budget
+- Reject probe samples that lose or stall the WebGPU device
+- Retry transient capability detection and clear failed GPU-recovery state
+
+### Removed
+- Static same-origin speed-test binaries and their deployment rules
+
+## [0.42.1] - 2026-08-22
+
+### Added
+- Production PWA coverage for COOP/COEP, service-worker navigation caching, and a real shared 16 GiB Memory64 reservation
+- Post-deploy header receipts for both the Cloudflare Workers URL and `ai.gratis.sh`
+
+### Changed
+- Pin Wrangler 4.125.0 so Workers Static Assets uploads `_headers` metadata reliably
+- Version the Workbox `index.html` cache revision and reload controlled clients after future service-worker takeovers become idle
+- Compare release versions with the previous pushed revision and allow explicit manual workflow recovery
+- Run unit and production Memory64 PWA receipts before each web deployment
+
+### Fixed
+- Restore production cross-origin isolation required for transferable shared Memory64
+- Keep Electron releases in draft until every platform build, signature, and notarization succeeds
+- Prevent overlapping Electron releases from cancelling and publishing incomplete artifacts
+- Prevent manual release recovery from turning an already-published version back into a draft
+
+## [0.42.0] - 2026-08-22
+
+### Added
+- Fork-maintainer runbook for migrating from Wllama V2 to `wllama64`
+- Browser-verified Qwen 3.5 4B, Ministral 3 3B/14B, and GPT-OSS 20B catalog options
+- Persistent-profile Memory64 inference gate with exact OPFS bytes and network-blocked reloads
+- Unit coverage for verified artifacts, model IDs, and conservative browser recommendations
+- Upstream Hugging Face identity and host-derived runtime context/batch assertions in the large-model gate
+
+### Changed
+- Expose models fitting the 15 GB Memory64 runtime budget as manual browser choices
+- Limit above-baseline manual browser choices to exact artifacts with inference receipts
+- Neutral-weight missing benchmark fields so one published score cannot dominate recommendations
+- Treat Qwen 3.5 9B language weights as text-only until mmproj support exists
+- Default Qwen 3.5 4B/9B to practical non-thinking browser chat
+- Reduce inference batches for models above 4 GB and 8 GB to preserve runtime headroom
+- Use inference-compatible Unsloth Ministral GGUFs instead of rejected vendor artifacts
+- Refresh i18next/react-i18next, lucide-react, and UUID major versions
+
+### Fixed
+- Handle partial OPFS synchronous writes and verify flushed byte counts
+- Probe the actual shared 16 GiB Memory64 reservation and cache the result
+- Warn on manually selected models above the conservative device-memory estimate
+- Stop generating hundreds of styled-components classes during large downloads
+
+## [0.41.0] - 2026-08-22
+
+### Added
+- Qwen 3.5 2B Q4_K_M after real browser inference validation
+- Local wasm32 compatibility runtime for supported non-Memory64 browsers
+
+### Changed
+- Migrate browser inference to `wllama64` and Wllama V3 chat completions
+- Stream browser model downloads to OPFS instead of buffering full blobs
+- Use embedded GGUF Jinja templates and a practical 2K selection baseline
+- Grow known browser models from the 2K selection baseline to a budget-fitting context up to 16K
+- Refresh supported dependencies, including Electron 43 and node-llama-cpp 3.20
+- Reconcile privacy, cloud-provider, browser-runtime, and model-memory documentation
+
+### Fixed
+- Preserve visible reasoning and Qwen 3.5's non-thinking default
+- Forward configured stop sequences under the provider API's correct name
+- Synchronize generation settings immediately across open components
+- Preserve the first message while a new chat receives its routed ID
+- Unload active models before clearing OPFS-backed model data
+- Remove OPFS weights when purging all models from the selector
+- Remove obsolete Workbox model duplicates left by older installations
+- Refuse missing OPFS entries instead of silently re-downloading during load
+- Validate Xet downloads by their stored file size when Content-Length is absent
+- Keep Xet download progress moving when the server omits Content-Length
+- Consume deep-link queries once when opening an existing conversation
+- Use the self-hosted compatibility runtime on older Firefox builds
+- Reject empty/waking placeholders in real-inference tests
+- Correct four stale catalog download sizes and exact model selection in E2E
+- Navigate Electron inference tests through both onboarding and returning-user states
+- Reject and remove partial OPFS downloads whose stored size does not match the catalog
+- Clear stale browser metadata even when OPFS cannot be opened
+
+### Removed
+- Wllama V2 binaries, aliases, manual prompt formatting, and obsolete heavy test
+
 ## [0.40.0] - 2026-03-17
 
 ### Added

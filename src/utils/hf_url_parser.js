@@ -1,6 +1,15 @@
 const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
 
 /**
+ * Build the exact download URL used by Wllama and network measurement.
+ * @param {string} repo
+ * @param {string} file_name
+ * @returns {string}
+ */
+export const build_download_url = ( repo, file_name ) =>
+    `${ HF_BASE_URL }/${ repo }/resolve/main/${ file_name }`
+
+/**
  * Extract quantization label from a GGUF filename (e.g. "model.Q4_K_M.gguf" → "Q4_K_M")
  * @param {string} file_name
  * @returns {string|null}

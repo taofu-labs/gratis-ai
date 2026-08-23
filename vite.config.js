@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import path from 'path'
 import { readFileSync } from 'fs'
 
 const pkg = JSON.parse( readFileSync( `./package.json`, `utf-8` ) )
@@ -9,7 +8,7 @@ const pkg = JSON.parse( readFileSync( `./package.json`, `utf-8` ) )
 export default defineConfig( ( { mode } ) => {
 
     const env = loadEnv( mode, process.cwd(), `` )
-    const app_name = env.VITE_APP_NAME || `Gratis`
+    const app_name = env.VITE_APP_NAME || `gratisAI`
 
     return {
         define: {
@@ -23,9 +22,9 @@ export default defineConfig( ( { mode } ) => {
                 manifest: {
                     name: app_name,
                     short_name: app_name,
-                    description: `Private AI that runs locally on your device, presented by True Performance Network.`,
-                    theme_color: `#0F1011`,
-                    background_color: `#0F1011`,
+                    description: `Run AI locally. Your data never leaves your device.`,
+                    theme_color: `#1a1a2e`,
+                    background_color: `#1a1a2e`,
                     display: `standalone`,
                     start_url: `/`,
                     icons: [
@@ -37,31 +36,23 @@ export default defineConfig( ( { mode } ) => {
                     globPatterns: [ `**/*.{js,css,html,wasm,woff2}` ],
                     // Exclude large ONNX Runtime WASM binaries from precaching — they're loaded on demand
                     globIgnores: [ `**/*ort-wasm*.wasm` ],
-                    maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-                    runtimeCaching: [
-                        {
-                            urlPattern: /^https:\/\/huggingface\.co\/.*/,
-                            handler: `CacheFirst`,
-                            options: {
-                                cacheName: `hf-model-cache`,
-                                expiration: { maxEntries: 5, maxAgeSeconds: 30 * 24 * 60 * 60 },
-                                cacheableResponse: { statuses: [ 0, 200 ] },
-                                rangeRequests: true,
-                            },
-                        },
-                    ],
+                    // The self-hosted wasm32 fallback is ~16 MiB.
+                    maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
+                    // A version bump must replace cached navigation responses even
+                    // when only edge headers changed. Cross-origin isolation is a
+                    // property of that cached response, not just the network route.
+                    manifestTransforms: [ entries => ( {
+                        manifest: entries.map( entry => entry.url === `index.html`
+                            ? { ...entry, revision: `${ entry.revision }-${ pkg.version }` }
+                            : entry ),
+                        warnings: [],
+                    } ) ],
                 },
             } ),
         ],
-        resolve: {
-            alias: {
-                // wllama package has main: "index.js" but built output is in esm/
-                '@wllama/wllama': path.resolve( `node_modules/@wllama/wllama/esm/index.js` ),
-            },
-        },
         server: {
             port: 5173,
-            // COOP + COEP headers enable SharedArrayBuffer, required for multi-threaded WASM inference
+            // Memory64 uses shared WASM memory even when inference is single-threaded.
             headers: {
                 'Cross-Origin-Opener-Policy': `same-origin`,
                 'Cross-Origin-Embedder-Policy': `require-corp`,

@@ -6,9 +6,13 @@ import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, Loa
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
-import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_download_time, estimate_model_memory, quality_score } from '../../utils/model_catalog'
-import { parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
+import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
+import {
+    BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
+} from '../../utils/device_detection'
+import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { storage_key } from '../../utils/branding'
+import { format_download_estimate } from '../../utils/network_speed'
 
 const Container = styled.div`
     display: flex;
@@ -18,7 +22,6 @@ const Container = styled.div`
     min-height: 0;
     padding: ${ ( { theme } ) => theme.spacing.xl };
     overflow-y: auto;
-    background: ${ ( { theme } ) => theme.colors.background };
 
     /* Flex spacers center content when it fits, collapse when it overflows */
     &::before, &::after {
@@ -28,23 +31,10 @@ const Container = styled.div`
 `
 
 const Title = styled.h1`
-    position: relative;
-    font-size: clamp( 2rem, 4vw, 2.875rem );
+    font-size: clamp( 1.5rem, 1.2rem + 1.5vw, 2rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
-    padding-bottom: ${ ( { theme } ) => theme.spacing.md };
-
-    &::after {
-        content: '';
-        position: absolute;
-        left: 50%;
-        bottom: 0;
-        width: 5.5rem;
-        height: 3px;
-        border-radius: ${ ( { theme } ) => theme.border_radius.full };
-        background: ${ ( { theme } ) => theme.colors.accent };
-        transform: translateX( -50% );
-    }
+    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
+    margin-bottom: 2rem;
 `
 
 const Subtitle = styled.p`
@@ -52,7 +42,7 @@ const Subtitle = styled.p`
     margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
     max-width: 520px;
-    line-height: 1.6;
+    line-height: 1.5;
 `
 
 
@@ -82,30 +72,29 @@ const CardRow = styled.div`
 const variant_color = ( theme, $variant ) =>
     $variant === `uncensored` ? theme.colors.error
         : $variant === `vision` ? theme.colors.info
-            : theme.colors.accent
+            : $variant === `nerd` ? theme.colors.info
+                : theme.colors.accent
 
-const OptionCard = styled.button`
+const OptionCard = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: ${ ( { theme } ) => theme.spacing.lg };
-    border: 1px solid ${ ( { theme, $active, $variant } ) =>
+    border: 2px solid ${ ( { theme, $active, $variant } ) =>
         $active ? variant_color( theme, $variant ) : theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.lg };
     text-align: center;
-    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
     cursor: pointer;
-    background: ${ ( { theme } ) => theme.colors.surface };
+    background: transparent;
 
     &:hover {
         border-color: ${ ( { theme, $active, $variant } ) =>
         $active ? variant_color( theme, $variant ) : theme.colors.text_muted };
-        background: ${ ( { theme } ) => theme.colors.surface_hover };
-        transform: translateY( -2px );
     }
 
     ${ ( { $active, $variant, theme } ) => $active && `
-        box-shadow: 0 0 0 3px rgba( 255, 90, 31, 0.12 );
+        box-shadow: 0 0 0 1px ${ variant_color( theme, $variant ) };
     ` }
 `
 
@@ -119,7 +108,7 @@ const CardLabel = styled.h2`
     color: ${ ( { $variant, theme } ) =>
         $variant === `faster` ? theme.colors.success
             : $variant === `uncensored` ? theme.colors.error
-                : $variant === `vision` ? theme.colors.info
+                : $variant === `vision` || $variant === `nerd` ? theme.colors.info
                     : theme.colors.accent };
 `
 
@@ -235,19 +224,24 @@ const RecommendedBadge = styled.div`
 
 const DownloadButton = styled.button`
     background: ${ ( { theme } ) => theme.colors.accent };
-    color: ${ ( { theme } ) => theme.colors.accent_ink };
+    color: white;
     padding: ${ ( { theme } ) => `${ theme.spacing.md } ${ theme.spacing.xl }` };
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
     font-size: 1rem;
     font-weight: 600;
     margin-top: ${ ( { theme } ) => theme.spacing.md };
-    transition: background 0.15s;
+    transition: opacity 0.15s;
     display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.sm };
     min-height: 2.75rem;
 
-    &:hover { background: ${ ( { theme } ) => theme.colors.accent_hover }; }
+    &:hover { opacity: 0.85; }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+    }
 `
 
 // Toggle buttons for expanding model lists
@@ -294,13 +288,11 @@ const ModelOption = styled.button`
     padding: ${ ( { theme } ) => theme.spacing.md };
     border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    background: ${ ( { theme, $active } ) => $active ? `rgba( 255, 90, 31, 0.1 )` : theme.colors.surface };
     text-align: left;
-    transition: border-color 0.15s, background 0.15s;
+    transition: border-color 0.15s;
 
     &:hover {
         border-color: ${ ( { theme } ) => theme.colors.text_muted };
-        background: ${ ( { theme } ) => theme.colors.surface_hover };
     }
 `
 
@@ -458,20 +450,16 @@ const SectionHeader = styled.div`
 `
 
 const SectionTitle = styled.h2`
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: 1.1rem;
+    font-weight: 600;
     color: ${ ( { theme } ) => theme.colors.text };
     margin-bottom: 2px;
 `
 
 const SectionSubtitle = styled.p`
-    font-size: 0.9rem;
-    line-height: 1.55;
+    font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
-    max-width: 34rem;
-    margin: 0 auto;
 `
-
 
 // ─── Benchmark display ────────────────────────────────────────────────────────
 
@@ -517,36 +505,31 @@ export default function ModelSelectPage() {
     }, [ show_alternatives ] )
 
     // Device memory budget and cached model detection
-    const { capabilities, max_model_bytes } = use_device_capabilities()
+    const { capabilities, max_model_bytes, is_detecting } = use_device_capabilities()
     const { cached_models } = use_model_manager()
-
-    // Measure real download speed for accurate time estimates
-    const { speed_bps, run_estimate } = use_speed_estimate()
-    useEffect( () => {
-        run_estimate()
-    }, [ run_estimate ] )
 
     const is_cached = ( model_id ) =>
         cached_models.some( m => m.id === model_id )
 
+    // Automatic browser picks stay conservative even when Chromium reports the
+    // host's full RAM. Larger, receipt-backed models remain explicit choices.
+    const automatic_model_budget = capabilities?.runtime === `browser`
+        ? Math.min( max_model_bytes, BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
+        : max_model_bytes
+
     // Select smarter/faster/uncensored/vision options based on device memory
     const { smarter, faster, uncensored, vision } = useMemo(
-        () => select_model_options( max_model_bytes ),
-        [ max_model_bytes ],
+        () => select_model_options( automatic_model_budget ),
+        [ automatic_model_budget ],
     )
 
     // All catalog models for the alternatives list, sorted: fits-in-memory first → params desc
     const catalog_models = useMemo( () => {
 
-        return [ ...MODEL_CATALOG ].sort( ( a, b ) => {
-
-            const a_fits = can_fit_in_memory( a, max_model_bytes ) ? 1 : 0
-            const b_fits = can_fit_in_memory( b, max_model_bytes ) ? 1 : 0
-            if( a_fits !== b_fits ) return b_fits - a_fits
-
-            return quality_score( b ) - quality_score( a ) || b.bpw - a.bpw
-
-        } )
+        return [ ...MODEL_CATALOG ]
+            .filter( model => !model.cloud_only )
+            .filter( model => can_fit_in_memory( model, max_model_bytes ) )
+            .sort( ( a, b ) => quality_score( b ) - quality_score( a ) || b.bpw - a.bpw )
 
     }, [ max_model_bytes ] )
 
@@ -570,6 +553,23 @@ export default function ModelSelectPage() {
             ? catalog_models.find( m => m.id === selected_model_id ) ?? smarter
             : smarter
 
+    const speed_target_url = active_model?.hugging_face_repo && active_model?.file_name
+        ? build_download_url( active_model.hugging_face_repo, active_model.file_name )
+        : null
+    const { speed_bps, is_estimating, run_estimate } = use_speed_estimate( speed_target_url )
+
+    useEffect( () => {
+        if( is_detecting || !speed_target_url ) return
+        const timer = setTimeout( run_estimate, 250 )
+        return () => clearTimeout( timer )
+    }, [ is_detecting, run_estimate, speed_target_url ] )
+
+    const download_estimate = model => is_estimating && !speed_bps
+        ? t( 'measuring_download_speed' )
+        : t( 'initial_download_takes', {
+            time: format_download_estimate( model.file_size_bytes, speed_bps, t ),
+        } )
+
     const active_is_cached = active_model && is_cached( active_model.id )
 
     // Warn Electron users when free RAM is dangerously low for the selected model
@@ -581,6 +581,10 @@ export default function ModelSelectPage() {
     const handle_download = () => {
 
         if( !active_model ) return
+        if( !can_fit_in_memory( active_model, max_model_bytes ) ) {
+            set_custom_error( t( 'model_does_not_fit' ) )
+            return
+        }
 
         // Cached models can skip the download page entirely
         if( active_is_cached ) {
@@ -597,6 +601,12 @@ export default function ModelSelectPage() {
         set_custom_model( null )
         set_custom_error( null )
         set_selected_model_id( model_id )
+    }
+
+    const select_with_keyboard = ( event, model_id ) => {
+        if( ![ `Enter`, ` ` ].includes( event.key ) ) return
+        event.preventDefault()
+        handle_select( model_id )
     }
 
     // Resolve a custom HuggingFace URL into a model definition
@@ -628,12 +638,19 @@ export default function ModelSelectPage() {
 
     // Alternatives exclude all models shown as recommendation cards
     const shown_ids = new Set( [ smarter?.id, faster?.id, uncensored?.id, vision?.id ].filter( Boolean ) )
-    const alternative_models = catalog_models.filter( m =>
-        !shown_ids.has( m.id ) && can_fit_in_memory( m, max_model_bytes )
-    )
+    const alternative_models = catalog_models.filter( model => {
+        if( shown_ids.has( model.id ) ) return false
+
+        // Below the automatic ceiling, existing catalog compatibility rules
+        // apply. Above it, an exact wllama64 inference receipt is mandatory.
+        const needs_browser_receipt = capabilities?.runtime === `browser`
+            && estimate_model_memory( model ) > BROWSER_AUTOMATIC_MODEL_CEILING_BYTES
+
+        return !needs_browser_receipt || model.browser_verified === true
+    } )
 
     // Card row when we have at least 2 options to compare
-    const card_count = 1 + ( faster ? 1 : 0 ) + ( uncensored ? 1 : 0 ) + ( vision ? 1 : 0 )
+    const card_count = [ smarter, faster, uncensored, vision ].filter( Boolean ).length
     const show_card_row = card_count >= 2
 
     return <Container>
@@ -670,9 +687,13 @@ export default function ModelSelectPage() {
 
             { /* Faster option */ }
             { faster && <OptionCard
+                data-testid={ `model-option-${ faster.id }` }
+                role="button"
+                tabIndex={ 0 }
                 $active={ active_model?.id === faster.id }
                 $variant="faster"
                 onClick={ () => handle_select( faster.id ) }
+                onKeyDown={ event => select_with_keyboard( event, faster.id ) }
             >
                 <CardLabel $variant="faster">
                     <Zap size={ 18 } />
@@ -680,7 +701,7 @@ export default function ModelSelectPage() {
                 </CardLabel>
                 { is_cached( faster.id )
                     ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                    : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( faster.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                    : <DownloadEstimate>{ download_estimate( faster ) }</DownloadEstimate> }
                 <CardDetailsToggle onClick={ ( e ) => {
                     e.stopPropagation(); toggle_details( faster.id )
                 } }
@@ -694,10 +715,14 @@ export default function ModelSelectPage() {
             </OptionCard> }
 
             { /* Smarter option */ }
-            <OptionCard
+            { smarter && <OptionCard
+                data-testid={ `model-option-${ smarter.id }` }
+                role="button"
+                tabIndex={ 0 }
                 $active={ active_model?.id === smarter.id }
                 $variant="smarter"
                 onClick={ () => handle_select( smarter.id ) }
+                onKeyDown={ event => select_with_keyboard( event, smarter.id ) }
             >
                 <CardLabel $variant="smarter">
                     <Sparkles size={ 18 } />
@@ -705,7 +730,7 @@ export default function ModelSelectPage() {
                 </CardLabel>
                 { is_cached( smarter.id )
                     ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                    : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( smarter.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                    : <DownloadEstimate>{ download_estimate( smarter ) }</DownloadEstimate> }
                 <CardDetailsToggle onClick={ ( e ) => {
                     e.stopPropagation(); toggle_details( smarter.id )
                 } }
@@ -716,13 +741,17 @@ export default function ModelSelectPage() {
                     { smarter.name } — { format_file_size( smarter.file_size_bytes ) } — { smarter.quantization }
                     { smarter.benchmarks && <BenchmarkRow benchmarks={ smarter.benchmarks } /> }
                 </CardDetails>
-            </OptionCard>
+            </OptionCard> }
 
             { /* Uncensored option */ }
             { uncensored && <OptionCard
+                data-testid={ `model-option-${ uncensored.id }` }
+                role="button"
+                tabIndex={ 0 }
                 $active={ active_model?.id === uncensored.id }
                 $variant="uncensored"
                 onClick={ () => handle_select( uncensored.id ) }
+                onKeyDown={ event => select_with_keyboard( event, uncensored.id ) }
             >
                 <CardLabel $variant="uncensored">
                     <ShieldOff size={ 18 } />
@@ -730,7 +759,7 @@ export default function ModelSelectPage() {
                 </CardLabel>
                 { is_cached( uncensored.id )
                     ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                    : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( uncensored.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                    : <DownloadEstimate>{ download_estimate( uncensored ) }</DownloadEstimate> }
                 <CardDetailsToggle onClick={ ( e ) => {
                     e.stopPropagation(); toggle_details( uncensored.id )
                 } }
@@ -745,9 +774,13 @@ export default function ModelSelectPage() {
 
             { /* Vision option */ }
             { vision && <OptionCard
+                data-testid={ `model-option-${ vision.id }` }
+                role="button"
+                tabIndex={ 0 }
                 $active={ active_model?.id === vision.id }
                 $variant="vision"
                 onClick={ () => handle_select( vision.id ) }
+                onKeyDown={ event => select_with_keyboard( event, vision.id ) }
             >
                 <CardLabel $variant="vision">
                     <Eye size={ 18 } />
@@ -755,7 +788,7 @@ export default function ModelSelectPage() {
                 </CardLabel>
                 { is_cached( vision.id )
                     ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                    : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( vision.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                    : <DownloadEstimate>{ download_estimate( vision ) }</DownloadEstimate> }
                 <CardDetailsToggle onClick={ ( e ) => {
                     e.stopPropagation(); toggle_details( vision.id )
                 } }
@@ -770,15 +803,20 @@ export default function ModelSelectPage() {
 
         </CardRow> }
 
+        { !is_detecting && card_count === 0 && !custom_model && <MemoryWarning data-testid="no-fitting-local-model">
+            <AlertTriangle size={ 14 } />
+            { t( 'no_local_model_fits' ) }
+        </MemoryWarning> }
+
         { /* ── Single-card fallback (no meaningfully smaller model available) ── */ }
-        { !show_card_row && active_model && <RecommendedCard>
+        { !show_card_row && active_model && <RecommendedCard data-testid={ `model-option-${ active_model.id }` }>
             <RecommendedBadge>
                 <Sparkles size={ 14 } />
                 { custom_model ? t( 'custom_hf_model' ) : t( 'recommended_for_device' ) }
             </RecommendedBadge>
             { is_cached( active_model.id )
                 ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                : <DownloadEstimate>{ t( 'initial_download_takes', { time: estimate_download_time( active_model.file_size_bytes, speed_bps ) } ) }</DownloadEstimate> }
+                : <DownloadEstimate>{ download_estimate( active_model ) }</DownloadEstimate> }
             <CardDetailsToggle onClick={ () => toggle_details( active_model.id ) }>
                 { t( 'show_details' ) } { details_open[ active_model.id ] ? <ChevronUp size={ 12 } /> : <ChevronDown size={ 12 } /> }
             </CardDetailsToggle>
@@ -787,10 +825,6 @@ export default function ModelSelectPage() {
                 { active_model.quantization && ` — ${ active_model.quantization }` }
                 { active_model.benchmarks && <BenchmarkRow benchmarks={ active_model.benchmarks } /> }
             </CardDetails>
-            { !can_fit_in_memory( active_model, max_model_bytes ) && <MemoryWarning>
-                <AlertTriangle size={ 14 } />
-                { t( 'may_be_too_large_browser' ) }
-            </MemoryWarning> }
         </RecommendedCard> }
 
         { /* All alternatives in one list — within the local models section */ }
@@ -809,6 +843,7 @@ export default function ModelSelectPage() {
                         const is_selected = model.id === active_model?.id
                         return <ModelOption
                             key={ model.id }
+                            data-testid={ `model-option-${ model.id }` }
                             $active={ is_selected }
                             onClick={ () => handle_select( model.id ) }
                         >
@@ -820,7 +855,7 @@ export default function ModelSelectPage() {
                                 </OptionName>
                                 <OptionMeta>
                                     { model.parameters_label } — { format_file_size( model.file_size_bytes ) } — { model.quantization }
-                                    { model.benchmarks && <> — <QualityBadge>Score { quality_score( model ).toFixed( 0 ) }/100</QualityBadge></> }
+                                    { benchmark_coverage( model ) === 5 && <> — <QualityBadge>Score { quality_score( model ).toFixed( 0 ) }/100</QualityBadge></> }
                                     { is_cached( model.id ) ? ` — ✓ ${ t( 'downloaded' ) }` : `` }
                                 </OptionMeta>
                             </OptionInfo>
@@ -867,20 +902,21 @@ export default function ModelSelectPage() {
                         <Check size={ 12 } /> { custom_model.name } — { format_file_size( custom_model.file_size_bytes ) } ({ custom_model.quantization })
                     </CustomModelStatus> }
 
-                    { /* Warn browser users about large custom models that may exceed WASM limits */ }
-                    { custom_model && !custom_loading && !window.electronAPI && custom_model.file_size_bytes > 2_000_000_000 && <CustomModelStatus $error>
-                        <AlertTriangle size={ 12 } /> { t( 'large_model_warning' ) }
-                    </CustomModelStatus> }
-
                 </CustomModelSection>
 
             </ExpandPanel>
         </> }
 
-        { /* ── Download action + step progress ── */ }
+        { active_model && !can_fit_in_memory( active_model, max_model_bytes ) && <MemoryWarning>
+            <AlertTriangle size={ 14 } />
+            { t( 'model_does_not_fit' ) }
+        </MemoryWarning> }
+
+        { /* ── Download action + step progress (below all model sections) ── */ }
         <DownloadButton
             data-testid="model-select-confirm-btn"
             onClick={ handle_download }
+            disabled={ !active_model || !can_fit_in_memory( active_model, max_model_bytes ) }
         >
             { active_is_cached ? t( 'start_chatting' ) : t( 'download_and_start' ) } <ArrowRight size={ 18 } />
         </DownloadButton>

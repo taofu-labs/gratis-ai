@@ -1,6 +1,6 @@
 # LLM Memory Requirements Reference
 
-Calculated 2026-02-22. All sizes in GiB (1 GiB = 1024^3 bytes).
+Calculated 2026-02-22; browser-runtime notes refreshed 2026-08-22. All sizes in GiB (1 GiB = 1024^3 bytes).
 
 ## Formulas Used
 
@@ -11,7 +11,10 @@ Calculated 2026-02-22. All sizes in GiB (1 GiB = 1024^3 bytes).
 ## Key Takeaways
 
 - KV cache at long contexts can rival or exceed model weight size (e.g., 70B at 32K ctx = 10 GiB KV in FP16)
-- Q4 KV cache quantization cuts KV overhead by 4x vs FP16, with minimal quality loss
-- The 3.4 GiB WASM browser cap means max ~7-8B at aggressive quants, or ~3B at Q8
-- For 8 GiB devices (M1, RTX 3060 8GB): sweet spot is 7-8B at Q4_K_M with 4-8K context
-- For 24 GiB (RTX 4090): can run up to 32B at Q5_K_M or 70B at Q4_K_M (tight at long ctx)
+- Quantized KV caches reduce overhead, but support and stability vary by backend. gratisAI starts browser inference with F16 KV cache.
+- wllama64's Memory64 runtime has a 16 GiB virtual ceiling; gratisAI limits model budget to 15 GB and further caps it by reported device memory.
+- The locally hosted wasm32 compatibility runtime keeps the older ~3.4 GiB practical ceiling and is substantially slower.
+- Browser selection starts at 2K context; catalog models grow within budget up to 16K at load. Advertised 128K/262K contexts are not startup allocations.
+- OPFS streams model weights to disk, so downloads do not require a second model-sized in-memory Blob. Runtime weights, KV cache, and buffers must still fit.
+- For 8 GiB devices, medium models leave safer operating-system headroom; a 7-8B Q4 model is a tight native-runtime choice at short context.
+- For 24 GiB devices, 14B Q4/Q5 models are comfortable; 32B Q4 is near the limit and needs backend-specific validation.

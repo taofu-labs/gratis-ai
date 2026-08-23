@@ -9,28 +9,28 @@ All architecture configs from `/resolve/main/config.json` on source/mirror repos
 ### SmolLM2 360M Instruct Q4_K_M
 - **Repo:** `bartowski/SmolLM2-360M-Instruct-GGUF`
 - **File:** `SmolLM2-360M-Instruct-Q4_K_M.gguf`
-- **Size:** 259,915,680 bytes (248 MiB)
+- **Size:** 270,590,880 bytes (258 MiB)
 - **Parameters:** 361,821,120 (0.362B)
 - **Architecture:** LlamaForCausalLM, 32 layers, 15 attn heads, 5 KV heads, head_dim=64, hidden=960, intermediate=2560, context=8192, vocab=49152
 
 ### TinyLlama 1.1B Chat v1.0 Q4_K_M
 - **Repo:** `TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF`
 - **File:** `tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf`
-- **Size:** 643,728,768 bytes (614 MiB)
+- **Size:** 668,788,096 bytes (638 MiB)
 - **Parameters:** 1,100,048,384 (1.100B)
 - **Architecture:** LlamaForCausalLM, 22 layers, 32 attn heads, 4 KV heads, head_dim=64, hidden=2048, intermediate=5632, context=2048, vocab=32000
 
 ### Llama 3.2 1B Instruct Q4_K_M
 - **Repo:** `bartowski/Llama-3.2-1B-Instruct-GGUF`
 - **File:** `Llama-3.2-1B-Instruct-Q4_K_M.gguf`
-- **Size:** 775,647,360 bytes (740 MiB)
+- **Size:** 807,694,464 bytes (770 MiB)
 - **Parameters:** 1,235,814,400 (1.236B)
 - **Architecture:** LlamaForCausalLM, 16 layers, 32 attn heads, 8 KV heads, head_dim=64, hidden=2048, intermediate=8192, context=131072, vocab=128256
 
 ### DeepSeek R1 Distill Qwen 1.5B Q4_K_M
 - **Repo:** `bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF`
 - **File:** `DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf`
-- **Size:** 1,071,584,864 bytes (1,022 MiB)
+- **Size:** 1,117,320,800 bytes (1,066 MiB)
 - **Parameters:** 1,777,030,656 (1.777B)
 - **Architecture:** Qwen2ForCausalLM, 28 layers, 12 attn heads, 2 KV heads, head_dim=128, hidden=1536, intermediate=8960, context=131072, vocab=151936
 
@@ -136,3 +136,93 @@ All file sizes verified via HuggingFace API (`/api/models/{repo}/tree/main`).
 - **4 of 6 models lack benchmarks** — `quality_score()` returns 0, so `select_best_uncensored()`
   will prefer models with published scores (Dolphin 8B, Venice 24B)
 - **Coverage gaps:** no training-based Dolphin models at 4B, 14B, or 32B
+
+---
+
+## wllama64 and current browser model research (2026-08-21)
+
+### Runtime
+
+- `wllama64` 1.0.0 tracks Wllama 3.6.0 and uses a shared Memory64 build with a 16 GiB virtual ceiling.
+- Primary browser requirements are 64-bit Chromium 137+, JSPI, shared Memory64, and COOP/COEP.
+- The package's automatic compatibility path uses a CDN unless overridden. Ship matching
+  `@wllama/wllama-compat` assets locally to keep executable code offline.
+- Wllama V3 uses OpenAI-compatible chat responses and embedded Jinja. This removes the V2
+  tokenizer/manual-template/byte-decoder workarounds.
+- Stream model downloads to OPFS with `ModelManager`; buffering every response chunk and joining
+  a Blob temporarily duplicates the model in the JavaScript heap.
+
+Primary source: https://github.com/actuallymentor/wllama64/tree/v1.0.0
+
+### Candidate decision
+
+| Candidate | Exact Q4_K_M file | License | Decision |
+|:----------|------------------:|:--------|:---------|
+| Qwen 3.5 2B | 1,280,835,840 B | Apache-2.0 | Added; real Memory64 UI inference passed |
+| Qwen 3.5 4B | 2,740,937,888 B | Apache-2.0 | Added; exact UI inference and cache-only reload passed |
+| Qwen 3.5 9B | 5,680,522,464 B | Apache-2.0 | Added as text-only; exact >4 GiB Memory64 proof passed |
+| Ministral 3 3B Instruct 2512 (Unsloth) | 2,146,497,824 B | Apache-2.0 | Added; vendor GGUF rejected, Unsloth build passed |
+| Ministral 3 14B Instruct 2512 (Unsloth) | 8,239,067,840 B | Apache-2.0 | Added; exact UI inference and cache-only reload passed |
+| LFM2.5 1.2B / 8B-A1B | 730,895,168 / 5,155,564,768 B | LFM Open License 1.0 | Do not recommend by default; >=$10M revenue restriction |
+| GPT-OSS 20B MXFP4 | 12,109,566,624 B | Apache-2.0 | Added; Harmony final-channel and near-ceiling proof passed |
+
+Qwen documents the 2B model as non-thinking by default. Keep `reasoning: true` as capability
+metadata but use `reasoning_enabled: false` for its default template/runtime behavior; otherwise
+the UI can sit on an empty bubble while the runtime generates hidden reasoning.
+
+Qwen source: https://huggingface.co/Qwen/Qwen3.5-2B
+
+Quant source: https://huggingface.co/unsloth/Qwen3.5-2B-GGUF
+
+### Acceptance rule
+
+Add a browser model only after the exact catalog GGUF completes download, load, embedded-template
+chat, non-empty streamed inference, and a semantic assertion through the real Playwright UI flow.
+Build success or Electron-native inference does not validate wllama64.
+
+### Verified Memory64 ladder (2026-08-22)
+
+Each exact artifact was fetched from its catalog Hugging Face URL into the local test mirror, then
+completed a real Chromium UI download, exact OPFS byte validation, native Memory64 load
+(`compat: false`), embedded-template streaming inference (`17 × 19 = 323`), browser restart,
+network-blocked cache-only reload, and a second semantic response. The durable gate also HEAD-checks
+the upstream URL and exact byte count before consuming the local mirror. These receipts came from
+Chromium reporting 32 GB device memory and four logical cores; the gate derives context and batch
+expectations from each test host instead of hard-coding those values:
+
+| Model | Artifact bytes | Runtime | First / cached output |
+|:------|---------------:|:--------|:----------------------|
+| Ministral 3 3B Q4_K_M (Unsloth) | 2,146,497,824 | mistral3, batch 512, ctx 16K | `323` / `Hello.` |
+| Qwen 3.5 4B Q4_K_M | 2,740,937,888 | qwen35, batch 512, ctx 16K | `323` / `hello` |
+| Qwen 3.5 9B Q4_K_M | 5,680,522,464 | qwen35, batch 256, ctx 16K | `323` / `hello` |
+| Ministral 3 14B Q4_K_M (Unsloth) | 8,239,067,840 | mistral3, batch 128, ctx 16K | `323` / `Hello! …` |
+| GPT-OSS 20B MXFP4 | 12,109,566,624 | gpt-oss, batch 128, ctx 16K | `323` / `hello` |
+
+GPT-OSS generated 62 tokens before its first one-token final answer. Harmony parsing correctly hid
+analysis/control channels from the UI. Qwen 3.5 4B/9B must default to non-thinking mode for short
+browser chats; otherwise a 128-token cap can be consumed by hidden reasoning with no final answer.
+
+The vendor Ministral 3B artifact at 2,147,023,008 bytes failed with `invalid gguf type for
+tokenizer.ggml.scores`; do not switch the catalog back without retesting the pinned runtime.
+
+## WebGPU resource probing and Wllama offload (2026-08-22)
+
+- WebGPU exposes allocation limits but no authoritative free-VRAM query. A useful browser-side
+  signal is a lower bound from retained, touched buffers until allocation refusal or a safety cap.
+- `adapter.info.isFallbackAdapter` identifies software/fallback adapters and should suppress the
+  destructive allocation probe and offload attempt.
+- `wllama64` 1.0.0 already forwards llama.cpp's `n_gpu_layers`; `0` forces CPU and a positive
+  value requests that many final repeating blocks on WebGPU. The output layer moves only when the
+  value exceeds `block_count`. No package fork or dependency update is required.
+- The GGUF remains fully resident in WASM memory during offload. Strict model eligibility must
+  remain based on RAM, KV-cache, runtime overhead, and the WASM address-space ceiling.
+- Qwen 3.5 hybrid models need separate KV-bearing `layers` and transformer `block_count` values:
+  2B has 24 blocks, 4B has 32, and 9B has 32. GPU-layer estimates use `block_count`.
+- A real-file speed sample should use one CORS-safelisted `Range` request to the selected GGUF.
+  Record rolling actual-download throughput separately and prefer it for later estimates.
+
+Primary sources:
+- https://gpuweb.github.io/gpuweb/
+- https://huggingface.co/Qwen/Qwen3.5-2B/raw/main/config.json
+- https://huggingface.co/Qwen/Qwen3.5-4B/raw/main/config.json
+- https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/config.json

@@ -88,50 +88,28 @@ For example: 14B Q4_K_M often outperforms 7B FP16 on benchmarks.
 
 ---
 
-## Topic 3: WASM Memory Constraints
+## Topic 3: WASM Memory Constraints (updated August 2026)
 
-### Theoretical Limit
-- wasm32: 4 GiB maximum (32-bit address space, 65536 pages of 64 KiB)
-- wasm64 (memory64): up to 16 GiB on web (spec allows more, browsers cap at 16 GB)
-- Memory64 went live in major browsers in early 2025
+### gratisAI runtime paths
 
-### Practical Browser Limits
-- **Chrome**: Supports up to 4 GiB (wasm32), requires explicit opt-in for >2 GiB
-  (ALLOW_MEMORY_GROWTH + MAXIMUM_MEMORY=4GB in Emscripten)
-- **Firefox**: 4 GiB support, historically had a 2 GiB cap (resolved in recent versions)
-- **Safari**: Varies by version, generally 2-4 GiB
-- **Mobile (Chrome Android)**: ~300 MB reliable allocation limit
-- Default without opt-in: 2 GiB maximum
-
-### wllama-Specific Constraints
-- Single file limit: **2 GiB** (ArrayBuffer size restriction in browsers)
-- Workaround: split models with `llama-gguf-split` into ~512 MB chunks
-- Split files download in parallel (faster) and bypass the per-file limit
-- Total model + KV cache + runtime overhead must fit in WASM memory
-- Recommended: Q4, Q5, Q6 quantizations for browser use
-
-### What Fits in WASM (practical guide)
-- ~1B models at Q4_K_M (~0.6 GiB): Comfortable
-- ~3B models at Q4_K_M (~1.5 GiB): Feasible with splitting
-- ~7B models at Q4_K_M (~4.1 GiB): Only with memory64 or very aggressive quant
-- ~7B models at IQ2_XXS (~2.2 GiB): Technically possible, very low quality
-- Anything >7B: Not practical in browser WASM today
-
-### WebAssembly 3.0 (September 2025)
-- memory64 now part of the spec
-- Allows i64 addressing for memories and tables
-- Web browsers cap at 16 GiB even with memory64
+- **Memory64**: `wllama64` uses shared Memory64 and JSPI in 64-bit Chromium 137+. COOP/COEP headers are mandatory. Its virtual-memory ceiling is 16 GiB; usable model size is lower and device-dependent.
+- **Compatibility**: the self-hosted `@wllama/wllama-compat` runtime uses wasm32, has a ~3.4 GiB practical ceiling, and is much slower. It never fetches executable assets from a CDN.
+- **Storage**: model downloads stream to OPFS. wllama64 reads large Blob-backed files in bounded chunks, so a single GGUF can exceed 2 GiB on the Memory64 path.
+- **Portability**: ~512 MiB GGUF shards remain useful for wasm32, constrained browsers, recovery, and parallel transfer.
+- **Total allocation**: weights, F16 KV cache, compute buffers, and runtime overhead all share the WASM limit. gratisAI selects at a 2K baseline, then grows known models within budget up to 16K.
 
 ### Sources
 - V8 blog: https://v8.dev/blog/4gb-wasm-memory
 - WebAssembly spec issue #1116: https://github.com/WebAssembly/spec/issues/1116
-- wllama GitHub: https://github.com/ngxson/wllama
+- wllama64 GitHub: https://github.com/actuallymentor/wllama64
 - Wasm 3.0 announcement: https://webassembly.org/news/2025-09-17-wasm-3.0/
 - MDN WebAssembly.Memory: https://developer.mozilla.org/en-US/docs/WebAssembly/Reference/JavaScript_interface/Memory/Memory
 
 ---
 
-## Topic 4: Best Open-Source Models by Parameter Size (Early 2026)
+## Topic 4: Best Open-Source Models by Parameter Size (historical early-2026 snapshot)
+
+This section is retained for historical comparison. Use `RESEARCH.md` and the live catalog for current recommendations and validation status.
 
 ### 0.5B-1B (Tiny/Edge)
 

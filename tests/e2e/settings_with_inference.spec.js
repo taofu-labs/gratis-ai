@@ -73,7 +73,7 @@ test.describe( `Settings with Inference`, () => {
         await page.getByTestId( `settings-tab-advanced` ).click()
 
         const max_tokens_input = page.getByTestId( `max-tokens-input` )
-        await max_tokens_input.fill( `20` )
+        await max_tokens_input.fill( `64` )
 
         // Close settings
         await page.keyboard.press( `Escape` )
@@ -82,14 +82,14 @@ test.describe( `Settings with Inference`, () => {
         await send_message( page, `Tell me everything you know about the solar system.` )
         await wait_for_inference( page, 1, 180_000 )
 
-        // Verify response exists but is relatively short (max 20 tokens ~ <200 chars typically)
+        // Verify response exists but is relatively short.
         const messages = await page.locator( `[data-testid="assistant-message"]` ).all()
         const text = await messages[ messages.length - 1 ].textContent()
         expect( text?.length ).toBeGreaterThan( 0 )
 
-        // 20 tokens should produce a noticeably short response — under 400 chars
+        // 64 tokens should produce a noticeably short response — under 600 chars
         // (generous upper bound since tokenisation varies)
-        expect( text?.length ).toBeLessThan( 400 )
+        expect( text?.length ).toBeLessThan( 600 )
 
     } )
 

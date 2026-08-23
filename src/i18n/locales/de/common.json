@@ -58,7 +58,10 @@
     "format_just_now": "Gerade eben",
     "format_minutes_ago": "vor {{count}}m",
     "format_hours_ago": "vor {{count}}h",
-    "format_eta_seconds": "Noch etwa {{count}} Sekunden",
-    "format_eta_minutes": "Noch etwa {{count}} Minute",
-    "format_eta_minutes_plural": "Noch etwa {{count}} Minuten"
+    "duration_seconds": "~{{count}} Sekunden",
+    "duration_minutes": "~{{count}} Min.",
+    "duration_minutes_seconds": "~{{minutes}} Min. {{seconds}} Sek.",
+    "duration_hours": "~{{count}} Std.",
+    "duration_hours_minutes": "~{{hours}} Std. {{minutes}} Min.",
+    "eta_remaining": "Noch {{duration}}"
 }
