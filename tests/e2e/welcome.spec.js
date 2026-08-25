@@ -12,6 +12,13 @@ test.describe( `Welcome Page`, () => {
         await expect( page.getByTestId( `get-started-btn` ) ).toBeVisible()
     } )
 
+    test( `opens settings before model setup`, async ( { page } ) => {
+        await page.goto( `/` )
+        await page.getByTestId( `settings-btn` ).click()
+        await expect( page.getByTestId( `settings-modal` ) ).toBeVisible()
+        await expect( page.getByTestId( `system-prompt-input` ) ).toBeVisible()
+    } )
+
     test( `shows value propositions about privacy and offline`, async ( { page } ) => {
         await page.goto( `/` )
         // Privacy value prop

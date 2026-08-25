@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, Shield, WifiOff, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowRight, Shield, WifiOff, ChevronDown, ChevronUp, Settings } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import DeviceInfo from '../atoms/DeviceInfo'
 import LanguageSelector from '../molecules/LanguageSelector'
-import { DISPLAY_NAME } from '../../utils/branding'
+import SettingsModal from '../molecules/SettingsModal'
+import { DISPLAY_NAME, EVENTS } from '../../utils/branding'
 
 const PageWrapper = styled.div`
     position: relative;
@@ -19,6 +20,24 @@ const TopRight = styled.div`
     top: ${ ( { theme } ) => theme.spacing.md };
     right: ${ ( { theme } ) => theme.spacing.md };
     z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
+`
+
+const IconButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+    transition: color 0.15s;
+
+    &:hover {
+        color: ${ ( { theme } ) => theme.colors.text };
+    }
 `
 
 const Container = styled.div`
@@ -154,21 +173,38 @@ const DetailsPanel = styled.div`
  * Designed to be warm and approachable — technical specs hidden behind "details".
  * @returns {JSX.Element}
  */
-export default function WelcomePage() {
+export default function WelcomePage( { theme_preference, on_theme_toggle } ) {
 
     const { t } = useTranslation( 'pages' )
     const navigate = useNavigate()
     const { capabilities } = use_device_capabilities()
     const [ show_details, set_show_details ] = useState( false )
+    const [ settings_open, set_settings_open ] = useState( false )
 
     const handle_start = () => {
-        navigate( `/select-model`, { state: { capabilities } } )
+        navigate( `/select-model` )
     }
+
+    useEffect( () => {
+
+        const handle_open_settings = () => set_settings_open( true )
+
+        window.addEventListener( EVENTS.open_settings, handle_open_settings )
+        return () => window.removeEventListener( EVENTS.open_settings, handle_open_settings )
+
+    }, [] )
 
     return <PageWrapper>
 
         <TopRight>
             <LanguageSelector />
+            <IconButton
+                data-testid="settings-btn"
+                onClick={ () => set_settings_open( true ) }
+                aria-label={ t( `common:aria_open_settings` ) }
+            >
+                <Settings size={ 18 } />
+            </IconButton>
         </TopRight>
 
         <Container>
@@ -221,6 +257,13 @@ export default function WelcomePage() {
             </> }
 
         </Container>
+
+        <SettingsModal
+            is_open={ settings_open }
+            on_close={ () => set_settings_open( false ) }
+            theme_preference={ theme_preference }
+            on_theme_change={ on_theme_toggle }
+        />
 
     </PageWrapper>
 

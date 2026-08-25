@@ -23,9 +23,9 @@ const NotFoundPage = lazy( maybe_prefetch( () => import( '../components/pages/No
  * Pick the right landing page: returning users get the search home,
  * first-time users get the onboarding welcome.
  */
-function LandingPage() {
+function LandingPage( props ) {
     const has_model = !!localStorage.getItem( storage_key( `active_model_id` ) )
-    return has_model ? <HomePage /> : <WelcomePage />
+    return has_model ? <HomePage /> : <WelcomePage { ...props } />
 }
 
 /**
@@ -43,7 +43,7 @@ export default function Routes( { theme_preference, theme_mode, on_theme_toggle 
 
     return <Suspense fallback={ <div /> }>
         <RouterRoutes>
-            <Route path="/" element={ <LandingPage /> } />
+            <Route path="/" element={ <LandingPage { ...layout_props } /> } />
             <Route path="/select-model" element={ <ModelSelectPage /> } />
             <Route path="/download" element={ <DownloadPage /> } />
             <Route path="/chat/:id?" element={ <ChatPage { ...layout_props } /> } />
