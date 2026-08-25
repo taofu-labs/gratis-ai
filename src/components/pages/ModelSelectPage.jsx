@@ -290,18 +290,21 @@ const ModelList = styled.div`
     flex-direction: column;
     gap: ${ ( { theme } ) => theme.spacing.sm };
     padding-top: ${ ( { theme } ) => theme.spacing.md };
+    width: 100%;
+    max-width: 520px;
 `
 
 const ModelOption = styled.button`
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     width: 100%;
     padding: ${ ( { theme } ) => theme.spacing.md };
     border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
     text-align: left;
-    transition: border-color 0.15s;
+    background: ${ ( { theme, $active } ) => $active ? `${ theme.colors.accent }10` : `transparent` };
+    transition: border-color 0.15s, background 0.15s;
 
     &:hover {
         border-color: ${ ( { theme } ) => theme.colors.text_muted };
@@ -310,9 +313,13 @@ const ModelOption = styled.button`
 
 const OptionInfo = styled.div`
     flex: 1;
+    min-width: 0;
 `
 
 const OptionName = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
     font-weight: 500;
     font-size: 0.9rem;
     margin-bottom: 2px;
@@ -321,6 +328,8 @@ const OptionName = styled.div`
 const OptionMeta = styled.div`
     font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
+    line-height: 1.45;
+    overflow-wrap: anywhere;
 `
 
 const CheckIcon = styled.div`
@@ -569,12 +578,12 @@ export default function ModelSelectPage() {
 
     }, [ tpn_models ] )
 
-    const smarter = catalog_models[ 0 ] || null
+    const smarter = null
     const faster = null
     const uncensored = null
     const vision = null
 
-    // Track user selection — defaults to the latest TPN winner variant
+    // Track user selection. Nothing is active until the user chooses a TPN model or loads a custom one.
     const [ selected_model_id, set_selected_model_id ] = useState( null )
 
     // Per-card "show details" toggle
@@ -587,12 +596,14 @@ export default function ModelSelectPage() {
     const [ custom_loading, set_custom_loading ] = useState( false )
     const [ custom_error, set_custom_error ] = useState( null )
 
-    // Resolve the active model — custom > user pick > latest TPN winner default
+    const selected_tpn_model = selected_model_id
+        ? catalog_models.find( m => m.id === selected_model_id ) ?? null
+        : null
+
+    // Resolve the active model — custom > explicit TPN pick
     const active_model = custom_model
         ? custom_model
-        : selected_model_id
-            ? catalog_models.find( m => m.id === selected_model_id ) ?? smarter
-            : smarter
+        : selected_tpn_model
 
     const speed_target_url = active_model?.hugging_face_repo && active_model?.file_name
         ? build_download_url( active_model.hugging_face_repo, active_model.file_name )
@@ -644,6 +655,9 @@ export default function ModelSelectPage() {
         set_selected_model_id( model_id )
     }
 
+    const winner_label = model =>
+        model.tpn_competition ? `${ model.tpn_competition } winner` : `TPN winner`
+
     const select_with_keyboard = ( event, model_id ) => {
         if( ![ `Enter`, ` ` ].includes( event.key ) ) return
         event.preventDefault()
@@ -678,10 +692,10 @@ export default function ModelSelectPage() {
     }
 
     // Alternatives are the remaining TPN winner variants for the same showcase flow.
-    const alternative_models = catalog_models.filter( model => model.id !== active_model?.id )
+    const alternative_models = []
 
     // Legacy recommendation cards stay out of the TPN showcase.
-    const card_count = active_model ? 1 : 0
+    const card_count = catalog_models.length
     const show_card_row = false
 
     return <Container>
@@ -847,26 +861,54 @@ export default function ModelSelectPage() {
 
         </CardRow> }
 
+        { catalog_models.length > 0 && <ModelList data-testid="tpn-model-list">
+            { catalog_models.map( model => {
+                const is_selected = !custom_model && model.id === selected_model_id
+
+                return <ModelOption
+                    key={ model.id }
+                    data-testid={ `model-option-${ model.id }` }
+                    $active={ is_selected }
+                    aria-pressed={ is_selected }
+                    onClick={ () => handle_select( model.id ) }
+                >
+                    <OptionInfo>
+                        <OptionName>
+                            <Sparkles size={ 14 } />
+                            { winner_label( model ) }
+                        </OptionName>
+                        <OptionMeta>{ model.hugging_face_repo }</OptionMeta>
+                        <OptionMeta>
+                            { model.quantization || t( 'unknown_quantization', { defaultValue: `Unknown quant` } ) }
+                            { ` - ${ format_file_size( model.file_size_bytes ) }` }
+                            { model.file_name && ` - ${ model.file_name }` }
+                        </OptionMeta>
+                        { model.context_length && <OptionMeta>
+                            { t( 'context_window_label', {
+                                context: model.context_length.toLocaleString(),
+                                defaultValue: `${ model.context_length.toLocaleString() } context`,
+                            } ) }
+                            { is_cached( model.id ) ? ` - ${ t( 'downloaded' ) }` : `` }
+                        </OptionMeta> }
+                    </OptionInfo>
+                    { is_selected && <CheckIcon><Check size={ 16 } /></CheckIcon> }
+                </ModelOption>
+            } ) }
+        </ModelList> }
+
         { !tpn_loading && !tpn_error && card_count === 0 && !custom_model && <MemoryWarning data-testid="no-tpn-winners">
             <AlertTriangle size={ 14 } />
             { t( 'no_tpn_winners', { defaultValue: `No TPN winner models found yet.` } ) }
         </MemoryWarning> }
 
-        { /* ── Single-card fallback (no meaningfully smaller model available) ── */ }
-        { !show_card_row && active_model && <RecommendedCard data-testid={ `model-option-${ active_model.id }` }>
+        { /* Custom model preview */ }
+        { custom_model && <RecommendedCard data-testid={ `model-option-${ active_model.id }` }>
             <RecommendedBadge>
                 <Sparkles size={ 14 } />
-                { active_model.is_tpn_winner
-                    ? t( 'tpn_winner_badge', {
-                        competition: active_model.tpn_competition,
-                        defaultValue: `${ active_model.tpn_competition } winner`,
-                    } )
-                    : t( 'custom_hf_model' ) }
+                { t( 'custom_hf_model' ) }
             </RecommendedBadge>
             <RecommendedName>
-                { active_model.is_tpn_winner && active_model.hugging_face_repo
-                    ? active_model.hugging_face_repo
-                    : active_model.name }
+                { active_model.name }
             </RecommendedName>
             <RecommendedMeta>
                 { active_model.quantization || t( 'unknown_quantization', { defaultValue: `Unknown quant` } ) }
@@ -880,19 +922,16 @@ export default function ModelSelectPage() {
                 } ) }
             </RecommendedMeta> }
             { is_cached( active_model.id ) && <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge> }
-            { !active_model.is_tpn_winner && !is_cached( active_model.id ) &&
-                <DownloadEstimate>{ download_estimate( active_model ) }</DownloadEstimate> }
-            { !active_model.is_tpn_winner && <>
-                <CardDetailsToggle onClick={ () => toggle_details( active_model.id ) }>
-                    { t( 'show_details' ) } { details_open[ active_model.id ] ? <ChevronUp size={ 12 } /> : <ChevronDown size={ 12 } /> }
-                </CardDetailsToggle>
-                <CardDetails $open={ !!details_open[ active_model.id ] }>
-                    { active_model.name } — { format_file_size( active_model.file_size_bytes ) }
-                    { active_model.quantization && ` — ${ active_model.quantization }` }
-                    { active_model.tpn_author && ` — ${ active_model.tpn_author }` }
-                    { active_model.benchmarks && <BenchmarkRow benchmarks={ active_model.benchmarks } /> }
-                </CardDetails>
-            </> }
+            { !is_cached( active_model.id ) && <DownloadEstimate>{ download_estimate( active_model ) }</DownloadEstimate> }
+            <CardDetailsToggle onClick={ () => toggle_details( active_model.id ) }>
+                { t( 'show_details' ) } { details_open[ active_model.id ] ? <ChevronUp size={ 12 } /> : <ChevronDown size={ 12 } /> }
+            </CardDetailsToggle>
+            <CardDetails $open={ !!details_open[ active_model.id ] }>
+                { active_model.name } — { format_file_size( active_model.file_size_bytes ) }
+                { active_model.quantization && ` — ${ active_model.quantization }` }
+                { active_model.tpn_author && ` — ${ active_model.tpn_author }` }
+                { active_model.benchmarks && <BenchmarkRow benchmarks={ active_model.benchmarks } /> }
+            </CardDetails>
         </RecommendedCard> }
 
         { /* All alternatives in one list — within the local models section */ }
@@ -987,7 +1026,9 @@ export default function ModelSelectPage() {
             onClick={ handle_download }
             disabled={ !active_model || !can_fit_in_memory( active_model, max_model_bytes ) }
         >
-            { active_is_cached ? t( 'start_chatting' ) : t( 'download_and_start' ) } <ArrowRight size={ 18 } />
+            { active_model
+                ? active_is_cached ? t( 'start_chatting' ) : t( 'download_and_start' )
+                : t( 'select_model_to_continue', { defaultValue: `Select a model` } ) } <ArrowRight size={ 18 } />
         </DownloadButton>
 
         <StepIndicator data-testid="step-indicator">
