@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -6,11 +6,9 @@ import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, Loa
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
-import { MODEL_CATALOG, select_model_options, format_file_size, can_fit_in_memory, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
-import {
-    BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
-} from '../../utils/device_detection'
+import { format_file_size, can_fit_in_memory, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
 import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
+import { resolve_tpn_winner_models } from '../../utils/tpn_winner_models'
 import { storage_key } from '../../utils/branding'
 import { format_download_estimate } from '../../utils/network_speed'
 
@@ -220,6 +218,20 @@ const RecommendedBadge = styled.div`
     margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
 `
 
+const RecommendedName = styled.div`
+    font-size: 1rem;
+    font-weight: 600;
+    color: ${ ( { theme } ) => theme.colors.text };
+    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
+`
+
+const RecommendedMeta = styled.div`
+    font-size: 0.85rem;
+    color: ${ ( { theme } ) => theme.colors.text_secondary };
+    text-align: center;
+    line-height: 1.45;
+`
+
 // ─── Shared UI components ────────────────────────────────────────────────────────
 
 const DownloadButton = styled.button`
@@ -345,6 +357,8 @@ const StepLine = styled.div`
 const MemoryWarning = styled.div`
     display: flex;
     align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: ${ ( { theme } ) => theme.spacing.xs };
     font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.warning || `#c49660` };
@@ -378,6 +392,7 @@ const CustomModelSection = styled.div`
     padding-top: ${ ( { theme } ) => theme.spacing.md };
     border-top: 1px solid ${ ( { theme } ) => theme.colors.border };
     width: 100%;
+    max-width: 420px;
 `
 
 const CustomModelLabel = styled.div`
@@ -421,6 +436,15 @@ const LoadButton = styled.button`
 
     &:hover:not(:disabled) { background: ${ ( { theme } ) => theme.colors.accent }; color: white; }
     &:disabled { opacity: 0.5; cursor: not-allowed; }
+`
+
+const InlineActionButton = styled.button`
+    color: ${ ( { theme } ) => theme.colors.accent };
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-height: 1.5rem;
+
+    &:hover { text-decoration: underline; }
 `
 
 const CustomModelStatus = styled.div`
@@ -507,33 +531,50 @@ export default function ModelSelectPage() {
     // Device memory budget and cached model detection
     const { capabilities, max_model_bytes, is_detecting } = use_device_capabilities()
     const { cached_models } = use_model_manager()
+    const [ tpn_models, set_tpn_models ] = useState( [] )
+    const [ tpn_loading, set_tpn_loading ] = useState( true )
+    const [ tpn_error, set_tpn_error ] = useState( null )
 
     const is_cached = ( model_id ) =>
         cached_models.some( m => m.id === model_id )
 
-    // Automatic browser picks stay conservative even when Chromium reports the
-    // host's full RAM. Larger, receipt-backed models remain explicit choices.
-    const automatic_model_budget = capabilities?.runtime === `browser`
-        ? Math.min( max_model_bytes, BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
-        : max_model_bytes
+    const load_tpn_models = useCallback( async () => {
 
-    // Select smarter/faster/uncensored/vision options based on device memory
-    const { smarter, faster, uncensored, vision } = useMemo(
-        () => select_model_options( automatic_model_budget ),
-        [ automatic_model_budget ],
-    )
+        set_tpn_loading( true )
+        set_tpn_error( null )
 
-    // All catalog models for the alternatives list, sorted: fits-in-memory first → params desc
+        try {
+            const models = await resolve_tpn_winner_models()
+            set_tpn_models( models )
+        } catch ( err ) {
+            set_tpn_models( [] )
+            set_tpn_error( err.message || `Could not load TPN winners.` )
+        } finally {
+            set_tpn_loading( false )
+        }
+
+    }, [] )
+
+    useEffect( () => {
+        load_tpn_models()
+    }, [ load_tpn_models ] )
+
+    // TPN variants are the only built-in choices. Custom Hugging Face models stay available.
     const catalog_models = useMemo( () => {
 
-        return [ ...MODEL_CATALOG ]
-            .filter( model => !model.cloud_only )
-            .filter( model => can_fit_in_memory( model, max_model_bytes ) )
-            .sort( ( a, b ) => quality_score( b ) - quality_score( a ) || b.bpw - a.bpw )
+        return [ ...tpn_models ].sort( ( a, b ) =>
+            String( b.tpn_competition || `` ).localeCompare( String( a.tpn_competition || `` ) )
+            || a.file_size_bytes - b.file_size_bytes
+        )
 
-    }, [ max_model_bytes ] )
+    }, [ tpn_models ] )
 
-    // Track user selection — defaults to the smarter option
+    const smarter = catalog_models[ 0 ] || null
+    const faster = null
+    const uncensored = null
+    const vision = null
+
+    // Track user selection — defaults to the latest TPN winner variant
     const [ selected_model_id, set_selected_model_id ] = useState( null )
 
     // Per-card "show details" toggle
@@ -546,7 +587,7 @@ export default function ModelSelectPage() {
     const [ custom_loading, set_custom_loading ] = useState( false )
     const [ custom_error, set_custom_error ] = useState( null )
 
-    // Resolve the active model — custom > user pick > smarter default
+    // Resolve the active model — custom > user pick > latest TPN winner default
     const active_model = custom_model
         ? custom_model
         : selected_model_id
@@ -636,22 +677,12 @@ export default function ModelSelectPage() {
 
     }
 
-    // Alternatives exclude all models shown as recommendation cards
-    const shown_ids = new Set( [ smarter?.id, faster?.id, uncensored?.id, vision?.id ].filter( Boolean ) )
-    const alternative_models = catalog_models.filter( model => {
-        if( shown_ids.has( model.id ) ) return false
+    // Alternatives are the remaining TPN winner variants for the same showcase flow.
+    const alternative_models = catalog_models.filter( model => model.id !== active_model?.id )
 
-        // Below the automatic ceiling, existing catalog compatibility rules
-        // apply. Above it, an exact wllama64 inference receipt is mandatory.
-        const needs_browser_receipt = capabilities?.runtime === `browser`
-            && estimate_model_memory( model ) > BROWSER_AUTOMATIC_MODEL_CEILING_BYTES
-
-        return !needs_browser_receipt || model.browser_verified === true
-    } )
-
-    // Card row when we have at least 2 options to compare
-    const card_count = [ smarter, faster, uncensored, vision ].filter( Boolean ).length
-    const show_card_row = card_count >= 2
+    // Legacy recommendation cards stay out of the TPN showcase.
+    const card_count = active_model ? 1 : 0
+    const show_card_row = false
 
     return <Container>
 
@@ -659,19 +690,32 @@ export default function ModelSelectPage() {
 
         { /* ── Local Models section ── */ }
         <SectionHeader>
-            <SectionTitle>{ t( 'local_models_section' ) }</SectionTitle>
-            <SectionSubtitle>{ t( 'local_models_subtitle' ) }</SectionSubtitle>
+            <SectionTitle>{ t( 'tpn_winner_models_section', { defaultValue: `TPN winner models` } ) }</SectionTitle>
+            <SectionSubtitle>
+                { t( 'tpn_winner_models_subtitle', {
+                    defaultValue: `Winners are discovered from tpnlabs Hugging Face collections.`,
+                } ) }
+            </SectionSubtitle>
         </SectionHeader>
 
         <Subtitle>
-            { card_count >= 4
-                ? t( 'subtitle_four_cards' )
-                : card_count >= 3
-                    ? t( 'subtitle_three_cards' )
-                    : show_card_row
-                        ? t( 'subtitle_two_cards' )
-                        : t( 'subtitle_single_card' ) }
+            { t( 'tpn_winner_subtitle', {
+                defaultValue: `Download winning TPN competition models from Hugging Face. All model weights stay local on your device.`,
+            } ) }
         </Subtitle>
+
+        { tpn_loading && <MemoryWarning data-testid="tpn-models-loading">
+            <Spinner size={ 14 } />
+            { t( 'loading_tpn_winners', { defaultValue: `Loading TPN winners...` } ) }
+        </MemoryWarning> }
+
+        { !tpn_loading && tpn_error && <MemoryWarning data-testid="tpn-models-error">
+            <AlertTriangle size={ 14 } />
+            { t( 'tpn_winners_failed', { defaultValue: `Could not load TPN winners.` } ) }
+            <InlineActionButton type="button" onClick={ load_tpn_models }>
+                { t( 'common:retry' ) }
+            </InlineActionButton>
+        </MemoryWarning> }
 
         { /* ── Low free RAM warning (Electron only) ── */ }
         { low_memory && <LowMemoryWarning>
@@ -803,28 +847,52 @@ export default function ModelSelectPage() {
 
         </CardRow> }
 
-        { !is_detecting && card_count === 0 && !custom_model && <MemoryWarning data-testid="no-fitting-local-model">
+        { !tpn_loading && !tpn_error && card_count === 0 && !custom_model && <MemoryWarning data-testid="no-tpn-winners">
             <AlertTriangle size={ 14 } />
-            { t( 'no_local_model_fits' ) }
+            { t( 'no_tpn_winners', { defaultValue: `No TPN winner models found yet.` } ) }
         </MemoryWarning> }
 
         { /* ── Single-card fallback (no meaningfully smaller model available) ── */ }
         { !show_card_row && active_model && <RecommendedCard data-testid={ `model-option-${ active_model.id }` }>
             <RecommendedBadge>
                 <Sparkles size={ 14 } />
-                { custom_model ? t( 'custom_hf_model' ) : t( 'recommended_for_device' ) }
+                { active_model.is_tpn_winner
+                    ? t( 'tpn_winner_badge', {
+                        competition: active_model.tpn_competition,
+                        defaultValue: `${ active_model.tpn_competition } winner`,
+                    } )
+                    : t( 'custom_hf_model' ) }
             </RecommendedBadge>
-            { is_cached( active_model.id )
-                ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-                : <DownloadEstimate>{ download_estimate( active_model ) }</DownloadEstimate> }
-            <CardDetailsToggle onClick={ () => toggle_details( active_model.id ) }>
-                { t( 'show_details' ) } { details_open[ active_model.id ] ? <ChevronUp size={ 12 } /> : <ChevronDown size={ 12 } /> }
-            </CardDetailsToggle>
-            <CardDetails $open={ !!details_open[ active_model.id ] }>
-                { active_model.name } — { format_file_size( active_model.file_size_bytes ) }
-                { active_model.quantization && ` — ${ active_model.quantization }` }
-                { active_model.benchmarks && <BenchmarkRow benchmarks={ active_model.benchmarks } /> }
-            </CardDetails>
+            <RecommendedName>
+                { active_model.is_tpn_winner && active_model.hugging_face_repo
+                    ? active_model.hugging_face_repo
+                    : active_model.name }
+            </RecommendedName>
+            <RecommendedMeta>
+                { active_model.quantization || t( 'unknown_quantization', { defaultValue: `Unknown quant` } ) }
+                { ` - ${ format_file_size( active_model.file_size_bytes ) }` }
+                { active_model.file_name && ` - ${ active_model.file_name }` }
+            </RecommendedMeta>
+            { active_model.context_length && <RecommendedMeta>
+                { t( 'context_window_label', {
+                    context: active_model.context_length.toLocaleString(),
+                    defaultValue: `${ active_model.context_length.toLocaleString() } context`,
+                } ) }
+            </RecommendedMeta> }
+            { is_cached( active_model.id ) && <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge> }
+            { !active_model.is_tpn_winner && !is_cached( active_model.id ) &&
+                <DownloadEstimate>{ download_estimate( active_model ) }</DownloadEstimate> }
+            { !active_model.is_tpn_winner && <>
+                <CardDetailsToggle onClick={ () => toggle_details( active_model.id ) }>
+                    { t( 'show_details' ) } { details_open[ active_model.id ] ? <ChevronUp size={ 12 } /> : <ChevronDown size={ 12 } /> }
+                </CardDetailsToggle>
+                <CardDetails $open={ !!details_open[ active_model.id ] }>
+                    { active_model.name } — { format_file_size( active_model.file_size_bytes ) }
+                    { active_model.quantization && ` — ${ active_model.quantization }` }
+                    { active_model.tpn_author && ` — ${ active_model.tpn_author }` }
+                    { active_model.benchmarks && <BenchmarkRow benchmarks={ active_model.benchmarks } /> }
+                </CardDetails>
+            </> }
         </RecommendedCard> }
 
         { /* All alternatives in one list — within the local models section */ }
@@ -833,7 +901,7 @@ export default function ModelSelectPage() {
                 data-testid="change-model-toggle"
                 onClick={ () => set_show_alternatives( !show_alternatives ) }
             >
-                { t( 'choose_different_model' ) }
+                { t( 'choose_tpn_variant', { defaultValue: `Choose another TPN winner variant` } ) }
                 { show_alternatives ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
             </ToggleButton>
 
@@ -850,6 +918,7 @@ export default function ModelSelectPage() {
                             <OptionInfo>
                                 <OptionName>
                                     { model.name }
+                                    { model.quantization && ` ${ model.quantization }` }
                                     { model.uncensored && <UncensoredTag>{ t( 'uncensored' ) }</UncensoredTag> }
                                     { model.vision && <VisionTag>{ t( 'vision' ) }</VisionTag> }
                                 </OptionName>
@@ -864,48 +933,48 @@ export default function ModelSelectPage() {
                     } ) }
                 </ModelList>
 
-                { /* Custom HuggingFace model input */ }
-                <CustomModelSection>
-                    <CustomModelLabel>
-                        <Link size={ 14 } />
-                        { t( 'custom_hf_model' ) }
-                    </CustomModelLabel>
-
-                    <CustomModelRow onSubmit={ handle_custom_load }>
-                        <CustomModelInput
-                            data-testid="custom-model-input"
-                            type="text"
-                            placeholder="hf.co/org/repo:Q4_K_M"
-                            value={ custom_url }
-                            onChange={ ( e ) => set_custom_url( e.target.value ) }
-                            disabled={ custom_loading }
-                        />
-                        <LoadButton
-                            data-testid="custom-model-load-btn"
-                            type="submit"
-                            disabled={ custom_loading || !custom_url.trim() }
-                        >
-                            { custom_loading ? t( 'common:loading' ) : t( 'common:load' ) }
-                        </LoadButton>
-                    </CustomModelRow>
-
-                    { /* Status feedback */ }
-                    { custom_loading && <CustomModelStatus>
-                        <Spinner size={ 12 } /> { t( 'common:resolving' ) }
-                    </CustomModelStatus> }
-
-                    { custom_error && <CustomModelStatus $error>
-                        <AlertTriangle size={ 12 } /> { custom_error }
-                    </CustomModelStatus> }
-
-                    { custom_model && !custom_loading && <CustomModelStatus>
-                        <Check size={ 12 } /> { custom_model.name } — { format_file_size( custom_model.file_size_bytes ) } ({ custom_model.quantization })
-                    </CustomModelStatus> }
-
-                </CustomModelSection>
-
             </ExpandPanel>
         </> }
+
+        { /* Custom HuggingFace model input */ }
+        <CustomModelSection>
+            <CustomModelLabel>
+                <Link size={ 14 } />
+                { t( 'custom_hf_model' ) }
+            </CustomModelLabel>
+
+            <CustomModelRow onSubmit={ handle_custom_load }>
+                <CustomModelInput
+                    data-testid="custom-model-input"
+                    type="text"
+                    placeholder="hf.co/org/repo:Q4_K_M"
+                    value={ custom_url }
+                    onChange={ ( e ) => set_custom_url( e.target.value ) }
+                    disabled={ custom_loading }
+                />
+                <LoadButton
+                    data-testid="custom-model-load-btn"
+                    type="submit"
+                    disabled={ custom_loading || !custom_url.trim() }
+                >
+                    { custom_loading ? t( 'common:loading' ) : t( 'common:load' ) }
+                </LoadButton>
+            </CustomModelRow>
+
+            { /* Status feedback */ }
+            { custom_loading && <CustomModelStatus>
+                <Spinner size={ 12 } /> { t( 'common:resolving' ) }
+            </CustomModelStatus> }
+
+            { custom_error && <CustomModelStatus $error>
+                <AlertTriangle size={ 12 } /> { custom_error }
+            </CustomModelStatus> }
+
+            { custom_model && !custom_loading && <CustomModelStatus>
+                <Check size={ 12 } /> { custom_model.name } — { format_file_size( custom_model.file_size_bytes ) } ({ custom_model.quantization })
+            </CustomModelStatus> }
+
+        </CustomModelSection>
 
         { active_model && !can_fit_in_memory( active_model, max_model_bytes ) && <MemoryWarning>
             <AlertTriangle size={ 14 } />
