@@ -86,12 +86,10 @@ const Body = styled.div`
  * @param {Object} props
  * @param {boolean} props.is_open - Whether the modal is open
  * @param {Function} props.on_close - Handler for closing the modal
- * @param {string} props.theme_preference - Current theme preference
- * @param {Function} props.on_theme_change - Handler for theme changes
  * @param {Function} [props.on_model_switch] - Handler for switching models
  * @returns {JSX.Element|null}
  */
-export default function SettingsModal( { is_open, on_close, theme_preference, on_theme_change, on_model_switch } ) {
+export default function SettingsModal( { is_open, on_close, on_model_switch } ) {
 
     const [ active_tab, set_active_tab ] = useState( `basic` )
     const { settings, update_setting } = use_settings()
@@ -147,8 +145,6 @@ export default function SettingsModal( { is_open, on_close, theme_preference, on
             <Body>
                 { active_tab === `basic` &&
                     <BasicSettings
-                        theme_preference={ theme_preference }
-                        on_theme_change={ on_theme_change }
                         system_prompt={ settings.system_prompt }
                         on_system_prompt_change={ ( v ) => update_setting( `system_prompt`, v ) }
                     /> }

@@ -11,6 +11,7 @@ import WakingUpIndicator from '../atoms/WakingUpIndicator'
 import GenerationStats from '../atoms/GenerationStats'
 import SlowDeviceWarning from '../atoms/SlowDeviceWarning'
 import MessageActions from './MessageActions'
+import { render_emoji_text } from '../../utils/emoji_text'
 
 
 /**
@@ -325,6 +326,8 @@ const MessageBubble = memo( ( {
     const { thinking, response, is_thinking } = is_user
         ? { thinking: null, response: message.content, is_thinking: false }
         : parse_thinking( message.content, is_streaming )
+    const display_thinking = render_emoji_text( thinking )
+    const display_response = render_emoji_text( response )
 
     // Count lines to decide whether truncation is needed
     const thinking_lines = thinking ? thinking.split( `\n` ).length : 0
@@ -398,7 +401,7 @@ const MessageBubble = memo( ( {
                         $expanded={ thinking_expanded }
                         data-testid="thinking-content"
                     >
-                        { thinking }
+                        { display_thinking }
                     </ThinkingWindow>
                     { needs_truncation && !thinking_expanded &&
                         <ExpandButton onClick={ () => set_thinking_expanded( true ) }>
@@ -422,18 +425,18 @@ const MessageBubble = memo( ( {
                     </ThinkingToggle>
                     <ThinkingPanel $expanded={ show_thinking }>
                         <ThinkingContent data-testid="thinking-content">
-                            { thinking }
+                            { display_thinking }
                         </ThinkingContent>
                     </ThinkingPanel>
                 </> }
 
                 { /* Main response content */ }
-                { response && <ReactMarkdown
+                { display_response && <ReactMarkdown
                     remarkPlugins={ [ remarkGfm ] }
                     rehypePlugins={ [ rehypeHighlight ] }
                     components={ { pre: CodeBlock } }
                 >
-                    { response }
+                    { display_response }
                 </ReactMarkdown> }
 
                 { /* Streaming indicator — waking up before first token, cursor after */ }

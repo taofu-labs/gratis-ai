@@ -93,32 +93,39 @@ export default function GetAppPage() {
 
     const navigate = useNavigate()
     const { t } = useTranslation( `pages` )
+    const title = t( `desktop_in_works_title`, {
+        defaultValue: `Desktop app in the works`,
+    } )
+    const description = t( `desktop_in_works_description`, {
+        name: DISPLAY_NAME,
+        defaultValue: `${ DISPLAY_NAME } desktop builds are being prepared. For now, the browser version keeps running models locally on your device.`,
+    } )
 
     return <Container>
         <Panel>
             <BrandMark size="3.25rem" />
             <Eyebrow>True Performance Network</Eyebrow>
-            <Title>{ t( `desktop_in_works_title` ) }</Title>
-            <Tagline>{ t( `desktop_in_works_description`, { name: DISPLAY_NAME } ) }</Tagline>
+            <Title>{ title }</Title>
+            <Tagline>{ description }</Tagline>
 
             <FeatureRow>
                 <Feature>
                     <IconWrap><Zap size={ 18 } /></IconWrap>
-                    <span>{ t( `desktop_in_works_speed` ) }</span>
+                    <span>{ t( `desktop_in_works_speed`, { defaultValue: `More memory headroom for larger models` } ) }</span>
                 </Feature>
                 <Feature>
                     <IconWrap><ShieldCheck size={ 18 } /></IconWrap>
-                    <span>{ t( `desktop_in_works_privacy` ) }</span>
+                    <span>{ t( `desktop_in_works_privacy`, { defaultValue: `Same local-first privacy model` } ) }</span>
                 </Feature>
                 <Feature>
                     <IconWrap><Laptop size={ 18 } /></IconWrap>
-                    <span>{ t( `desktop_in_works_models` ) }</span>
+                    <span>{ t( `desktop_in_works_models`, { defaultValue: `Built for TPN winner models` } ) }</span>
                 </Feature>
             </FeatureRow>
 
             <BackButton onClick={ () => navigate( `/chat` ) }>
                 <ArrowLeft size={ 16 } />
-                { t( `or_continue_browser` ) }
+                { t( `or_continue_browser`, { defaultValue: `Continue in your browser` } ) }
             </BackButton>
         </Panel>
     </Container>

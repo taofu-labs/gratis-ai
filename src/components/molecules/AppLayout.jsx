@@ -34,9 +34,6 @@ const ContentArea = styled.main`
  * Shell layout wrapping sidebar + content with top bar
  * @param {Object} props
  * @param {React.ReactNode} props.children - Page content
- * @param {string} props.theme_preference - Current theme preference
- * @param {string} props.theme_mode - Resolved theme mode
- * @param {Function} props.on_theme_toggle - Handler for theme cycling
  * @param {Function} props.on_new_chat - Handler for new chat creation
  * @param {Array} props.conversations - Array of conversation objects for sidebar
  * @param {Function} props.on_export - Handler for exporting a conversation
@@ -49,7 +46,7 @@ const ContentArea = styled.main`
  * @returns {JSX.Element}
  */
 export default function AppLayout( {
-    children, theme_preference, theme_mode, on_theme_toggle, on_new_chat,
+    children, on_new_chat,
     conversations, on_export, on_delete, on_delete_all,
     cached_models, active_model_id, is_model_switching, on_model_switch,
     on_models_purged,
@@ -95,9 +92,6 @@ export default function AppLayout( {
     return <LayoutContainer>
 
         <TopBar
-            theme_preference={ theme_preference }
-            theme_mode={ theme_mode }
-            on_theme_toggle={ on_theme_toggle }
             on_settings_open={ () => set_settings_open( true ) }
             sidebar_collapsed={ sidebar_collapsed }
             on_toggle_sidebar={ toggle_sidebar }
@@ -146,8 +140,6 @@ export default function AppLayout( {
         <SettingsModal
             is_open={ settings_open }
             on_close={ close_settings }
-            theme_preference={ theme_preference }
-            on_theme_change={ on_theme_toggle }
             on_model_switch={ on_model_switch }
         />
 

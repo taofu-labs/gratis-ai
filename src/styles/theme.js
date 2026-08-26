@@ -26,34 +26,6 @@ const shared = {
     },
 }
 
-// Light palette — reversed, restrained TPN palette
-const light_colors = {
-    background: `#F4F5F3`,
-    surface: `#FFFFFF`,
-    surface_hover: `#F0F1EF`,
-    sidebar: `#ECEDEA`,
-    primary: `#101112`,
-    primary_hover: `#24272C`,
-    accent: `#FF5A1F`,
-    accent_hover: `#FF8A57`,
-    accent_ink: `#101112`,
-    text: `#101112`,
-    text_secondary: `#3F4348`,
-    text_muted: `#6A6F76`,
-    user_bubble: `#FF5A1F`,
-    assistant_bubble: `#FFFFFF`,
-    border: `#D4D7D2`,
-    border_subtle: `#E7E9E6`,
-    border_control: `#C8CCD1`,
-    error: `#B85C5C`,
-    success: `#2F8F57`,
-    warning: `#A56F2B`,
-    info: `#426B8F`,
-    input_background: `#FFFFFF`,
-    code_background: `#ECEDEA`,
-    modal_overlay: `rgba( 0, 0, 0, 0.4 )`,
-}
-
 // Dark palette — TPN brand canvas
 const dark_colors = {
     background: `#0F1011`,
@@ -83,4 +55,3 @@ const dark_colors = {
 }
 
 export const dark_theme = { ...shared, colors: dark_colors, mode: `dark` }
-export const light_theme = { ...shared, colors: light_colors, mode: `light` }

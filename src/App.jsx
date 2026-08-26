@@ -27,7 +27,7 @@ const router_future = { v7_startTransition: true, v7_relativeSplatPath: true }
  */
 export default function App() {
 
-    const { theme, theme_preference, set_theme_preference } = use_theme()
+    const { theme } = use_theme()
 
     // Sync language from Electron system locale on first load
     useEffect( () => {
@@ -53,11 +53,7 @@ export default function App() {
             <Router future={ router_future }>
                 <QueryParamProvider adapter={ ReactRouter6Adapter }>
                     <DesktopAppBanner />
-                    <Routes
-                        theme_preference={ theme_preference }
-                        theme_mode={ theme.mode }
-                        on_theme_toggle={ set_theme_preference }
-                    />
+                    <Routes />
                     <Toaster
                         position="bottom-center"
                         toastOptions={ {

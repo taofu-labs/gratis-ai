@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { Sun, Moon, Monitor, Settings, PanelLeft, ArrowLeftRight } from 'lucide-react'
+import { Settings, PanelLeft, ArrowLeftRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ModelSelector from './ModelSelector'
@@ -74,27 +74,9 @@ const ChangeModelLabel = styled.span`
     }
 `
 
-// Cycle: system -> light -> dark -> system
-const CYCLE = [ `system`, `light`, `dark` ]
-
 /**
- * Returns the icon component matching the current theme state
- * @param {string} preference - Theme preference value
- * @param {string} mode - Resolved theme mode
- * @returns {JSX.Element}
- */
-const get_theme_icon = ( preference, mode ) => {
-    if( preference === `system` ) return <Monitor size={ 18 } />
-    if( mode === `light` ) return <Sun size={ 18 } />
-    return <Moon size={ 18 } />
-}
-
-/**
- * Top navigation bar with model selector, theme toggle, and settings
+ * Top navigation bar with model selector and settings
  * @param {Object} props
- * @param {string} props.theme_preference - Current theme preference
- * @param {string} props.theme_mode - Resolved theme mode
- * @param {Function} props.on_theme_toggle - Handler for theme cycling
  * @param {Function} props.on_settings_open - Handler for opening settings
  * @param {boolean} props.sidebar_collapsed - Whether sidebar is currently collapsed
  * @param {Function} props.on_toggle_sidebar - Handler for toggling sidebar visibility
@@ -105,9 +87,6 @@ const get_theme_icon = ( preference, mode ) => {
  * @returns {JSX.Element}
  */
 export default function TopBar( {
-    theme_preference,
-    theme_mode,
-    on_theme_toggle,
     on_settings_open,
     sidebar_collapsed,
     on_toggle_sidebar,
@@ -120,12 +99,6 @@ export default function TopBar( {
 
     const navigate = useNavigate()
     const { t } = useTranslation( `pages` )
-
-    const cycle_theme = () => {
-        const current_index = CYCLE.indexOf( theme_preference )
-        const next = CYCLE[ ( current_index + 1 ) % CYCLE.length ]
-        on_theme_toggle( next )
-    }
 
     return <Bar>
 
@@ -158,18 +131,9 @@ export default function TopBar( {
             </ChangeModelButton>
         </LeftSection>
 
-        { /* Right: language + theme toggle + settings */ }
+        { /* Right: language + settings */ }
         <RightSection>
             <LanguageSelector />
-
-            <IconButton
-                data-testid="theme-toggle"
-                onClick={ cycle_theme }
-                title={ t( `theme_label`, { theme: theme_preference.charAt( 0 ).toUpperCase() + theme_preference.slice( 1 ) } ) }
-                aria-label={ t( `common:aria_toggle_theme` ) }
-            >
-                { get_theme_icon( theme_preference, theme_mode ) }
-            </IconButton>
 
             <IconButton
                 data-testid="settings-btn"

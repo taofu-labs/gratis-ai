@@ -44,6 +44,11 @@
     "update_quit_and_reopen": "Quit and Reopen",
 
     "get_app_tagline": "Download the desktop app for faster, fully-offline AI powered by your own hardware.",
+    "desktop_in_works_title": "Desktop app in the works",
+    "desktop_in_works_description": "{{name}} desktop builds are being prepared. For now, the browser version keeps running models locally on your device.",
+    "desktop_in_works_speed": "More memory headroom for larger models",
+    "desktop_in_works_privacy": "Same local-first privacy model",
+    "desktop_in_works_models": "Built for TPN winner models",
     "download_for": "Download for {{platform}}",
     "not_configured": "Not configured",
     "intel_mac_prompt": "Running an Intel Mac?",

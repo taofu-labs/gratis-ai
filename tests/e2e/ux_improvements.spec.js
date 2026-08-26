@@ -1,5 +1,46 @@
 import { test, expect } from '@playwright/test'
 
+const TPN_MODEL_FILE = `Qwen3.5-4B-Q4_K_M.gguf`
+const TPN_MODEL_ID = `tpn-001-winner-qwen3-5-4b-q4-k-m`
+
+const mock_tpn_winners = async page => {
+
+    await page.route( /\/api\/collections\?owner=tpnlabs&limit=50$/, route => route.fulfill( {
+        contentType: `application/json`,
+        json: [ {
+            title: `TPN-001`,
+            slug: `tpnlabs/tpn-001`,
+            shareUrl: `https://huggingface.co/collections/tpnlabs/tpn-001`,
+            items: [ {
+                type: `model`,
+                id: `tpnlabs/tpn-001-winner`,
+                author: `winner`,
+                numParameters: 4_000_000_000,
+                note: { text: `winner` },
+            } ],
+        } ],
+    } ) )
+
+    await page.route( /\/api\/models\/tpnlabs\/tpn-001-winner\?blobs=false$/, route => route.fulfill( {
+        contentType: `application/json`,
+        json: {
+            numParameters: 4_000_000_000,
+            gguf: {
+                architecture: `qwen3`,
+                context_length: 4096,
+            },
+            cardData: {
+                license: `apache-2.0`,
+            },
+            siblings: [ {
+                rfilename: TPN_MODEL_FILE,
+                size: 420_000_000,
+            } ],
+        },
+    } ) )
+
+}
+
 test.describe( `UX Improvements - Progressive Disclosure`, () => {
 
     // ── Welcome Page ──────────────────────────────────────────────────
@@ -27,23 +68,38 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( toggle ).toContainText( `Hide` )
     } )
 
-    // ── Model Select Page ─────────────────────────────────────────────
+    test( `get app page shows in-progress desktop copy`, async ( { page } ) => {
+        await page.goto( `/get-app` )
 
-    test( `model select auto-recommends a model`, async ( { page } ) => {
-        await page.goto( `/select-model` )
-        await expect( page.getByText( `Pick a model` ) ).toBeVisible()
-        // Should have a confirm button
-        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: `Desktop app in the works` } ) ).toBeVisible()
+        await expect( page.getByText( /desktop builds are being prepared/i ) ).toBeVisible()
+        await expect( page.getByText( `Continue in your browser` ) ).toBeVisible()
+        await expect( page.getByText( `Get more power with the same privacy — try the desktop app` ) ).toHaveCount( 0 )
+        await expect( page.locator( `body` ) ).not.toContainText( `desktop_in_works_title` )
     } )
 
-    test( `model select hides alternatives behind toggle`, async ( { page } ) => {
+    // ── Model Select Page ─────────────────────────────────────────────
+
+    test( `model select shows TPN winner models and custom loader`, async ( { page } ) => {
+        await mock_tpn_winners( page )
         await page.goto( `/select-model` )
-        const toggle = page.getByTestId( `change-model-toggle` )
-        await expect( toggle ).toBeVisible()
-        await expect( toggle ).toContainText( `Choose a different local model` )
+        await expect( page.getByText( `Pick a model` ) ).toBeVisible()
+        await expect( page.getByTestId( `tpn-model-list` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-option-${ TPN_MODEL_ID }` ) ).toBeVisible()
+        await expect( page.getByTestId( `custom-model-input` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeDisabled()
+    } )
+
+    test( `model select enables continue after choosing a TPN winner`, async ( { page } ) => {
+        await mock_tpn_winners( page )
+        await page.goto( `/select-model` )
+        await page.getByTestId( `model-option-${ TPN_MODEL_ID }` ).click()
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
     } )
 
     test( `large browser alternatives obey the current device memory budget`, async ( { page } ) => {
+        await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         const toggle = page.getByTestId( `change-model-toggle` )
         if( await toggle.isVisible() ) await toggle.click()
@@ -53,12 +109,14 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
     } )
 
     test( `model select shows step progress`, async ( { page } ) => {
+        await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         await expect( page.getByTestId( `step-indicator` ) ).toBeVisible()
     } )
 
-    test( `download estimate samples the real GGUF path with one range`, async ( { page } ) => {
-        await page.route( `https://huggingface.co/**`, route => route.fulfill( {
+    test( `speed probe samples the selected GGUF path with one range`, async ( { page } ) => {
+        await mock_tpn_winners( page )
+        await page.route( /\/resolve\/main\/Qwen3\.5-4B-Q4_K_M\.gguf$/, route => route.fulfill( {
             status: 206,
             headers: {
                 'Access-Control-Allow-Origin': `*`,
@@ -68,12 +126,13 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         } ) )
 
         const request = page.waitForRequest( request =>
-            request.url().includes( `/resolve/main/` ) && !!request.headers().range )
+            request.url().includes( `/resolve/main/${ TPN_MODEL_FILE }` ) && !!request.headers().range )
 
         await page.goto( `/select-model` )
+        await page.getByTestId( `model-option-${ TPN_MODEL_ID }` ).click()
         expect( ( await request ).headers().range ).toMatch( /^bytes=0-\d+$/ )
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
         await expect( page.getByText( `Measuring download speed…` ) ).toHaveCount( 0, { timeout: 10_000 } )
-        await expect( page.getByText( /Initial download takes/ ).first() ).toBeVisible()
     } )
 
     // ── Chat Page ─────────────────────────────────────────────────────
@@ -89,12 +148,12 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
 
     // ── Settings Progressive Disclosure ───────────────────────────────
 
-    test( `settings basic tab is clean (no temperature/tokens)`, async ( { page } ) => {
+    test( `settings basic tab is clean (dark-only, no temperature/tokens)`, async ( { page } ) => {
         await page.goto( `/chat` )
         await page.getByTestId( `settings-btn` ).click()
 
         // Should show friendly labels
-        await expect( page.getByText( `Appearance` ) ).toBeVisible()
+        await expect( page.getByText( `Appearance` ) ).toHaveCount( 0 )
         await expect( page.getByText( `Custom Instructions` ) ).toBeVisible()
 
         // Should NOT show temperature or max tokens (those are advanced now)
@@ -144,11 +203,12 @@ test.describe( `UX Improvements - Mobile & Touch`, () => {
 
     test( `welcome page is usable on mobile`, async ( { page } ) => {
         await page.goto( `/` )
-        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: /gratis/i } ) ).toBeVisible()
         await expect( page.getByTestId( `get-started-btn` ) ).toBeVisible()
     } )
 
     test( `model select page is usable on mobile`, async ( { page } ) => {
+        await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         await expect( page.getByText( `Pick a model` ) ).toBeVisible()
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible()

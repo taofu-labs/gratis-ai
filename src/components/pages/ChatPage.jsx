@@ -154,13 +154,9 @@ const SpinnerIcon = styled.div`
 
 /**
  * Main chat interface page with layout shell
- * @param {Object} props
- * @param {string} props.theme_preference - Current theme preference
- * @param {string} props.theme_mode - Resolved theme mode
- * @param {Function} props.on_theme_toggle - Handler for theme cycling
  * @returns {JSX.Element}
  */
-export default function ChatPage( { theme_preference, theme_mode, on_theme_toggle } ) {
+export default function ChatPage() {
 
     const { id: conversation_id } = useParams()
     const navigate = useNavigate()
@@ -799,9 +795,6 @@ export default function ChatPage( { theme_preference, theme_mode, on_theme_toggl
     const should_center = !has_messages && has_model && !is_loading_model
 
     return <AppLayout
-        theme_preference={ theme_preference }
-        theme_mode={ theme_mode }
-        on_theme_toggle={ on_theme_toggle }
         on_new_chat={ handle_new_chat }
         conversations={ conversations }
         on_export={ handle_export }

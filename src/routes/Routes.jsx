@@ -30,23 +30,16 @@ function LandingPage( props ) {
 
 /**
  * Application route definitions
- * @param {Object} props
- * @param {string} props.theme_preference - Current theme preference
- * @param {string} props.theme_mode - Resolved theme mode
- * @param {Function} props.on_theme_toggle - Handler for theme cycling
  * @returns {JSX.Element}
  */
-export default function Routes( { theme_preference, theme_mode, on_theme_toggle } ) {
-
-    // Shared props passed to pages that use AppLayout
-    const layout_props = { theme_preference, theme_mode, on_theme_toggle }
+export default function Routes() {
 
     return <Suspense fallback={ <div /> }>
         <RouterRoutes>
-            <Route path="/" element={ <LandingPage { ...layout_props } /> } />
+            <Route path="/" element={ <LandingPage /> } />
             <Route path="/select-model" element={ <ModelSelectPage /> } />
             <Route path="/download" element={ <DownloadPage /> } />
-            <Route path="/chat/:id?" element={ <ChatPage { ...layout_props } /> } />
+            <Route path="/chat/:id?" element={ <ChatPage /> } />
             <Route path="/get-app" element={ <GetAppPage /> } />
             <Route path="*" element={ <NotFoundPage /> } />
         </RouterRoutes>

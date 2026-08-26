@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import styled from 'styled-components'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Monitor, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { storage_key } from '../../utils/branding'
@@ -81,9 +81,12 @@ const DismissButton = styled.button`
 export default function DesktopAppBanner() {
 
     const { t } = useTranslation( `pages` )
+    const { pathname } = useLocation()
     const [ dismissed, set_dismissed ] = useState( () =>
         localStorage.getItem( DISMISSED_KEY ) === `true`
     )
+
+    if( pathname === `/get-app` ) return null
 
     // Hide in Electron — native inference means the desktop app is already running
     if( window.electronAPI?.native_inference ) return null

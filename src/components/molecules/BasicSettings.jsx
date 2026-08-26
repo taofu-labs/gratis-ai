@@ -1,5 +1,4 @@
 import styled from 'styled-components'
-import { Sun, Moon, Monitor } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 const Section = styled.div`
@@ -17,30 +16,6 @@ const Description = styled.p`
     font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
     margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
-`
-
-const ThemeToggleGroup = styled.div`
-    display: flex;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-`
-
-const ThemeButton = styled.button`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-    padding: ${ ( { theme } ) => `${ theme.spacing.xs } ${ theme.spacing.md }` };
-    border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    font-size: 0.85rem;
-    font-weight: ${ ( { $active } ) => $active ? `600` : `400` };
-    border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.text : theme.colors.border };
-    background: transparent;
-    color: ${ ( { theme, $active } ) => $active ? theme.colors.text : theme.colors.text_secondary };
-    transition: all 0.15s;
-    min-height: 2.75rem;
-
-    &:hover {
-        border-color: ${ ( { theme } ) => theme.colors.text_secondary };
-    }
 `
 
 const Textarea = styled.textarea`
@@ -81,15 +56,11 @@ const ShortcutKey = styled.code`
 /**
  * Basic settings tab — simple, non-intimidating options only.
  * @param {Object} props
- * @param {string} props.theme_preference - Current theme preference
- * @param {Function} props.on_theme_change - Handler for theme changes
  * @param {string} props.system_prompt - Current system prompt
  * @param {Function} props.on_system_prompt_change - Handler for system prompt changes
  * @returns {JSX.Element}
  */
 export default function BasicSettings( {
-    theme_preference,
-    on_theme_change,
     system_prompt,
     on_system_prompt_change,
 } ) {
@@ -97,32 +68,6 @@ export default function BasicSettings( {
     const { t } = useTranslation( `settings` )
 
     return <>
-
-        { /* Theme */ }
-        <Section>
-            <Label>{ t( `appearance` ) }</Label>
-            <Description>{ t( `appearance_description` ) }</Description>
-            <ThemeToggleGroup>
-                <ThemeButton
-                    $active={ theme_preference === `light` }
-                    onClick={ () => on_theme_change( `light` ) }
-                >
-                    <Sun size={ 14 } /> { t( `theme_light` ) }
-                </ThemeButton>
-                <ThemeButton
-                    $active={ theme_preference === `dark` }
-                    onClick={ () => on_theme_change( `dark` ) }
-                >
-                    <Moon size={ 14 } /> { t( `theme_dark` ) }
-                </ThemeButton>
-                <ThemeButton
-                    $active={ theme_preference === `system` }
-                    onClick={ () => on_theme_change( `system` ) }
-                >
-                    <Monitor size={ 14 } /> { t( `theme_system` ) }
-                </ThemeButton>
-            </ThemeToggleGroup>
-        </Section>
 
         { /* System Prompt */ }
         <Section>

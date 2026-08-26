@@ -173,7 +173,7 @@ const DetailsPanel = styled.div`
  * Designed to be warm and approachable — technical specs hidden behind "details".
  * @returns {JSX.Element}
  */
-export default function WelcomePage( { theme_preference, on_theme_toggle } ) {
+export default function WelcomePage() {
 
     const { t } = useTranslation( 'pages' )
     const navigate = useNavigate()
@@ -261,8 +261,6 @@ export default function WelcomePage( { theme_preference, on_theme_toggle } ) {
         <SettingsModal
             is_open={ settings_open }
             on_close={ () => set_settings_open( false ) }
-            theme_preference={ theme_preference }
-            on_theme_change={ on_theme_toggle }
         />
 
     </PageWrapper>
