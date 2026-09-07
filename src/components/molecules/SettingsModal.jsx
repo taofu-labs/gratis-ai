@@ -156,7 +156,12 @@ export default function SettingsModal( { is_open, on_close, on_model_switch } ) 
                     /> }
 
                 { active_tab === `models` &&
-                    <ModelsSettings on_close={ on_close } on_model_switch={ on_model_switch } /> }
+                    <ModelsSettings
+                        settings={ settings }
+                        on_setting_change={ update_setting }
+                        on_close={ on_close }
+                        on_model_switch={ on_model_switch }
+                    /> }
             </Body>
 
         </Modal>

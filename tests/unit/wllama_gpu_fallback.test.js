@@ -8,7 +8,9 @@ const mocks = vi.hoisted( () => ( {
     fail_benign_inference: false,
     probed: true,
     memory64: true,
+    memory_budget: 4_000_000_000,
     put: vi.fn(),
+    cached_model: null,
 } ) )
 
 vi.mock( `mentie`, () => ( {
@@ -39,6 +41,7 @@ vi.mock( `wllama64`, () => {
     class Wllama {
         constructor() {
             this.loaded = false
+            this.source = null
             this.load_options = null
             mocks.instances.push( this )
         }
@@ -46,7 +49,8 @@ vi.mock( `wllama64`, () => {
         getWorkerResources() {
             return { compat: false }
         }
-        async loadModel( _, options ) {
+        async loadModel( source, options ) {
+            this.source = source
             this.load_options = options
             if( options.n_gpu_layers > 0 && mocks.fail_gpu ) throw new Error( `WebGPU backend failed` )
             if( options.n_gpu_layers === 0 && mocks.fail_cpu ) {
@@ -86,7 +90,7 @@ vi.mock( `wllama64`, () => {
 
 vi.mock( `../../src/stores/db.js`, () => ( {
     get_db: async () => ( {
-        get: async () => ( {
+        get: async () => mocks.cached_model || ( {
             blob: { size: 270_590_880 },
             file_size_bytes: 270_590_880,
         } ),
@@ -105,7 +109,7 @@ vi.mock( `../../src/utils/device_detection.js`, () => ( {
         memory: { device_memory: 8 },
         gpu: { webgpu: true },
     } ),
-    estimate_max_model_bytes: () => 4_000_000_000,
+    estimate_max_model_bytes: () => mocks.memory_budget,
     probe_capabilities_gpu_memory: async capabilities => ( {
         ...capabilities,
         gpu: mocks.probed
@@ -126,7 +130,10 @@ describe( `Wllama WebGPU fallback`, () => {
         mocks.fail_benign_inference = false
         mocks.probed = true
         mocks.memory64 = true
+        mocks.memory_budget = 4_000_000_000
+        mocks.cached_model = null
         mocks.put.mockClear()
+        vi.unstubAllGlobals()
     } )
 
     test( `loads with a positive GPU target when the empirical probe permits it`, async () => {
@@ -135,6 +142,114 @@ describe( `Wllama WebGPU fallback`, () => {
 
         expect( mocks.instances ).toHaveLength( 1 )
         expect( mocks.instances[ 0 ].load_options.n_gpu_layers ).toBeGreaterThan( 0 )
+        expect( provider.is_ready() ).toBe( true )
+    } )
+
+    test( `loads a browser model from a saved file handle`, async () => {
+        const file = { size: 270_590_880 }
+        mocks.cached_model = {
+            file_handle: {
+                queryPermission: vi.fn( async () => `granted` ),
+                getFile: vi.fn( async () => file ),
+            },
+            file_size_bytes: 270_590_880,
+        }
+
+        const provider = new WllamaProvider()
+        await provider.load_model( `smollm2-360m-q4km` )
+
+        expect( mocks.instances ).toHaveLength( 1 )
+        expect( mocks.instances[ 0 ].source ).toEqual( [ file ] )
+        expect( provider.is_ready() ).toBe( true )
+    } )
+
+    test( `uses cached architecture metadata for custom browser models`, async () => {
+        mocks.memory_budget = 5_600_000_000
+        const file = { size: 4_859_552_672 }
+        mocks.cached_model = {
+            id: `custom-tpn002-entry-a`,
+            file_handle: {
+                queryPermission: vi.fn( async () => `granted` ),
+                getFile: vi.fn( async () => file ),
+            },
+            file_size_bytes: 4_859_552_672,
+            family: `qwen35`,
+            parameters: 8_953_803_264,
+            parameters_label: `9B`,
+            context_length: 262_144,
+            layers: 8,
+            block_count: 32,
+            kv_heads: 4,
+            head_dim: 256,
+            reasoning: true,
+            reasoning_enabled: false,
+        }
+
+        const provider = new WllamaProvider()
+        await provider.load_model( `custom-tpn002-entry-a` )
+
+        expect( mocks.instances ).toHaveLength( 1 )
+        expect( mocks.instances[ 0 ].source ).toEqual( [ file ] )
+        expect( mocks.instances[ 0 ].load_options.n_ctx ).toBeGreaterThan( 2048 )
+        expect( mocks.instances[ 0 ].load_options.default_template_kwargs ).toEqual( {
+            enable_thinking: false,
+        } )
+        expect( provider.is_ready() ).toBe( true )
+    } )
+
+    test( `backfills stale custom cache metadata before loading`, async () => {
+        mocks.memory_budget = 5_600_000_000
+        const file = { size: 4_859_552_672 }
+        mocks.cached_model = {
+            id: `custom-tpn002-entry-a`,
+            file_handle: {
+                queryPermission: vi.fn( async () => `granted` ),
+                getFile: vi.fn( async () => file ),
+            },
+            download_url: `https://huggingface.co/tatjr13/tpn002-entry-a/resolve/main/model.gguf`,
+            hugging_face_repo: `tatjr13/tpn002-entry-a`,
+            file_name: `model.gguf`,
+            file_size_bytes: 4_859_552_672,
+            context_length: 4096,
+            quantization: `GGUF`,
+        }
+        vi.stubGlobal( `fetch`, vi.fn( async url => {
+            if( !String( url ).includes( `/api/models/tatjr13/tpn002-entry-a?blobs=true` ) ) {
+                return { ok: false, status: 404 }
+            }
+            return {
+                ok: true,
+                json: async () => ( {
+                    gguf: {
+                        total: 8_953_803_264,
+                        architecture: `qwen35`,
+                        context_length: 262_144,
+                        totalFileSize: 4_859_552_672,
+                    },
+                    siblings: [
+                        {
+                            rfilename: `model.gguf`,
+                            size: 4_859_552_672,
+                            lfs: { size: 4_859_552_672 },
+                        },
+                    ],
+                } ),
+            }
+        } ) )
+
+        const provider = new WllamaProvider()
+        await provider.load_model( `custom-tpn002-entry-a` )
+
+        expect( mocks.instances ).toHaveLength( 1 )
+        expect( mocks.instances[ 0 ].source ).toEqual( [ file ] )
+        expect( mocks.instances[ 0 ].load_options.n_ctx ).toBeGreaterThan( 2048 )
+        expect( mocks.put ).toHaveBeenCalledWith( `models`, expect.objectContaining( {
+            id: `custom-tpn002-entry-a`,
+            layers: 8,
+            kv_heads: 4,
+            head_dim: 256,
+            file_handle: mocks.cached_model.file_handle,
+        } ) )
         expect( provider.is_ready() ).toBe( true )
     } )
 

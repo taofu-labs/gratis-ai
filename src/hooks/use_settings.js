@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { log } from 'mentie'
 import { EVENTS, STORAGE_PREFIX } from '../utils/branding'
+import { HF_TOKEN_SETTING } from '../utils/hf_auth'
 
 // Default values for all settings
 const DEFAULTS = {
@@ -16,9 +17,11 @@ const DEFAULTS = {
     presence_penalty: 0,
     seed: -1,
     stop_sequences: ``,
+    [ HF_TOKEN_SETTING ]: ``,
 }
 
 const PREFIX = STORAGE_PREFIX
+const SENSITIVE_SETTINGS = new Set( [ HF_TOKEN_SETTING ] )
 
 /**
  * Read a setting from localStorage with fallback to default
@@ -29,6 +32,7 @@ const PREFIX = STORAGE_PREFIX
 const read_setting = ( key, default_value ) => {
     const stored = localStorage.getItem( `${ PREFIX }${ key }` )
     if( stored === null ) return default_value
+    if( typeof default_value !== `number` ) return stored
     const num = Number( stored )
     return isNaN( num ) ? stored : num
 }
@@ -64,10 +68,15 @@ export default function use_settings() {
     const update_setting = useCallback( ( key, value ) => {
 
         localStorage.setItem( `${ PREFIX }${ key }`, String( value ) )
-        log.debug( `[settings] ${ key } = ${ value }` )
+        const log_value = SENSITIVE_SETTINGS.has( key ) ? `[hidden]` : value
+        log.debug( `[settings] ${ key } = ${ log_value }` )
         set_settings( ( prev ) => ( { ...prev, [ key ]: value } ) )
         window.dispatchEvent( new CustomEvent( EVENTS.settings_changed, {
-            detail: { key, value },
+            detail: {
+                key,
+                value: SENSITIVE_SETTINGS.has( key ) ? undefined : value,
+                sensitive: SENSITIVE_SETTINGS.has( key ),
+            },
         } ) )
 
     }, [] )
@@ -109,7 +118,9 @@ export default function use_settings() {
                 const setting_key = e.key.slice( PREFIX.length )
                 if( setting_key in DEFAULTS ) {
                     log.debug( `[settings] Cross-tab sync: ${ setting_key }` )
-                    const val = e.newValue === null ? DEFAULTS[ setting_key ] :  isNaN( Number( e.newValue ) ) ? e.newValue : Number( e.newValue )
+                    const val = e.newValue === null
+                        ? DEFAULTS[ setting_key ]
+                        : read_setting( setting_key, DEFAULTS[ setting_key ] )
                     set_settings( ( prev ) => ( { ...prev, [ setting_key ]: val } ) )
                 }
             }
@@ -117,7 +128,10 @@ export default function use_settings() {
 
         const handle_local_change = ( { detail } ) => {
             if( detail?.key && detail.key in DEFAULTS ) {
-                set_settings( ( prev ) => ( { ...prev, [ detail.key ]: detail.value } ) )
+                const value = detail.sensitive
+                    ? read_setting( detail.key, DEFAULTS[ detail.key ] )
+                    : detail.value
+                set_settings( ( prev ) => ( { ...prev, [ detail.key ]: value } ) )
             }
         }
 

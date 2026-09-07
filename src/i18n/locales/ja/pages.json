@@ -73,6 +73,8 @@
     "cloud": "クラウド",
     "local": "ローカル",
 
+    "device_runtime": "ランタイム",
+    "device_model_budget": "モデル読み込み予算",
     "device_gpu": "GPU",
     "device_vram": "利用可能なGPUメモリ",
     "device_ram": "RAM",

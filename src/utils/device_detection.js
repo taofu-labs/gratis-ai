@@ -427,13 +427,16 @@ export const estimate_max_model_bytes = ( capabilities ) => {
         ? MEMORY64_MODEL_CEILING_BYTES
         : WASM32_MODEL_CEILING_BYTES
 
-    // navigator.deviceMemory is rounded and is absent in several browsers.
-    // Some Chromium releases clamp it while others report larger host values,
-    // so treat it as a coarse physical-memory hint, never as free memory.
-    // Unknown devices get a conservative 4 GB assumption.
+    // navigator.deviceMemory is rounded, sometimes absent, and often clamped
+    // below the real machine. Memory64-capable browsers get the same floor as
+    // the automatic recommendation budget so a privacy-clamped signal does not
+    // recreate the old ~2 GiB practical ceiling.
     const device_mem = capabilities?.memory?.device_memory || 4
     const device_fraction = has_memory64 ? 0.7 : 0.6
-    const device_cap = device_mem * device_fraction * 1_000_000_000
+    const device_cap = Math.max(
+        device_mem * device_fraction * 1_000_000_000,
+        has_memory64 ? BROWSER_AUTOMATIC_MODEL_CEILING_BYTES : 0,
+    )
 
     // wasm32 loading still shares practical limits with large JS buffers.
     const heap_limit = capabilities?.memory?.js_heap_limit

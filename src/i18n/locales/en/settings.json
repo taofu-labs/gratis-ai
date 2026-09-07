@@ -66,6 +66,14 @@
     "browse_models": "Browse Models",
     "load_custom_file": "Load Custom File",
 
+    "huggingface_access": "Hugging Face Access",
+    "huggingface_access_description": "Public downloads use Hugging Face's SDK path without a token. Add a read token only for gated models or rate-limited accounts. Stored only on this device.",
+    "show_hf_token": "Show Hugging Face token",
+    "hide_hf_token": "Hide Hugging Face token",
+    "clear_hf_token": "Clear token",
+    "hf_token_saved": "Read token saved locally.",
+    "hf_token_empty": "Public downloads will continue without a token.",
+
     "your_data": "Your Data",
     "your_data_description": "Export your conversations as text files for safekeeping.",
     "export_all_conversations": "Export All Conversations",

@@ -73,6 +73,8 @@
     "cloud": "Cloud",
     "local": "Lokaal",
 
+    "device_runtime": "Runtime",
+    "device_model_budget": "Modellaadbudget",
     "device_gpu": "GPU",
     "device_vram": "Beschikbaar GPU-geheugen",
     "device_ram": "RAM",

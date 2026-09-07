@@ -1,6 +1,8 @@
 import styled from 'styled-components'
 import { Cpu, HardDrive, Monitor } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { estimate_max_model_bytes } from '../../utils/device_detection'
+import { format_file_size } from '../../utils/model_catalog'
 
 const Container = styled.div`
     display: flex;
@@ -38,9 +40,22 @@ export default function DeviceInfo( { capabilities } ) {
 
     if( !capabilities ) return null
 
-    const { gpu, memory, cpu } = capabilities
+    const { gpu, memory, cpu, wasm } = capabilities
+    const model_budget = estimate_max_model_bytes( capabilities )
 
     return <Container data-testid="device-info">
+
+        { /* Browser runtime */ }
+        { capabilities.runtime === `browser` && <InfoCard>
+            <Cpu size={ 14 } />
+            { t( `device_runtime` ) }: <Value>{ wasm?.memory64 ? `Memory64` : `compat` }</Value>
+        </InfoCard> }
+
+        { /* Estimated model-load budget, separate from storage quota. */ }
+        { model_budget > 0 && <InfoCard>
+            <HardDrive size={ 14 } />
+            { t( `device_model_budget` ) }: <Value>{ format_file_size( model_budget ) }</Value>
+        </InfoCard> }
 
         { /* GPU info */ }
         <InfoCard>

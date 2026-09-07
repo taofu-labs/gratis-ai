@@ -2,13 +2,17 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye, HardDrive } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
 import { format_file_size, can_fit_in_memory, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
 import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { resolve_tpn_winner_models } from '../../utils/tpn_winner_models'
+import {
+    choose_external_model_file,
+    should_use_external_model_file,
+} from '../../utils/external_model_files'
 import { storage_key } from '../../utils/branding'
 import { format_download_estimate } from '../../utils/network_speed'
 
@@ -630,7 +634,9 @@ export default function ModelSelectPage() {
     const model_needs = active_model ? estimate_model_memory( active_model ) : 0
     const low_memory = is_electron && free_bytes && model_needs > 0 && free_bytes < model_needs * 1.2
 
-    const handle_download = () => {
+    const active_uses_external_file = active_model && should_use_external_model_file( active_model )
+
+    const handle_download = async () => {
 
         if( !active_model ) return
         if( !can_fit_in_memory( active_model, max_model_bytes ) ) {
@@ -645,7 +651,20 @@ export default function ModelSelectPage() {
             return
         }
 
-        navigate( `/download`, { state: { model: active_model } } )
+        try {
+            const storage_mode = should_use_external_model_file( active_model )
+                ? `external-file`
+                : `opfs`
+
+            if( storage_mode === `external-file` ) await choose_external_model_file( active_model )
+            navigate( `/download`, { state: { model: active_model, storage_mode } } )
+        } catch ( error ) {
+            if( error?.name !== `AbortError` ) {
+                set_custom_error( error.message || t( 'download_storage_failed', {
+                    defaultValue: `Could not prepare local model storage.`,
+                } ) )
+            }
+        }
 
     }
 
@@ -911,6 +930,7 @@ export default function ModelSelectPage() {
                 { active_model.name }
             </RecommendedName>
             <RecommendedMeta>
+                { active_model.parameters_label && active_model.parameters_label !== `Custom` && `${ active_model.parameters_label } - ` }
                 { active_model.quantization || t( 'unknown_quantization', { defaultValue: `Unknown quant` } ) }
                 { ` - ${ format_file_size( active_model.file_size_bytes ) }` }
                 { active_model.file_name && ` - ${ active_model.file_name }` }
@@ -928,6 +948,7 @@ export default function ModelSelectPage() {
             </CardDetailsToggle>
             <CardDetails $open={ !!details_open[ active_model.id ] }>
                 { active_model.name } — { format_file_size( active_model.file_size_bytes ) }
+                { active_model.parameters_label && active_model.parameters_label !== `Custom` && ` — ${ active_model.parameters_label }` }
                 { active_model.quantization && ` — ${ active_model.quantization }` }
                 { active_model.tpn_author && ` — ${ active_model.tpn_author }` }
                 { active_model.benchmarks && <BenchmarkRow benchmarks={ active_model.benchmarks } /> }
@@ -1010,7 +1031,9 @@ export default function ModelSelectPage() {
             </CustomModelStatus> }
 
             { custom_model && !custom_loading && <CustomModelStatus>
-                <Check size={ 12 } /> { custom_model.name } — { format_file_size( custom_model.file_size_bytes ) } ({ custom_model.quantization })
+                <Check size={ 12 } /> { custom_model.name }
+                { custom_model.parameters_label && custom_model.parameters_label !== `Custom` && ` — ${ custom_model.parameters_label }` }
+                { ` — ${ format_file_size( custom_model.file_size_bytes ) } (${ custom_model.quantization })` }
             </CustomModelStatus> }
 
         </CustomModelSection>
@@ -1020,6 +1043,13 @@ export default function ModelSelectPage() {
             { t( 'model_does_not_fit' ) }
         </MemoryWarning> }
 
+        { active_uses_external_file && !active_is_cached && <MemoryWarning>
+            <HardDrive size={ 14 } />
+            { t( 'large_model_external_storage', {
+                defaultValue: `Large browser downloads are saved as a local GGUF file.`,
+            } ) }
+        </MemoryWarning> }
+
         { /* ── Download action + step progress (below all model sections) ── */ }
         <DownloadButton
             data-testid="model-select-confirm-btn"
@@ -1027,7 +1057,9 @@ export default function ModelSelectPage() {
             disabled={ !active_model || !can_fit_in_memory( active_model, max_model_bytes ) }
         >
             { active_model
-                ? active_is_cached ? t( 'start_chatting' ) : t( 'download_and_start' )
+                ? active_is_cached ? t( 'start_chatting' )
+                    : active_uses_external_file ? t( 'choose_save_location', { defaultValue: `Choose save location` } )
+                        : t( 'download_and_start' )
                 : t( 'select_model_to_continue', { defaultValue: `Select a model` } ) } <ArrowRight size={ 18 } />
         </DownloadButton>
 

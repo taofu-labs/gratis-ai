@@ -1,3 +1,14 @@
+import { get_hf_headers, hf_status_message, with_hf_headers } from './hf_auth'
+import {
+    architecture_profile,
+    bpw_for_quantization,
+    category_for_size,
+    estimate_bpw_from_file,
+    file_size,
+    gguf_parameters,
+    parameter_label,
+} from './gguf_model_metadata'
+
 const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
 
 /**
@@ -70,16 +81,6 @@ export const parse_hf_url = ( input ) => {
 }
 
 /**
- * Extract parameter count label from a model name or repo name (e.g. "Mistral-7B" → "7B")
- * @param {string} name
- * @returns {string}
- */
-const extract_parameters = ( name ) => {
-    const match = name.match( /(\d+(?:\.\d+)?x?\d*(?:\.\d+)?[BbMm])\b/ )
-    return match ? match[ 1 ].toUpperCase() : `Custom`
-}
-
-/**
  * Derive a human-readable model name from a HF repo path
  * @param {string} repo - HF repo (org/name)
  * @returns {string}
@@ -89,18 +90,6 @@ const derive_model_name = ( repo ) => {
     return repo_name
         .replace( /-GGUF$/i, `` )
         .replace( /[-_]/g, ` ` )
-}
-
-/**
- * Estimate model tier from file size
- * @param {number} file_size_bytes
- * @returns {'lightweight' | 'medium' | 'heavy' | 'ultra'}
- */
-const estimate_category = ( file_size_bytes ) => {
-    if( file_size_bytes < 500_000_000 ) return `lightweight`
-    if( file_size_bytes < 2_000_000_000 ) return `medium`
-    if( file_size_bytes < 10_000_000_000 ) return `heavy`
-    return `ultra`
 }
 
 /**
@@ -121,21 +110,62 @@ const generate_model_id = ( repo, file_name ) => {
  * @param {string} repo
  * @param {string} file_name
  * @param {number} file_size_bytes
+ * @param {Object} [model_data]
  * @returns {import('./model_catalog').ModelDefinition}
  */
-const build_model_def = ( repo, file_name, file_size_bytes ) => ( {
-    id: generate_model_id( repo, file_name ),
-    category: estimate_category( file_size_bytes ),
-    name: derive_model_name( repo ),
-    description: `Custom model from ${ repo }`,
-    hugging_face_repo: repo,
-    file_name,
-    file_size_bytes,
-    context_length: 4096,
-    parameters_label: extract_parameters( repo ),
-    quantization: extract_quantization( file_name ) || `unknown`,
-    is_custom: true,
-} )
+const build_model_def = ( repo, file_name, file_size_bytes, model_data = {} ) => {
+    const architecture = model_data.gguf?.architecture || `custom`
+    const parameters = gguf_parameters( model_data )
+    const profile = architecture_profile( architecture, parameters )
+    const quantization = extract_quantization( file_name ) || `GGUF`
+    const bpw = bpw_for_quantization( quantization ) || estimate_bpw_from_file( file_size_bytes, parameters )
+
+    return {
+        id: generate_model_id( repo, file_name ),
+        category: category_for_size( file_size_bytes ),
+        name: derive_model_name( repo ),
+        description: `Custom GGUF from ${ repo }`,
+        family: architecture,
+        parameters: parameters || profile?.parameters || 0,
+        parameters_label: parameter_label( parameters || profile?.parameters ),
+        quantization,
+        bpw,
+        file_size_bytes,
+        context_length: model_data.gguf?.context_length || profile?.context_length || 4096,
+        layers: profile?.layers,
+        block_count: profile?.block_count,
+        kv_heads: profile?.kv_heads,
+        head_dim: profile?.head_dim,
+        hugging_face_repo: repo,
+        file_name,
+        reasoning: profile?.reasoning || false,
+        reasoning_enabled: profile?.reasoning_enabled || false,
+        license: model_data.cardData?.license || profile?.license || `unknown`,
+        is_custom: true,
+    }
+}
+
+const fetch_model_data = async ( repo, fetch_impl, headers ) => {
+    const api_url = `${ HF_BASE_URL }/api/models/${ repo }?blobs=true`
+    const response = await fetch_impl( api_url, with_hf_headers( {}, headers ) )
+
+    if( !response.ok ) {
+        if( response.status === 404 ) throw new Error( `Repository not found: ${ repo }` )
+        throw new Error( hf_status_message( response.status ) )
+    }
+
+    return response.json()
+}
+
+const resolve_file_size = async ( repo, file_name, target_file, model_data, fetch_impl, headers ) => {
+    const known_size = file_size( target_file ) || model_data.gguf?.totalFileSize || 0
+    if( known_size ) return known_size
+
+    const head_url = `${ HF_BASE_URL }/${ repo }/resolve/main/${ file_name }`
+    const head = await fetch_impl( head_url, with_hf_headers( { method: `HEAD` }, headers ) )
+    if( !head.ok ) throw new Error( hf_status_message( head.status ) )
+    return parseInt( head.headers.get( `content-length` ) ) || 0
+}
 
 /**
  * Resolve a parsed HF URL to a full model definition by querying the HF API.
@@ -143,33 +173,20 @@ const build_model_def = ( repo, file_name, file_size_bytes ) => ( {
  * model definition ready for download.
  *
  * @param {{ repo: string, file_name: string|null, quantization: string|null }} parsed
+ * @param {Object} [options]
+ * @param {typeof fetch} [options.fetch_impl]
+ * @param {Record<string, string>} [options.headers]
  * @returns {Promise<import('./model_catalog').ModelDefinition>}
  * @throws {Error} If repo not found, no GGUF files, or no matching quantization
  */
-export const resolve_hf_model = async ( parsed ) => {
+export const resolve_hf_model = async ( parsed, {
+    fetch_impl = fetch,
+    headers = get_hf_headers(),
+} = {} ) => {
 
     const { repo, file_name: direct_file, quantization } = parsed
 
-    // Direct file link — just need to verify it exists and get its size
-    if( direct_file ) {
-        const url = `${ HF_BASE_URL }/${ repo }/resolve/main/${ direct_file }`
-        const head = await fetch( url, { method: `HEAD` } )
-        if( !head.ok ) throw new Error( `File not found: ${ direct_file }` )
-
-        const size = parseInt( head.headers.get( `content-length` ) ) || 0
-        return build_model_def( repo, direct_file, size )
-    }
-
-    // Query HF API for repo file listing
-    const api_url = `${ HF_BASE_URL }/api/models/${ repo }`
-    const response = await fetch( api_url )
-
-    if( !response.ok ) {
-        if( response.status === 404 ) throw new Error( `Repository not found: ${ repo }` )
-        throw new Error( `HuggingFace API error: ${ response.status }` )
-    }
-
-    const data = await response.json()
+    const data = await fetch_model_data( repo, fetch_impl, headers )
     const siblings = data.siblings || []
 
     // Filter to GGUF files only
@@ -179,7 +196,10 @@ export const resolve_hf_model = async ( parsed ) => {
     // Find the target file — match by quantization hint, or pick a sensible default
     let target_file
 
-    if( quantization ) {
+    if( direct_file ) {
+        target_file = gguf_files.find( ( f ) => f.rfilename === direct_file )
+        if( !target_file ) throw new Error( `GGUF file not found: ${ direct_file }` )
+    } else if( quantization ) {
         const quant_lower = quantization.toLowerCase()
         target_file = gguf_files.find( ( f ) => f.rfilename.toLowerCase().includes( quant_lower ) )
         if( !target_file ) throw new Error( `No GGUF file matching "${ quantization }" in ${ repo }` )
@@ -188,14 +208,8 @@ export const resolve_hf_model = async ( parsed ) => {
         target_file = gguf_files.find( ( f ) => f.rfilename.includes( `Q4_K_M` ) ) || gguf_files[ 0 ]
     }
 
-    // Siblings may not include file size — fetch via HEAD if needed
-    let file_size = target_file.size || 0
-    if( !file_size ) {
-        const head_url = `${ HF_BASE_URL }/${ repo }/resolve/main/${ target_file.rfilename }`
-        const head = await fetch( head_url, { method: `HEAD` } )
-        file_size = parseInt( head.headers.get( `content-length` ) ) || 0
-    }
+    const size = await resolve_file_size( repo, target_file.rfilename, target_file, data, fetch_impl, headers )
 
-    return build_model_def( repo, target_file.rfilename, file_size )
+    return build_model_def( repo, target_file.rfilename, size, data )
 
 }

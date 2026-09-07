@@ -73,6 +73,8 @@
     "cloud": "Облако",
     "local": "Локально",
 
+    "device_runtime": "Runtime",
+    "device_model_budget": "Бюджет загрузки модели",
     "device_gpu": "GPU",
     "device_vram": "Доступная память GPU",
     "device_ram": "RAM",

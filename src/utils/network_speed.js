@@ -129,6 +129,7 @@ const abort_error = () => {
  */
 export const probe_download_speed = async ( url, {
     signal,
+    headers = {},
     fetch_impl = fetch,
     now = () => performance.now(),
     max_bytes = 32 * MIB,
@@ -161,7 +162,10 @@ export const probe_download_speed = async ( url, {
 
         const response = await fetch_impl( url, {
             cache: `no-store`,
-            headers: { Range: `bytes=0-${ max_bytes - 1 }` },
+            headers: {
+                ...headers,
+                Range: `bytes=0-${ max_bytes - 1 }`,
+            },
             redirect: `follow`,
             signal: controller.signal,
         } )

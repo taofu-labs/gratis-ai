@@ -348,7 +348,7 @@ const register_ipc_handlers = () => {
 
     // Download a model by streaming directly to disk — avoids buffering
     // the entire file in renderer memory (which fails for large models)
-    ipcMain.handle( `llm:download_model`, async ( _event, { url, id, file_name, metadata, expected_size } ) => {
+    ipcMain.handle( `llm:download_model`, async ( _event, { url, id, file_name, metadata, expected_size, headers = {} } ) => {
 
         ensure_models_dir()
 
@@ -357,8 +357,24 @@ const register_ipc_handlers = () => {
 
         try {
 
-            const response = await fetch( url, { signal: active_download_controller.signal } )
-            if( !response.ok ) throw new Error( `Download failed: ${ response.status } ${ response.statusText }` )
+            const request_headers = Object.fromEntries(
+                Object.entries( headers || {} )
+                    .filter( ( [ key, value ] ) => key && typeof value === `string` )
+            )
+            const request_options = {
+                signal: active_download_controller.signal,
+                ... Object.keys( request_headers ).length ? { headers: request_headers } : {},
+            }
+            const response = await fetch( url, request_options )
+            if( !response.ok ) {
+                if( response.status === 401 || response.status === 403 ) {
+                    throw new Error( `Hugging Face rejected the token or this account does not have access to the model. Check the read token in Settings > Models.` )
+                }
+                if( response.status === 429 ) {
+                    throw new Error( `Hugging Face is throttling this download. Add a read token in Settings > Models or retry after the limit resets.` )
+                }
+                throw new Error( `Download failed: ${ response.status } ${ response.statusText }` )
+            }
 
             const content_length = parseInt( response.headers.get( `content-length` ) ) || expected_size || 0
             const reader = response.body.getReader()

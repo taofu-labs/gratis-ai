@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { format_file_size } from '../../utils/model_catalog'
@@ -10,6 +10,7 @@ import { clear_all_data, get_db } from '../../stores/db'
 import { clear_browser_model_cache } from '../../utils/model_download'
 import { export_conversation } from '../../utils/export'
 import { storage_key, APP_PREFIX } from '../../utils/branding'
+import { HF_TOKEN_SETTING } from '../../utils/hf_auth'
 import use_llm from '../../stores/llm_store'
 
 const Section = styled.div`
@@ -145,6 +146,58 @@ const Button = styled.button`
     }
 `
 
+const TokenRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.sm };
+`
+
+const TokenInput = styled.input`
+    flex: 1;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: ${ ( { theme } ) => `${ theme.spacing.xs } ${ theme.spacing.sm }` };
+    background: ${ ( { theme } ) => theme.colors.input_background };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border_control };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    color: ${ ( { theme } ) => theme.colors.text };
+    font-family: ${ ( { theme } ) => theme.fonts.mono };
+    font-size: 0.8rem;
+
+    &::placeholder {
+        color: ${ ( { theme } ) => theme.colors.text_muted };
+    }
+
+    &:focus {
+        outline: none;
+        border-color: ${ ( { theme } ) => theme.colors.accent };
+    }
+`
+
+const IconButton = styled.button`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 2.75rem;
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    color: ${ ( { theme } ) => theme.colors.text_secondary };
+    transition: all 0.15s;
+
+    &:hover {
+        background: ${ ( { theme } ) => theme.colors.surface_hover };
+        color: ${ ( { theme } ) => theme.colors.text };
+    }
+`
+
+const TokenStatus = styled.div`
+    margin-top: ${ ( { theme } ) => theme.spacing.xs };
+    font-size: 0.75rem;
+    color: ${ ( { theme, $active } ) => $active ? theme.colors.success : theme.colors.text_muted };
+`
+
 // Danger Zone — hidden behind a toggle for safety
 const DangerToggle = styled.button`
     display: flex;
@@ -191,11 +244,13 @@ const DangerButton = styled( Button )`
  * Models settings tab with cached model management and danger zone.
  * Danger zone is hidden behind a toggle for safety (progressive disclosure).
  * @param {Object} props
+ * @param {Object} props.settings - Current settings values
+ * @param {Function} props.on_setting_change - Handler for updating settings
  * @param {Function} props.on_close - Handler to close settings modal
  * @param {Function} props.on_model_switch - Handler for switching models
  * @returns {JSX.Element}
  */
-export default function ModelsSettings( { on_close, on_model_switch } ) {
+export default function ModelsSettings( { settings = {}, on_setting_change, on_close, on_model_switch } ) {
 
     const navigate = useNavigate()
     const { t } = useTranslation( `settings` )
@@ -203,7 +258,9 @@ export default function ModelsSettings( { on_close, on_model_switch } ) {
     const unload_model = use_llm( state => state.unload_model )
     const [ confirming, set_confirming ] = useState( null )
     const [ show_danger, set_show_danger ] = useState( false )
+    const [ show_hf_token, set_show_hf_token ] = useState( false )
     const active_model_id = localStorage.getItem( storage_key( `active_model_id` ) )
+    const hf_token = settings[ HF_TOKEN_SETTING ] || ``
 
     const handle_add_preset = () => {
         if( on_close ) on_close()
@@ -236,6 +293,10 @@ export default function ModelsSettings( { on_close, on_model_switch } ) {
     const handle_load = ( model_id ) => {
         if( on_model_switch ) on_model_switch( model_id )
         if( on_close ) on_close()
+    }
+
+    const handle_hf_token_change = ( e ) => {
+        on_setting_change?.( HF_TOKEN_SETTING, e.target.value.trim() )
     }
 
     const handle_export_all = async () => {
@@ -338,6 +399,42 @@ export default function ModelsSettings( { on_close, on_model_switch } ) {
                         </ModelItem>
                     } ) }
                 </ModelList> }
+        </Section>
+
+        { /* Hugging Face access */ }
+        <Section>
+            <SectionTitle>{ t( `huggingface_access` ) }</SectionTitle>
+            <Description>{ t( `huggingface_access_description` ) }</Description>
+            <TokenRow>
+                <TokenInput
+                    data-testid="hf-token-input"
+                    type={ show_hf_token ? `text` : `password` }
+                    value={ hf_token }
+                    placeholder="hf_..."
+                    autoComplete="off"
+                    spellCheck={ false }
+                    onChange={ handle_hf_token_change }
+                />
+                <IconButton
+                    type="button"
+                    data-testid="hf-token-visibility-btn"
+                    aria-label={ show_hf_token ? t( `hide_hf_token` ) : t( `show_hf_token` ) }
+                    title={ show_hf_token ? t( `hide_hf_token` ) : t( `show_hf_token` ) }
+                    onClick={ () => set_show_hf_token( ( value ) => !value ) }
+                >
+                    { show_hf_token ? <EyeOff size={ 16 } /> : <Eye size={ 16 } /> }
+                </IconButton>
+                { hf_token && <SmallButton
+                    type="button"
+                    data-testid="hf-token-clear-btn"
+                    onClick={ () => on_setting_change?.( HF_TOKEN_SETTING, `` ) }
+                >
+                    { t( `clear_hf_token` ) }
+                </SmallButton> }
+            </TokenRow>
+            <TokenStatus $active={ Boolean( hf_token ) }>
+                { hf_token ? t( `hf_token_saved` ) : t( `hf_token_empty` ) }
+            </TokenStatus>
         </Section>
 
         { /* Add model section */ }

@@ -8,6 +8,7 @@ import {
 import {
     MODEL_CATALOG,
     benchmark_coverage,
+    can_fit_in_memory,
     estimate_model_memory,
     get_model_by_id,
     quality_score,
@@ -85,6 +86,20 @@ describe( `model selection`, () => {
         expect( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES ).toBe( automatic_budget )
         expect( MEMORY64_MODEL_CEILING_BYTES ).toBe( 15_000_000_000 )
         expect( WASM32_MODEL_CEILING_BYTES ).toBe( 3_400_000_000 )
+    } )
+
+    test( `does not recreate a 2GB wall from clamped Memory64 device memory`, () => {
+        const reported_four_gb = {
+            runtime: `browser`,
+            wasm: { memory64: true },
+            memory: { device_memory: 4 },
+        }
+
+        expect( estimate_max_model_bytes( reported_four_gb ) ).toBe( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
+        expect( can_fit_in_memory(
+            get_model_by_id( `qwen35-4b-q4km` ),
+            estimate_max_model_bytes( reported_four_gb ),
+        ) ).toBe( true )
     } )
 
     test( `returns no recommendation when even the smallest runtime cannot fit`, () => {

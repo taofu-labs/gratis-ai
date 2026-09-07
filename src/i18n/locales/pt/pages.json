@@ -73,6 +73,8 @@
     "cloud": "Nuvem",
     "local": "Local",
 
+    "device_runtime": "Runtime",
+    "device_model_budget": "Orçamento de carregamento",
     "device_gpu": "GPU",
     "device_vram": "Memória de GPU disponível",
     "device_ram": "RAM",

@@ -73,6 +73,8 @@
     "cloud": "云端",
     "local": "本地",
 
+    "device_runtime": "运行时",
+    "device_model_budget": "模型加载预算",
     "device_gpu": "GPU",
     "device_vram": "可用 GPU 内存",
     "device_ram": "RAM",

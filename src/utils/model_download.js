@@ -1,6 +1,12 @@
 import { log } from 'mentie'
 import { CacheManager, ModelManager, ModelValidationStatus } from 'wllama64'
 import { get_db } from '../stores/db'
+import { get_external_model_file, take_pending_external_model_file } from './external_model_files'
+import { get_hf_headers, normalize_hf_error } from './hf_auth'
+import {
+    download_hf_model_file_to_cache,
+    download_hf_model_file_to_external_file,
+} from './hf_sdk_download'
 import { build_download_url } from './hf_url_parser'
 import { get_model_by_id } from './model_catalog'
 import { create_download_speed_tracker } from './network_speed'
@@ -54,7 +60,7 @@ export const get_browser_cached_model = async ( download_url, expected_size ) =>
 
 const remove_browser_cache_entry = async ( cached ) => {
 
-    if( cached?.download_url ) {
+    if( cached?.download_url && !cached?.file_handle ) {
         try {
             const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
             const stored_model = models.find( model => model.url === cached.download_url )
@@ -69,6 +75,34 @@ const remove_browser_cache_entry = async ( cached ) => {
     if( cached?.id ) await db.delete( `models`, cached.id )
 
 }
+
+const cache_metadata = ( model, overrides = {} ) => ( {
+    id: model.id,
+    name: model.name,
+    category: model.category,
+    family: model.family,
+    parameters: model.parameters,
+    parameters_label: model.parameters_label,
+    quantization: model.quantization,
+    bpw: model.bpw,
+    file_size_bytes: model.file_size_bytes,
+    context_length: model.context_length,
+    layers: model.layers,
+    block_count: model.block_count,
+    kv_heads: model.kv_heads,
+    head_dim: model.head_dim,
+    hugging_face_repo: model.hugging_face_repo,
+    file_name: model.file_name,
+    reasoning: model.reasoning,
+    reasoning_enabled: model.reasoning_enabled,
+    license: model.license,
+    is_custom: model.is_custom,
+    is_tpn_winner: model.is_tpn_winner,
+    tpn_competition: model.tpn_competition,
+    tpn_author: model.tpn_author,
+    tpn_collection_url: model.tpn_collection_url,
+    ...overrides,
+} )
 
 /**
  * Builds the Hugging Face download URL for a model
@@ -138,6 +172,17 @@ export const is_model_cached = async ( model_id, expected_repo, expected_file ) 
     if( cached.blob ) {
         log.debug( `[download] Cache hit: ${ model_id } (legacy IndexedDB)` )
         return true
+    }
+
+    if( cached.file_handle ) {
+        try {
+            await get_external_model_file( cached.file_handle, cached.file_size_bytes )
+            log.debug( `[download] Cache hit: ${ model_id } (external file)` )
+            return true
+        } catch ( error ) {
+            log.warn( `[download] External file unavailable for ${ model_id }:`, error )
+            return false
+        }
     }
 
     if( !cached.download_url ) {
@@ -222,9 +267,10 @@ export const clear_browser_model_cache = async () => {
  * @param {AbortSignal} [signal] - Abort signal for cancellation
  * @returns {Promise<void>}
  */
-export const download_model = async ( model, on_progress, signal ) => {
+export const download_model = async ( model, on_progress, signal, { storage_mode } = {} ) => {
 
     const url = build_download_url( model.hugging_face_repo, model.file_name )
+    const headers = get_hf_headers()
     const speed_tracker = create_download_speed_tracker( url )
     const report_progress = progress => {
         speed_tracker.update( progress )
@@ -255,15 +301,8 @@ export const download_model = async ( model, on_progress, signal ) => {
                 id: model.id,
                 file_name: model.file_name,
                 expected_size: model.file_size_bytes,
-                metadata: {
-                    name: model.name,
-                    category: model.category,
-                    hugging_face_repo: model.hugging_face_repo,
-                    file_name: model.file_name,
-                    parameters_label: model.parameters_label,
-                    quantization: model.quantization,
-                    context_length: model.context_length,
-                },
+                headers,
+                metadata: cache_metadata( model ),
             } )
         } catch ( err ) {
             if( err?.message?.includes( `abort` ) ) {
@@ -279,20 +318,65 @@ export const download_model = async ( model, on_progress, signal ) => {
 
     }
 
-    // Browser path: Wllama streams directly into OPFS. This avoids keeping a
-    // second multi-GB copy in V8 while assembling a Blob.
-    const downloaded = await get_browser_model_manager().downloadModel( url, {
-        signal,
-        progressCallback: ( { loaded, total } ) => {
-            const bytes_total = total || model.file_size_bytes
-            report_progress( {
-                progress: bytes_total > 0 ? Math.min( loaded / bytes_total, 1 ) : 0,
-                bytes_loaded: loaded,
-                bytes_total,
-                status: `Downloading...`,
+    // Browser path: Hugging Face SDK resolves the best download path first,
+    // including Xet parallel reads when available, then streams into OPFS.
+    let downloaded
+    let external_file_handle = null
+    try {
+        if( storage_mode === `external-file` ) {
+            const file_handle = take_pending_external_model_file( model.id )
+            if( !file_handle ) throw new Error( `Choose where to save this GGUF file before downloading.` )
+            external_file_handle = file_handle
+
+            const result = await download_hf_model_file_to_external_file( {
+                model,
+                file_handle,
+                signal,
+                on_progress: ( { loaded, total } ) => {
+                    const bytes_total = total || model.file_size_bytes
+                    report_progress( {
+                        progress: bytes_total > 0 ? Math.min( loaded / bytes_total, 1 ) : 0,
+                        bytes_loaded: loaded,
+                        bytes_total,
+                        status: `Downloading...`,
+                    } )
+                },
             } )
-        },
-    } )
+
+            log.debug( `[download] Hugging Face SDK browser download used ${ result.mode } path into external file` )
+
+            const file = await get_external_model_file( file_handle, result.size || model.file_size_bytes )
+            downloaded = {
+                open: async () => [ file ],
+                remove: async () => {},
+            }
+        }
+
+        const manager = get_browser_model_manager()
+        if( !downloaded ) {
+            const result = await download_hf_model_file_to_cache( {
+                model,
+                url,
+                cache_manager: manager.cacheManager,
+                signal,
+                on_progress: ( { loaded, total } ) => {
+                    const bytes_total = total || model.file_size_bytes
+                    report_progress( {
+                        progress: bytes_total > 0 ? Math.min( loaded / bytes_total, 1 ) : 0,
+                        bytes_loaded: loaded,
+                        bytes_total,
+                        status: `Downloading...`,
+                    } )
+                },
+            } )
+
+            log.debug( `[download] Hugging Face SDK browser download used ${ result.mode } path into OPFS` )
+            downloaded = await get_browser_cached_model( url, result.size || model.file_size_bytes )
+            if( !downloaded ) throw new Error( `The downloaded model could not be validated. Please retry the download.` )
+        }
+    } catch ( err ) {
+        throw normalize_hf_error( err )
+    }
 
     const downloaded_files = await downloaded.open()
     const [ first_file ] = downloaded_files
@@ -320,25 +404,31 @@ export const download_model = async ( model, on_progress, signal ) => {
         throw new Error( `Downloaded file is not a valid GGUF model. The file may be corrupted or the URL may have redirected to an error page.` )
     }
 
+    if( storage_mode === `external-file` ) {
+        const now = Date.now()
+        const db = await get_db()
+        await db.put( `models`, cache_metadata( model, {
+            storage: `file-system-access`,
+            file_handle: external_file_handle,
+            download_url: url,
+            cached_at: now,
+            file_size_bytes: expected_size || downloaded_size,
+            last_used_at: now,
+        } ) )
+        log.info( `[download] Complete: ${ model.name } (${ ( downloaded_size / 1e6 ).toFixed( 0 ) } MB)` )
+        report_progress( { progress: 1, bytes_loaded: downloaded_size, bytes_total: downloaded_size, status: `Complete` } )
+        return
+    }
+
     const now = Date.now()
     const db = await get_db()
-    await db.put( `models`, {
-        id: model.id,
+    await db.put( `models`, cache_metadata( model, {
         storage: `wllama64-opfs`,
         download_url: url,
         cached_at: now,
         file_size_bytes: expected_size || downloaded_size,
-        name: model.name,
-        category: model.category,
-        hugging_face_repo: model.hugging_face_repo,
-        file_name: model.file_name,
-        parameters_label: model.parameters_label,
-        quantization: model.quantization,
-        context_length: model.context_length,
-        reasoning: model.reasoning,
-        reasoning_enabled: model.reasoning_enabled,
         last_used_at: now,
-    } )
+    } ) )
 
     log.info( `[download] Complete: ${ model.name } (${ ( downloaded_size / 1e6 ).toFixed( 0 ) } MB)` )
     report_progress( { progress: 1, bytes_loaded: downloaded_size, bytes_total: downloaded_size, status: `Complete` } )

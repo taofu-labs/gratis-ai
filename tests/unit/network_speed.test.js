@@ -52,6 +52,28 @@ describe( `network speed evidence`, () => {
         expect( sample.bps ).toBeCloseTo( 512 * 1024 / 1.4, 0 )
     } )
 
+    test( `passes auth headers to the range probe`, async () => {
+        const fetch_impl = vi.fn( async () => stream_response( [ 256 * 1024, 256 * 1024 ] ) )
+        const times = [ 0, 100, 200, 300, 1_400 ]
+
+        await probe_download_speed( `https://huggingface.co/org/model.gguf`, {
+            fetch_impl,
+            headers: { Authorization: `Bearer hf_test` },
+            max_bytes: 512 * 1024,
+            now: () => times.shift() ?? 1_400,
+        } )
+
+        expect( fetch_impl ).toHaveBeenCalledWith(
+            `https://huggingface.co/org/model.gguf`,
+            expect.objectContaining( {
+                headers: {
+                    Authorization: `Bearer hf_test`,
+                    Range: `bytes=0-524287`,
+                },
+            } ),
+        )
+    } )
+
     test( `prefers conservative real-download history over a probe`, () => {
         const storage = new MemoryStorage()
         const url = `https://cdn.example/model.gguf`

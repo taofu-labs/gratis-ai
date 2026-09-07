@@ -78,4 +78,52 @@ describe( `TPN winner models`, () => {
 
     } )
 
+    test( `passes Hugging Face headers to collection and model requests`, async () => {
+
+        const fetch_impl = vi.fn( async url => {
+
+            if( url === `https://huggingface.co/api/collections?owner=tpnlabs&limit=50` ) {
+                return json_response( [
+                    {
+                        title: `TPN-001`,
+                        slug: `tpnlabs/tpn-001`,
+                        items: [ {
+                            type: `model`,
+                            id: `tpnlabs/tpn-001-winner`,
+                            note: { text: `winner` },
+                        } ],
+                    },
+                ] )
+            }
+
+            if( url === `https://huggingface.co/api/models/tpnlabs/tpn-001-winner?blobs=false` ) {
+                return json_response( {
+                    siblings: [
+                        { rfilename: `winner-Q4_K_M.gguf`, size: 100_000_000 },
+                    ],
+                } )
+            }
+
+            throw new Error( `Unexpected fetch: ${ url }` )
+
+        } )
+
+        await resolve_tpn_winner_models( {
+            fetch_impl,
+            headers: { Authorization: `Bearer hf_test` },
+        } )
+
+        expect( fetch_impl ).toHaveBeenNthCalledWith(
+            1,
+            `https://huggingface.co/api/collections?owner=tpnlabs&limit=50`,
+            { headers: { Authorization: `Bearer hf_test` } },
+        )
+        expect( fetch_impl ).toHaveBeenNthCalledWith(
+            2,
+            `https://huggingface.co/api/models/tpnlabs/tpn-001-winner?blobs=false`,
+            { headers: { Authorization: `Bearer hf_test` } },
+        )
+
+    } )
+
 } )

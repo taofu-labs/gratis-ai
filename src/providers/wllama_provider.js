@@ -10,12 +10,13 @@ import { select_gpu_offload_layers } from '../utils/gpu_offload'
 import { ModelFitError } from '../utils/model_fit_error'
 import { wait_for_existing_webgpu_memory_probe } from '../utils/webgpu_memory'
 import {
-    DEFAULT_RUNTIME_CONTEXT,
     estimate_model_memory,
     get_model_by_id,
     select_browser_batch,
     select_browser_context,
 } from '../utils/model_catalog'
+import { get_external_model_file } from '../utils/external_model_files'
+import { resolve_hf_model } from '../utils/hf_url_parser'
 import { get_browser_cached_model } from '../utils/model_download'
 
 // Memory64 is the primary runtime. The matching wasm32 build remains local so
@@ -36,6 +37,44 @@ const WLLAMA_LOGGER = {
     log: ( ...args ) => log.info( `[wllama64]`, ...args ),
     warn: ( ...args ) => log.warn( `[wllama64]`, ...args ),
     error: ( ...args ) => log.error( `[wllama64]`, ...args ),
+}
+
+const has_architecture_metadata = model =>
+    !!( model?.layers && model?.kv_heads && model?.head_dim )
+
+const hydrate_cached_model = async ( model_id, cached, db ) => {
+    const catalog_model = get_model_by_id( model_id )
+    if( catalog_model ) return catalog_model
+    if( has_architecture_metadata( cached ) ) return cached
+    if( !cached.hugging_face_repo || !cached.file_name ) return cached
+
+    try {
+        const hydrated = await resolve_hf_model( {
+            repo: cached.hugging_face_repo,
+            file_name: cached.file_name,
+            quantization: null,
+        } )
+        const merged = {
+            ...cached,
+            ...hydrated,
+            id: cached.id || model_id,
+            storage: cached.storage,
+            blob: cached.blob,
+            file_handle: cached.file_handle,
+            download_url: cached.download_url,
+            cached_at: cached.cached_at,
+            last_used_at: cached.last_used_at,
+            file_size_bytes: cached.file_size_bytes || hydrated.file_size_bytes,
+        }
+
+        await Promise.resolve( db.put( `models`, merged ) ).catch( () => {
+            log.warn( `[wllama] Could not persist hydrated custom model metadata` )
+        } )
+        return merged
+    } catch ( error ) {
+        log.warn( `[wllama] Could not hydrate custom model metadata:`, error )
+        return cached
+    }
 }
 
 /**
@@ -74,25 +113,32 @@ export default class WllamaProvider {
         const db = await get_db()
         const cached = await db.get( `models`, model_id )
 
-        if( !cached?.blob && !cached?.download_url ) {
+        if( !cached?.blob && !cached?.download_url && !cached?.file_handle ) {
             throw new Error( `Model ${ model_id } not found in cache` )
         }
 
-        const model = get_model_by_id( model_id )
+        const model = await hydrate_cached_model( model_id, cached, db )
         let stored_model = null
+        let storage_error = null
 
         try {
-            if( cached.download_url ) {
+            if( cached.file_handle ) {
+                const expected_size = model.file_size_bytes || cached.file_size_bytes
+                stored_model = await get_external_model_file( cached.file_handle, expected_size )
+            } else if( cached.download_url ) {
                 // Catalog size wins over cached metadata so an interrupted
                 // download cannot validate itself using its truncated length.
-                const expected_size = model?.file_size_bytes || cached.file_size_bytes
+                const expected_size = model.file_size_bytes || cached.file_size_bytes
                 stored_model = await get_browser_cached_model( cached.download_url, expected_size )
             }
         } catch ( error ) {
+            storage_error = error
             log.warn( `[wllama] Could not access browser model storage:`, error )
         }
 
-        if( cached.download_url && !stored_model ) {
+        if( cached.file_handle && storage_error ) throw storage_error
+
+        if( ( cached.download_url || cached.file_handle ) && !stored_model ) {
             throw new Error( `Model files are missing from browser storage. Download the model again.` )
         }
 
@@ -100,9 +146,9 @@ export default class WllamaProvider {
 
         const capabilities = await detect_capabilities()
         const memory_budget = estimate_max_model_bytes( capabilities )
-        const fit_model = model || {
-            ...cached,
-            file_size_bytes: cached.file_size_bytes || cached.blob?.size || 0,
+        const fit_model = {
+            ...model,
+            file_size_bytes: model.file_size_bytes || cached.file_size_bytes || cached.blob?.size || 0,
         }
         const required_memory = estimate_model_memory( fit_model )
 
@@ -117,15 +163,13 @@ export default class WllamaProvider {
         // otherwise create a wasteful pthread pool in desktop-class browsers.
         const hardware_threads = navigator.hardwareConcurrency || 1
         const n_threads = Math.min( 8, Math.max( 1, Math.floor( hardware_threads / 2 ) ) )
-        const model_size = cached.file_size_bytes || model?.file_size_bytes || 0
+        const model_size = cached.file_size_bytes || model.file_size_bytes || 0
 
         // Near-ceiling models need compute-graph headroom more than prompt
         // throughput. A 512-token batch can add a large transient allocation
         // on top of 8–12 GB of weights.
         const n_batch = select_browser_batch( model_size, n_threads )
-        const n_ctx = model
-            ? select_browser_context( model, memory_budget )
-            : DEFAULT_RUNTIME_CONTEXT
+        const n_ctx = select_browser_context( fit_model, memory_budget )
         const reasoning_enabled = cached.reasoning_enabled ?? model?.reasoning_enabled
         const file_size_mb = ( model_size / 1_000_000 ).toFixed( 0 )
 
@@ -152,11 +196,13 @@ export default class WllamaProvider {
             } : {},
         }
 
-        const source = cached.blob ? [ cached.blob ] : stored_model
+        const source = cached.blob ? [ cached.blob ]
+            : cached.file_handle ? [ stored_model ]
+                : stored_model
         let probed_capabilities = capabilities
 
         if( !this._gpu_disabled && capabilities.gpu?.webgpu ) {
-            if( model?.block_count ) {
+            if( fit_model.block_count ) {
                 if( on_progress ) on_progress( { progress: 0, status: `Measuring GPU memory...` } )
                 probed_capabilities = await probe_capabilities_gpu_memory( capabilities )
             } else {
@@ -168,7 +214,7 @@ export default class WllamaProvider {
         }
 
         let gpu_layers = this._gpu_disabled ? 0 : select_gpu_offload_layers( {
-            model,
+            model: fit_model,
             gpu_probe: probed_capabilities.gpu?.memory_source === `measured` ? {
                 status: `measured`,
                 measured_bytes: probed_capabilities.gpu.allocatable_bytes,

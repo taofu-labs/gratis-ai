@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test'
 
+const SETTINGS_EVENT = `gratis:settings-changed`
+const HF_TOKEN_KEY = `gratis:settings:hf_token`
+
 test.describe( `Settings Modal`, () => {
 
     test( `opens settings via gear icon`, async ( { page } ) => {
@@ -73,6 +76,38 @@ test.describe( `Settings Modal`, () => {
         await page.getByTestId( `settings-btn` ).click()
         await page.getByTestId( `settings-tab-models` ).click()
         await expect( page.getByTestId( `add-model-preset-btn` ) ).toBeVisible()
+    } )
+
+    test( `models tab stores an optional Hugging Face token locally`, async ( { page } ) => {
+        await page.goto( `/chat` )
+        await page.evaluate( event_name => {
+            window.__settings_events = []
+            window.addEventListener( event_name, e => window.__settings_events.push( e.detail ) )
+        }, SETTINGS_EVENT )
+        await page.getByTestId( `settings-btn` ).click()
+        await page.getByTestId( `settings-tab-models` ).click()
+
+        const input = page.getByTestId( `hf-token-input` )
+        await expect( input ).toHaveAttribute( `type`, `password` )
+        await input.fill( `hf_test_token` )
+        await expect( page.getByText( `Read token saved locally.` ) ).toBeVisible()
+
+        await page.getByTestId( `hf-token-visibility-btn` ).click()
+        await expect( input ).toHaveAttribute( `type`, `text` )
+
+        expect( await page.evaluate( key =>
+            localStorage.getItem( key ), HF_TOKEN_KEY
+        ) ).toBe( `hf_test_token` )
+        const event = await page.evaluate( () => window.__settings_events.at( -1 ) )
+        expect( event.key ).toBe( `hf_token` )
+        expect( event.sensitive ).toBe( true )
+        expect( event.value ).toBeUndefined()
+
+        await page.getByTestId( `hf-token-clear-btn` ).click()
+        await expect( page.getByText( `Public downloads will continue without a token.` ) ).toBeVisible()
+        expect( await page.evaluate( key =>
+            localStorage.getItem( key ), HF_TOKEN_KEY
+        ) ).toBe( `` )
     } )
 
     test( `models tab hides danger zone behind toggle`, async ( { page } ) => {

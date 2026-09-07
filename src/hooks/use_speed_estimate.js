@@ -5,6 +5,7 @@ import {
     probe_download_speed,
     record_speed_sample,
 } from '../utils/network_speed'
+import { get_hf_headers } from '../utils/hf_auth'
 
 /**
  * Measure the real model-download host with a bounded streaming request.
@@ -62,7 +63,10 @@ export default function use_speed_estimate( target_url ) {
         set_error( null )
 
         try {
-            const sample = await probe_download_speed( target_url, { signal: controller.signal } )
+            const sample = await probe_download_speed( target_url, {
+                signal: controller.signal,
+                headers: get_hf_headers(),
+            } )
             if( request_id !== request_id_ref.current ) return
 
             record_speed_sample( target_url, sample.bps, `probe` )
