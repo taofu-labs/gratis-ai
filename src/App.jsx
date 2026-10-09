@@ -7,7 +7,6 @@ import { Toaster } from 'react-hot-toast'
 import GlobalStyle from './styles/GlobalStyle'
 import ErrorBoundary from './components/molecules/ErrorBoundary'
 import use_theme from './hooks/use_theme'
-import DesktopAppBanner from './components/atoms/DesktopAppBanner'
 import Routes from './routes/Routes'
 import { register_shortcuts } from './utils/keyboard_shortcuts'
 import { EVENTS } from './utils/branding'
@@ -52,7 +51,6 @@ export default function App() {
         <ErrorBoundary>
             <Router future={ router_future }>
                 <QueryParamProvider adapter={ ReactRouter6Adapter }>
-                    <DesktopAppBanner />
                     <Routes />
                     <Toaster
                         position="bottom-center"
