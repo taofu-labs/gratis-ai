@@ -280,11 +280,19 @@ export default function ModelsSettings( { settings = {}, on_setting_change, on_c
             return
         }
 
+        const was_active = model.id === active_model_id
+
         try {
+            if( was_active ) {
+                await unload_model()
+                localStorage.removeItem( storage_key( `active_model_id` ) )
+            }
+
             await delete_model( model.id )
             set_confirming( null )
             toast.success( t( `common:deleted_model`, { name: model.name } ) )
         } catch ( err ) {
+            if( was_active ) localStorage.setItem( storage_key( `active_model_id` ), model.id )
             toast.error( err.message )
         }
 
@@ -390,7 +398,6 @@ export default function ModelsSettings( { settings = {}, on_setting_change, on_c
                                 </SmallButton>
                                 <DeleteButton
                                     data-testid={ `model-delete-btn-${ model.id }` }
-                                    disabled={ is_active }
                                     onClick={ () => handle_delete( model ) }
                                 >
                                     { confirming === model.id ? t( `click_again_to_confirm` ) : t( `remove` ) }

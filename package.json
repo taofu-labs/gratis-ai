@@ -27,7 +27,7 @@
         "@fontsource-variable/montserrat": "^5.3.0",
         "@fontsource-variable/nunito": "^5.3.0",
         "@huggingface/hub": "^2.16.3",
-        "@wllama/wllama-compat": "3.6.0",
+        "@wllama/wllama-compat": "3.8.1",
         "electron-updater": "^6.8.9",
         "i18next": "^26.4.0",
         "idb": "^8.0.3",
@@ -47,7 +47,7 @@
         "styled-components": "^6.5.3",
         "use-query-params": "^2.2.2",
         "uuid": "^14.0.2",
-        "wllama64": "1.0.0",
+        "wllama64": "1.0.1",
         "zustand": "^5.0.15"
     },
     "devDependencies": {

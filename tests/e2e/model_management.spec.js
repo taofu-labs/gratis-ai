@@ -20,6 +20,14 @@ test.describe( `Model Management`, () => {
         await expect( page ).toHaveURL( /select-model/ )
     } )
 
+    test( `model picker exposes settings before loading a model`, async ( { page } ) => {
+        await page.goto( `/select-model` )
+        await page.getByTestId( `settings-btn` ).click()
+        await expect( page.getByTestId( `settings-modal` ) ).toBeVisible()
+        await page.getByTestId( `settings-tab-models` ).click()
+        await expect( page.getByTestId( `storage-summary` ) ).toBeVisible()
+    } )
+
     test( `models tab shows storage summary`, async ( { page } ) => {
         await page.goto( `/chat` )
         await page.getByTestId( `settings-btn` ).click()

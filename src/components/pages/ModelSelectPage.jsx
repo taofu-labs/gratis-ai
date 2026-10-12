@@ -2,10 +2,11 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye, HardDrive } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye, HardDrive, Settings } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
+import SettingsModal from '../molecules/SettingsModal'
 import { format_file_size, can_fit_in_memory, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
 import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { resolve_tpn_winner_models } from '../../utils/tpn_winner_models'
@@ -13,7 +14,7 @@ import {
     choose_external_model_file,
     should_use_external_model_file,
 } from '../../utils/external_model_files'
-import { storage_key } from '../../utils/branding'
+import { EVENTS, storage_key } from '../../utils/branding'
 import { format_download_estimate } from '../../utils/network_speed'
 
 const Container = styled.div`
@@ -29,6 +30,28 @@ const Container = styled.div`
     &::before, &::after {
         content: '';
         flex: 1 0 0px;
+    }
+`
+
+const PageActions = styled.div`
+    position: fixed;
+    top: ${ ( { theme } ) => theme.spacing.md };
+    right: ${ ( { theme } ) => theme.spacing.md };
+    z-index: 10;
+`
+
+const IconButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+    transition: color 0.15s;
+
+    &:hover {
+        color: ${ ( { theme } ) => theme.colors.text };
     }
 `
 
@@ -522,7 +545,16 @@ export default function ModelSelectPage() {
     const navigate = useNavigate()
     const { t } = useTranslation( 'models' )
     const [ show_alternatives, set_show_alternatives ] = useState( false )
+    const [ settings_open, set_settings_open ] = useState( false )
     const expand_panel_ref = useRef( null )
+
+    useEffect( () => {
+
+        const handle_open_settings = () => set_settings_open( true )
+        window.addEventListener( EVENTS.open_settings, handle_open_settings )
+        return () => window.removeEventListener( EVENTS.open_settings, handle_open_settings )
+
+    }, [] )
 
     // Auto-scroll the alternatives panel into view on mobile when expanded
     useEffect( () => {
@@ -718,6 +750,16 @@ export default function ModelSelectPage() {
     const show_card_row = false
 
     return <Container>
+
+        <PageActions>
+            <IconButton
+                data-testid="settings-btn"
+                onClick={ () => set_settings_open( true ) }
+                aria-label={ t( `common:aria_open_settings` ) }
+            >
+                <Settings size={ 18 } />
+            </IconButton>
+        </PageActions>
 
         <Title>{ t( 'pick_a_model' ) }</Title>
 
@@ -1070,6 +1112,11 @@ export default function ModelSelectPage() {
             <StepLine />
             <StepDot />
         </StepIndicator>
+
+        <SettingsModal
+            is_open={ settings_open }
+            on_close={ () => set_settings_open( false ) }
+        />
 
     </Container>
 
