@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { export_conversation } from '../../utils/export'
 import { DISPLAY_NAME, storage_key } from '../../utils/branding'
 import { is_model_fit_error } from '../../utils/model_fit_error'
+import BrowserRamOverride from '../atoms/BrowserRamOverride'
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -426,6 +427,10 @@ export default function HomePage() {
                 { !is_model_fit_error( load_error ) && <ErrorAction onClick={ handle_retry } data-testid="home-retry-btn">
                     <RotateCcw size={ 12 } /> { t( 'common:retry' ) }
                 </ErrorAction> }
+                { is_model_fit_error( load_error ) && <BrowserRamOverride
+                    on_change={ handle_retry }
+                    data-testid="home-ram-override"
+                /> }
                 <ErrorAction onClick={ () => navigate( `/select-model` ) } data-testid="home-choose-another-btn">
                     { t( 'choose_another' ) }
                 </ErrorAction>

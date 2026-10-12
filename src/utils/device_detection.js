@@ -37,6 +37,7 @@ import {
     reported_webgpu_bytes,
     select_webgpu_probe_target,
 } from './webgpu_memory'
+import { EVENTS, storage_key } from './branding'
 
 /**
  * Detect the exact shared Memory64 primitive used by wllama64.
@@ -392,6 +393,46 @@ export const MEMORY64_MODEL_CEILING_BYTES = 15_000_000_000
 export const WASM32_MODEL_CEILING_BYTES = 3_400_000_000
 export const BROWSER_AUTOMATIC_MODEL_CEILING_BYTES = 5_600_000_000
 
+// Browser RAM signals are capped or privacy-clamped. Memory64 users can supply
+// the installed RAM so model fit checks use the real machine class.
+export const BROWSER_RAM_OVERRIDE_KEY = `browser_ram_gb`
+export const BROWSER_RAM_OVERRIDE_OPTIONS = [ 16, 24, 32, 64 ]
+
+export const read_browser_ram_override = () => {
+
+    try {
+        const value = Number( globalThis.localStorage?.getItem( storage_key( BROWSER_RAM_OVERRIDE_KEY ) ) )
+        return Number.isFinite( value ) && value > 8 ? value : null
+    } catch {
+        return null
+    }
+
+}
+
+export const set_browser_ram_override = gb => {
+
+    try {
+        const key = storage_key( BROWSER_RAM_OVERRIDE_KEY )
+        if( gb ) globalThis.localStorage.setItem( key, String( gb ) )
+        else globalThis.localStorage.removeItem( key )
+    } catch {
+        return false
+    }
+
+    globalThis.window?.dispatchEvent( new CustomEvent( EVENTS.settings_changed, {
+        detail: { key: BROWSER_RAM_OVERRIDE_KEY, value: gb || null },
+    } ) )
+
+    return true
+
+}
+
+/** The override applies only to Memory64 browsers, never wasm32 or Electron. */
+export const supports_browser_ram_override = () =>
+    typeof window !== `undefined`
+    && !window.electronAPI?.native_inference
+    && detect_wasm_capabilities().memory64
+
 export const estimate_max_model_bytes = ( capabilities ) => {
 
     if( capabilities?.runtime === `electron` && capabilities?.memory?.total_bytes ) {
@@ -431,10 +472,14 @@ export const estimate_max_model_bytes = ( capabilities ) => {
     // below the real machine. Memory64-capable browsers get the same floor as
     // the automatic recommendation budget so a privacy-clamped signal does not
     // recreate the old ~2 GiB practical ceiling.
-    const device_mem = capabilities?.memory?.device_memory || 4
-    const device_fraction = has_memory64 ? 0.7 : 0.6
+    const ram_override = has_memory64 ? read_browser_ram_override() : null
+    const device_mem = ram_override || capabilities?.memory?.device_memory || 4
+    // Declared RAM is exact rather than privacy-rounded. Reserve 40% for the
+    // OS, browser, and transient allocations while allowing 8 GB-class GGUFs
+    // on 16 GB machines.
+    const device_percentage = ram_override ? 60 : has_memory64 ? 70 : 60
     const device_cap = Math.max(
-        device_mem * device_fraction * 1_000_000_000,
+        device_mem * 1_000_000_000 * device_percentage / 100,
         has_memory64 ? BROWSER_AUTOMATIC_MODEL_CEILING_BYTES : 0,
     )
 

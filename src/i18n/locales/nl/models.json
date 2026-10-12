@@ -63,5 +63,11 @@
     "download_range_40_plus_minutes": "meer dan 40 minuten",
     "does_not_fit": "past niet",
     "model_does_not_fit": "Dit model past niet in het geheugen dat voor deze browser beschikbaar is.",
-    "no_local_model_fits": "Geen lokaal model past veilig in het beschikbare geheugen. Sluit andere apps of gebruik een cloudmodel."
+    "no_local_model_fits": "Geen lokaal model past veilig in het beschikbare geheugen. Sluit andere apps of gebruik een cloudmodel.",
+    "model_memory_budget_warning": "Dit model heeft ongeveer {{required}} nodig, meer dan het huidige browserbudget van {{budget}}.",
+    "ram_override_budget_active": "Browserbudget voor modellen: {{budget}}.",
+    "ram_override_label": "Mijn apparaat heeft meer RAM…",
+    "ram_override_reset": "Door browser gemeten RAM gebruiken",
+    "ram_override_hint": "Browsers kunnen RAM-informatie verbergen of beperken. Geef aan hoeveel RAM je apparaat echt heeft om grotere modellen te laden.",
+    "ram_override_confirm": "{{gb}} GB gebruiken als het geïnstalleerde RAM van dit apparaat? Gratis reserveert 40% voor het systeem en de browser. Een onjuiste waarde kan het tabblad laten crashen."
 }

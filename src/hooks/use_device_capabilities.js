@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import use_llm_store from '../stores/llm_store'
+import { EVENTS } from '../utils/branding'
 import {
+    BROWSER_RAM_OVERRIDE_KEY,
     detect_capabilities,
     estimate_max_model_bytes,
     get_initial_browser_capabilities,
@@ -15,7 +17,19 @@ export default function use_device_capabilities() {
 
     const [ capabilities, set_capabilities ] = useState( get_initial_browser_capabilities )
     const [ is_detecting, set_is_detecting ] = useState( true )
+    const [ , set_ram_override_version ] = useState( 0 )
     const max_model_bytes = capabilities ? estimate_max_model_bytes( capabilities ) : 0
+
+    useEffect( () => {
+
+        const handle_change = ( { detail } ) => {
+            if( detail?.key === BROWSER_RAM_OVERRIDE_KEY ) set_ram_override_version( version => version + 1 )
+        }
+
+        window.addEventListener( EVENTS.settings_changed, handle_change )
+        return () => window.removeEventListener( EVENTS.settings_changed, handle_change )
+
+    }, [] )
 
     useEffect( () => {
 

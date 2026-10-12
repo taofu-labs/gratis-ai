@@ -69,5 +69,11 @@
     "download_range_40_plus_minutes": "40+ minutes",
     "does_not_fit": "does not fit",
     "model_does_not_fit": "This model does not fit in the memory available to this browser.",
-    "no_local_model_fits": "No local model can safely fit in the memory available to this browser. Close other apps or use a cloud model."
+    "no_local_model_fits": "No local model can safely fit in the memory available to this browser. Close other apps or use a cloud model.",
+    "model_memory_budget_warning": "This model needs about {{required}}, above the current {{budget}} browser budget.",
+    "ram_override_budget_active": "Browser model budget: {{budget}}.",
+    "ram_override_label": "My device has more RAM…",
+    "ram_override_reset": "Use browser-detected RAM",
+    "ram_override_hint": "Browsers may hide or limit RAM information. Tell Gratis how much RAM your device really has to load larger models.",
+    "ram_override_confirm": "Use {{gb}} GB as this device's installed RAM? Gratis will reserve 40% for the system and browser. An incorrect value may crash the tab."
 }

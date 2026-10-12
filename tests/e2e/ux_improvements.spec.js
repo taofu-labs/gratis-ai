@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 const TPN_MODEL_FILE = `Qwen3.5-4B-Q4_K_M.gguf`
 const TPN_MODEL_ID = `tpn-001-winner-qwen3-5-4b-q4-k-m`
 
-const mock_tpn_winners = async page => {
+const mock_tpn_winners = async ( page, { file_size = 420_000_000 } = {} ) => {
 
     await page.route( /\/api\/collections\?owner=tpnlabs&limit=50$/, route => route.fulfill( {
         contentType: `application/json`,
@@ -34,7 +34,7 @@ const mock_tpn_winners = async page => {
             },
             siblings: [ {
                 rfilename: TPN_MODEL_FILE,
-                size: 420_000_000,
+                size: file_size,
             } ],
         },
     } ) )
@@ -95,6 +95,25 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         await page.getByTestId( `model-option-${ TPN_MODEL_ID }` ).click()
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
+    } )
+
+    test( `declared RAM raises the Memory64 model budget`, async ( { page } ) => {
+        await page.addInitScript( () => {
+            Object.defineProperty( navigator, `deviceMemory`, { configurable: true, value: 4 } )
+        } )
+        await mock_tpn_winners( page, { file_size: 7_200_000_000 } )
+        await page.goto( `/select-model` )
+        await page.getByTestId( `model-option-${ TPN_MODEL_ID }` ).click()
+
+        await expect( page.getByTestId( `browser-ram-budget` ) ).toContainText( `needs about` )
+        await expect( page.getByTestId( `browser-ram-budget` ) ).toContainText( `5.6 GB` )
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeDisabled()
+
+        page.once( `dialog`, dialog => dialog.accept() )
+        await page.getByTestId( `model-select-ram-override` ).selectOption( `16` )
+
+        await expect( page.getByTestId( `browser-ram-budget` ) ).toContainText( `9.6 GB` )
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
     } )
 

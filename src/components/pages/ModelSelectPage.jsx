@@ -6,7 +6,9 @@ import { Check, ChevronDown, ChevronUp, ArrowRight, Sparkles, AlertTriangle, Loa
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
+import BrowserRamOverride from '../atoms/BrowserRamOverride'
 import SettingsModal from '../molecules/SettingsModal'
+import { read_browser_ram_override, supports_browser_ram_override } from '../../utils/device_detection'
 import { format_file_size, can_fit_in_memory, estimate_model_memory, quality_score, benchmark_coverage } from '../../utils/model_catalog'
 import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { resolve_tpn_winner_models } from '../../utils/tpn_winner_models'
@@ -665,13 +667,15 @@ export default function ModelSelectPage() {
     const free_bytes = capabilities?.memory?.free_bytes
     const model_needs = active_model ? estimate_model_memory( active_model ) : 0
     const low_memory = is_electron && free_bytes && model_needs > 0 && free_bytes < model_needs * 1.2
+    const active_model_too_large = !!active_model && !can_fit_in_memory( active_model, max_model_bytes )
+    const has_ram_override = supports_browser_ram_override() && !!read_browser_ram_override()
 
     const active_uses_external_file = active_model && should_use_external_model_file( active_model )
 
     const handle_download = async () => {
 
         if( !active_model ) return
-        if( !can_fit_in_memory( active_model, max_model_bytes ) ) {
+        if( active_model_too_large ) {
             set_custom_error( t( 'model_does_not_fit' ) )
             return
         }
@@ -1080,9 +1084,16 @@ export default function ModelSelectPage() {
 
         </CustomModelSection>
 
-        { active_model && !can_fit_in_memory( active_model, max_model_bytes ) && <MemoryWarning>
-            <AlertTriangle size={ 14 } />
-            { t( 'model_does_not_fit' ) }
+        { ( active_model_too_large || has_ram_override ) && <MemoryWarning data-testid="browser-ram-budget">
+            { active_model_too_large && <AlertTriangle size={ 14 } /> }
+            { active_model_too_large && t( 'model_memory_budget_warning', {
+                required: format_file_size( model_needs ),
+                budget: format_file_size( max_model_bytes ),
+            } ) }
+            { has_ram_override && !active_model_too_large && t( 'ram_override_budget_active', {
+                budget: format_file_size( max_model_bytes ),
+            } ) }
+            <BrowserRamOverride data-testid="model-select-ram-override" />
         </MemoryWarning> }
 
         { active_uses_external_file && !active_is_cached && <MemoryWarning>
@@ -1096,7 +1107,7 @@ export default function ModelSelectPage() {
         <DownloadButton
             data-testid="model-select-confirm-btn"
             onClick={ handle_download }
-            disabled={ !active_model || !can_fit_in_memory( active_model, max_model_bytes ) }
+            disabled={ !active_model || active_model_too_large }
         >
             { active_model
                 ? active_is_cached ? t( 'start_chatting' )
