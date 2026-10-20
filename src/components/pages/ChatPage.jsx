@@ -180,6 +180,21 @@ export default function ChatPage() {
     const pending_conversation_id_ref = useRef( null )
     const partial_reply_ref = useRef( null )
 
+    // Settles once every started reply has finished streaming *and* saving.
+    // The store drops is_generating before the final save lands, so history
+    // rewrites (edit, regenerate, delete) wait on this instead.
+    const replies_settled_ref = useRef( Promise.resolve() )
+    // An edit or regenerate is waiting on storage; blocks a second one
+    const rewriting_ref = useRef( false )
+
+    // Bumped whenever the visible chat is swapped out (New Chat, navigation,
+    // delete). Async flows capture it up front and drop their work once stale.
+    const epoch_ref = useRef( 0 )
+    const capture_epoch = () => {
+        const epoch = epoch_ref.current
+        return () => epoch_ref.current === epoch
+    }
+
     // Latest messages for async flows (edit, regenerate) that outlive a render
     const messages_ref = useRef( messages )
     messages_ref.current = messages
@@ -290,6 +305,18 @@ export default function ChatPage() {
     const route_conversation_ref = useRef( conversation_id )
     route_conversation_ref.current = conversation_id
 
+    // Navigating to another chat invalidates pending work of the previous one,
+    // except our own first-message hop from /chat to /chat/:new_id
+    const last_route_ref = useRef( conversation_id )
+    useEffect( () => {
+
+        if( conversation_id === last_route_ref.current ) return
+        last_route_ref.current = conversation_id
+        if( conversation_id && conversation_id === pending_conversation_id_ref.current ) return
+        epoch_ref.current++
+
+    }, [ conversation_id ] )
+
     useEffect( () => {
 
         if( conversation_id === pending_conversation_id_ref.current ) {
@@ -394,11 +421,12 @@ export default function ChatPage() {
      * @param {Array} history_msgs - Messages the reply answers
      * @returns {Promise<void>}
      */
-    const stream_reply = useCallback( async ( conv_id, history_msgs ) => {
+    const stream_reply = useCallback( ( conv_id, history_msgs ) => {
 
         const assistant_msg = { id: uuid(), role: `assistant`, content: ``, created_at: Date.now() }
         set_messages( prev => [ ...prev, assistant_msg ] )
 
+        // Updates by id, so a reply whose chat was swapped out touches nothing
         const update_reply = changes => set_messages( prev => prev.map( m =>
             m.id === assistant_msg.id ? { ...m, ...changes } : m
         ) )
@@ -430,36 +458,68 @@ export default function ChatPage() {
         }
         partial_reply_ref.current = partial
 
-        try {
+        const reply = ( async () => {
 
-            const result = await chat_stream( history, get_generate_options(), ( full_text ) => {
-                update_reply( { content: full_text } )
-                partial.text = full_text
-                if( Date.now() - partial.saved_at >= PARTIAL_SAVE_INTERVAL_MS ) save_partial_reply( partial )
-            } )
+            try {
 
-            partial.done = true
-            const final_assistant = { ...assistant_msg, content: result.text, stats: result.stats }
-            update_reply( final_assistant )
+                const result = await chat_stream( history, get_generate_options(), ( full_text ) => {
+                    update_reply( { content: full_text } )
+                    partial.text = full_text
+                    if( Date.now() - partial.saved_at >= PARTIAL_SAVE_INTERVAL_MS ) save_partial_reply( partial )
+                } )
 
-            if( conv_id ) {
-                await partial.saving
-                await save_message( conv_id, final_assistant )
-                await refresh()
+                partial.done = true
+                const final_assistant = { ...assistant_msg, content: result.text, stats: result.stats }
+                update_reply( final_assistant )
+
+                // Saved into its own conversation even if the user moved on
+                if( conv_id ) {
+                    await partial.saving
+                    await save_message( conv_id, final_assistant )
+                    await refresh()
+                }
+
+            } catch ( err ) {
+
+                // Keep what already arrived, persisted as interrupted, and
+                // show the error beneath it so the user sees it in context
+                await save_partial_reply( partial )
+                partial.done = true
+                const error_content = [ partial.text, `**Error:** ${ err.message }` ].filter( Boolean ).join( `\n\n` )
+                update_reply( { content: error_content, is_error: true } )
+
+            } finally {
+                if( partial_reply_ref.current === partial ) partial_reply_ref.current = null
             }
 
-        } catch ( err ) {
+        } )()
 
-            // Show the error inline so the user sees it in context. A partial
-            // reply already saved stays in history, marked as interrupted.
-            partial.done = true
-            update_reply( { content: `**Error:** ${ err.message }`, is_error: true } )
-
-        } finally {
-            if( partial_reply_ref.current === partial ) partial_reply_ref.current = null
-        }
+        replies_settled_ref.current = Promise.allSettled( [ replies_settled_ref.current, reply ] )
+        return reply
 
     }, [ chat_stream, save_message, save_partial_reply, refresh, get_generate_options, settings.system_prompt, loaded_model_id ] )
+
+    /**
+     * Rewrite stored history once earlier replies have finished saving, so a
+     * stopped reply's late final save cannot re-insert what was just removed.
+     * @param {Function} is_current - Epoch check; a swapped-out chat skips the write
+     * @param {Array} msgs - The history to keep
+     * @returns {Promise<boolean>} Whether the caller may continue
+     */
+    const rewrite_history = useCallback( async ( is_current, msgs ) => {
+
+        rewriting_ref.current = true
+
+        try {
+            await replies_settled_ref.current
+            if( !is_current() ) return false
+            if( current_conversation_id ) await replace_messages( current_conversation_id, msgs )
+            return is_current()
+        } finally {
+            rewriting_ref.current = false
+        }
+
+    }, [ replace_messages, current_conversation_id ] )
 
     /**
      * Regenerate the last assistant message
@@ -468,15 +528,17 @@ export default function ChatPage() {
 
         // History stays readable while the model loads; rewriting it must wait
         const history_msgs = messages_ref.current.slice( 0, -1 )
-        if( !has_model || is_generating_ref.current || history_msgs.at( -1 )?.role !== `user` ) return
+        if( !has_model || is_generating_ref.current || rewriting_ref.current ) return
+        if( history_msgs.at( -1 )?.role !== `user` ) return
 
+        const is_current = capture_epoch()
         set_messages( history_msgs )
 
         // Drop the old reply from storage first, so a reload mid-stream never shows both
-        if( current_conversation_id ) await replace_messages( current_conversation_id, history_msgs )
+        if( !await rewrite_history( is_current, history_msgs ) ) return
         await stream_reply( current_conversation_id, history_msgs )
 
-    }, [ stream_reply, replace_messages, current_conversation_id, has_model ] )
+    }, [ stream_reply, rewrite_history, current_conversation_id, has_model ] )
 
     /**
      * Build a /status response with model, prompt, and system metadata.
@@ -539,21 +601,27 @@ export default function ChatPage() {
 
         }
 
+        const is_current = capture_epoch()
         const user_msg = { id: uuid(), role: `user`, content: text, created_at: Date.now() }
         set_messages( prev => [ ...prev, user_msg ] )
 
-        // Create conversation if this is the first message
+        // Create conversation if this is the first message. If the user left
+        // meanwhile, it is still saved, but must not pull them back into it.
         let conv_id = current_conversation_id
         if( !conv_id ) {
             conv_id = await create_conversation( text )
-            pending_conversation_id_ref.current = conv_id
-            set_current_conversation_id( conv_id )
-            navigate( `/chat/${ conv_id }`, { replace: true } )
+            if( is_current() ) {
+                pending_conversation_id_ref.current = conv_id
+                set_current_conversation_id( conv_id )
+                navigate( `/chat/${ conv_id }`, { replace: true } )
+            }
         }
 
         // Save user message to IndexedDB
         await save_message( conv_id, user_msg )
 
+        // A chat swapped out while storage was busy gets no reply streamed into it
+        if( !is_current() ) return
         await stream_reply( conv_id, [ ...base_messages, user_msg ] )
 
     }, [ stream_reply, current_conversation_id, create_conversation, save_message, navigate, build_status_response ] )
@@ -623,7 +691,7 @@ export default function ChatPage() {
                     next.delete( `q` )
                     return next
                 }, { replace: true } )
-                set_pending_query( { id: uuid(), text: q_param } )
+                set_pending_query( { id: uuid(), text: q_param, epoch: epoch_ref.current } )
                 return
             }
 
@@ -646,6 +714,12 @@ export default function ChatPage() {
 
         if( !pending_query ) return
 
+        // Bound to the chat it arrived in; New Chat or navigation drops it
+        if( pending_query.epoch !== epoch_ref.current ) {
+            set_pending_query( null )
+            return
+        }
+
         if( has_model ) {
             set_pending_query( null )
             send_message( pending_query.text )
@@ -666,15 +740,16 @@ export default function ChatPage() {
 
         // One reply at a time: a second run would steal the stop control and
         // the first would later re-save into the truncated history
-        if( !has_model || is_generating_ref.current ) return
+        if( !has_model || is_generating_ref.current || rewriting_ref.current ) return
 
         // Truncate at the edited message, in storage too, then re-send
+        const is_current = capture_epoch()
         const truncated = messages_ref.current.slice( 0, index )
         set_messages( truncated )
-        if( current_conversation_id ) await replace_messages( current_conversation_id, truncated )
+        if( !await rewrite_history( is_current, truncated ) ) return
         await send_message( new_text, truncated )
 
-    }, [ send_message, replace_messages, current_conversation_id, has_model ] )
+    }, [ send_message, rewrite_history, has_model ] )
 
     const handle_stop = useCallback( () => {
         abort()
@@ -685,6 +760,8 @@ export default function ChatPage() {
      */
     const handle_new_chat = useCallback( () => {
         abort()
+        epoch_ref.current++
+        set_pending_query( null )
         pending_conversation_id_ref.current = null
         set_current_conversation_id( null )
         set_messages( [] )
@@ -713,22 +790,34 @@ export default function ChatPage() {
      */
     const handle_delete = useCallback( async ( id ) => {
 
+        // Stop a reply still streaming or saving into this chat and let its
+        // writes land first, or they would leave orphaned messages behind
+        const is_active = id === current_conversation_id
+        const is_replying = partial_reply_ref.current?.conv_id === id
+        if( is_active ) epoch_ref.current++
+        if( is_active || is_replying ) {
+            abort()
+            await replies_settled_ref.current
+        }
         await delete_conversation( id )
 
         // If we deleted the active conversation, navigate to empty chat
-        if( id === current_conversation_id ) {
+        if( is_active ) {
             set_current_conversation_id( null )
             set_messages( [] )
             navigate( `/chat` )
         }
 
-    }, [ delete_conversation, current_conversation_id, navigate ] )
+    }, [ delete_conversation, current_conversation_id, navigate, abort ] )
 
     /**
      * Handle wiping all conversations from sidebar
      */
     const handle_delete_all = useCallback( async () => {
 
+        abort()
+        epoch_ref.current++
+        await replies_settled_ref.current
         await delete_all_conversations()
 
         // Reset current chat state
@@ -736,7 +825,7 @@ export default function ChatPage() {
         set_messages( [] )
         navigate( `/chat` )
 
-    }, [ delete_all_conversations, navigate ] )
+    }, [ delete_all_conversations, navigate, abort ] )
 
     /**
      * Switch to a different cached model
