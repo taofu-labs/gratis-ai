@@ -522,3 +522,9 @@
 - Added Granite 4.0 H 1B/Micro/Tiny, Gemma 4 26B-A4B (IQ4_XS), Qwen 3.6 35B-A3B (IQ3_XXS). Not browser-verified yet.
 - Recommender "faster" card now uses MoE-aware `decode_bytes` plus a 75% quality floor; added `sliding_kv` KV estimate for Gemma 4 SWA.
 - Note: ModelSelectPage currently shows TPN winners only; catalog entries surface via id lookup and as architecture profiles for custom/TPN GGUFs.
+
+## 2026-10-20 — Picker never dead-ends
+
+- `select_picker_models` (model_catalog.js): TPN winners lead whenever any fits the manual budget; otherwise (none announced, too large, discovery failed/offline/10 s timeout) the catalog smarter/faster/uncensored/vision cards + alternatives return. Winners that don't fit stay listed above the fallback.
+- Picker lists cached models ("On this device") with one-click reuse; cached models suppress the catalog's default selection.
+- Card estimates: size always, time only from a measured host-scoped speed sample (`get_speed_estimate`); guessed ranges are no longer shown on cards.

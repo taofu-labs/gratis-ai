@@ -271,3 +271,11 @@ because it can interrupt a multi-gigabyte model download.
   5.6 GB; expose only receipt-backed larger models as explicit choices.
 - Dynamic styled-components rules leak classes during multi-GB progress updates. Put frequently
   changing widths in an inline style via `.attrs()`.
+
+## Picker test ids and fallback mode (2026-10-20)
+
+`ModelSelectPage` renders TPN winners OR (when none fit/exist/load) catalog cards; both use
+`model-option-{id}`. Catalog-mode e2e tests must not mock a fitting TPN winner, or the catalog
+disappears. Seeding the IndexedDB `models` store (`gratisai-db`) is enough to exercise the
+"On this device" list (`cached-model-{id}`, `use-cached-{id}`) without a real download.
+`tests/playwright.config.js` reuses any server on :5173 — on shared machines use a private port.
