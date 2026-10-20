@@ -65,6 +65,9 @@ const deferred = () => {
     return { promise, resolve }
 }
 
+/** A load superseded by an unload or a newer load; not a failure to report. */
+const load_interrupted = () => Object.assign( new Error( `Model load was interrupted. Try again.` ), { name: `LoadInterruptedError` } )
+
 /** Allocation failures; a retry with larger buffers cannot succeed. */
 const is_memory_error = error => error instanceof RangeError
     || /memory|out of bounds|allocation failed|cannot allocate/i.test( error?.message || `` )
@@ -170,7 +173,7 @@ export default class WllamaProvider {
 
     /** Throw if an unload happened since `generation` started loading. */
     _assert_load_current( generation ) {
-        if( this._load_generation !== generation ) throw new Error( `Model load was interrupted. Try again.` )
+        if( this._load_generation !== generation ) throw load_interrupted()
     }
 
     /** Release waiters on the disposed worker and start a fresh epoch. */
@@ -377,7 +380,7 @@ export default class WllamaProvider {
 
         // An unload during the load disposed the runtime it just created
         this._assert_load_current( generation )
-        if( !this._wllama?.isModelLoaded() ) throw new Error( `Model load was interrupted. Try again.` )
+        if( !this._wllama?.isModelLoaded() ) throw load_interrupted()
 
         if( !this._wllama.getChatTemplate() ) {
             await this._release_model()
@@ -704,7 +707,7 @@ export default class WllamaProvider {
         try {
             // exit() never settles the pending load; disposal must end it too
             const disposed = this._epoch_ended.promise.then( () => {
-                throw new Error( `Model load was interrupted. Try again.` )
+                throw load_interrupted()
             } )
             await Promise.race( [
                 runtime.loadModel( source, load_options ),

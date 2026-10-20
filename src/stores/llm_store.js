@@ -197,6 +197,13 @@ const use_llm_store = create( ( set, get ) => ( {
                 set( { loaded_model_id: final_model_id } )
                 log.info( `[use_llm] Model loaded successfully: ${ final_model_id }` )
             } catch ( err ) {
+
+                // A newer load or an unload superseded this one and owns the outcome
+                if( err.name === `LoadInterruptedError` ) {
+                    log.info( `[use_llm] Load of ${ model_id } superseded` )
+                    return
+                }
+
                 log.error( `[use_llm] Model load failed:`, err.message )
                 set( { error: err.message } )
                 throw err
