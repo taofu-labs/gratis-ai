@@ -171,6 +171,7 @@ export default class WllamaProvider {
         // that waited on a worker that will never answer again.
         this._runtime_epoch = 0
         this._epoch_ended = deferred()
+        this._load_chain = Promise.resolve()
     }
 
     /** Release waiters on the disposed worker and start a fresh epoch. */
@@ -189,7 +190,18 @@ export default class WllamaProvider {
      * @param {Function} [on_progress] - Progress callback
      * @returns {Promise<void>}
      */
-    async load_model( model_id, on_progress ) {
+    load_model( model_id, on_progress ) {
+
+        // One load at a time: a second load would dispose the runtime the
+        // first is still initialising
+        const run = this._load_chain.then( () => this._load_model_now( model_id, on_progress ) )
+        this._load_chain = run.catch( () => {} )
+        return run
+
+    }
+
+    /** Load body; callers go through load_model() so loads never interleave. */
+    async _load_model_now( model_id, on_progress ) {
 
         if( this._loaded_model_id === model_id && this._wllama?.isModelLoaded() ) {
             log.info( `[wllama] Model ${ model_id } already loaded, skipping reload` )
@@ -359,6 +371,9 @@ export default class WllamaProvider {
             : `CPU`
 
         log.info( `[wllama] Loaded ${ model_id } (${ file_size_mb } MB, ${ runtime_name }, ${ backend_name }, ${ n_threads } threads, ${ n_ctx } ctx)` )
+
+        // An unload during the load disposed the runtime it just created
+        if( !this._wllama?.isModelLoaded() ) throw new Error( `Model load was interrupted. Try again.` )
 
         if( !this._wllama.getChatTemplate() ) {
             await this.unload_model()

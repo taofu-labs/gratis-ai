@@ -52,6 +52,7 @@ vi.mock( `wllama64`, () => {
         async loadModel( source, options ) {
             this.source = source
             this.load_options = options
+            if( mocks.load_delay_ms ) await new Promise( resolve => setTimeout( resolve, mocks.load_delay_ms ) )
             if( options.n_gpu_layers > 0 && mocks.fail_gpu ) throw new Error( `WebGPU backend failed` )
             if( options.n_gpu_layers === 0 && mocks.fail_cpu ) {
                 throw new WllamaError( `Model failed`, `load_error` )
@@ -130,6 +131,7 @@ describe( `Wllama WebGPU fallback`, () => {
         mocks.fail_gpu = false
         mocks.fail_cpu = false
         mocks.fail_quantized_kv = false
+        mocks.load_delay_ms = 0
         mocks.fail_gpu_inference = false
         mocks.fail_benign_inference = false
         mocks.probed = true
@@ -313,6 +315,33 @@ describe( `Wllama WebGPU fallback`, () => {
         // GPU, then CPU with q8_0 KV, then CPU with f16 KV
         expect( mocks.instances ).toHaveLength( 3 )
         expect( mocks.instances[ 2 ].load_options.cache_type_k ).toBe( `f16` )
+    } )
+
+    test( `concurrent loads run one after another instead of disposing each other`, async () => {
+        mocks.probed = false
+        mocks.load_delay_ms = 30
+        const provider = new WllamaProvider()
+
+        await Promise.all( [
+            provider.load_model( `smollm2-360m-q4km` ),
+            provider.load_model( `smollm2-360m-q4km` ),
+        ] )
+
+        // The second call finds the first runtime ready and keeps it
+        expect( mocks.instances ).toHaveLength( 1 )
+        expect( provider.is_ready() ).toBe( true )
+    } )
+
+    test( `an unload during a load fails it clearly instead of crashing`, async () => {
+        mocks.probed = false
+        mocks.load_delay_ms = 50
+        const provider = new WllamaProvider()
+
+        const loading = provider.load_model( `smollm2-360m-q4km` )
+        await new Promise( resolve => setTimeout( resolve, 20 ) )
+        await provider.unload_model()
+
+        await expect( loading ).rejects.toThrow( /interrupted/i )
     } )
 
     test( `retries CPU loads with f16 KV when the quantized cache is rejected`, async () => {
