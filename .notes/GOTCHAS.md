@@ -342,3 +342,11 @@ carry their epoch too. Replies still save into their own conversation after the 
 node_modules) serves the SPA HTML for `/wasm/wllama.wasm`, so every model load aborts with
 "expected magic word" / "Model worker stopped responding". Copy `public/wasm` from the main
 checkout before running inference e2e in a worktree.
+
+## Hugging Face rejects *.workers.dev referrers (2026-10-20)
+
+Requests carrying `Referer: https://<anything>.workers.dev/` get HTTP 404 with no CORS headers from
+huggingface.co (API, resolve, and CDN redirects). In the browser that surfaces as a CORS failure and breaks
+every model download on Workers deployments. `index.html` sets `<meta name="referrer" content="no-referrer">`;
+a unit test in `deployment_headers.test.js` guards it. Chrome also force-upgrades `.dev` hosts to HTTPS (HSTS
+preload), so a local `*.workers.dev` host-resolver simulation cannot work; verify on the real deployment.

@@ -1,6 +1,10 @@
 # Human Actions
 
-## Apple Developer agreement blocks notarization (2026-08-22)
+## Resolved 2026-10-20: Apple Developer agreement blocked notarization (2026-08-22)
+
+v0.44.0 built, signed, notarized and published on all platforms; the agreement is in place.
+
+Original note:
 
 The v0.42.0 macOS build packaged and signed successfully, then Apple's notary service returned HTTP
 403: a required agreement is missing or expired for the Developer team. Accept the current agreement
@@ -8,12 +12,10 @@ in the Apple Developer/App Store Connect account before the next Electron releas
 cannot bypass this. The release workflow now keeps all artifacts in draft until every platform build,
 including notarization, succeeds.
 
-## Push blocked: taofu-labs forbids classic PATs (2026-10-20)
+## Resolved: push access (2026-10-20)
 
-All 2026-10-20 work is committed on local `main` only. The container's GH_TOKEN is a classic PAT, which the
-`taofu-labs` org rejects for git and API, and there is no SSH key. Provide a fine-grained PAT (contents,
-actions, pull requests: read/write on taofu-labs/gratis-ai) in `.env.local`, or an SSH key at `.ssh_key`,
-then push `main`. The tracked `.env` has a container-local trailing-newline edit; do not commit it.
+A fine-grained PAT in `.env.local` (`GH_TOKEN=`) pushes to taofu-labs/gratis-ai and reads Actions. The
+container's environment GH_TOKEN is a classic PAT the org rejects; always read the token from `.env.local`.
 
 ## Review: first-run default now needs a save dialog (2026-10-20)
 
