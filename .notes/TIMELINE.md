@@ -522,3 +522,11 @@
 - Added Granite 4.0 H 1B/Micro/Tiny, Gemma 4 26B-A4B (IQ4_XS), Qwen 3.6 35B-A3B (IQ3_XXS). Not browser-verified yet.
 - Recommender "faster" card now uses MoE-aware `decode_bytes` plus a 75% quality floor; added `sliding_kv` KV estimate for Gemma 4 SWA.
 - Note: ModelSelectPage currently shows TPN winners only; catalog entries surface via id lookup and as architecture profiles for custom/TPN GGUFs.
+
+## 2026-10-20 — Generation lifecycle fixes
+
+- Stop is UI-instant: provider races each worker call against the abort signal, throws AbortError, drains the abandoned request in the background (`_settling`); next request/load waits on it. Stopped replies keep partial text + `stats.stopped`; empty-template fallback only for unstopped empty replies.
+- CPU runtimes cap `n_batch` at 128 (finer `return_progress` + quicker worker release; CPU prefill throughput ~flat above 128). GPU keeps `select_browser_batch`.
+- Prefill shows "Reading your message… N%"; stats use `timings.predicted_*` and show TTFT.
+- ChatPage: partial replies saved every 2 s + `pagehide` as `stats.interrupted`; `?q=` queued visibly while model loads; history readable during load; welcome unmounts; edit/regenerate rewrite stored history.
+- `tests/e2e/abort_generation.spec.js` helper is stale (expects `gratisAI` heading — local `.env` sets `Gratis`; and `change-model-toggle` no longer exists on ModelSelectPage). Drove the flows with a scratch Playwright script instead.
