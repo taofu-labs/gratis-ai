@@ -2,18 +2,19 @@ import { useState, useEffect, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { log } from 'mentie'
-import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, HardDrive } from 'lucide-react'
+import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, HardDrive, Settings } from 'lucide-react'
 import ChatInput from '../molecules/ChatInput'
 import VoiceModelDialog from '../molecules/VoiceModelDialog'
 import LanguageSelector from '../molecules/LanguageSelector'
 import Sidebar from '../molecules/Sidebar'
+import SettingsModal from '../molecules/SettingsModal'
 import use_llm from '../../hooks/use_llm'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_voice_input from '../../hooks/use_voice_input'
 import use_chat_history from '../../hooks/use_chat_history'
 import { useTranslation } from 'react-i18next'
 import { export_conversation } from '../../utils/export'
-import { DISPLAY_NAME, storage_key } from '../../utils/branding'
+import { DISPLAY_NAME, EVENTS, storage_key } from '../../utils/branding'
 import { is_model_fit_error } from '../../utils/model_fit_error'
 import BrowserRamOverride from '../atoms/BrowserRamOverride'
 
@@ -60,6 +61,13 @@ const TopRight = styled.div`
     top: ${ ( { theme } ) => theme.spacing.md };
     right: ${ ( { theme } ) => theme.spacing.md };
     z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
+`
+
+const SettingsButton = styled( SidebarToggle )`
+    position: static;
 `
 
 const Title = styled.h1`
@@ -112,6 +120,13 @@ const SwitchIcon = styled.button`
     &:hover {
         color: ${ ( { theme } ) => theme.colors.text };
         background: ${ ( { theme } ) => theme.colors.surface_hover };
+    }
+
+    /* 44px hit area; negative margin keeps the row layout unchanged */
+    @media ${ ( { theme } ) => theme.media.touch } {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+        margin: -0.8125rem;
     }
 `
 
@@ -178,6 +193,14 @@ export default function HomePage() {
 
     const [ load_error, set_load_error ] = useState( null )
     const [ sidebar_collapsed, set_sidebar_collapsed ] = useState( true )
+    const [ settings_open, set_settings_open ] = useState( false )
+
+    // Ctrl+, opens settings here too
+    useEffect( () => {
+        const handle_open_settings = () => set_settings_open( true )
+        window.addEventListener( EVENTS.open_settings, handle_open_settings )
+        return () => window.removeEventListener( EVENTS.open_settings, handle_open_settings )
+    }, [] )
 
     // Voice input hook
     const {
@@ -250,6 +273,18 @@ export default function HomePage() {
         } )
 
     }, [ active_id, load_model ] )
+
+    // "Switch to this" from the settings modal
+    const handle_settings_model_switch = useCallback( ( model_id ) => {
+
+        localStorage.setItem( storage_key( `active_model_id` ), model_id )
+        set_load_error( null )
+        load_model( model_id ).catch( ( err ) => {
+            log.error( `[HomePage] Switch failed:`, err.message )
+            set_load_error( { message: err.message, code: err.code } )
+        } )
+
+    }, [ load_model ] )
 
     // Cancel any in-progress load and jump to model picker
     const handle_switch_model = useCallback( () => {
@@ -336,9 +371,16 @@ export default function HomePage() {
             on_delete_all={ handle_delete_all }
         />
 
-        { /* Language selector — top right corner */ }
+        { /* Language + settings — top right corner, as on welcome and chat */ }
         <TopRight>
             <LanguageSelector />
+            <SettingsButton
+                data-testid="settings-btn"
+                onClick={ () => set_settings_open( true ) }
+                aria-label={ t( `common:aria_open_settings` ) }
+            >
+                <Settings size={ 18 } />
+            </SettingsButton>
         </TopRight>
 
         { /* Toggle button — only visible when sidebar is closed */ }
@@ -437,6 +479,12 @@ export default function HomePage() {
             </ErrorBanner> }
 
         </Container>
+
+        <SettingsModal
+            is_open={ settings_open }
+            on_close={ () => set_settings_open( false ) }
+            on_model_switch={ handle_settings_model_switch }
+        />
 
     </PageWrapper>
 
