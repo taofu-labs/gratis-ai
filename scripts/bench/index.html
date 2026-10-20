@@ -1,0 +1,82 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>wllama64 bench</title>
+<pre id="out">running</pre>
+<script type="module">
+
+    // One benchmark cell: load a GGUF with the given config, measure prefill + decode.
+    // Query: model, cfg (JSON load options), runs, max_tokens, prompt_reps
+    import { Wllama } from '/wllama/index.js'
+
+    const query = Object.fromEntries( new URLSearchParams( location.search ) )
+    const load_options = JSON.parse( query.cfg || `{}` )
+    const out = document.getElementById( `out` )
+
+    const run = async () => {
+
+        const blob = await ( await fetch( `/models/${ query.model }` ) ).blob()
+        const wllama = new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: true } )
+
+        const load_started = performance.now()
+        await wllama.loadModel( [ blob ], {
+            n_ctx: 2048,
+            n_parallel: 1,
+            jinja: true,
+            reasoning: false,
+            default_template_kwargs: { enable_thinking: false },
+            ...load_options,
+        } )
+        const load_ms = performance.now() - load_started
+
+        // A few hundred prompt tokens exercise prefill; temperature 0 keeps decode comparable
+        const filler = `The quick brown fox jumps over the lazy dog. `.repeat( Number( query.prompt_reps || 40 ) )
+        const messages = [ { role: `user`, content: `${ filler }\nWrite a detailed 300 word story about a lighthouse keeper.` } ]
+        const runs = []
+
+        for( let i = 0; i < Number( query.runs || 2 ); i++ ) {
+
+            let timings = null
+            let first_token_at = null
+            const started = performance.now()
+
+            const stream = await wllama.createChatCompletion( {
+                messages,
+                max_tokens: Number( query.max_tokens || 128 ),
+                temperature: 0,
+                seed: 1,
+                cache_prompt: false,
+                stream: true,
+            } )
+
+            for await ( const chunk of stream ) {
+                if( chunk.choices?.[ 0 ]?.delta?.content && first_token_at === null ) first_token_at = performance.now()
+                if( chunk.timings ) timings = chunk.timings
+            }
+
+            runs.push( { wall_ms: performance.now() - started, ttft_ms: first_token_at - started, timings } )
+
+        }
+
+        const diagnostics = {
+            cross_origin_isolated: crossOriginIsolated,
+            multithread: wllama.isMultithread?.(),
+            compat: wllama.getWorkerResources?.()?.compat,
+            hardware_concurrency: navigator.hardwareConcurrency,
+        }
+
+        await wllama.exit()
+        return { load_ms, runs, diagnostics }
+
+    }
+
+    run()
+        .then( result => {
+            window.__result = result
+            out.textContent = JSON.stringify( result, null, 1 )
+        } )
+        .catch( error => {
+            window.__result = { error: String( error?.stack || error ) }
+            out.textContent = String( error )
+        } )
+
+</script>

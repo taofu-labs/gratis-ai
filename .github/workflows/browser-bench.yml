@@ -1,0 +1,68 @@
+name: Browser inference benchmark
+run-name: Benchmark wllama64 ${{ inputs.wllama64_version || 'from lockfile' }}
+
+# Manual tokens/sec benchmark in real headful Chromium on a clean runner.
+# Developer machines are often too noisy for A/B comparisons of load options.
+
+on:
+  workflow_dispatch:
+    inputs:
+      wllama64_version:
+        description: wllama64 version to benchmark (empty = lockfile)
+        required: false
+        type: string
+      configs:
+        description: JSON { label -> load options } (empty = defaults in scripts/bench/run.mjs)
+        required: false
+        type: string
+      rounds:
+        description: Round-robin rounds per config
+        required: false
+        default: '3'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: |
+          npm ci --ignore-scripts
+          if [[ -n "${{ inputs.wllama64_version }}" ]]; then
+            npm install --no-save --ignore-scripts "wllama64@${{ inputs.wllama64_version }}"
+          fi
+          npx playwright install --with-deps chromium
+
+      - name: Cache models
+        uses: actions/cache@v4
+        with:
+          path: bench-models
+          key: bench-models-v1
+
+      - name: Download models
+        run: |
+          mkdir -p bench-models
+          cd bench-models
+          [[ -f qwen3-0.6b.gguf ]] || curl -fsSL -o qwen3-0.6b.gguf https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf
+          [[ -f llama32-1b.gguf ]] || curl -fsSL -o llama32-1b.gguf https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf
+
+      - name: Benchmark
+        env:
+          BENCH_CONFIGS: ${{ inputs.configs }}
+          BENCH_WASM_DIR: node_modules/wllama64/esm/wasm
+          BENCH_THREADS: 4
+        run: |
+          nproc
+          xvfb-run -a node scripts/bench/run.mjs bench-models "${{ inputs.rounds || 3 }}"
