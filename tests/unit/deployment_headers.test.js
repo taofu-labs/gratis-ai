@@ -77,4 +77,13 @@ describe( `deployment headers`, () => {
         expect( headers_file ).toContain( `Cross-Origin-Embedder-Policy: require-corp` )
     } )
 
+    test( `never sends a referrer to model hosts`, () => {
+
+        // Hugging Face answers 404 without CORS for *.workers.dev referrers,
+        // which silently breaks every model download on such deployments
+        const index_html = readFileSync( `index.html`, `utf-8` )
+        expect( index_html ).toMatch( /<meta name="referrer" content="no-referrer"/ )
+
+    } )
+
 } )

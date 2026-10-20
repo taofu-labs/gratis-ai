@@ -26,6 +26,7 @@
 - Rebrand for True Performance Network; force dark mode (d7b8a7f, fa9822e)
 
 ### Fixed
+- Model downloads on *.workers.dev deployments: send no Referer; HF rejected it (see git log)
 - Stop takes effect at once and keeps partial text instead of an empty-reply error (19c9d24)
 - Cancel download really stops the transfer and discards partial bytes (16ee521)
 - Unload after a stop no longer hangs on the terminated worker (4a6d88b)
