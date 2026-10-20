@@ -15,6 +15,10 @@ on:
         description: JSON { label -> load options } (empty = defaults in scripts/bench/run.mjs)
         required: false
         type: string
+      models:
+        description: Space-separated name=url GGUF list (empty = Qwen3 0.6B + Llama 3.2 1B)
+        required: false
+        type: string
       rounds:
         description: Round-robin rounds per config
         required: false
@@ -49,14 +53,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: bench-models
-          key: bench-models-v1
+          key: bench-models-${{ hashFiles('.github/workflows/browser-bench.yml') }}-${{ inputs.models }}
 
       - name: Download models
+        env:
+          MODELS: ${{ inputs.models || 'qwen3-0.6b.gguf=https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf llama32-1b.gguf=https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf' }}
         run: |
-          mkdir -p bench-models
-          cd bench-models
-          [[ -f qwen3-0.6b.gguf ]] || curl -fsSL -o qwen3-0.6b.gguf https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf
-          [[ -f llama32-1b.gguf ]] || curl -fsSL -o llama32-1b.gguf https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf
+          mkdir -p bench-models bench-run
+          for entry in $MODELS; do
+            name="${entry%%=*}"
+            [[ -f "bench-models/$name" ]] || curl -fsSL -o "bench-models/$name" "${entry#*=}"
+            ln -sf "../bench-models/$name" "bench-run/$name"
+          done
+          ls -laL bench-run
 
       - name: Benchmark
         env:
@@ -65,4 +74,4 @@ jobs:
           BENCH_THREADS: 4
         run: |
           nproc
-          xvfb-run -a node scripts/bench/run.mjs bench-models "${{ inputs.rounds || 3 }}"
+          xvfb-run -a node scripts/bench/run.mjs bench-run "${{ inputs.rounds || 3 }}"
