@@ -16,7 +16,7 @@
 - TPN winner models in the picker; declare browser RAM; large custom GGUFs (6591981, 0665086, 9e9c2e7)
 
 ### Changed
-- Upgrade wllama64 to 1.1.0 (upstream Wllama 3.8.1) (9c468ab)
+- Upgrade wllama64 to 1.1.1 (upstream Wllama 3.8.1 + OPFS short-write fix) (9c468ab)
 - Upgrade Vite 8, plugin-react 6, vite-plugin-pwa 2, Vitest 5, Electron 44 (80e3e2b)
 - Stream updates coalesce per frame; bubbles no longer re-render per token (9738425)
 - Smoothed ETA from observed throughput; picker shows size unless measured (782b62c)
