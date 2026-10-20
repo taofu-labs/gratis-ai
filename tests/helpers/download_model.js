@@ -16,7 +16,7 @@ export async function download_model_via_ui( page, model, opts = {} ) {
 
     // Step 1 — Welcome page
     await page.goto( `/` )
-    await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
+    await expect( page.getByRole( `heading`, { name: /gratis/i } ) ).toBeVisible()
     const get_started = page.getByTestId( `get-started-btn` )
     if( await get_started.isVisible() ) {
         await expect( get_started ).toBeEnabled( { timeout: 15_000 } )

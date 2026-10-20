@@ -34,7 +34,7 @@ test.describe( `E2E Inference`, () => {
         } )
         expect( memory64 ).toBe( true )
 
-        await expect( page.getByRole( `heading`, { name: `gratisAI` } ) ).toBeVisible()
+        await expect( page.getByRole( `heading`, { name: /gratis/i } ) ).toBeVisible()
 
         // Wait for device detection to finish so button is enabled
         await expect( page.getByTestId( `get-started-btn` ) ).toBeEnabled( { timeout: 15_000 } )

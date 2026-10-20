@@ -2,8 +2,8 @@ import { defineConfig } from '@playwright/test'
 
 const large_inference = !!process.env.LARGE_INFERENCE_ARTIFACT_DIR
 const app_command = large_inference
-    ? `VITE_HF_BASE_URL=http://127.0.0.1:5174 VITE_INFERENCE_DIAGNOSTICS=1 npm run dev`
-    : `npm run dev`
+    ? `VITE_HF_BASE_URL=http://127.0.0.1:5174 VITE_INFERENCE_DIAGNOSTICS=1 npm run dev -- --host 127.0.0.1`
+    : `npm run dev -- --host 127.0.0.1`
 
 export default defineConfig( {
     testDir: `./e2e`,
@@ -12,7 +12,8 @@ export default defineConfig( {
     fullyParallel: false,
     retries: 1,
     use: {
-        baseURL: `http://localhost:5173`,
+        // Pin IPv4: Vite may bind only [::1] for localhost while Chromium dials 127.0.0.1
+        baseURL: `http://127.0.0.1:5173`,
         headless: true,
         viewport: { width: 1280, height: 720 },
         actionTimeout: 30_000,

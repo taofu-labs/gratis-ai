@@ -69,6 +69,12 @@ test.describe( `Vision Models — Model Select Page`, () => {
     test( `download button navigates after selecting vision card`, async ( { page } ) => {
 
         await inject_high_memory( page )
+
+        // Multi-GB picks save to a user-chosen file when the File System Access
+        // API exists; a native save dialog would block this navigation check
+        await page.addInitScript( () => {
+            delete window.showSaveFilePicker
+        } )
         await page.goto( `/select-model` )
 
         // Select the vision card
@@ -87,9 +93,15 @@ test.describe( `Vision Models — Model Select Page`, () => {
 
     test( `vision card does not appear when memory is too low`, async ( { page } ) => {
 
-        // Override navigator.deviceMemory to simulate a low-memory device
+        // Simulate an old low-memory browser: Memory64 browsers deliberately
+        // ignore privacy-clamped deviceMemory, so the wasm32 budget must apply
         await page.addInitScript( () => {
             Object.defineProperty( navigator, `deviceMemory`, { get: () => 1, configurable: true } )
+            const NativeMemory = WebAssembly.Memory
+            WebAssembly.Memory = function( descriptor ) {
+                if( descriptor?.address === `i64` ) throw new TypeError( `Memory64 unavailable` )
+                return new NativeMemory( descriptor )
+            }
         } )
 
         await page.goto( `/select-model` )
