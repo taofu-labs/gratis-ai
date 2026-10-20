@@ -522,3 +522,8 @@
 - Added Granite 4.0 H 1B/Micro/Tiny, Gemma 4 26B-A4B (IQ4_XS), Qwen 3.6 35B-A3B (IQ3_XXS). Not browser-verified yet.
 - Recommender "faster" card now uses MoE-aware `decode_bytes` plus a 75% quality floor; added `sliding_kv` KV estimate for Gemma 4 SWA.
 - Note: ModelSelectPage currently shows TPN winners only; catalog entries surface via id lookup and as architecture profiles for custom/TPN GGUFs.
+
+## 2026-10-20 — Toolchain majors
+
+- Adopted Vite 8, plugin-react 6, vite-plugin-pwa 2, electron-vite 6, Vitest 5, Electron 44,
+  Playwright 1.64, Wrangler 4.151 and added npm `allowScripts`. ESLint 10 stays deferred (airier stack).

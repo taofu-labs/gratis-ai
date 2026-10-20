@@ -57,7 +57,10 @@ describe( `deployment headers`, () => {
 
         expect( deploy_workflow ).toContain( `workflow_dispatch:` )
         expect( deploy_workflow ).toContain( `cancel-in-progress: true` )
-        expect( deploy_workflow ).toContain( `wranglerVersion: "4.125.0"` )
+        // The action must use the same exact Wrangler pin as package.json
+        const { devDependencies } = JSON.parse( readFileSync( `package.json`, `utf8` ) )
+        expect( devDependencies.wrangler ).toMatch( /^\d+\.\d+\.\d+$/ )
+        expect( deploy_workflow ).toContain( `wranglerVersion: "${ devDependencies.wrangler }"` )
         expect( deploy_workflow ).toContain( `verify_deployment_headers.js` )
         expect( deploy_workflow ).toContain( `src/**` )
         expect( deploy_workflow ).toContain( `public/**` )
