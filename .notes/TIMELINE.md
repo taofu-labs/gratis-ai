@@ -527,3 +527,9 @@
 
 - Adopted Vite 8, plugin-react 6, vite-plugin-pwa 2, electron-vite 6, Vitest 5, Electron 44,
   Playwright 1.64, Wrangler 4.151 and added npm `allowScripts`. ESLint 10 stays deferred (airier stack).
+
+## 2026-10-20 — Picker never dead-ends
+
+- `select_picker_models` (model_catalog.js): TPN winners lead whenever any fits the manual budget; otherwise (none announced, too large, discovery failed/offline/10 s timeout) the catalog smarter/faster/uncensored/vision cards + alternatives return. Winners that don't fit stay listed above the fallback.
+- Picker lists cached models ("On this device") with one-click reuse; cached models suppress the catalog's default selection.
+- Card estimates: size always, time only from a measured host-scoped speed sample (`get_speed_estimate`); guessed ranges are no longer shown on cards.

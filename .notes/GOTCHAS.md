@@ -290,3 +290,11 @@ because it can interrupt a multi-gigabyte model download.
 - wllama64 `loadModel()` has no progress callback; the store mirrors the provider's status strings
   into `load_stage` i18n keys (`LOAD_STAGE_PATTERNS` in llm_store). Changing provider status wording
   silently drops the stage text back to the previous stage.
+
+## Picker test ids and fallback mode (2026-10-20)
+
+`ModelSelectPage` renders TPN winners OR (when none fit/exist/load) catalog cards; both use
+`model-option-{id}`. Catalog-mode e2e tests must not mock a fitting TPN winner, or the catalog
+disappears. Seeding the IndexedDB `models` store (`gratisai-db`) is enough to exercise the
+"On this device" list (`cached-model-{id}`, `use-cached-{id}`) without a real download.
+`tests/playwright.config.js` reuses any server on :5173 — on shared machines use a private port.

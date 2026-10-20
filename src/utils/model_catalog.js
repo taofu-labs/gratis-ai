@@ -1699,6 +1699,55 @@ export const select_model_options = ( available_bytes ) => {
 }
 
 
+// ─── Picker glue ─────────────────────────────────────────────────────────────────
+
+const NO_RECOMMENDATIONS = Object.freeze( { smarter: null, faster: null, uncensored: null, vision: null } )
+
+/**
+ * Decide what the model picker offers. TPN winners are the product's primary
+ * choice and always lead. The catalog recommender fills in whenever no winner
+ * fits this device, none exist yet, or discovery failed — so the picker never dead-ends.
+ *
+ * @param {Object} options
+ * @param {ModelDefinition[]} [options.winners] - Resolved TPN winner variants
+ * @param {number} options.max_bytes - Manual memory budget (alternatives, winner fit)
+ * @param {number} [options.automatic_bytes] - Conservative budget for automatic cards
+ * @param {number|null} [options.receipt_ceiling_bytes] - Above this, alternatives need `browser_verified`
+ * @returns {{ winners: ModelDefinition[], use_catalog: boolean, recommendations: { smarter: ModelDefinition|null, faster: ModelDefinition|null, uncensored: ModelDefinition|null, vision: ModelDefinition|null }, alternatives: ModelDefinition[] }}
+ */
+export const select_picker_models = ( {
+    winners = [],
+    max_bytes,
+    automatic_bytes = max_bytes,
+    receipt_ceiling_bytes = null,
+} ) => {
+
+    // Newest competition first, then smallest variant
+    const sorted_winners = [ ...winners ].sort( ( a, b ) =>
+        String( b.tpn_competition || `` ).localeCompare( String( a.tpn_competition || `` ) )
+        || a.file_size_bytes - b.file_size_bytes
+    )
+
+    const use_catalog = !sorted_winners.some( m => can_fit_in_memory( m, max_bytes ) )
+    if( !use_catalog ) return { winners: sorted_winners, use_catalog, recommendations: NO_RECOMMENDATIONS, alternatives: [] }
+
+    const recommendations = select_model_options( automatic_bytes )
+    const shown_ids = new Set( Object.values( recommendations ).filter( Boolean ).map( m => m.id ) )
+
+    // Past the automatic ceiling, only exact-artifact browser receipts qualify
+    const has_receipt = m => !receipt_ceiling_bytes
+        || estimate_model_memory( m ) <= receipt_ceiling_bytes
+        || m.browser_verified === true
+
+    const alternatives = get_fitting_models( max_bytes )
+        .filter( m => !shown_ids.has( m.id ) )
+        .filter( has_receipt )
+
+    return { winners: sorted_winners, use_catalog, recommendations, alternatives }
+
+}
+
+
 // ─── Formatting ─────────────────────────────────────────────────────────────────
 
 /**
