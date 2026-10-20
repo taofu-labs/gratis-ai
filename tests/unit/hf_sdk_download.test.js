@@ -1,9 +1,11 @@
 import { describe, expect, test, vi } from 'vitest'
 import {
     abortable_stream,
+    discard_partial_download,
     download_hf_model_file_to_cache,
     download_hf_model_file_to_external_file,
     get_resume_offset,
+    sweep_partial_downloads,
 } from '../../src/utils/hf_sdk_download'
 
 const model = {
@@ -14,6 +16,20 @@ const model = {
 
 const download_url = `https://huggingface.co/tpnlabs/test-model/resolve/main/test-model-Q4_K_M.gguf`
 const resume_key = `partial_download:cache-key`
+const stale_key = `partial_download:stale-key`
+const stale_record = JSON.stringify( { etag: `old`, total: 9, url: `https://x/old.gguf` } )
+
+// Hold a download lock the way another tab's active download would
+const hold_lock = name => {
+    let release = null
+    let acquired = null
+    const ready = new Promise( resolve => acquired = resolve )
+    navigator.locks.request( name, () => {
+        acquired()
+        return new Promise( resolve => release = resolve )
+    } )
+    return ready.then( () => release )
+}
 
 class MemoryStorage {
     constructor() {
@@ -323,6 +339,174 @@ describe( `Hugging Face SDK download`, () => {
 
         expect( storage_backend.delete ).not.toHaveBeenCalled()
         expect( JSON.parse( storage.getItem( resume_key ) ) ).toMatchObject( { etag: `etag`, total: 6 } )
+    } )
+
+    test( `sweep keeps the record when the delete fails`, async () => {
+        const storage = new MemoryStorage()
+        storage.setItem( stale_key, stale_record )
+        const storage_backend = { delete: vi.fn( async () => {
+            throw Object.assign( new Error( `busy` ), { name: `NoModificationAllowedError` } )
+        } ) }
+
+        await sweep_partial_downloads( { storage_backend, storage } )
+
+        expect( storage_backend.delete ).toHaveBeenCalledWith( `stale-key` )
+        expect( storage.getItem( stale_key ) ).toBe( stale_record )
+    } )
+
+    test( `sweep never touches a download whose lock another tab holds`, async () => {
+        const storage = new MemoryStorage()
+        storage.setItem( stale_key, stale_record )
+        const storage_backend = { delete: vi.fn( async () => {} ) }
+        const release = await hold_lock( `gratis-download:stale-key` )
+
+        await sweep_partial_downloads( { storage_backend, storage } )
+        release()
+
+        expect( storage_backend.delete ).not.toHaveBeenCalled()
+        expect( storage.getItem( stale_key ) ).toBe( stale_record )
+    } )
+
+    test( `sweep is skipped entirely without Web Locks`, async () => {
+        const storage = new MemoryStorage()
+        storage.setItem( stale_key, stale_record )
+        const storage_backend = { delete: vi.fn( async () => {} ) }
+
+        await sweep_partial_downloads( { storage_backend, storage, locks: null } )
+
+        expect( storage_backend.delete ).not.toHaveBeenCalled()
+        expect( storage.getItem( stale_key ) ).toBe( stale_record )
+    } )
+
+    test( `downloads still work without Web Locks`, async () => {
+        const storage_backend = create_backend()
+
+        await download_hf_model_file_to_cache( {
+            model,
+            url: download_url,
+            cache_manager: create_cache_manager(),
+            storage_backend,
+            storage: new MemoryStorage(),
+            access_token: ``,
+            sdk: create_sdk( { size: 6, etag: `etag`, url: download_url } ),
+            locks: null,
+        } )
+
+        expect( storage_backend.size ).toBe( 6 )
+    } )
+
+    test( `holds the download lock for the whole attempt`, async () => {
+        let held = []
+        const sdk = create_sdk( { size: 6, etag: `etag`, url: download_url } )
+        sdk.fileDownloadInfo = vi.fn( async () => {
+            held = ( await navigator.locks.query() ).held.map( ( { name } ) => name )
+            return { size: 6, etag: `etag`, url: download_url }
+        } )
+
+        await download_hf_model_file_to_cache( {
+            model,
+            url: download_url,
+            cache_manager: create_cache_manager(),
+            storage_backend: create_backend(),
+            storage: new MemoryStorage(),
+            access_token: ``,
+            sdk,
+        } )
+
+        expect( held ).toContain( `gratis-download:cache-key` )
+    } )
+
+    test( `deletes an incompatible prefix before recording the new revision`, async () => {
+        const storage = new MemoryStorage()
+        storage.setItem( resume_key, JSON.stringify( { etag: `old`, total: 6 } ) )
+        const storage_backend = create_backend( 4 )
+        const record_at_delete = []
+        const delete_prefix = storage_backend.delete
+        storage_backend.delete = vi.fn( async key => {
+            record_at_delete.push( storage.getItem( resume_key ) )
+            return delete_prefix( key )
+        } )
+
+        await download_hf_model_file_to_cache( {
+            model,
+            url: download_url,
+            cache_manager: create_cache_manager(),
+            storage_backend,
+            storage,
+            access_token: ``,
+            sdk: create_sdk( { size: 6, etag: `new`, url: download_url } ),
+        } )
+
+        expect( storage_backend.delete ).toHaveBeenCalledWith( `cache-key` )
+        expect( record_at_delete ).toEqual( [ null ] )
+        expect( storage_backend.appends ).toEqual( [ { key: `cache-key`, offset: 0 } ] )
+    } )
+
+    test( `a failed prefix delete leaves no record that could validate stale bytes`, async () => {
+        const storage = new MemoryStorage()
+        storage.setItem( resume_key, JSON.stringify( { etag: `old`, total: 6 } ) )
+        const storage_backend = create_backend( 4 )
+        storage_backend.delete = vi.fn( async () => {
+            throw new Error( `locked` )
+        } )
+
+        await expect( download_hf_model_file_to_cache( {
+            model,
+            url: download_url,
+            cache_manager: create_cache_manager(),
+            storage_backend,
+            storage,
+            access_token: ``,
+            sdk: create_sdk( { size: 6, etag: `new`, url: download_url } ),
+        } ) ).rejects.toThrow( `locked` )
+
+        expect( storage_backend.append ).not.toHaveBeenCalled()
+        expect( storage.getItem( resume_key ) ).toBeNull()
+    } )
+
+    test( `cancel during the metadata lookup discards an existing prefix`, async () => {
+        const controller = new AbortController()
+        const storage = new MemoryStorage()
+        storage.setItem( resume_key, JSON.stringify( { etag: `etag`, total: 6 } ) )
+        const storage_backend = create_backend( 4 )
+
+        const pending = download_hf_model_file_to_cache( {
+            model,
+            url: download_url,
+            cache_manager: create_cache_manager(),
+            storage_backend,
+            storage,
+            access_token: ``,
+            sdk: {
+                fileDownloadInfo: vi.fn( () => new Promise( ( _, reject ) => {
+                    controller.signal.addEventListener( `abort`, () => reject( Object.assign( new Error( `aborted` ), { name: `AbortError` } ) ) )
+                } ) ),
+                downloadFile: vi.fn(),
+            },
+            signal: controller.signal,
+        } )
+        setTimeout( () => controller.abort(), 5 )
+
+        await expect( pending ).rejects.toMatchObject( { name: `AbortError` } )
+        expect( storage_backend.delete ).toHaveBeenCalledWith( `cache-key` )
+        expect( storage.getItem( resume_key ) ).toBeNull()
+    } )
+
+    test( `discard_partial_download removes a kept prefix after the lock frees`, async () => {
+        const storage = new MemoryStorage()
+        storage.setItem( resume_key, JSON.stringify( { etag: `etag`, total: 6 } ) )
+        const storage_backend = create_backend( 3 )
+        const release = await hold_lock( `gratis-download:cache-key` )
+
+        const pending = discard_partial_download( { url: download_url, cache_manager: create_cache_manager(), storage_backend, storage } )
+        await new Promise( resolve => setTimeout( resolve, 10 ) )
+        expect( storage_backend.delete ).not.toHaveBeenCalled()
+
+        release()
+        await pending
+
+        expect( storage_backend.delete ).toHaveBeenCalledWith( `cache-key` )
+        expect( storage.getItem( resume_key ) ).toBeNull()
     } )
 
     test( `get_resume_offset only trusts a matching prefix that fits`, () => {

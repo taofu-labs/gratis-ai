@@ -170,16 +170,50 @@ export const get_resume_offset = ( { record, stored_size, etag, total } ) => {
     return stored_size
 }
 
+const lock_name = cache_key => `gratis-download:${ cache_key }`
+
+/**
+ * Hold this origin's cross-tab lock for `cache_key` while `fn` runs. Without
+ * the Web Locks API the work still runs, it is only unprotected.
+ * @param {Object} options
+ * @param {string} options.cache_key
+ * @param {LockManager|null} [options.locks]
+ * @param {AbortSignal} [options.signal] - Stops waiting for a busy lock
+ * @param {Function} fn
+ * @returns {Promise<*>}
+ */
+const with_download_lock = ( { cache_key, locks, signal }, fn ) => {
+    if( !locks?.request ) return fn()
+    return locks.request( lock_name( cache_key ), signal ? { signal } : {}, fn )
+}
+
 /**
  * Delete interrupted downloads other than `keep_key`. Their prefixes have no
  * metadata, so no model list can show or delete them; they would only eat quota.
+ *
+ * A prefix is only deleted while holding its download lock, so another tab's
+ * active download is never touched. Without Web Locks nothing is swept: a
+ * leaked prefix costs quota, deleting a live download costs the download.
+ * A record is only removed once its bytes are gone, so nothing goes untracked.
+ *
  * @param {Object} options
  * @param {{ delete: Function }} options.storage_backend
  * @param {string|null} [options.keep_key] - Cache key of the download that may resume
  * @param {Storage} [options.storage]
+ * @param {LockManager|null} [options.locks]
  * @returns {Promise<void>}
  */
-export const sweep_partial_downloads = async ( { storage_backend, keep_key = null, storage = globalThis.localStorage } ) => {
+export const sweep_partial_downloads = async ( {
+    storage_backend,
+    keep_key = null,
+    storage = globalThis.localStorage,
+    locks = globalThis.navigator?.locks,
+} ) => {
+
+    if( !locks?.request ) {
+        log.debug( `[download] Web Locks unavailable, skipping partial download sweep` )
+        return
+    }
 
     let keys = []
     try {
@@ -190,10 +224,21 @@ export const sweep_partial_downloads = async ( { storage_backend, keep_key = nul
     }
 
     for( const record_key of keys ) {
+
         const cache_key = record_key.slice( RESUME_KEY_PREFIX.length )
         if( cache_key === keep_key ) continue
-        await storage_backend.delete( cache_key ).catch( () => {} )
-        write_resume_record( storage, cache_key, null )
+
+        // ifAvailable: a held lock means a live download, possibly in another tab
+        await locks.request( lock_name( cache_key ), { ifAvailable: true }, async lock => {
+            if( !lock ) return log.debug( `[download] Skipping sweep of active download ${ cache_key }` )
+            try {
+                await storage_backend.delete( cache_key )
+                write_resume_record( storage, cache_key, null )
+            } catch ( error ) {
+                log.warn( `[download] Could not sweep partial download ${ cache_key }:`, error?.message )
+            }
+        } )
+
     }
 
 }
@@ -219,6 +264,7 @@ export const sweep_partial_downloads = async ( { storage_backend, keep_key = nul
  * @param {typeof fetch} [options.fetch_impl]
  * @param {{ fileDownloadInfo: typeof fileDownloadInfo, downloadFile: typeof downloadFile }} [options.sdk]
  * @param {Storage} [options.storage] - Persists resume records
+ * @param {LockManager|null} [options.locks] - Cross-tab download locks
  * @returns {Promise<{ cache_key: string, size: number, etag: string, mode: 'xet'|'web', resumed_from: number }>}
  */
 export const download_hf_model_file_to_cache = async ( {
@@ -232,97 +278,130 @@ export const download_hf_model_file_to_cache = async ( {
     fetch_impl = fetch,
     sdk = { fileDownloadInfo, downloadFile },
     storage = globalThis.localStorage,
+    locks = globalThis.navigator?.locks,
 } ) => {
 
-    const { blob, info } = await get_hf_model_blob( { model, signal, access_token, fetch_impl, sdk } )
-
-    const total = info.size || model.file_size_bytes || 0
-    const etag = clean_etag( info.etag )
+    // The key only depends on the URL, so the lock can cover the whole attempt
     const cache_key = await cache_manager.getNameFromURL( url )
-    await sweep_partial_downloads( { storage_backend, keep_key: cache_key, storage } )
 
-    // Existing metadata belongs to an older entry the caller already judged
-    // invalid. Drop it so it cannot adopt the new bytes mid-download.
-    const existing_metadata = await cache_manager.getMetadata( cache_key ).catch( () => null )
-    if( existing_metadata?.originalURL ) {
-        await cache_manager.delete( cache_key ).catch( () => {} )
-        write_resume_record( storage, cache_key, null )
-    }
+    return with_download_lock( { cache_key, locks, signal }, async () => {
 
-    const stored_size = await storage_backend.getSize( cache_key ).catch( () => -1 )
-    const offset = get_resume_offset( {
-        record: read_resume_record( storage, cache_key ),
-        stored_size,
-        etag,
-        total,
-    } )
-    if( offset > 0 ) log.info( `[download] Resuming ${ model.file_name } at ${ ( offset / 1e6 ).toFixed( 0 ) } MB` )
+        // True once this key may hold bytes this attempt is responsible for
+        let owns_prefix = !!read_resume_record( storage, cache_key )
 
-    write_resume_record( storage, cache_key, { etag, total, url } )
-    on_progress?.( { loaded: offset, total, resumed_from: offset } )
-
-    const discard_partial = async () => {
-        await storage_backend.delete( cache_key ).catch( () => {} )
-        write_resume_record( storage, cache_key, null )
-    }
-
-    const progress = create_progress_stream( total, on_progress, offset )
-    let stored_bytes = offset
-
-    try {
-
-        // A prefix that already holds every byte only lacks its metadata
-        if( !( total > 0 ) || offset < total ) {
-            const source = offset > 0 ? blob.slice( offset ) : blob
-            const stream = abortable_stream( source.stream(), signal ).pipeThrough( progress.stream )
-            stored_bytes = await storage_backend.append( cache_key, stream, { offset } )
+        const discard_partial = async () => {
+            await storage_backend.delete( cache_key ).catch( () => {} )
+            write_resume_record( storage, cache_key, null )
         }
 
-        if( signal?.aborted ) throw abort_error()
+        try {
 
-    } catch ( error ) {
-        // Cancel discards; transient failures keep the prefix for a resume
-        if( signal?.aborted || error?.name === `AbortError` ) await discard_partial()
-        throw error
-    }
+            const { blob, info } = await get_hf_model_blob( { model, signal, access_token, fetch_impl, sdk } )
 
-    if( total > 0 && stored_bytes !== total ) {
-        await discard_partial()
-        throw new Error( `The model download was incomplete. Please retry the download.` )
-    }
+            const total = info.size || model.file_size_bytes || 0
+            const etag = clean_etag( info.etag )
+            await sweep_partial_downloads( { storage_backend, keep_key: cache_key, storage, locks } )
 
-    // Metadata last: only now does wllama see a model at this key
-    await cache_manager.writeMetadata( cache_key, {
-        originalURL: url,
-        originalSize: total || stored_bytes,
-        etag,
+            // Existing metadata belongs to an older entry the caller already judged
+            // invalid. Drop it so it cannot adopt the new bytes mid-download.
+            const existing_metadata = await cache_manager.getMetadata( cache_key ).catch( () => null )
+            if( existing_metadata?.originalURL ) {
+                await cache_manager.delete( cache_key ).catch( () => {} )
+                write_resume_record( storage, cache_key, null )
+            }
+
+            const stored_size = await storage_backend.getSize( cache_key ).catch( () => -1 )
+            const offset = get_resume_offset( {
+                record: read_resume_record( storage, cache_key ),
+                stored_size,
+                etag,
+                total,
+            } )
+            if( offset > 0 ) log.info( `[download] Resuming ${ model.file_name } at ${ ( offset / 1e6 ).toFixed( 0 ) } MB` )
+
+            // An untrusted prefix must be gone before a new record could vouch for it.
+            // A failed delete throws with no record left, so no retry appends to it.
+            if( offset === 0 && stored_size > 0 ) {
+                write_resume_record( storage, cache_key, null )
+                await storage_backend.delete( cache_key )
+            }
+
+            owns_prefix = true
+            write_resume_record( storage, cache_key, { etag, total, url } )
+            on_progress?.( { loaded: offset, total, resumed_from: offset } )
+
+            const progress = create_progress_stream( total, on_progress, offset )
+            let stored_bytes = offset
+
+            // A prefix that already holds every byte only lacks its metadata
+            if( !( total > 0 ) || offset < total ) {
+                const source = offset > 0 ? blob.slice( offset ) : blob
+                const stream = abortable_stream( source.stream(), signal ).pipeThrough( progress.stream )
+                stored_bytes = await storage_backend.append( cache_key, stream, { offset } )
+            }
+
+            if( signal?.aborted ) throw abort_error()
+
+            if( total > 0 && stored_bytes !== total ) {
+                await discard_partial()
+                throw new Error( `The model download was incomplete. Please retry the download.` )
+            }
+
+            // Metadata last: only now does wllama see a model at this key
+            await cache_manager.writeMetadata( cache_key, {
+                originalURL: url,
+                originalSize: total || stored_bytes,
+                etag,
+            } )
+            write_resume_record( storage, cache_key, null )
+
+            return {
+                cache_key,
+                size: stored_bytes || total,
+                etag,
+                mode: info.xet ? `xet` : `web`,
+                resumed_from: offset,
+            }
+
+        } catch ( error ) {
+            // Cancel discards, even mid-metadata; transient failures keep the prefix for a resume
+            const aborted = signal?.aborted || error?.name === `AbortError`
+            if( aborted && owns_prefix ) await discard_partial()
+            throw error
+        }
+
     } )
-    write_resume_record( storage, cache_key, null )
-
-    return {
-        cache_key,
-        size: stored_bytes || total,
-        etag,
-        mode: info.xet ? `xet` : `web`,
-        resumed_from: offset,
-    }
 
 }
 
 /**
- * Discard an interrupted OPFS download for `url`, if any.
+ * Discard an interrupted OPFS download for `url`, if any. Waits for that
+ * key's download lock, so a just-aborted attempt finishes its own cleanup first.
  * @param {Object} options
  * @param {string} options.url
  * @param {import('wllama64').CacheManager} options.cache_manager
  * @param {{ delete: Function }} options.storage_backend
  * @param {Storage} [options.storage]
+ * @param {LockManager|null} [options.locks]
  * @returns {Promise<void>}
  */
-export const discard_partial_download = async ( { url, cache_manager, storage_backend, storage = globalThis.localStorage } ) => {
+export const discard_partial_download = async ( {
+    url,
+    cache_manager,
+    storage_backend,
+    storage = globalThis.localStorage,
+    locks = globalThis.navigator?.locks,
+} ) => {
+
     const cache_key = await cache_manager.getNameFromURL( url )
-    if( !read_resume_record( storage, cache_key ) ) return
-    await storage_backend.delete( cache_key ).catch( () => {} )
-    write_resume_record( storage, cache_key, null )
+
+    await with_download_lock( { cache_key, locks }, async () => {
+        if( !read_resume_record( storage, cache_key ) ) return
+        // A failed delete keeps the record, so the bytes stay sweepable
+        await storage_backend.delete( cache_key )
+        write_resume_record( storage, cache_key, null )
+    } )
+
 }
 
 /**
