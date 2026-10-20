@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
 import MessageBubble from './MessageBubble'
 
@@ -29,13 +29,33 @@ const ListContainer = styled.div`
 export default function MessageList( { messages, is_streaming, is_endpoint_warming, is_cloud_model, on_regenerate, on_edit } ) {
 
     const list_ref = useRef( null )
+    const stick_to_bottom = useRef( true )
 
-    // Auto-scroll to bottom during streaming and when new messages appear
+    // Parent handlers change on every streamed token. Stable wrappers keep the
+    // memoized bubbles from re-parsing markdown for the whole chat per token.
+    const handlers = useRef( { on_regenerate, on_edit } )
+    handlers.current = { on_regenerate, on_edit }
+    const stable_regenerate = useCallback( ( ...args ) => handlers.current.on_regenerate?.( ...args ), [] )
+    const stable_edit = useCallback( ( ...args ) => handlers.current.on_edit?.( ...args ), [] )
+
+    // Follow the stream only while the reader is already at the bottom, so
+    // scrolling up to re-read is not yanked back down by every token
+    const handle_scroll = useCallback( () => {
+        const list = list_ref.current
+        if( !list ) return
+        stick_to_bottom.current = list.scrollHeight - list.scrollTop - list.clientHeight < 80
+    }, [] )
+
+    // A newly sent message always snaps back to the bottom
+    const message_count = messages.length
+    useEffect( () => {
+        stick_to_bottom.current = true
+    }, [ message_count ] )
+
     useEffect( () => {
 
-        if( list_ref.current ) {
-            list_ref.current.scrollTop = list_ref.current.scrollHeight
-        }
+        const list = list_ref.current
+        if( list && stick_to_bottom.current ) list.scrollTop = list.scrollHeight
 
     }, [ messages, is_streaming ] )
 
@@ -44,7 +64,7 @@ export default function MessageList( { messages, is_streaming, is_endpoint_warmi
         msg.role === `assistant` ? idx : acc, -1
     )
 
-    return <ListContainer ref={ list_ref }>
+    return <ListContainer ref={ list_ref } onScroll={ handle_scroll }>
 
         { messages.map( ( message, index ) =>
             <MessageBubble
@@ -54,8 +74,9 @@ export default function MessageList( { messages, is_streaming, is_endpoint_warmi
                 is_endpoint_warming={ is_endpoint_warming }
                 is_cloud_model={ is_cloud_model }
                 is_last_assistant={ index === last_assistant_index }
-                on_regenerate={ on_regenerate }
-                on_edit={ ( new_text ) => on_edit( index, new_text ) }
+                index={ index }
+                on_regenerate={ stable_regenerate }
+                on_edit={ stable_edit }
             />
         ) }
 

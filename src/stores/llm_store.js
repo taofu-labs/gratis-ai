@@ -4,6 +4,37 @@ import { create_provider } from '../providers/factory'
 import { storage_key } from '../utils/branding'
 
 /**
+ * Coalesce streamed text updates to one per animation frame. Re-rendering and
+ * markdown parsing then scale with frames instead of tokens, which leaves the
+ * CPU to the inference worker on low-core devices.
+ * @param {Function} fn - Receiver of the latest arguments
+ * @returns {Function} Throttled caller with a synchronous `flush()`
+ */
+const per_frame = fn => {
+
+    let pending = null
+    let frame = null
+
+    const flush = () => {
+        if( frame !== null ) cancelAnimationFrame( frame )
+        frame = null
+        if( !pending ) return
+        const args = pending
+        pending = null
+        fn( ...args )
+    }
+
+    const call = ( ...args ) => {
+        pending = args
+        if( frame === null ) frame = requestAnimationFrame( flush )
+    }
+
+    call.flush = flush
+    return call
+
+}
+
+/**
  * Shared LLM state store — singleton across all pages.
  *
  * Both HomePage (preload) and ChatPage (inference) share the same
@@ -143,7 +174,7 @@ const use_llm_store = create( ( set, get ) => ( {
      *
      * @param {Array} messages
      * @param {Object} [opts]
-     * @param {Function} on_token - Called with ( full_text, chunk )
+     * @param {Function} on_token - Called with ( full_text, latest_chunk ), at most once per frame
      * @returns {Promise<{ text: string, stats: Object }>}
      */
     chat_stream: async ( messages, opts, on_token ) => {
@@ -158,6 +189,7 @@ const use_llm_store = create( ( set, get ) => ( {
 
         let full_text = ``
         let token_count = 0
+        const emit = per_frame( ( ...args ) => on_token?.( ...args ) )
         let first_token_time = null
         const start_time = performance.now()
 
@@ -169,8 +201,9 @@ const use_llm_store = create( ( set, get ) => ( {
                 if( !first_token_time ) first_token_time = performance.now()
                 full_text += chunk
                 token_count++
-                if( on_token ) on_token( full_text, chunk )
+                emit( full_text, chunk )
             }
+            emit.flush()
 
             const elapsed_ms = performance.now() - start_time
             const ttft_ms = first_token_time ? first_token_time - start_time : 0
@@ -196,6 +229,8 @@ const use_llm_store = create( ( set, get ) => ( {
             return { text: full_text, stats: generation_stats }
 
         } catch ( err ) {
+
+            emit.flush()
 
             if( err.name === `AbortError` || err.message?.includes( `abort` ) ) {
 

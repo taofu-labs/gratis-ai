@@ -301,7 +301,8 @@ const CodeBlock = ( { children, ...props } ) => {
  * @param {boolean} props.is_streaming - Whether this message is currently streaming
  * @param {boolean} props.is_last_assistant - Whether this is the last assistant message
  * @param {Function} props.on_regenerate - Regenerate handler
- * @param {Function} props.on_edit - Edit handler
+ * @param {number} props.index - Position in the conversation, passed back to on_edit
+ * @param {Function} props.on_edit - Edit handler, called as on_edit( index, text )
  * @returns {JSX.Element}
  */
 const MessageBubble = memo( ( {
@@ -310,6 +311,7 @@ const MessageBubble = memo( ( {
     is_endpoint_warming,
     is_cloud_model,
     is_last_assistant,
+    index,
     on_regenerate,
     on_edit,
 } ) => {
@@ -342,7 +344,7 @@ const MessageBubble = memo( ( {
 
     const handle_edit_submit = () => {
         if( on_edit && edit_text.trim() ) {
-            on_edit( edit_text.trim() )
+            on_edit( index, edit_text.trim() )
             set_is_editing( false )
         }
     }
