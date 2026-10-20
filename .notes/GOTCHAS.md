@@ -185,8 +185,15 @@ model name does not prove that model is active. A test once requested SmolLM2 bu
 option (expanding alternatives first), exclude the waking indicator, wait for completion stats,
 then assert semantic output and reject the empty-response fallback.
 
-TopBar and mobile Sidebar both render `model-selector-dropdown`; CSS hides one. Tests that use
-this id must add `.filter({ visible: true })` or Playwright strict mode sees two matches.
+Since 2026-10-20 only TopBar renders `model-selector-dropdown` (all viewports; the mobile
+Sidebar copy was removed). Keep `.filter({ visible: true })` in tests anyway; it is harmless.
+
+## Modals: portal + #root inert (2026-10-20)
+
+`SettingsModal` portals to `document.body` and `use_dialog_focus` sets `#root.inert` while open.
+Anything rendered inside a dialog must live in that portal, or it becomes unclickable. Toasts sit
+inside `#root`, so they are not announced while a dialog is open. Closed sidebar is `inert` too:
+tests cannot click sidebar items without opening it first.
 
 ## Same-window settings hooks need an app event (2026-08-21)
 

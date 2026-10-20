@@ -87,11 +87,15 @@ export default function AppLayout( {
     }, [] )
 
     const toggle_sidebar = () => set_sidebar_collapsed( prev => !prev )
+
+    // Phone drawer open: the page behind is covered by a backdrop, keep focus out of it
+    const drawer_open = !sidebar_collapsed && window.matchMedia( `( max-width: 768px )` ).matches
     const close_settings = useCallback( () => set_settings_open( false ), [] )
 
     return <LayoutContainer>
 
         <TopBar
+            inert={ drawer_open }
             on_settings_open={ () => set_settings_open( true ) }
             sidebar_collapsed={ sidebar_collapsed }
             on_toggle_sidebar={ toggle_sidebar }
@@ -99,7 +103,6 @@ export default function AppLayout( {
             active_model_id={ active_model_id }
             is_model_switching={ is_model_switching }
             on_model_switch={ on_model_switch }
-            on_models_purged={ on_models_purged }
         />
 
         <UpdateBanner
@@ -125,14 +128,8 @@ export default function AppLayout( {
                 on_export={ on_export }
                 on_delete={ on_delete }
                 on_delete_all={ on_delete_all }
-                cached_models={ cached_models }
-                active_model_id={ active_model_id }
-                is_model_switching={ is_model_switching }
-                on_model_switch={ on_model_switch }
-                on_settings_open={ () => set_settings_open( true ) }
-                on_models_purged={ on_models_purged }
             />
-            <ContentArea>
+            <ContentArea inert={ drawer_open }>
                 { children }
             </ContentArea>
         </MainArea>
@@ -141,6 +138,7 @@ export default function AppLayout( {
             is_open={ settings_open }
             on_close={ close_settings }
             on_model_switch={ on_model_switch }
+            on_models_purged={ on_models_purged }
         />
 
     </LayoutContainer>

@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import styled, { keyframes } from 'styled-components'
-import { Plus, PanelLeftClose, PanelLeft, Download, Trash2, Trash, Monitor, RefreshCw, LoaderCircle, CheckCircle } from 'lucide-react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { Plus, PanelLeftClose, PanelLeft, Download, Trash2, Trash, RefreshCw, LoaderCircle, CheckCircle } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { truncate } from '../../utils/format'
-import ModelSelector from './ModelSelector'
 
 const SidebarContainer = styled.aside`
     display: flex;
@@ -14,8 +13,11 @@ const SidebarContainer = styled.aside`
     min-width: ${ ( { $collapsed } ) => $collapsed ? `0px` : `260px` };
     background: ${ ( { theme } ) => theme.colors.sidebar };
     border-right: 1px solid ${ ( { theme } ) => theme.colors.border_subtle };
-    transition: all 0.2s ease;
     overflow: hidden;
+
+    /* Closed: drop out of tab order and the a11y tree once the slide ends */
+    visibility: ${ ( { $collapsed } ) => $collapsed ? `hidden` : `visible` };
+    transition: width 0.2s ease, min-width 0.2s ease, visibility 0s linear ${ ( { $collapsed } ) => $collapsed ? `0.2s` : `0s` };
 
     @media ( prefers-reduced-motion: reduce ) {
         transition: none;
@@ -38,7 +40,7 @@ const Backdrop = styled.div`
         display: ${ ( { $visible } ) => $visible ? `block` : `none` };
         position: fixed;
         inset: 0;
-        background: rgba( 0, 0, 0, 0.3 );
+        background: ${ ( { theme } ) => theme.colors.modal_overlay };
         z-index: 99;
     }
 `
@@ -76,16 +78,6 @@ const CollapseButton = styled.button`
     transition: color 0.15s;
 
     &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
-`
-
-// Model selector section — visible on mobile only
-const MobileModelSection = styled.div`
-    display: none;
-    padding: ${ ( { theme } ) => `0 ${ theme.spacing.sm } ${ theme.spacing.xs }` };
-
-    @media ( max-width: ${ ( { theme } ) => theme.breakpoints.mobile } ) {
-        display: block;
-    }
 `
 
 const ConversationListContainer = styled.div`
@@ -159,6 +151,11 @@ const ActionIcon = styled.button`
         color: ${ ( { theme, $confirming } ) => $confirming ? theme.colors.error : theme.colors.text };
         background: ${ ( { theme } ) => theme.colors.code_background };
     }
+
+    @media ${ ( { theme } ) => theme.media.touch } {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
 `
 
 const SidebarFooter = styled.div`
@@ -182,36 +179,6 @@ const WipeButton = styled.button`
         color: ${ ( { theme, $confirming } ) => $confirming ? theme.colors.error : theme.colors.text };
         background: ${ ( { theme } ) => theme.colors.surface_hover };
     }
-`
-
-const DownloadAppLink = styled( Link )`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    width: 100%;
-    padding: ${ ( { theme } ) => `${ theme.spacing.xs } ${ theme.spacing.sm }` };
-    border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    color: ${ ( { theme } ) => theme.colors.accent };
-    font-size: 0.8rem;
-    text-decoration: none;
-    transition: color 0.15s, background 0.15s;
-    min-height: 2.75rem;
-
-    &:hover {
-        background: ${ ( { theme } ) => theme.colors.surface_hover };
-    }
-`
-
-const DownloadAppLabel = styled.span`
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-`
-
-const DownloadAppSubtext = styled.span`
-    font-size: 0.65rem;
-    opacity: 0.7;
-    font-weight: 400;
 `
 
 const spin = keyframes`
@@ -259,17 +226,10 @@ const is_electron = () => !!window.electronAPI?.native_inference
  * @param {Function} props.on_export - Handler for exporting a conversation
  * @param {Function} props.on_delete - Handler for deleting a conversation
  * @param {Function} props.on_delete_all - Handler for wiping all conversations
- * @param {Array} props.cached_models - Array of cached model metadata (for mobile model selector)
- * @param {string} props.active_model_id - Currently active model ID
- * @param {boolean} props.is_model_switching - Whether a model switch is in progress
- * @param {Function} props.on_model_switch - Handler for model switching
- * @param {Function} props.on_settings_open - Handler for opening settings (model management)
  * @returns {JSX.Element}
  */
 export default function Sidebar( {
     collapsed, on_toggle, on_new_chat, conversations = [], on_export, on_delete, on_delete_all,
-    cached_models, active_model_id, is_model_switching, on_model_switch, on_settings_open,
-    on_models_purged,
 } ) {
 
     const { t } = useTranslation( 'pages' )
@@ -393,9 +353,9 @@ export default function Sidebar( {
     return <>
 
         { /* Mobile backdrop — dims content behind sidebar */ }
-        <Backdrop $visible={ !collapsed } onClick={ on_toggle } data-testid="sidebar-backdrop" />
+        <Backdrop $visible={ !collapsed } onClick={ on_toggle } data-testid="sidebar-backdrop" aria-hidden="true" />
 
-        <SidebarContainer $collapsed={ collapsed }>
+        <SidebarContainer $collapsed={ collapsed } inert={ collapsed } data-testid="sidebar">
 
             <SidebarHeader>
                 <NewChatButton
@@ -410,18 +370,6 @@ export default function Sidebar( {
                     { collapsed ? <PanelLeft size={ 18 } /> : <PanelLeftClose size={ 18 } /> }
                 </CollapseButton>
             </SidebarHeader>
-
-            <MobileModelSection>
-                <ModelSelector
-                    cached_models={ cached_models }
-                    active_model_id={ active_model_id }
-                    is_switching={ is_model_switching }
-                    on_switch={ on_model_switch }
-                    on_open_settings={ on_settings_open }
-                    on_after_select={ close_on_mobile }
-                    on_models_purged={ on_models_purged }
-                />
-            </MobileModelSection>
 
             <ConversationListContainer>
 
@@ -487,30 +435,21 @@ export default function Sidebar( {
                 </WipeButton>
             </SidebarFooter> }
 
-            { /* Electron: check for updates — Web: download app promo */ }
-            { is_electron()
-                ? <SidebarFooter>
-                    <CheckUpdateButton
-                        data-testid="check-for-updates-btn"
-                        onClick={ handle_check_for_updates }
-                        disabled={ check_status === `checking` }
-                        aria-label={ t( 'common:aria_check_for_updates' ) }
-                    >
-                        { check_status === `checking` && <><SpinnerIcon size={ 14 } /> { t( 'checking_updates' ) }</> }
-                        { check_status === `up_to_date` && <><CheckCircle size={ 14 } /> { t( 'up_to_date' ) }</> }
-                        { check_status === `failed` && <><RefreshCw size={ 14 } /> { t( 'check_failed' ) }</> }
-                        { check_status === `idle` && <><RefreshCw size={ 14 } /> { t( 'check_for_updates' ) }</> }
-                    </CheckUpdateButton>
-                </SidebarFooter>
-                : <SidebarFooter>
-                    <DownloadAppLink to="/get-app" data-testid="sidebar-download-app">
-                        <Monitor size={ 14 } />
-                        <DownloadAppLabel>
-                            { t( 'download_app' ) }
-                            <DownloadAppSubtext>{ t( 'download_app_subtext' ) }</DownloadAppSubtext>
-                        </DownloadAppLabel>
-                    </DownloadAppLink>
-                </SidebarFooter> }
+            { /* Electron: check for updates. Web "get the app" promo stays hidden until
+                 the desktop app ships (route /get-app is kept) */ }
+            { is_electron() && <SidebarFooter>
+                <CheckUpdateButton
+                    data-testid="check-for-updates-btn"
+                    onClick={ handle_check_for_updates }
+                    disabled={ check_status === `checking` }
+                    aria-label={ t( 'common:aria_check_for_updates' ) }
+                >
+                    { check_status === `checking` && <><SpinnerIcon size={ 14 } /> { t( 'checking_updates' ) }</> }
+                    { check_status === `up_to_date` && <><CheckCircle size={ 14 } /> { t( 'up_to_date' ) }</> }
+                    { check_status === `failed` && <><RefreshCw size={ 14 } /> { t( 'check_failed' ) }</> }
+                    { check_status === `idle` && <><RefreshCw size={ 14 } /> { t( 'check_for_updates' ) }</> }
+                </CheckUpdateButton>
+            </SidebarFooter> }
 
         </SidebarContainer>
 
