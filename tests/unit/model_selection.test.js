@@ -43,6 +43,8 @@ const VERIFIED_MODELS = {
 
 const ALL_BROWSER_VERIFIED_IDS = [
     `gpt-oss-20b-mxfp4`,
+    `granite4-h-1b-q4km`,
+    `granite4-h-tiny-q4km`,
     `ministral3-14b-q4km`,
     `ministral3-3b-q4km`,
     `qwen35-2b-q4km`,
