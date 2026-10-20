@@ -710,8 +710,10 @@ export default class WllamaProvider {
             return await this._load_runtime_attempt( source, fast_options, model_size )
         } catch ( error ) {
 
-            // More cache bytes cannot cure an out-of-memory failure
-            if( is_memory_error( error ) ) throw error
+            // Only a runtime rejection can be the cache type. More cache bytes
+            // cannot cure out-of-memory, and a stalled worker needs no retry.
+            const rejected_by_runtime = error instanceof WllamaError && error.type === `load_error`
+            if( !rejected_by_runtime || is_memory_error( error ) ) throw error
 
             log.warn( `[wllama] q8_0 KV load failed, retrying with f16 KV:`, error?.message )
             await new Promise( resolve => setTimeout( resolve, 50 ) )
