@@ -176,6 +176,8 @@ const use_llm_store = create( ( set, get ) => ( {
             return state._load_promise
         }
 
+        // `promise` is read in the IIFE's finally, which always runs after its
+        // first await, by which time the const below is initialised
         const promise = ( async () => {
 
             const provider = await get().ensure_provider( model_id )
@@ -208,7 +210,11 @@ const use_llm_store = create( ( set, get ) => ( {
                 set( { error: err.message } )
                 throw err
             } finally {
-                set( { is_loading: false, load_stage: null, _load_promise: null, _loading_model_id: null } )
+                // Only the load that still owns the slot may clear it; a
+                // superseded load must not wipe its replacement's state
+                if( get()._load_promise === promise ) {
+                    set( { is_loading: false, load_stage: null, _load_promise: null, _loading_model_id: null } )
+                }
             }
 
         } )()

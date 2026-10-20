@@ -83,6 +83,7 @@ export default function use_chat_history() {
             content: message.content,
             created_at: message.created_at || Date.now(),
             stats: message.stats || null,
+            error: message.error || null,
         }
 
         const db = await get_db()
@@ -205,6 +206,7 @@ export default function use_chat_history() {
                 content: msg.content,
                 created_at: msg.created_at || Date.now(),
                 stats: msg.stats || null,
+                error: msg.error || null,
             } )
         }
 

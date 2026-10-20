@@ -35,5 +35,6 @@
 
     "image_requires_vision": "Wprowadzanie obrazów wymaga obsługi modelu wizyjnego (wkrótce)",
     "unsupported_file_type": "Ten typ pliku nie jest obsługiwany",
-    "file_too_large": "Plik jest za duży (maks. 100 KB)"
+    "file_too_large": "Plik jest za duży (maks. 100 KB)",
+    "reply_error": "Błąd: {{message}}"
 }

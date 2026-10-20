@@ -264,6 +264,43 @@ describe( `llm store stop`, () => {
 
 } )
 
+describe( `llm store load ownership`, () => {
+
+    test( `a superseded load never clears its replacement's loading state`, async () => {
+
+        // A hangs until it is interrupted; B is still loading when A settles
+        let interrupt_a
+        const provider = {
+            is_ready: () => false,
+            get_loaded_model: () => null,
+            unload_model: async () => {
+                interrupt_a?.()
+            },
+            load_model: model_id => model_id === `a`
+                ? new Promise( ( _, reject ) => {
+                    // Settle after B has started, like a worker that answers late
+                    interrupt_a = () => setTimeout( () => reject( Object.assign( new Error( `interrupted` ), { name: `LoadInterruptedError` } ) ), 5 )
+                } )
+                : new Promise( () => {} ),
+        }
+        use_llm_store.setState( { _provider: provider, _provider_type: `local`, is_loading: false, _load_promise: null, _loading_model_id: null } )
+
+        const { load_model, unload_model } = use_llm_store.getState()
+        const loading_a = load_model( `a` )
+        await sleep( 10 )
+        await unload_model()
+        load_model( `b` )
+        await loading_a
+
+        const state = use_llm_store.getState()
+        expect( state.is_loading ).toBe( true )
+        expect( state._loading_model_id ).toBe( `b` )
+        expect( state.error ).toBeNull()
+
+    } )
+
+} )
+
 describe( `stats formatting`, () => {
 
     test( `shows the stop state, time to first token, or only the state when nothing was generated`, () => {

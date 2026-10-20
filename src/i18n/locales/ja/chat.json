@@ -35,5 +35,6 @@
 
     "image_requires_vision": "画像入力にはビジョンモデルのサポートが必要です（近日対応予定）",
     "unsupported_file_type": "このファイル形式はサポートされていません",
-    "file_too_large": "ファイルが大きすぎます（最大100 KB）"
+    "file_too_large": "ファイルが大きすぎます（最大100 KB）",
+    "reply_error": "エラー: {{message}}"
 }

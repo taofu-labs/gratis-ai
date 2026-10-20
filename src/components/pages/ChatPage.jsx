@@ -22,15 +22,6 @@ import { useTranslation } from 'react-i18next'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 import { storage_key, EVENTS, DISPLAY_NAME, APP_VERSION } from '../../utils/branding'
 
-// stream_reply appends this banner to a failed reply; error messages may span lines
-const ERROR_BANNER = `**Error:** `
-const strip_error_banner = ( content = `` ) => {
-    const start = content.lastIndexOf( ERROR_BANNER )
-    if( start === 0 ) return ``
-    if( start < 0 || content.slice( start - 2, start ) !== `\n\n` ) return content
-    return content.slice( 0, start - 2 )
-}
-
 // How often a streaming reply is written to IndexedDB, so a closed tab keeps it
 const PARTIAL_SAVE_INTERVAL_MS = 2_000
 
@@ -195,6 +186,7 @@ export default function ChatPage() {
     const replies_settled_ref = useRef( Promise.resolve() )
     // An edit or regenerate is waiting on storage; blocks a second one
     const rewriting_ref = useRef( false )
+    const rewrite_owner_ref = useRef( 0 )
     const [ is_rewriting, set_is_rewriting ] = useState( false )
 
     // Bumped whenever the visible chat is swapped out (New Chat, navigation,
@@ -355,6 +347,7 @@ export default function ChatPage() {
                     role: m.role,
                     content: m.content,
                     stats: m.stats,
+                    error: m.error,
                     // Keep the original order when edits and regenerates rewrite history
                     created_at: m.created_at,
                 } ) ) )
@@ -449,9 +442,6 @@ export default function ChatPage() {
         // Strict templates (Gemma, Mistral) demand alternating roles, so turns
         // left adjacent by a dropped empty reply are merged
         const history = history_msgs
-            // The model only ever sees what it said, never our error banner,
-            // which may come back from storage inside the content itself
-            .map( ( { role, content } ) => ( { role, content: role === `assistant` ? strip_error_banner( content ) : content } ) )
             .filter( ( { content } ) => content )
             .reduce( ( turns, { role, content } ) => {
                 const previous = turns.at( -1 )
@@ -494,12 +484,15 @@ export default function ChatPage() {
 
             } catch ( err ) {
 
-                // Keep what already arrived, persisted as interrupted, and
-                // show the error beneath it so the user sees it in context
-                await save_partial_reply( partial )
+                // Keep what already arrived and record the error beside it, never
+                // inside content: the model's history must hold only its own words
                 partial.done = true
-                const error_content = [ partial.text, `**Error:** ${ err.message }` ].filter( Boolean ).join( `\n\n` )
-                update_reply( { content: error_content, is_error: true } )
+                const failed_reply = { ...assistant_msg, content: partial.text, stats: { interrupted: true }, error: err.message }
+                update_reply( failed_reply )
+                if( conv_id ) {
+                    await partial.saving
+                    await save_message( conv_id, failed_reply ).catch( save_error => log.warn( `[ChatPage] Could not save failed reply:`, save_error ) )
+                }
 
             } finally {
                 if( partial_reply_ref.current === partial ) partial_reply_ref.current = null
@@ -522,25 +515,23 @@ export default function ChatPage() {
      */
     const rewrite_history = useCallback( async ( is_current, msgs, next ) => {
 
-        // Held until the replacement reply has started, so a user send can
-        // never land in history that is about to be rewritten
+        // Held through the replacement reply, so a user send can never land in
+        // history being rewritten. Only the newest rewrite may release it.
+        const owner = ++rewrite_owner_ref.current
         rewriting_ref.current = true
         set_is_rewriting( true )
-        const release = () => {
-            rewriting_ref.current = false
-            set_is_rewriting( false )
-        }
 
         try {
             await replies_settled_ref.current
             if( !is_current() ) return
             if( current_conversation_id ) await replace_messages( current_conversation_id, msgs )
             if( !is_current() ) return
-            const run = next()
-            release()
-            await run
+            await next()
         } finally {
-            release()
+            if( rewrite_owner_ref.current === owner ) {
+                rewriting_ref.current = false
+                set_is_rewriting( false )
+            }
         }
 
     }, [ replace_messages, current_conversation_id ] )

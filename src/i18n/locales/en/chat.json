@@ -35,5 +35,6 @@
 
     "image_requires_vision": "Image input requires vision model support (coming soon)",
     "unsupported_file_type": "This file type is not supported",
-    "file_too_large": "File is too large (max 100 KB)"
+    "file_too_large": "File is too large (max 100 KB)",
+    "reply_error": "Error: {{message}}"
 }

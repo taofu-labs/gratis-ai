@@ -35,5 +35,6 @@
 
     "image_requires_vision": "L'entrée d'images nécessite un modèle de vision (bientôt disponible)",
     "unsupported_file_type": "Ce type de fichier n'est pas pris en charge",
-    "file_too_large": "Le fichier est trop volumineux (max 100 Ko)"
+    "file_too_large": "Le fichier est trop volumineux (max 100 Ko)",
+    "reply_error": "Erreur : {{message}}"
 }

@@ -253,6 +253,7 @@ export default class WllamaProvider {
         if( on_progress ) on_progress( { progress: 0, status: `Checking available memory...` } )
 
         const capabilities = await detect_capabilities()
+        this._assert_load_current( generation )
         const memory_budget = estimate_max_model_bytes( capabilities )
         const fit_model = {
             ...model,
@@ -321,6 +322,7 @@ export default class WllamaProvider {
             }
         }
 
+        this._assert_load_current( generation )
         let gpu_layers = this._gpu_disabled ? 0 : select_gpu_offload_layers( {
             model: fit_model,
             adapter_class: classify_webgpu_adapter( probed_capabilities.gpu?.adapter_info ),
@@ -346,6 +348,7 @@ export default class WllamaProvider {
                 runtime_name = loaded.compat ? `wasm32 compatibility` : `Memory64`
                 this._gpu_layers = gpu_layers
             } catch ( gpu_error ) {
+                if( gpu_error?.name === `LoadInterruptedError` ) throw gpu_error
                 this._gpu_disabled = true
                 gpu_layers = 0
                 log.warn( `[wllama] GPU load failed; retrying ${ model_id } on CPU:`, gpu_error )
@@ -358,6 +361,7 @@ export default class WllamaProvider {
 
         if( !this._wllama?.isModelLoaded() ) {
 
+            this._assert_load_current( generation )
             if( on_progress ) on_progress( { progress: 0, status: gpu_layers === 0 && this._gpu_disabled
                 ? `Loading model with CPU fallback...`
                 : `Loading model into memory...` } )

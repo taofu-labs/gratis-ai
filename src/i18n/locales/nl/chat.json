@@ -35,5 +35,6 @@
 
     "image_requires_vision": "Afbeeldingsinvoer vereist ondersteuning voor een visiemodel (binnenkort beschikbaar)",
     "unsupported_file_type": "Dit bestandstype wordt niet ondersteund",
-    "file_too_large": "Bestand is te groot (max 100 KB)"
+    "file_too_large": "Bestand is te groot (max 100 KB)",
+    "reply_error": "Fout: {{message}}"
 }

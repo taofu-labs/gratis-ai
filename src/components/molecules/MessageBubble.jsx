@@ -231,6 +231,13 @@ const ThinkingWindow = styled.div`
     ` }
 `
 
+const ReplyError = styled.p`
+    margin: ${ ( { theme } ) => theme.spacing.sm } 0 0;
+    color: ${ ( { theme } ) => theme.colors.error };
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+`
+
 const ExpandButton = styled.button`
     font-size: 0.75rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
@@ -403,6 +410,11 @@ const MessageBubble = memo( ( {
                 >
                     { display_response }
                 </ReactMarkdown> }
+
+                { /* A failed reply keeps its text; the error sits apart from it */ }
+                { message.error && <ReplyError role="alert" data-testid="reply-error">
+                    { t( `reply_error`, { message: message.error } ) }
+                </ReplyError> }
 
                 { /* Streaming indicator — waking up before first token, cursor after */ }
                 { is_streaming && !is_thinking && (
