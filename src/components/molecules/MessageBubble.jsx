@@ -354,6 +354,19 @@ const MessageBubble = memo( ( {
         set_is_editing( false )
     }
 
+    // Esc cancels, Ctrl/Cmd+Enter saves, plain Enter keeps adding lines
+    const handle_edit_keydown = ( event ) => {
+        if( event.key === `Escape` ) {
+            event.preventDefault()
+            event.stopPropagation()
+            handle_edit_cancel()
+        }
+        if( event.key === `Enter` && ( event.ctrlKey || event.metaKey ) ) {
+            event.preventDefault()
+            handle_edit_submit()
+        }
+    }
+
     const testid = is_user ? `user-message` : `assistant-message`
 
     return <BubbleContainer $is_user={ is_user }>
@@ -372,6 +385,7 @@ const MessageBubble = memo( ( {
                     data-testid="message-edit-textarea"
                     value={ edit_text }
                     onChange={ ( e ) => set_edit_text( e.target.value ) }
+                    onKeyDown={ handle_edit_keydown }
                     autoFocus
                 />
                 <EditActions>
@@ -385,7 +399,7 @@ const MessageBubble = memo( ( {
                         data-testid="message-edit-submit"
                         onClick={ handle_edit_submit }
                     >
-                        { t( `common:submit` ) }
+                        { t( `save_and_resend` ) }
                     </SubmitButton>
                 </EditActions>
             </EditContainer>
@@ -452,8 +466,8 @@ const MessageBubble = memo( ( {
         { !is_user && !is_streaming && message.stats &&
             <GenerationStats stats={ message.stats } /> }
 
-        { /* Slow device nudge — web-only, once per session */ }
-        { !is_user && !is_streaming && message.stats &&
+        { /* Slow device nudge — web-only, latest reply only, dismissible */ }
+        { !is_user && !is_streaming && is_last_assistant && message.stats &&
             <SlowDeviceWarning tokens_per_second={ message.stats.tokens_per_second } /> }
 
     </BubbleContainer>
