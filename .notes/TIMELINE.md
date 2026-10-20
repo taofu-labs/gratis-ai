@@ -516,3 +516,8 @@
   limited CPU demotion to GPU/runtime failures, and cleared stale loaded-model state after recovery.
 - Final review separated healthy probe-budget exhaustion from stalled operations and made custom
   model loads join, without starting, any allocation probe already in flight.
+
+## 2026-10-20 — Toolchain majors
+
+- Adopted Vite 8, plugin-react 6, vite-plugin-pwa 2, electron-vite 6, Vitest 5, Electron 44,
+  Playwright 1.64, Wrangler 4.151 and added npm `allowScripts`. ESLint 10 stays deferred (airier stack).
