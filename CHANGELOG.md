@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.44.0] - 2026-10-20
+
+### Added
+- Flash attention + q8_0 KV cache on CPU: +22-66% decode, measured (48fbf0f)
+- Full WebGPU offload on discrete GPUs when measured VRAM allows (7c62845)
+- Granite 4.0 H hybrids, Gemma 4 26B-A4B, Qwen 3.6 35B-A3B; MoE-aware picks (6503af7)
+- Picker falls back to device picks and lists models already on the device (6a5b3c1)
+- Resume interrupted downloads after reload via HTTP Range (16ee521)
+- Prompt-reading progress, time to first token, real llama.cpp token counts (19c9d24)
+- Model load stages with display names instead of a bare spinner (7db3088)
+- Partial replies saved while streaming, marked interrupted after reload (2ca16b8)
+- Code block header with language label; Esc cancels edits, "Save & resend" (4c1e3a0, c15c8b4)
+- Real-browser tokens/sec benchmark: `scripts/bench`, `browser-bench.yml` (e8b8add)
+- TPN winner models in the picker; declare browser RAM; large custom GGUFs (6591981, 0665086, 9e9c2e7)
+
+### Changed
+- Upgrade wllama64 to 1.1.0 (upstream Wllama 3.8.1) (9c468ab)
+- Upgrade Vite 8, plugin-react 6, vite-plugin-pwa 2, Vitest 5, Electron 44 (80e3e2b)
+- Stream updates coalesce per frame; bubbles no longer re-render per token (9738425)
+- Smoothed ETA from observed throughput; picker shows size unless measured (782b62c)
+- Slow-reply tip suggests a faster model and can be dismissed (c15c8b4)
+- Settings is an accessible modal; visible focus ring; 4.5:1 muted text (f5fcfb7, e8169f8)
+- 44px touch targets; model name in the mobile top bar; purge moved to Danger Zone (2a519a1)
+- Rebrand for True Performance Network; force dark mode (d7b8a7f, fa9822e)
+
+### Fixed
+- Stop takes effect at once and keeps partial text instead of an empty-reply error (19c9d24)
+- Cancel download really stops the transfer and discards partial bytes (16ee521)
+- Unload after a stop no longer hangs on the terminated worker (4a6d88b)
+- No edit/regenerate while streaming; strict templates get alternating roles (4a6d88b)
+- Purge refreshes every page; cached models re-check memory fit (ed090e8)
+- Focus trap skips hidden controls; drawer breakpoint tracks resizes (ed090e8)
+- Auto-scroll follows the stream only while the reader is at the bottom (9738425)
+- Welcome start crash, WebGPU recovery and probe bounds, fit-error locales (acb3c13, febdabc)
+
+### Removed
+- Desktop-app banner and sidebar link until the desktop app ships (d08fe8d, 2a519a1)
+
 ## [0.43.0] - 2026-08-22
 
 ### Added

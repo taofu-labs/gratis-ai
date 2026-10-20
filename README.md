@@ -63,10 +63,12 @@ The app picks the best model for your device automatically. Smaller devices get 
 |---|---|---|
 | SmolLM2 360M | ~271 MB | Older laptops, quick conversations |
 | Llama 3.2 1B | ~808 MB | General chat on modest hardware |
+| Granite 4.0 H 1B | ~901 MB | Fast hybrid model, small memory footprint |
 | DeepSeek R1 1.5B | ~1.1 GB | Compact reasoning tasks |
 | Qwen 3.5 2B | ~1.28 GB | Current reasoning, instruction following, multilingual chat |
 | Ministral 3 3B | ~2.15 GB | Compact multilingual instruction following |
 | Qwen 3.5 4B | ~2.74 GB | Strong mid-size reasoning, coding, and chat |
+| Granite 4.0 H Tiny | ~4.23 GB | 8B-class quality at ~2.6x the speed of dense 4B (1B active) |
 | Qwen 3.5 9B | ~5.68 GB | High-quality chat on high-memory systems |
 | Ministral 3 14B | ~8.24 GB | High-end instruction following and reasoning |
 | GPT-OSS 20B | ~12.11 GB | Near-ceiling browser reasoning with 3.6B active parameters |
@@ -107,6 +109,9 @@ For build instructions, architecture details, model catalog internals, and more,
 ```bash
 # Quick start
 npm install && npm run dev
+
+# Real-browser tokens/sec benchmark (GGUFs in ./models; dispatch browser-bench.yml for clean numbers)
+xvfb-run -a node scripts/bench/run.mjs ./models
 ```
 
 Everything else — testing, CI/CD, Electron builds, deployment — lives in **[DOCUMENTATION.md](DOCUMENTATION.md)**.
