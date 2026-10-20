@@ -73,7 +73,8 @@ test.describe( `Model Switching`, () => {
         expect( msgs.length ).toBeGreaterThanOrEqual( 1 )
 
         // Verify generation stats
-        await expect( page.getByTestId( `generation-stats` ) ).toBeVisible( { timeout: 30_000 } )
+        // The conversation may hold earlier replies with their own stats
+        await expect( page.getByTestId( `generation-stats` ).last() ).toBeVisible( { timeout: 30_000 } )
 
     } )
 

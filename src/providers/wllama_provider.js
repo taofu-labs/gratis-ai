@@ -787,6 +787,9 @@ export default class WllamaProvider {
     /** Convert the final CPU load failure into an actionable user error. */
     _friendly_load_error( load_error, model_id, file_size_mb ) {
 
+        // Superseded loads are not failures; the caller decides what to show
+        if( load_error?.name === `LoadInterruptedError` ) return load_error
+
         if( is_memory_error( load_error ) ) {
             log.error( `[wllama] Out of memory loading ${ model_id } (${ file_size_mb } MB)` )
             return new Error( `This model is too large for your browser's available memory. Try a smaller model or close other tabs.` )

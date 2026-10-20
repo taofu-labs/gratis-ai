@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useId } from 'react'
-import { createPortal } from 'react-dom'
+import { createPortal, flushSync } from 'react-dom'
 import styled, { keyframes } from 'styled-components'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -121,8 +121,10 @@ export default function SettingsModal( { is_open, on_close, on_model_switch, on_
     // Listen for global close-modal events (Escape key)
     useEffect( () => {
 
+        // Close within the keypress: the app stays inert until this commits,
+        // so a deferred close would drop input typed right after Escape
         const handle_close = () => {
-            if( is_open ) on_close()
+            if( is_open ) flushSync( on_close )
         }
         window.addEventListener( EVENTS.close_modal, handle_close )
         return () => window.removeEventListener( EVENTS.close_modal, handle_close )

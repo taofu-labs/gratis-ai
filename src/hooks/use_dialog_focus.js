@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 
 const FOCUSABLE = [
     `a[href]`, `button:not([disabled])`, `input:not([disabled])`,
@@ -14,7 +14,9 @@ const FOCUSABLE = [
  */
 export default function use_dialog_focus( ref, is_open ) {
 
-    useEffect( () => {
+    // Layout effect: inert must lift in the same commit that closes the dialog,
+    // or input typed right after Esc lands on a still-inert page and is dropped
+    useLayoutEffect( () => {
 
         if( !is_open || !ref.current ) return
 
