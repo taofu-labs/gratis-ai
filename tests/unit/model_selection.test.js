@@ -9,10 +9,12 @@ import {
     MODEL_CATALOG,
     benchmark_coverage,
     can_fit_in_memory,
+    decode_bytes,
     estimate_model_memory,
     get_model_by_id,
     quality_score,
     select_browser_batch,
+    select_browser_context,
     select_model_options,
 } from '../../src/utils/model_catalog'
 
@@ -82,7 +84,7 @@ describe( `model selection`, () => {
         const automatic_budget = estimate_max_model_bytes( reported_eight_gb )
 
         expect( automatic_budget ).toBe( 5_600_000_000 )
-        expect( select_model_options( automatic_budget ).smarter.id ).toBe( `phi-4-mini-q4km` )
+        expect( select_model_options( automatic_budget ).smarter.id ).toBe( `granite4-h-tiny-q4km` )
         expect( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES ).toBe( automatic_budget )
         expect( MEMORY64_MODEL_CEILING_BYTES ).toBe( 15_000_000_000 )
         expect( WASM32_MODEL_CEILING_BYTES ).toBe( 3_400_000_000 )
@@ -140,6 +142,51 @@ describe( `model selection`, () => {
             .sort()
 
         expect( verified_ids ).toEqual( ALL_BROWSER_VERIFIED_IDS )
+    } )
+
+    test( `scales MoE decode bytes by the active-parameter fraction`, () => {
+        const moe = get_model_by_id( `granite4-h-tiny-q4km` )
+        const dense = get_model_by_id( `granite4-h-micro-q4km` )
+
+        expect( decode_bytes( dense ) ).toBe( dense.file_size_bytes )
+        expect( decode_bytes( moe ) ).toBe( Math.round( 4_230_976_352 * 1_000_000_000 / 6_939_037_248 ) )
+        expect( decode_bytes( moe ) ).toBeLessThan( decode_bytes( dense ) )
+    } )
+
+    test( `picks the faster card by decode bytes, not file size`, () => {
+        const { smarter, faster } = select_model_options( 8_000_000_000 )
+
+        // The 4.2 GB MoE streams ~0.6 GB per token: ~10× faster than the dense 8B.
+        expect( smarter.id ).toBe( `qwen3-8b-q5km` )
+        expect( faster.id ).toBe( `granite4-h-tiny-q4km` )
+        expect( faster.file_size_bytes ).toBeGreaterThan( smarter.file_size_bytes * 0.5 )
+    } )
+
+    test( `skips a toy faster card when the smarter pick is already a fast MoE`, () => {
+        const { smarter, faster } = select_model_options( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
+
+        expect( smarter.id ).toBe( `granite4-h-tiny-q4km` )
+        expect( faster ).toBeNull()
+    } )
+
+    test( `caps sliding-window KV at the window instead of the context`, () => {
+        const gemma = get_model_by_id( `gemma4-26b-a4b-iq4xs` )
+        const full_per_token = 2 * 5 * 2 * 512 * 2
+        const sliding = 2 * 25 * 8 * 256 * ( 1_024 + 512 ) * 2
+
+        expect( estimate_model_memory( gemma, 4_096 ) - estimate_model_memory( gemma, 2_048 ) )
+            .toBe( full_per_token * 2_048 )
+        expect( estimate_model_memory( gemma, 2_048 ) )
+            .toBe( gemma.file_size_bytes + full_per_token * 2_048 + sliding + 500_000_000 )
+    } )
+
+    test( `keeps the large MoE additions inside the Memory64 budget at 16K`, () => {
+        for( const id of [ `gemma4-26b-a4b-iq4xs`, `qwen36-35b-a3b-iq3xxs` ] ) {
+            const model = get_model_by_id( id )
+            expect( model.moe ).toBe( true )
+            expect( model.reasoning_enabled ).toBe( false )
+            expect( select_browser_context( model, MEMORY64_MODEL_CEILING_BYTES ) ).toBe( 16_384 )
+        }
     } )
 
     test( `shrinks prompt batches at the measured large-model thresholds`, () => {

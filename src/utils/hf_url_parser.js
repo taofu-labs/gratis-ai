@@ -136,6 +136,7 @@ const build_model_def = ( repo, file_name, file_size_bytes, model_data = {} ) =>
         block_count: profile?.block_count,
         kv_heads: profile?.kv_heads,
         head_dim: profile?.head_dim,
+        sliding_kv: profile?.sliding_kv,
         hugging_face_repo: repo,
         file_name,
         reasoning: profile?.reasoning || false,
