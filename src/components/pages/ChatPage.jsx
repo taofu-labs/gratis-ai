@@ -19,6 +19,7 @@ import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
 import { get_model_by_id, format_file_size } from '../../utils/model_catalog'
 import { useTranslation } from 'react-i18next'
+import ModelLoadStage from '../atoms/ModelLoadStage'
 import { storage_key, EVENTS, DISPLAY_NAME, APP_VERSION } from '../../utils/branding'
 
 // How often a streaming reply is written to IndexedDB, so a closed tab keeps it
@@ -804,6 +805,7 @@ export default function ChatPage() {
             return <LoadingContainer data-testid="model-loading">
                 <SpinnerIcon><LoaderCircle size={ 32 } /></SpinnerIcon>
                 <LoadingText>{ t( 'loading_your_model' ) }</LoadingText>
+                <ModelLoadStage />
             </LoadingContainer>
         }
 

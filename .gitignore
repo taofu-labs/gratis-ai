@@ -164,3 +164,7 @@ out/
 *.png
 *.jpg
 *.jpeg
+
+# Playwright artifacts
+test-results/
+playwright-report/
