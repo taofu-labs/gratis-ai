@@ -14,7 +14,7 @@
 
     const run = async () => {
 
-        const wllama = new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: true } )
+        const wllama = new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: false } )
 
         const load_started = performance.now()
         // Stream from the URL: fetch().blob() fails for multi-GB files

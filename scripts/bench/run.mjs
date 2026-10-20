@@ -49,10 +49,16 @@ const run_cell = async ( model, load_options ) => {
 
     try {
         const page = await browser.newPage()
+        const console_tail = []
+        page.on( `console`, message => console_tail.push( message.text() ) && console_tail.length > 15 && console_tail.shift() )
         const cfg = encodeURIComponent( JSON.stringify( load_options ) )
         await page.goto( `http://localhost:${ port }/?model=${ model }&cfg=${ cfg }&${ query_tail }` )
         await page.waitForFunction( () => window.__result, null, { timeout: 900_000 } )
-        return await page.evaluate( () => window.__result )
+        const result = await page.evaluate( () => window.__result )
+
+        // Native llama.cpp logs explain load failures the JS error hides
+        if( result.error ) result.error += `\n    ${ console_tail.join( `\n    ` ) }`
+        return result
     } finally {
         await browser.close()
     }

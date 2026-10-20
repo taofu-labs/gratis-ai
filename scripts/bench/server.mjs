@@ -29,13 +29,24 @@ createServer( ( request, response ) => {
 
     try {
         const { size } = statSync( file )
-        response.writeHead( 200, {
+        const headers = {
             'Content-Type': content_types[ extname( file ) ] || `application/octet-stream`,
-            'Content-Length': size,
+            'Accept-Ranges': `bytes`,
             'Cross-Origin-Opener-Policy': `same-origin`,
             'Cross-Origin-Embedder-Policy': `require-corp`,
             'Cross-Origin-Resource-Policy': `same-origin`,
-        } )
+        }
+
+        // Wllama fetches multi-GB GGUFs in ranged chunks
+        const [ , start, end ] = request.headers.range?.match( /^bytes=(\d+)-(\d*)$/ ) || []
+        if( start !== undefined ) {
+            const last = end ? Number( end ) : size - 1
+            response.writeHead( 206, { ...headers, 'Content-Length': last - start + 1, 'Content-Range': `bytes ${ start }-${ last }/${ size }` } )
+            return createReadStream( file, { start: Number( start ), end: last } ).pipe( response )
+        }
+
+        response.writeHead( 200, { ...headers, 'Content-Length': size } )
+        if( request.method === `HEAD` ) return response.end()
         createReadStream( file ).pipe( response )
     } catch {
         response.writeHead( 404 ).end()
