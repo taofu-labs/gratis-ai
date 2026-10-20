@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { X, CheckCircle, LoaderCircle } from 'lucide-react'
 import { log } from 'mentie'
-import { download_model, is_model_cached } from '../../utils/model_download'
+import { discard_browser_partial_download, download_model, is_model_cached } from '../../utils/model_download'
 import { format_file_size } from '../../utils/model_catalog'
 import { storage_key } from '../../utils/branding'
 import { create_download_eta_estimator, format_download_duration } from '../../utils/network_speed'
@@ -312,6 +312,12 @@ export default function DownloadPage() {
         log.info( `[download] Aborted by user` )
         cancelled_ref.current = true
         abort_ref.current?.abort()
+
+        // Cancel means discard, even after a network error left a resumable prefix
+        if( model ) discard_browser_partial_download( model ).catch( discard_error => {
+            log.warn( `[download] Could not discard partial download:`, discard_error?.message )
+        } )
+
         navigate( `/select-model`, { replace: true } )
     }
 
