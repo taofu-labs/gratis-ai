@@ -35,10 +35,10 @@
 - Auto-scroll follows the stream only while the reader is at the bottom (9738425)
 - New Chat no longer resurrects the previous conversation (b748bbb)
 - Route chunks preload again under Vite 8; drop less-lazy (1c8eee9)
-- Disposed workers can never block the next runtime; loads are serialized (101fb5d, 18b576b)
+- Disposed workers never block the next runtime; loads serialize and cancel cleanly (101fb5d, 18b576b, a216e0f, ad4b10a)
 - CPU loads retry with f16 KV when a GGUF rejects the q8_0 cache (101fb5d)
 - Downloads lock cross-tab; cancel always discards; no mixed-revision resumes (db0ee23, 9482b1f)
-- Edits, regenerates and New Chat wait for pending saves; errors keep partial text (6826983)
+- Edits, regenerates and New Chat wait for pending saves; errors keep partial text (6826983, ad4b10a)
 - Welcome start crash, WebGPU recovery and probe bounds, fit-error locales (acb3c13, febdabc)
 
 ### Removed
