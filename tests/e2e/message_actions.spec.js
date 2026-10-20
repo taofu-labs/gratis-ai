@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { MODELS } from '../fixtures/test_models'
+import { MODELS, LONG_PROMPT } from '../fixtures/test_models'
 import { download_model_via_ui, send_message } from '../helpers/download_model'
 import { wait_for_inference } from '../helpers/wait_for_inference'
 
@@ -114,6 +114,60 @@ test.describe( `Message Actions`, () => {
             test.skip( true, `message-regenerate-btn not found — feature may not be implemented yet` )
 
         }
+
+    } )
+
+    /**
+     * Wait until the last assistant bubble shows real tokens, then stop it
+     */
+    const stop_after_tokens = async () => {
+
+        await expect( async () => {
+            const last = page.locator( `[data-testid="assistant-message"]` ).last()
+            await expect( last.getByTestId( `waking-up-indicator` ) ).toHaveCount( 0 )
+            expect( ( await last.textContent() )?.length ).toBeGreaterThan( 0 )
+        } ).toPass( { timeout: 180_000 } )
+
+        const stop_btn = page.getByTestId( `stop-btn` )
+        if( await stop_btn.isVisible() ) await stop_btn.click()
+        await expect( stop_btn ).toHaveCount( 0, { timeout: 30_000 } )
+
+    }
+
+    const click_regenerate = async () => {
+        await page.locator( `[data-testid="assistant-message"]` ).last().hover()
+        await page.getByTestId( `message-regenerate-btn` ).click()
+    }
+
+    test( `stop then regenerate persists only the new reply`, async () => {
+
+        await page.getByTestId( `new-chat-btn` ).click()
+        await expect( page.locator( `[data-testid="assistant-message"]` ) ).toHaveCount( 0, { timeout: 5_000 } )
+
+        // Stop a long reply, then regenerate right away: the stopped reply's
+        // late final save must not resurrect it next to the new one
+        await send_message( page, LONG_PROMPT )
+        await stop_after_tokens()
+        await click_regenerate()
+        await stop_after_tokens()
+
+        await page.reload()
+        await expect( page.getByTestId( `user-message` ) ).toHaveCount( 1, { timeout: 30_000 } )
+        await expect( page.locator( `[data-testid="assistant-message"]` ) ).toHaveCount( 1 )
+
+    } )
+
+    test( `new chat during regenerate leaves the fresh chat empty`, async () => {
+
+        // Regenerate the reloaded conversation, then leave before it can stream
+        await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 180_000 } )
+        await click_regenerate()
+        await page.getByTestId( `new-chat-btn` ).click()
+
+        // Nothing from the abandoned run may stream into the new chat
+        await page.waitForTimeout( 5_000 )
+        await expect( page.getByTestId( `user-message` ) ).toHaveCount( 0 )
+        await expect( page.locator( `[data-testid="assistant-message"]` ) ).toHaveCount( 0 )
 
     } )
 
