@@ -16,10 +16,16 @@
 
         const wllama = new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: false } )
 
+        // Stage the GGUF on disk first: in-memory blobs fail past ~2 GB and
+        // wllama's stock OPFS writer can drop bytes on partial writes
+        const root = await navigator.storage.getDirectory()
+        const handle = await root.getFileHandle( query.model, { create: true } )
+        const response = await fetch( `/models/${ query.model }` )
+        await response.body.pipeTo( await handle.createWritable() )
+        const file = await handle.getFile()
+
         const load_started = performance.now()
-        // Stream through the OPFS cache like the app: in-memory blobs truncate past ~2 GB
-        await wllama.loadModelFromUrl( `${ location.origin }/models/${ query.model }`, {
-            useCache: true,
+        await wllama.loadModel( [ file ], {
             n_ctx: 2048,
             n_parallel: 1,
             jinja: true,
