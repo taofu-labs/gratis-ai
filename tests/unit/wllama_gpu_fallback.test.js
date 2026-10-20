@@ -265,6 +265,19 @@ describe( `Wllama WebGPU fallback`, () => {
         expect( provider.is_ready() ).toBe( true )
     } )
 
+    test( `uses the fast CPU KV path only for CPU loads`, async () => {
+        mocks.fail_gpu = true
+        const provider = new WllamaProvider()
+
+        await provider.load_model( `smollm2-360m-q4km` )
+
+        const [ gpu, cpu ] = mocks.instances.map( ( { load_options } ) => load_options )
+        expect( gpu ).toMatchObject( { cache_type_k: `f16`, cache_type_v: `f16` } )
+        expect( gpu.flash_attn ).toBeUndefined()
+        expect( cpu ).toMatchObject( { flash_attn: true, cache_type_k: `q8_0`, cache_type_v: `q8_0`, n_ubatch: 128 } )
+        expect( cpu.n_ubatch ).toBeLessThanOrEqual( cpu.n_batch )
+    } )
+
     test( `never offloads from an unmeasured reported hint`, async () => {
         mocks.probed = false
         const provider = new WllamaProvider()

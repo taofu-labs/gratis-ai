@@ -32,6 +32,18 @@ const GPU_LOAD_BYTES_PER_SECOND = 8 * 1024 ** 2
 const GPU_TOKEN_TIMEOUT_MS = 300_000
 const RUNTIME_EXIT_TIMEOUT_MS = 5_000
 
+// Measured in headful Chromium on a clean 4 vCPU runner (scripts/bench):
+// flash attention plus a q8_0 KV cache decodes 23–65% faster than f16 on CPU
+// because WASM decode is memory-bandwidth bound. Smaller ubatches cost nothing
+// measurable and let a Stop interrupt prompt processing sooner. GPU loads keep
+// f16 until WebGPU FA/quantized-KV support is verified on real hardware.
+const CPU_FAST_OPTIONS = {
+    flash_attn: true,
+    cache_type_k: `q8_0`,
+    cache_type_v: `q8_0`,
+    n_ubatch: 128,
+}
+
 const WLLAMA_LOGGER = {
     debug: ( ...args ) => log.debug( `[wllama64]`, ...args ),
     log: ( ...args ) => log.info( `[wllama64]`, ...args ),
@@ -257,6 +269,7 @@ export default class WllamaProvider {
             try {
                 const loaded = await this._load_runtime_attempt( source, {
                     ...load_options,
+                    ...CPU_FAST_OPTIONS,
                     n_gpu_layers: 0,
                 }, model_size )
                 runtime_name = loaded.compat ? `wasm32 compatibility` : `Memory64`
@@ -634,6 +647,7 @@ export default class WllamaProvider {
         try {
             await this._load_runtime_attempt( context.source, {
                 ...context.load_options,
+                ...CPU_FAST_OPTIONS,
                 n_gpu_layers: 0,
             }, context.model_size )
             this._gpu_layers = 0
