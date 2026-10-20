@@ -71,6 +71,7 @@
     "export_all_conversations": "すべての会話をエクスポート",
 
     "danger_zone": "危険な操作",
+    "purge_models_description": "ダウンロード済みのモデルをすべて削除します。会話と設定は残ります。",
     "danger_zone_description": "すべての会話、モデル、設定が完全に削除されます。",
     "delete_everything": "すべてを削除",
     "confirm_delete_all": "すべての会話、キャッシュ済みモデル、設定が削除されます。この操作は取り消せません。"

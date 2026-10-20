@@ -71,6 +71,7 @@
     "export_all_conversations": "Exportar Todas as Conversas",
 
     "danger_zone": "Zona de Perigo",
+    "purge_models_description": "Exclui todos os modelos baixados. Conversas e configurações são mantidas.",
     "danger_zone_description": "Isso excluirá permanentemente todas as conversas, modelos e configurações.",
     "delete_everything": "Excluir Tudo",
     "confirm_delete_all": "Isso excluirá todas as conversas, modelos em cache e configurações. Essa ação não pode ser desfeita."
