@@ -16,6 +16,8 @@ import { export_conversation } from '../../utils/export'
 import { DISPLAY_NAME, storage_key } from '../../utils/branding'
 import { is_model_fit_error } from '../../utils/model_fit_error'
 import BrowserRamOverride from '../atoms/BrowserRamOverride'
+import ModelLoadStage from '../atoms/ModelLoadStage'
+import { get_model_by_id } from '../../utils/model_catalog'
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -202,7 +204,8 @@ export default function HomePage() {
     // Resolve active model name for display
     const active_id = localStorage.getItem( storage_key( `active_model_id` ) )
     const active_model = cached_models.find( ( m ) => m.id === active_id )
-    const model_name = active_model?.name || active_id || `Unknown`
+    // Never surface the raw id: custom ids are internal slugs
+    const model_name = active_model?.name || get_model_by_id( active_id )?.name
 
     // ── Preload model on mount ──────────────────────────────────────
 
@@ -389,7 +392,7 @@ export default function HomePage() {
 
                 { is_loading && <>
                     <LoadingDot />
-                    <span>{ t( 'loading_model', { name: model_name } ) }</span>
+                    <span>{ model_name ? t( 'loading_model', { name: model_name } ) : t( 'loading_model_generic' ) }</span>
                     <ModelTag>
                         <HardDrive size={ 10 } /> { t( 'local' ) }
                     </ModelTag>
@@ -403,7 +406,7 @@ export default function HomePage() {
                 </> }
 
                 { !is_loading && loaded_model_id && <>
-                    <span>{ t( 'model_ready', { name: model_name } ) }</span>
+                    <span>{ model_name ? t( 'model_ready', { name: model_name } ) : t( 'model_ready_generic' ) }</span>
                     <ModelTag>
                         <HardDrive size={ 10 } /> { t( 'local' ) }
                     </ModelTag>
@@ -417,6 +420,8 @@ export default function HomePage() {
                 </> }
 
             </ModelRow>
+
+            { is_loading && <ModelLoadStage /> }
 
             { /* Error banner — only after loading settles, never mid-load */ }
             { !is_loading && load_error && <ErrorBanner data-testid="home-load-error">

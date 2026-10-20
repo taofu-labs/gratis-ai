@@ -330,3 +330,126 @@ export const format_download_estimate = ( file_size_bytes, speed_bps, t ) => {
     return t( `models:download_range_40_plus_minutes` )
 
 }
+
+/**
+ * Live ETA for an active download, driven only by observed throughput.
+ *
+ * - The clock starts at the first byte, so connection setup and Xet
+ *   reconstruction lookups do not count as slow transfer.
+ * - Bursty progress (Xet parallel reads, OPFS back-pressure) accumulates until
+ *   `min_interval_ms` passed, then folds into time-weighted EMAs.
+ * - The shown rate blends the EMA with the average since the first byte:
+ *   the EMA tracks real changes, the average damps swings. Replayed Hugging
+ *   Face traces showed ~2x worst-case error this way versus 30x+ for a raw
+ *   rate during Xet's slow start.
+ * - Nothing is shown before `warmup_ms` and a size-relative byte gate.
+ *
+ * @param {Object} [options]
+ * @param {Function} [options.now] - Clock in ms
+ * @param {number} [options.tau_ms] - Time constant of the tracked rate
+ * @param {number} [options.fast_tau_ms] - Time constant used to detect slow-downs
+ * @param {number} [options.average_weight] - Share of the since-first-byte average in the shown rate
+ * @param {number} [options.warmup_ms]
+ * @param {number} [options.warmup_bytes] - Minimum bytes before showing anything
+ * @param {number} [options.warmup_fraction] - Share of the file that must arrive first...
+ * @param {number} [options.max_warmup_bytes] - ...capped so large models do not wait for minutes
+ * @param {number} [options.min_interval_ms]
+ * @returns {{ update: Function, snapshot: Function, reset: Function }}
+ */
+export const create_download_eta_estimator = ( {
+    now = Date.now,
+    tau_ms = 8_000,
+    fast_tau_ms = 2_000,
+    average_weight = 0.5,
+    warmup_ms = 5_000,
+    warmup_bytes = 8 * MIB,
+    warmup_fraction = 0.05,
+    max_warmup_bytes = 64 * MIB,
+    min_interval_ms = 250,
+} = {} ) => {
+
+    let first = null
+    let last = null
+    let slow_bps = null
+    let fast_bps = null
+    let bytes_total = 0
+    let bytes_loaded = 0
+
+    const reset = () => {
+        first = null
+        last = null
+        slow_bps = null
+        fast_bps = null
+    }
+
+    const snapshot = () => {
+
+        const elapsed_ms = last && first ? last.time - first.time : 0
+        const observed_bytes = last && first ? last.bytes - first.bytes : 0
+        const gate_bytes = Math.max( warmup_bytes, Math.min( bytes_total * warmup_fraction, max_warmup_bytes ) )
+        const is_ready = elapsed_ms >= warmup_ms && observed_bytes >= gate_bytes && slow_bps > 0
+        const is_done = bytes_total > 0 && bytes_loaded >= bytes_total
+
+        const average_bps = elapsed_ms > 0 ? observed_bytes / elapsed_ms * 1000 : 0
+        const bps = is_ready ? average_weight * average_bps + ( 1 - average_weight ) * slow_bps : null
+
+        const eta_seconds = is_done ? 0
+            : bps > 0 && bytes_total > bytes_loaded ? ( bytes_total - bytes_loaded ) / bps
+                : null
+
+        // A sharp drop against the long-run rate usually means server throttling
+        const is_slowed = Boolean( is_ready && !is_done && elapsed_ms >= 20_000 && fast_bps < slow_bps * 0.4 )
+
+        return { bps, eta_seconds, is_ready, is_slowed }
+
+    }
+
+    const update = ( { bytes_loaded: loaded, bytes_total: total } = {} ) => {
+
+        const next_loaded = Number( loaded )
+        if( !Number.isFinite( next_loaded ) || next_loaded < 0 ) return snapshot()
+        if( Number( total ) > 0 ) bytes_total = Number( total )
+
+        const time = now()
+        bytes_loaded = next_loaded
+
+        // A restarted download invalidates every earlier sample
+        if( !last || next_loaded < last.bytes ) {
+            reset()
+            first = { time, bytes: next_loaded, is_flowing: false }
+            last = first
+            return snapshot()
+        }
+
+        // Anchor the clock at the first chunk so setup latency is not counted as slow transfer
+        if( !first.is_flowing ) {
+            if( next_loaded > first.bytes ) {
+                first = { time, bytes: next_loaded, is_flowing: true }
+                last = first
+            }
+            return snapshot()
+        }
+
+        const interval_ms = time - last.time
+        if( interval_ms < min_interval_ms ) return snapshot()
+
+        const rate = ( next_loaded - last.bytes ) / interval_ms * 1000
+        const elapsed_ms = time - first.time
+
+        if( elapsed_ms < warmup_ms || slow_bps === null ) {
+            const average = ( next_loaded - first.bytes ) / Math.max( 1, elapsed_ms ) * 1000
+            slow_bps = average
+            fast_bps = average
+        } else {
+            slow_bps += ( 1 - Math.exp( -interval_ms / tau_ms ) ) * ( rate - slow_bps )
+            fast_bps += ( 1 - Math.exp( -interval_ms / fast_tau_ms ) ) * ( rate - fast_bps )
+        }
+
+        last = { time, bytes: next_loaded }
+        return snapshot()
+
+    }
+
+    return { update, snapshot, reset }
+
+}

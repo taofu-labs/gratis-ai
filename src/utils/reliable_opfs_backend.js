@@ -10,6 +10,10 @@
 const WORKER_SOURCE = `
     let access_handle = null
     let file_offset = 0
+    let unflushed_bytes = 0
+
+    // Flush periodically so a reload or crash keeps a long resumable prefix.
+    const FLUSH_EVERY_BYTES = 64 * 1024 * 1024
 
     const close_handle = () => {
         if( !access_handle ) return
@@ -17,14 +21,21 @@ const WORKER_SOURCE = `
         access_handle = null
     }
 
-    const open_file = async ( filename ) => {
+    // Offset zero starts a new file; a positive offset appends to a resumable prefix
+    const open_file = async ( filename, offset = 0 ) => {
         const root = await navigator.storage.getDirectory()
         const cache = await root.getDirectoryHandle( 'cache', { create: true } )
         const file = await cache.getFileHandle( filename, { create: true } )
 
         access_handle = await file.createSyncAccessHandle()
-        access_handle.truncate( 0 )
-        file_offset = 0
+        const existing_size = access_handle.getSize()
+        if( offset > existing_size ) {
+            throw new Error( 'OPFS resume offset ' + offset + ' exceeds stored size ' + existing_size )
+        }
+
+        access_handle.truncate( offset )
+        file_offset = offset
+        unflushed_bytes = 0
     }
 
     const write_all = ( buffer ) => {
@@ -38,6 +49,12 @@ const WORKER_SOURCE = `
             }
             chunk_offset += written
             file_offset += written
+            unflushed_bytes += written
+        }
+
+        if( unflushed_bytes >= FLUSH_EVERY_BYTES ) {
+            access_handle.flush()
+            unflushed_bytes = 0
         }
     }
 
@@ -52,11 +69,11 @@ const WORKER_SOURCE = `
     }
 
     self.onmessage = async ( event ) => {
-        const { id, action, filename, buffer } = event.data
+        const { id, action, filename, buffer, offset } = event.data
 
         try {
             let value = null
-            if( action === 'open' ) await open_file( filename )
+            if( action === 'open' ) await open_file( filename, offset )
             else if( action === 'write' ) write_all( buffer )
             else if( action === 'close' ) value = finish_file()
             else if( action === 'abort' ) close_handle()
@@ -141,12 +158,30 @@ export class ReliableOPFSBackend {
     }
 
     async write( key, stream ) {
+        try {
+            await this.append( key, stream )
+        } catch ( error ) {
+            await this.delete( key ).catch( () => {} )
+            throw error
+        }
+    }
+
+    /**
+     * Stream bytes into `key` starting at `offset`. Bytes before the offset are
+     * kept, so an interrupted download can resume. A failure keeps the stored
+     * prefix; callers that want to discard it must delete the key themselves.
+     * @param {string} key
+     * @param {ReadableStream} stream
+     * @param {{ offset?: number }} [options]
+     * @returns {Promise<number>} Final stored size in bytes
+     */
+    async append( key, stream, { offset = 0 } = {} ) {
         const writer = create_writer()
         const reader = stream.getReader()
-        let written_bytes = 0
+        let written_bytes = offset
 
         try {
-            await writer.call( `open`, { filename: key } )
+            await writer.call( `open`, { filename: key, offset } )
 
             while( true ) {
                 const { done, value } = await reader.read()
@@ -159,10 +194,10 @@ export class ReliableOPFSBackend {
             if( stored_bytes !== written_bytes ) {
                 throw new Error( `OPFS size mismatch: wrote ${ written_bytes }, stored ${ stored_bytes }` )
             }
+            return stored_bytes
         } catch ( error ) {
             await writer.call( `abort` ).catch( () => {} )
             await reader.cancel( error ).catch( () => {} )
-            await this.delete( key ).catch( () => {} )
             throw error
         } finally {
             reader.releaseLock()

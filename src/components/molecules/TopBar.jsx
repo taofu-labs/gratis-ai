@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ModelSelector from './ModelSelector'
 import LanguageSelector from './LanguageSelector'
+import use_llm_store from '../../stores/llm_store'
 
 const Bar = styled.header`
     display: flex;
@@ -100,6 +101,9 @@ export default function TopBar( {
     const navigate = useNavigate()
     const { t } = useTranslation( `pages` )
 
+    // While a model loads nothing is "loaded" yet; name the incoming model instead of "No model"
+    const loading_model_id = use_llm_store( s => s._loading_model_id )
+
     return <Bar>
 
         { /* Left: sidebar toggle + model selector + change model */ }
@@ -114,7 +118,7 @@ export default function TopBar( {
             <DesktopOnly>
                 <ModelSelector
                     cached_models={ cached_models }
-                    active_model_id={ active_model_id }
+                    active_model_id={ active_model_id || loading_model_id }
                     is_switching={ is_model_switching }
                     on_switch={ on_model_switch }
                     on_open_settings={ on_settings_open }

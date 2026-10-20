@@ -3,6 +3,19 @@ import { log } from 'mentie'
 import { create_provider } from '../providers/factory'
 import { storage_key } from '../utils/branding'
 
+// Provider status strings → i18n stage keys (pages namespace). Unknown
+// statuses keep the previous stage so the UI never shows raw English.
+const LOAD_STAGE_PATTERNS = [
+    [ /checking/i, `load_stage_checking_memory` ],
+    [ /measuring gpu/i, `load_stage_measuring_gpu` ],
+    [ /retrying safely on cpu/i, `load_stage_cpu_retry` ],
+    [ /gpu acceleration/i, `load_stage_loading_gpu` ],
+    [ /cpu fallback|into memory|^loading model/i, `load_stage_loading_memory` ],
+    [ /ready/i, `load_stage_ready` ],
+]
+
+const stage_from_status = ( status = `` ) => LOAD_STAGE_PATTERNS.find( ( [ pattern ] ) => pattern.test( status ) )?.[ 1 ]
+
 /**
  * Coalesce streamed text updates to one per animation frame. Re-rendering and
  * markdown parsing then scale with frames instead of tokens, which leaves the
@@ -49,6 +62,8 @@ const use_llm_store = create( ( set, get ) => ( {
     is_generating: false,
     is_endpoint_warming: false,
     loaded_model_id: null,
+    load_stage: null,
+    load_started_at: null,
     stats: null,
     error: null,
 
@@ -141,8 +156,15 @@ const use_llm_store = create( ( set, get ) => ( {
 
             log.info( `[use_llm] Loading model: ${ model_id }` )
 
+            // Mirror provider stages into the store so every page can show them
+            const track_progress = progress => {
+                const load_stage = stage_from_status( progress?.status )
+                if( load_stage && get()._loading_model_id === model_id ) set( { load_stage } )
+                on_progress?.( progress )
+            }
+
             try {
-                await provider.load_model( model_id, on_progress )
+                await provider.load_model( model_id, track_progress )
 
                 // Use provider's canonical ID — reflects a potentially recreated endpoint
                 const final_model_id = provider.get_loaded_model() || model_id
@@ -153,7 +175,7 @@ const use_llm_store = create( ( set, get ) => ( {
                 set( { error: err.message } )
                 throw err
             } finally {
-                set( { is_loading: false, _load_promise: null, _loading_model_id: null } )
+                set( { is_loading: false, load_stage: null, _load_promise: null, _loading_model_id: null } )
             }
 
         } )()
@@ -162,7 +184,14 @@ const use_llm_store = create( ( set, get ) => ( {
         // where a concurrent caller sees _load_promise but _loading_model_id
         // hasn't been set yet (it was previously inside the async IIFE,
         // after the first `await`, giving a window for the dedup to miss)
-        set( { is_loading: true, error: null, _loading_model_id: model_id, _load_promise: promise } )
+        set( {
+            is_loading: true,
+            error: null,
+            load_stage: `load_stage_starting`,
+            load_started_at: Date.now(),
+            _loading_model_id: model_id,
+            _load_promise: promise,
+        } )
 
         return promise
 

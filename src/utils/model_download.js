@@ -21,6 +21,11 @@ const WLLAMA_CACHE_LOGGER = {
 
 let browser_model_manager = null
 
+// One backend instance shared by wllama's CacheManager and resumable downloads
+const browser_storage_backend = new ReliableOPFSBackend()
+
+const abort_error = () => Object.assign( new Error( `Download aborted` ), { name: `AbortError` } )
+
 /**
  * Get the shared browser model manager backed by OPFS.
  * @returns {ModelManager}
@@ -29,7 +34,7 @@ export const get_browser_model_manager = () => {
     if( !browser_model_manager ) {
         browser_model_manager = new ModelManager( {
             allowOffline: true,
-            cacheManager: new CacheManager( [ new ReliableOPFSBackend() ] ),
+            cacheManager: new CacheManager( [ browser_storage_backend ] ),
             logger: WLLAMA_CACHE_LOGGER,
         } )
     }
@@ -358,6 +363,7 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
                 model,
                 url,
                 cache_manager: manager.cacheManager,
+                storage_backend: browser_storage_backend,
                 signal,
                 on_progress: ( { loaded, total } ) => {
                     const bytes_total = total || model.file_size_bytes
@@ -370,13 +376,22 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
                 },
             } )
 
-            log.debug( `[download] Hugging Face SDK browser download used ${ result.mode } path into OPFS` )
+            log.debug( `[download] Hugging Face SDK browser download used ${ result.mode } path into OPFS (resumed from ${ result.resumed_from } bytes)` )
             downloaded = await get_browser_cached_model( url, result.size || model.file_size_bytes )
             if( !downloaded ) throw new Error( `The downloaded model could not be validated. Please retry the download.` )
         }
     } catch ( err ) {
+        if( err?.name === `AbortError` || signal?.aborted ) throw abort_error()
         throw normalize_hf_error( err )
     }
+
+    // A cancel that lands after the last byte must still leave nothing behind
+    const discard_if_aborted = async () => {
+        if( !signal?.aborted ) return
+        if( storage_mode !== `external-file` ) await downloaded.remove().catch( () => {} )
+        throw abort_error()
+    }
+    await discard_if_aborted()
 
     const downloaded_files = await downloaded.open()
     const [ first_file ] = downloaded_files
@@ -403,6 +418,8 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
         await downloaded.remove()
         throw new Error( `Downloaded file is not a valid GGUF model. The file may be corrupted or the URL may have redirected to an error page.` )
     }
+
+    await discard_if_aborted()
 
     if( storage_mode === `external-file` ) {
         const now = Date.now()

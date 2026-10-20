@@ -271,3 +271,22 @@ because it can interrupt a multi-gigabyte model download.
   5.6 GB; expose only receipt-backed larger models as explicit choices.
 - Dynamic styled-components rules leak classes during multi-GB progress updates. Put frequently
   changing widths in an inline style via `.attrs()`.
+
+## Download cancel/resume pipeline (2026-10-20)
+
+- Abort must reach the *write loop*, not just fetch: Xet's `XetBlob.stream()` pipes internal fetches
+  that kept feeding OPFS after cancel, and the page then navigated to `/chat` post-unmount. Wrap the
+  SDK stream in `abortable_stream()`; DownloadPage treats unmount as cancel (no navigation, no
+  `active_model_id` write). Abort deletes the partial file; other failures keep it for resume.
+- Resumable OPFS download: bytes go straight into the final cache key via
+  `ReliableOPFSBackend.append( key, stream, { offset } )`; wllama metadata is written *last*, so a
+  prefix never validates as a model (`getModels()` skips entries without `originalURL`). The resume
+  record (`localStorage partial_download:<key>` = etag + size) must match HF's current etag/size,
+  else restart at 0. Range comes from SDK `blob.slice( offset )` (lazy for both WebBlob and XetBlob).
+- Xet ramps up slowly (~0.2 MB/s for the first ~10 s, then 3-10 MB/s). Any rate-from-start ETA reads
+  "~1 hr" early. The estimator anchors at the first byte, gates on 5 s + size-relative bytes, and
+  blends EMA with the since-first-byte average. `tests/fixtures/xet_download_trace.json` is a real
+  trace replayed in unit tests.
+- wllama64 `loadModel()` has no progress callback; the store mirrors the provider's status strings
+  into `load_stage` i18n keys (`LOAD_STAGE_PATTERNS` in llm_store). Changing provider status wording
+  silently drops the stage text back to the previous stage.
