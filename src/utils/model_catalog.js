@@ -249,6 +249,7 @@ export const MODEL_CATALOG = [
         benchmarks: { mmlu: 59.74, gpqa: 29.69, humaneval: 73, math: 49.4, gsm8k: 69.83 },
         license: `Apache-2.0`,
         category: `medium`,
+        browser_verified: true,
     },
 
     {
@@ -551,6 +552,7 @@ export const MODEL_CATALOG = [
         num_experts: 64,
         num_active_experts: 6,
         category: `heavy`,
+        browser_verified: true,
     },
 
     {
