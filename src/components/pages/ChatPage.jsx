@@ -287,6 +287,9 @@ export default function ChatPage() {
     }, [ abort ] )
 
     // Load conversation messages when navigating to /chat/:id
+    const route_conversation_ref = useRef( conversation_id )
+    route_conversation_ref.current = conversation_id
+
     useEffect( () => {
 
         if( conversation_id === pending_conversation_id_ref.current ) {
@@ -297,6 +300,10 @@ export default function ChatPage() {
 
             // Validate that the conversation exists before loading messages
             load_messages( conversation_id ).then( ( msgs ) => {
+
+                // New Chat clears state one render before the URL drops the
+                // old id; a load resolving after that must not resurrect it
+                if( route_conversation_ref.current !== conversation_id ) return
 
                 if( msgs.length === 0 ) {
                     // Conversation not found or empty — redirect to fresh chat

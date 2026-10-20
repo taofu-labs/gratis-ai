@@ -50,7 +50,12 @@ const run_cell = async ( model, load_options ) => {
 
     // Persistent profile: incognito contexts cap OPFS far below multi-GB models
     const profile = mkdtempSync( join( tmpdir(), `bench-profile-` ) )
-    const browser = await chromium.launchPersistentContext( profile, { headless: false, args: [ `--unlimited-storage` ] } )
+    const browser = await chromium.launchPersistentContext( profile, {
+        headless: false,
+        // Sandboxed locally; Ubuntu 24.04 CI runners block its user namespaces
+        chromiumSandbox: !process.env.CI,
+        args: [ `--unlimited-storage` ],
+    } )
 
     try {
         const page = await browser.newPage()

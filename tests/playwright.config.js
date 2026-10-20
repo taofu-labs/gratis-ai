@@ -20,6 +20,9 @@ export default defineConfig( {
         actionTimeout: 30_000,
         // GGUF model files are streamed to OPFS. Allow realistic large-model
         // tests to use the full temporary profile quota.
+        // Keep Chromium's sandbox locally; Ubuntu 24.04 CI runners block the
+        // unprivileged user namespaces it needs
+        chromiumSandbox: !process.env.CI,
         launchOptions: {
             // Use system Chromium on Alpine (musl) where Playwright's glibc binaries won't work
             ...( process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && {

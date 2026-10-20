@@ -9,6 +9,9 @@ export default defineConfig( {
     use: {
         baseURL: `http://127.0.0.1:4173`,
         headless: true,
+        // Keep Chromium's sandbox locally; Ubuntu 24.04 CI runners block the
+        // unprivileged user namespaces it needs
+        chromiumSandbox: !process.env.CI,
         launchOptions: {
             ...process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && {
                 executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
