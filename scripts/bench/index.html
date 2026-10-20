@@ -17,9 +17,9 @@
         const wllama = new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: false } )
 
         const load_started = performance.now()
-        // Stream from the URL: fetch().blob() fails for multi-GB files
+        // Stream through the OPFS cache like the app: in-memory blobs truncate past ~2 GB
         await wllama.loadModelFromUrl( `${ location.origin }/models/${ query.model }`, {
-            useCache: false,
+            useCache: true,
             n_ctx: 2048,
             n_parallel: 1,
             jinja: true,
