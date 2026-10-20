@@ -516,3 +516,9 @@
   limited CPU demotion to GPU/runtime failures, and cleared stale loaded-model state after recovery.
 - Final review separated healthy probe-budget exhaustion from stalled operations and made custom
   model loads join, without starting, any allocation probe already in flight.
+
+## 2026-10-20 — Fast-decode catalog additions
+
+- Added Granite 4.0 H 1B/Micro/Tiny, Gemma 4 26B-A4B (IQ4_XS), Qwen 3.6 35B-A3B (IQ3_XXS). Not browser-verified yet.
+- Recommender "faster" card now uses MoE-aware `decode_bytes` plus a 75% quality floor; added `sliding_kv` KV estimate for Gemma 4 SWA.
+- Note: ModelSelectPage currently shows TPN winners only; catalog entries surface via id lookup and as architecture profiles for custom/TPN GGUFs.

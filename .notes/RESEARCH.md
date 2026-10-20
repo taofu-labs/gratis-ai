@@ -226,3 +226,33 @@ Primary sources:
 - https://huggingface.co/Qwen/Qwen3.5-2B/raw/main/config.json
 - https://huggingface.co/Qwen/Qwen3.5-4B/raw/main/config.json
 - https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/config.json
+
+## Fast-decode catalog additions (2026-10-20)
+
+Browser decode ~ bandwidth bound => tok/s ~ 1 / bytes read per token (`decode_bytes`: file × active/total for MoE).
+Sizes: HF `?blobs=true`. Arch/KV: GGUF header range-read + config.json. Archs `granitehybrid`, `gemma4`,
+`qwen35moe` present in llama.cpp `src/llama-arch.cpp` and as strings in shipped `wllama64` 1.0.1 wasm.
+All Apache-2.0, embedded chat template present. None load-tested in a real browser yet (no `browser_verified`).
+
+| id | GGUF | bytes | active | KV layers | why |
+|:--|:--|--:|--:|:--|:--|
+| granite4-h-1b-q4km | ibm-granite/granite-4.0-h-1b-GGUF Q4_K_M | 901,162,208 | 1.46B dense | 4/40 (Mamba2 hybrid) | q 56.3 > Qwen3 1.7B 52.5, smaller file |
+| granite4-h-micro-q4km | ibm-granite/granite-4.0-h-micro-GGUF Q4_K_M | 1,942,564,512 | 3.2B dense | 4/40 | q 65.7 > Phi-4 Mini 64.9 at 78% bytes; fits wasm32 |
+| granite4-h-tiny-q4km | ibm-granite/granite-4.0-h-tiny-GGUF Q4_K_M | 4,230,976,352 | 1B of 6.94B | 4/40 | q 67.7 ≈ Qwen3 8B 67.9 at ~0.6 GB/token (~8-10× less); fits 5.6 GB auto tier |
+| gemma4-26b-a4b-iq4xs | unsloth/gemma-4-26B-A4B-it-GGUF UD-IQ4_XS | 13,597,177,568 | 3.8B of 25.2B | 5 global + 25 SWA(1024) | GPQA 82.3 vs GPT-OSS 71.5, same bytes/token |
+| qwen36-35b-a3b-iq3xxs | unsloth/Qwen3.6-35B-A3B-GGUF UD-IQ3_XXS | 13,211,155,424 | 3B of 34.7B | 10/40 | GPQA 86.0 (thinking), ~1.1 GB/token: fastest big model |
+
+- Granite benchmarks: IBM cards (MMLU 5-shot, GPQA 0-shot CoT, HumanEval pass@1, Minerva Math, GSM8K 8-shot).
+- Gemma 4 / Qwen 3.6: GPQA Diamond from vendor cards only (catalog convention; others null).
+- Gemma 4 26B: Q4_K_M 16.9 GB, Google QAT q4_0 14.44 GB, Unsloth QAT UD-Q4_K_XL 14.25 GB all exceed the
+  15 GB estimate (weights + ~0.36 GB SWA/global KV + 0.5 GB runtime). IQ4_XS is the best fit.
+- Qwen 3.6 35B: Q4 ≥ 17.7 GB; UD-IQ3_XXS only sane quant under budget. 3-bit risk: verify output quality.
+- Gemma 4 + Qwen 3.6 think by default → `reasoning_enabled: false` (Gemma template: `enable_thinking` default false).
+- Rejected: LFM2.5 8B-A1B / 24B-A2B (LFM Open License, revenue cap); Gemma 4 E2B/E4B (PLE files 3.1/5.0 GB,
+  GPQA 43/59 < Qwen 3.5 2B/4B); Gemma 4 12B dense (slower than 26B-A4B); Granite 4.2 3B/8B (dense `granite`,
+  GPQA 54.8 < Qwen 3.5 4B); Qwen3.5-0.8B (GPQA 11.9; no win over Qwen3 0.6B); Qwen 3.8 (27B dense / huge MoE only).
+- Unsloth fallback for Granite h-tiny if the IBM GGUF fails: `unsloth/granite-4.0-h-tiny-GGUF` Q4_K_M 4,254,815,392 B.
+
+Sources: https://huggingface.co/ibm-granite/granite-4.0-h-tiny · https://huggingface.co/ibm-granite/granite-4.0-h-1b ·
+https://huggingface.co/google/gemma-4-26B-A4B-it · https://huggingface.co/Qwen/Qwen3.6-35B-A3B ·
+https://github.com/ggml-org/llama.cpp/blob/master/src/llama-arch.cpp

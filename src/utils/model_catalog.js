@@ -37,6 +37,7 @@
  * @property {number} block_count - Transformer block count used by llama.cpp GPU offload
  * @property {number} kv_heads - Number of key-value attention heads (GQA)
  * @property {number} head_dim - Dimension per attention head
+ * @property {SlidingKv} [sliding_kv] - Sliding-window attention layers whose KV cache stops at `window` tokens
  * @property {string} hugging_face_repo - HF repo path (org/name)
  * @property {string} file_name - GGUF filename
  * @property {boolean} reasoning - Whether the model supports native thinking/reasoning mode (<think> tags)
@@ -56,6 +57,14 @@
  * @property {number} [num_active_experts] - Experts active per token (MoE only)
  * @property {string} [category] - Legacy tier label for backward compat with cached IndexedDB data
  * @property {Benchmarks} [benchmarks] - Benchmark scores (null = unavailable for that benchmark)
+ */
+
+/**
+ * @typedef {Object} SlidingKv
+ * @property {number} layers   - Sliding-window attention layers (excluded from `layers`)
+ * @property {number} kv_heads - KV heads per sliding layer
+ * @property {number} head_dim - Head dimension per sliding layer
+ * @property {number} window   - Sliding window in tokens
  */
 
 /**
@@ -216,6 +225,33 @@ export const MODEL_CATALOG = [
     },
 
     {
+        id: `granite4-h-1b-q4km`,
+        name: `Granite 4.0 H 1B`,
+        description: `IBM's hybrid Mamba model. Beats Qwen3 1.7B in a smaller file with a tiny KV cache.`,
+        family: `granitehybrid`,
+        parameters: 1_461_538_368,
+        parameters_label: `1.5B`,
+        quantization: `Q4_K_M`,
+        bpw: 4.85,
+        file_size_bytes: 901_162_208,
+        context_length: 131_072,
+
+        // Mamba-2 hybrid: only 4 of 40 blocks are attention layers with a KV cache.
+        layers: 4,
+        block_count: 40,
+        kv_heads: 4,
+        head_dim: 128,
+
+        hugging_face_repo: `ibm-granite/granite-4.0-h-1b-GGUF`,
+        file_name: `granite-4.0-h-1b-Q4_K_M.gguf`,
+        hf_model_repo: `ibm-granite/granite-4.0-h-1b`,
+        reasoning: false,
+        benchmarks: { mmlu: 59.74, gpqa: 29.69, humaneval: 73, math: 49.4, gsm8k: 69.83 },
+        license: `Apache-2.0`,
+        category: `medium`,
+    },
+
+    {
         id: `qwen35-2b-q4km`,
         name: `Qwen 3.5 2B`,
         description: `Current compact Qwen with strong reasoning, instruction following, and multilingual support.`,
@@ -296,6 +332,33 @@ export const MODEL_CATALOG = [
         license: `Apache-2.0`,
         category: `medium`,
         browser_verified: true,
+    },
+
+    {
+        id: `granite4-h-micro-q4km`,
+        name: `Granite 4.0 H Micro`,
+        description: `IBM's hybrid Mamba 3B. Phi-4 Mini quality in a smaller, faster file.`,
+        family: `granitehybrid`,
+        parameters: 3_191_396_096,
+        parameters_label: `3B`,
+        quantization: `Q4_K_M`,
+        bpw: 4.85,
+        file_size_bytes: 1_942_564_512,
+        context_length: 131_072,
+
+        // Mamba-2 hybrid: only 4 of 40 blocks are attention layers with a KV cache.
+        layers: 4,
+        block_count: 40,
+        kv_heads: 8,
+        head_dim: 64,
+
+        hugging_face_repo: `ibm-granite/granite-4.0-h-micro-GGUF`,
+        file_name: `granite-4.0-h-micro-Q4_K_M.gguf`,
+        hf_model_repo: `ibm-granite/granite-4.0-h-micro`,
+        reasoning: false,
+        benchmarks: { mmlu: 67.43, gpqa: 32.15, humaneval: 81, math: 66.44, gsm8k: 81.35 },
+        license: `Apache-2.0`,
+        category: `medium`,
     },
 
     // ── 4B models ───────────────────────────────────────────────────────
@@ -457,6 +520,110 @@ export const MODEL_CATALOG = [
         num_active_experts: 4,
         category: `ultra`,
         browser_verified: true,
+    },
+
+    {
+        id: `granite4-h-tiny-q4km`,
+        name: `Granite 4.0 H Tiny`,
+        description: `IBM's hybrid Mamba MoE. 1B active parameters per token: 1B speed, 4B-class answers.`,
+        family: `granitehybrid`,
+        parameters: 6_939_037_248,
+        parameters_label: `7B`,
+        quantization: `Q4_K_M`,
+        bpw: 4.85,
+        file_size_bytes: 4_230_976_352,
+        context_length: 131_072,
+
+        // Mamba-2 hybrid: only 4 of 40 blocks are attention layers with a KV cache.
+        layers: 4,
+        block_count: 40,
+        kv_heads: 4,
+        head_dim: 128,
+
+        hugging_face_repo: `ibm-granite/granite-4.0-h-tiny-GGUF`,
+        file_name: `granite-4.0-h-tiny-Q4_K_M.gguf`,
+        hf_model_repo: `ibm-granite/granite-4.0-h-tiny`,
+        reasoning: false,
+        benchmarks: { mmlu: 68.65, gpqa: 32.59, humaneval: 83, math: 69.64, gsm8k: 84.69 },
+        license: `Apache-2.0`,
+        moe: true,
+        active_parameters: 1_000_000_000,
+        num_experts: 64,
+        num_active_experts: 6,
+        category: `heavy`,
+    },
+
+    {
+        id: `gemma4-26b-a4b-iq4xs`,
+        name: `Gemma 4 26B A4B`,
+        description: `Google's MoE with 3.8B active parameters. Near-31B quality at 4B speed.`,
+        family: `gemma4`,
+        parameters: 25_233_142_046,
+        parameters_label: `26B`,
+        // IQ4_XS keeps weights + KV + runtime under the 15 GB Memory64 budget;
+        // Q4_K_M (16.9 GB) and the 14.2 GB QAT build do not.
+        quantization: `IQ4_XS`,
+        bpw: 4.25,
+        file_size_bytes: 13_597_177_568,
+        context_length: 262_144,
+
+        // Five global layers grow with context; the other 25 use a 1024-token
+        // sliding window whose cache stops growing once the window is full.
+        layers: 5,
+        block_count: 30,
+        kv_heads: 2,
+        head_dim: 512,
+        sliding_kv: { layers: 25, kv_heads: 8, head_dim: 256, window: 1_024 },
+
+        hugging_face_repo: `unsloth/gemma-4-26B-A4B-it-GGUF`,
+        file_name: `gemma-4-26B-A4B-it-UD-IQ4_XS.gguf`,
+        hf_model_repo: `google/gemma-4-26B-A4B-it`,
+        reasoning: true,
+        // The template defaults thinking off; keep short browser chats direct.
+        reasoning_enabled: false,
+        benchmarks: { mmlu: null, gpqa: 82.3, humaneval: null, math: null, gsm8k: null },
+        license: `Apache-2.0`,
+        moe: true,
+        active_parameters: 3_800_000_000,
+        num_experts: 128,
+        num_active_experts: 8,
+        category: `ultra`,
+    },
+
+    {
+        id: `qwen36-35b-a3b-iq3xxs`,
+        name: `Qwen 3.6 35B A3B`,
+        description: `Qwen's flagship-class MoE with 3B active parameters. Fastest large model in the catalog.`,
+        family: `qwen35moe`,
+        parameters: 34_660_610_688,
+        parameters_label: `35B`,
+        // Unsloth dynamic 3-bit: the only quality-preserving quant under the
+        // 15 GB Memory64 budget (Q4_K_M is 22 GB).
+        quantization: `IQ3_XXS`,
+        bpw: 3.06,
+        file_size_bytes: 13_211_155_424,
+        context_length: 262_144,
+
+        // Three linear-attention blocks per full-attention block. Only the ten
+        // full-attention blocks grow a traditional KV cache.
+        layers: 10,
+        block_count: 40,
+        kv_heads: 2,
+        head_dim: 256,
+
+        hugging_face_repo: `unsloth/Qwen3.6-35B-A3B-GGUF`,
+        file_name: `Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf`,
+        hf_model_repo: `Qwen/Qwen3.6-35B-A3B`,
+        reasoning: true,
+        // Qwen 3.6 thinks by default; short browser chats need direct answers.
+        reasoning_enabled: false,
+        benchmarks: { mmlu: null, gpqa: 86.0, humaneval: null, math: null, gsm8k: null },
+        license: `Apache-2.0`,
+        moe: true,
+        active_parameters: 3_000_000_000,
+        num_experts: 256,
+        num_active_experts: 8,
+        category: `ultra`,
     },
 
     // ── 32B models ──────────────────────────────────────────────────────
@@ -1177,6 +1344,18 @@ const RUNTIME_OVERHEAD = 500_000_000
 export const DEFAULT_RUNTIME_CONTEXT = 2048
 export const MAX_BROWSER_CONTEXT = 16_384
 
+// llama.cpp sizes a sliding-window cache at window + one micro-batch.
+const SLIDING_KV_UBATCH = 512
+
+/** FP16 K + V bytes for `layers` attention layers holding `tokens` tokens. */
+const kv_bytes = ( { layers, kv_heads, head_dim }, tokens ) =>
+    2 * layers * kv_heads * head_dim * tokens * 2
+
+/** Sliding-window layers stop growing once their window is full. */
+const sliding_kv_bytes = ( sliding_kv, ctx ) => sliding_kv
+    ? kv_bytes( sliding_kv, Math.min( ctx, sliding_kv.window + SLIDING_KV_UBATCH ) )
+    : 0
+
 /**
  * Estimate total runtime memory for a model (weights + KV cache + overhead).
  *
@@ -1197,7 +1376,7 @@ export const estimate_model_memory = ( model, context_length ) => {
     // If architecture params are present, compute KV cache properly
     // KV cache = 2 × layers × kv_heads × head_dim × context × 2 bytes (FP16)
     if( model.layers && model.kv_heads && model.head_dim ) {
-        const kv_cache = 2 * model.layers * model.kv_heads * model.head_dim * ctx * 2
+        const kv_cache = kv_bytes( model, ctx ) + sliding_kv_bytes( model.sliding_kv, ctx )
         return model.file_size_bytes + kv_cache + RUNTIME_OVERHEAD
     }
 
@@ -1259,6 +1438,21 @@ export const select_browser_batch = ( model_size, n_threads ) =>
         : model_size > 4_000_000_000
             ? 256
             : n_threads > 1 ? 512 : 256
+
+
+// ─── Speed ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Weight bytes streamed per generated token. Decode is memory-bandwidth bound,
+ * so this is a proxy for inverse tokens/sec. MoE models read only their
+ * active experts, so scale the file by the active-parameter fraction.
+ *
+ * @param {ModelDefinition} model
+ * @returns {number} Approximate bytes read per token
+ */
+export const decode_bytes = model => model.moe && model.active_parameters && model.parameters
+    ? Math.round( model.file_size_bytes * model.active_parameters / model.parameters )
+    : model.file_size_bytes
 
 
 // ─── Quality scoring ─────────────────────────────────────────────────────────────
@@ -1459,16 +1653,20 @@ export const select_best_vision = ( available_bytes ) => {
 
 // ─── Option selection ────────────────────────────────────────────────────────────
 
+// A "faster" card must keep at least 75% of the smarter card's quality score
+const FASTER_QUALITY_FLOOR = 0.75
+
 /**
  * Select smarter/faster/uncensored options for the recommendation UI.
  *
  * - **smarter** = highest-quality model that fits (same as `select_best_model`)
- * - **faster**  = highest-quality model that fits AND is ≤50% the file size of smarter
+ * - **faster**  = highest-quality model that fits AND reads ≤50% of smarter's bytes per token (`decode_bytes`)
  * - **uncensored** = best uncensored model that fits, or `null`
  * - **vision** = best vision model that fits, or `null`
  *
- * The 50% threshold ensures meaningful differentiation between the two cards.
- * If no meaningfully smaller model exists, `faster` is `null` → UI falls back
+ * The 50% threshold ensures meaningful differentiation between the two cards;
+ * the 75% quality floor keeps the faster card useful.
+ * If no meaningfully faster model exists, `faster` is `null` → UI falls back
  * to a single recommendation card.
  *
  * @param {number} available_bytes - Memory budget from estimate_max_model_bytes()
@@ -1479,13 +1677,17 @@ export const select_model_options = ( available_bytes ) => {
     const smarter = select_best_model( available_bytes )
     if( !smarter ) return { smarter: null, faster: null, uncensored: null, vision: null }
 
-    // Find the highest-quality model that fits AND is ≤50% the smarter model's file size
-    const half_size = smarter.file_size_bytes * 0.5
+    // Highest-quality model that fits AND streams ≤50% of smarter's bytes per
+    // token. Decode bytes, not file size: a big MoE can out-run a small dense model.
+    // The quality floor keeps a toy model from replacing an already-fast MoE.
+    const half_decode = decode_bytes( smarter ) * 0.5
+    const quality_floor = quality_score( smarter ) * FASTER_QUALITY_FLOOR
 
     const faster_candidates = MODEL_CATALOG
         .filter( m => !m.uncensored && !m.vision && !m.cloud_only && m.id !== smarter.id )
         .filter( m => can_fit_in_memory( m, available_bytes ) )
-        .filter( m => m.file_size_bytes <= half_size )
+        .filter( m => decode_bytes( m ) <= half_decode )
+        .filter( m => quality_score( m ) >= quality_floor )
         .sort( ( a, b ) => quality_score( b ) - quality_score( a ) || b.bpw - a.bpw )
 
     const faster = faster_candidates[ 0 ] ?? null

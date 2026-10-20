@@ -64,6 +64,7 @@ const build_winner_variant = ( { collection, item, model_data, file } ) => {
         block_count: profile?.block_count,
         kv_heads: profile?.kv_heads,
         head_dim: profile?.head_dim,
+        sliding_kv: profile?.sliding_kv,
         hugging_face_repo: item.id,
         file_name: file.rfilename,
         reasoning: profile?.reasoning || false,

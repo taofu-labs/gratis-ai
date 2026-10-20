@@ -571,6 +571,13 @@ Selection estimates every model at 2K. At load time, known catalog models grow t
 - Defer LFM2.5 defaults: its license restricts commercial use by entities at or above $10M annual revenue.
 - Never copy non-equivalent benchmarks into the five-field schema (for example, MMLU-Pro is not MMLU and LiveCodeBench is not HumanEval).
 
+### Decode-speed cut (2026-10-20)
+
+- Speed proxy: `decode_bytes(model)` = bytes read per token (file × active/total for MoE). Faster card = ≤50% of smarter's decode bytes AND ≥75% of its quality score; file size no longer decides "faster".
+- Hybrid KV: `layers` = KV-bearing attention layers only (Granite H 4/40, Qwen 3.5/3.6 1 in 4); `block_count` = all blocks. Gemma 4 SWA layers go in `sliding_kv` (capped at window + 512 tokens). SSM state (~60 MB) is inside the 500 MB runtime overhead.
+- Granite "math" = Minerva Math (MATH-derived; closest equivalent).
+- 5.6 GB auto tier smarter = Granite 4.0 H Tiny (1B active). 8 GB: Qwen3 8B Q5 smarter, H Tiny faster.
+
 
 ---
 
