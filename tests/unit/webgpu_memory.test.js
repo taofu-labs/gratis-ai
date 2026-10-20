@@ -194,7 +194,7 @@ describe( `WebGPU memory probing`, () => {
             ram_budget_bytes: 8 * GIB,
             device_memory_gb: 8,
             adapter_info: { vendor: `nvidia` },
-        } ) ).toBe( Math.floor( 8 * GIB * 0.4 ) )
+        } ) ).toBe( Math.floor( 8 * GIB * 1.3 ) )
     } )
 
 } )

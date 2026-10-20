@@ -12,6 +12,7 @@ const MIB = 1024 ** 2
  * @param {Object|null} options.gpu_probe
  * @param {number} options.ram_budget_bytes
  * @param {number} options.context_length
+ * @param {'discrete'|'shared_or_unknown'} [options.adapter_class] - From classify_webgpu_adapter
  * @returns {number} n_gpu_layers value, or zero for CPU
  */
 export const select_gpu_offload_layers = ( {
@@ -19,6 +20,7 @@ export const select_gpu_offload_layers = ( {
     gpu_probe,
     ram_budget_bytes,
     context_length,
+    adapter_class = `shared_or_unknown`,
 } ) => {
 
     if( gpu_probe?.status !== `measured` || gpu_probe.measured_bytes <= 0 ) return 0
@@ -27,12 +29,17 @@ export const select_gpu_offload_layers = ( {
     const runtime_bytes = estimate_model_memory( model, context_length )
     const ram_slack = Math.max( 0, ram_budget_bytes - runtime_bytes )
 
-    // Retain both fixed driver/graph room and proportional headroom for the
-    // WebGPU allocator. Treat offloaded bytes as RAM too, covering UMA safely.
-    const gpu_budget = Math.max( 0, Math.min(
-        gpu_probe.measured_bytes * 0.6 - 256 * MIB,
-        ram_slack * 0.5,
-    ) )
+    // Discrete VRAM is a separate pool: the WASM copy of the weights does not
+    // compete with it, so only GPU-side KV/compute room must be reserved.
+    // Shared/unknown adapters retain both fixed driver/graph room and
+    // proportional allocator headroom, and treat offloaded bytes as RAM too.
+    const non_weight_bytes = Math.max( 0, runtime_bytes - model.file_size_bytes )
+    const gpu_budget = adapter_class === `discrete`
+        ? Math.max( 0, gpu_probe.measured_bytes * 0.85 - 256 * MIB - non_weight_bytes )
+        : Math.max( 0, Math.min(
+            gpu_probe.measured_bytes * 0.6 - 256 * MIB,
+            ram_slack * 0.5,
+        ) )
 
     const estimated_weight_bytes = model.file_size_bytes * 1.15
     if( gpu_budget >= estimated_weight_bytes ) return 99_999

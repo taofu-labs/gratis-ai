@@ -58,4 +58,32 @@ describe( `GPU layer selection`, () => {
         } ) ).toBe( 0 )
     } )
 
+    test( `discrete VRAM is not limited by WASM RAM slack`, () => {
+        const options = {
+            model: MODEL,
+            gpu_probe: { status: `measured`, measured_bytes: 4 * GIB },
+            ram_budget_bytes: 1.6 * GIB,
+            context_length: 2048,
+        }
+
+        // Shared memory: tight RAM slack keeps most layers on CPU
+        expect( select_gpu_offload_layers( options ) ).toBeLessThan( MODEL.block_count )
+
+        // Discrete: the same measured VRAM proves full offload
+        expect( select_gpu_offload_layers( { ...options, adapter_class: `discrete` } ) ).toBe( 99_999 )
+    } )
+
+    test( `discrete offload still reserves GPU room for KV and compute`, () => {
+        const layers = select_gpu_offload_layers( {
+            model: MODEL,
+            gpu_probe: { status: `measured`, measured_bytes: 1.2 * GIB },
+            ram_budget_bytes: 8 * GIB,
+            context_length: 2048,
+            adapter_class: `discrete`,
+        } )
+
+        expect( layers ).toBeGreaterThan( 0 )
+        expect( layers ).toBeLessThan( MODEL.block_count )
+    } )
+
 } )

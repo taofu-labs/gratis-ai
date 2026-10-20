@@ -8,7 +8,7 @@ import {
 } from '../utils/device_detection'
 import { select_gpu_offload_layers } from '../utils/gpu_offload'
 import { ModelFitError } from '../utils/model_fit_error'
-import { wait_for_existing_webgpu_memory_probe } from '../utils/webgpu_memory'
+import { classify_webgpu_adapter, wait_for_existing_webgpu_memory_probe } from '../utils/webgpu_memory'
 import {
     estimate_model_memory,
     get_model_by_id,
@@ -215,6 +215,7 @@ export default class WllamaProvider {
 
         let gpu_layers = this._gpu_disabled ? 0 : select_gpu_offload_layers( {
             model: fit_model,
+            adapter_class: classify_webgpu_adapter( probed_capabilities.gpu?.adapter_info ),
             gpu_probe: probed_capabilities.gpu?.memory_source === `measured` ? {
                 status: `measured`,
                 measured_bytes: probed_capabilities.gpu.allocatable_bytes,

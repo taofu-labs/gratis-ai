@@ -82,8 +82,11 @@ export const select_webgpu_probe_target = ( {
     // slack. Forty percent covers meaningful layer offload without probing for
     // memory that strict model selection can never use.
     const useful_target = Math.max( 0, Math.floor( ram_budget_bytes * 0.4 ) )
+
+    // Separate VRAM can hold every layer of the largest loadable model, so
+    // probe far enough to prove full offload rather than a RAM-slack slice
     if( classify_webgpu_adapter( adapter_info ) === `discrete` ) {
-        return Math.min( WEBGPU_PROBE_MAX_BYTES, useful_target )
+        return Math.min( WEBGPU_PROBE_MAX_BYTES, Math.floor( ram_budget_bytes * 1.3 ) )
     }
 
     const reported_ram_guard = device_memory_gb
