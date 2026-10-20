@@ -11,8 +11,9 @@
  * Needs a display for headful Chromium: wrap in `xvfb-run -a` on Linux.
  */
 import { spawn } from 'node:child_process'
-import { appendFileSync, readdirSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { appendFileSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
@@ -45,7 +46,9 @@ await new Promise( done => setTimeout( done, 500 ) )
 // Fresh browser per cell so one config cannot warm caches for the next
 const run_cell = async ( model, load_options ) => {
 
-    const browser = await chromium.launch( { headless: false, args: [ `--unlimited-storage` ] } )
+    // Persistent profile: incognito contexts cap OPFS far below multi-GB models
+    const profile = mkdtempSync( join( tmpdir(), `bench-profile-` ) )
+    const browser = await chromium.launchPersistentContext( profile, { headless: false, args: [ `--unlimited-storage` ] } )
 
     try {
         const page = await browser.newPage()
@@ -61,6 +64,7 @@ const run_cell = async ( model, load_options ) => {
         return result
     } finally {
         await browser.close()
+        rmSync( profile, { recursive: true, force: true } )
     }
 
 }
