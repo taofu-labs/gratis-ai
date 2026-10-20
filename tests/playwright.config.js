@@ -12,8 +12,9 @@ export default defineConfig( {
     fullyParallel: false,
     retries: 1,
     use: {
-        // Pin IPv4: Vite may bind only [::1] for localhost while Chromium dials 127.0.0.1
-        baseURL: `http://127.0.0.1:5173`,
+        // Vite binds 127.0.0.1 (it may otherwise pick only [::1]); keep the
+        // localhost name, which mentie needs to enable dev-level logging
+        baseURL: `http://localhost:5173`,
         headless: true,
         viewport: { width: 1280, height: 720 },
         actionTimeout: 30_000,

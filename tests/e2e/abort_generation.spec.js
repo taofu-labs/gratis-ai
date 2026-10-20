@@ -18,13 +18,16 @@ test.describe( `Abort Generation`, () => {
         // Send a long prompt that will generate a lengthy response
         await send_message( page, LONG_PROMPT )
 
-        // Wait for streaming to begin — poll until assistant message has actual text content
+        // Wait for real tokens: the prompt-reading indicator also renders text
+        // inside the bubble, and stopping during it rightly keeps no partial text
         await expect( async () => {
             const msgs = await page.locator( `[data-testid="assistant-message"]` ).all()
             expect( msgs.length ).toBeGreaterThanOrEqual( 1 )
-            const content = await msgs[ msgs.length - 1 ].textContent()
+            const last = msgs[ msgs.length - 1 ]
+            await expect( last.getByTestId( `waking-up-indicator` ) ).toHaveCount( 0 )
+            const content = await last.textContent()
             expect( content?.length ).toBeGreaterThan( 0 )
-        } ).toPass( { timeout: 60_000 } )
+        } ).toPass( { timeout: 180_000 } )
 
         // Try to abort — if the stop button is still visible, click it.
         // SmolLM2 is fast enough that generation may already be done.
