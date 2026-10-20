@@ -439,6 +439,7 @@ export default function ChatPage() {
         // Strict templates (Gemma, Mistral) demand alternating roles, so turns
         // left adjacent by a dropped empty reply are merged
         const history = history_msgs
+            .map( ( { role, content, model_content } ) => ( { role, content: model_content ?? content } ) )
             .filter( ( { content } ) => content )
             .reduce( ( turns, { role, content } ) => {
                 const previous = turns.at( -1 )
@@ -486,7 +487,8 @@ export default function ChatPage() {
                 await save_partial_reply( partial )
                 partial.done = true
                 const error_content = [ partial.text, `**Error:** ${ err.message }` ].filter( Boolean ).join( `\n\n` )
-                update_reply( { content: error_content, is_error: true } )
+                // The model only ever sees what it said, never our error banner
+                update_reply( { content: error_content, is_error: true, model_content: partial.text } )
 
             } finally {
                 if( partial_reply_ref.current === partial ) partial_reply_ref.current = null
