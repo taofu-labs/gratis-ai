@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Shield, WifiOff, ChevronDown, ChevronUp, Settings } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
+import Button from '../atoms/Button'
 import DeviceInfo from '../atoms/DeviceInfo'
 import LanguageSelector from '../molecules/LanguageSelector'
 import SettingsModal from '../molecules/SettingsModal'
@@ -96,27 +97,6 @@ const IconCircle = styled.div`
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
     background: ${ ( { theme } ) => theme.colors.code_background };
     color: ${ ( { theme } ) => theme.colors.text };
-`
-
-const StartButton = styled.button`
-    background: ${ ( { theme } ) => theme.colors.accent };
-    color: white;
-    padding: ${ ( { theme } ) => `${ theme.spacing.md } ${ theme.spacing.xl }` };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    font-size: 1.1rem;
-    font-weight: 600;
-    transition: opacity 0.15s;
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    min-height: 2.75rem;
-
-    &:hover { opacity: 0.85; }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
 `
 
 // Step indicator showing the 3-step onboarding
@@ -226,12 +206,13 @@ export default function WelcomePage() {
                 </ValueProp>
             </ValueProps>
 
-            <StartButton
+            <Button
+                $sheen
                 data-testid="get-started-btn"
                 onClick={ handle_start }
             >
-                { t( 'get_started' ) } <ArrowRight size={ 18 } />
-            </StartButton>
+                { t( 'get_started' ) } <ArrowRight size={ 16 } />
+            </Button>
 
             { /* Step progress indicator */ }
             <StepIndicator data-testid="step-indicator">

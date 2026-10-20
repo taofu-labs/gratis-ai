@@ -19,6 +19,7 @@ import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
 import { get_model_by_id, format_file_size } from '../../utils/model_catalog'
 import { useTranslation } from 'react-i18next'
+import Button from '../atoms/Button'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 import { storage_key, EVENTS, DISPLAY_NAME, APP_VERSION } from '../../utils/branding'
 
@@ -106,22 +107,6 @@ const NoModelText = styled.p`
     margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
     max-width: 400px;
     line-height: 1.5;
-`
-
-const SetupButton = styled.button`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    background: ${ ( { theme } ) => theme.colors.accent };
-    color: white;
-    padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.lg }` };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: opacity 0.15s;
-    min-height: 2.75rem;
-
-    &:hover { opacity: 0.85; }
 `
 
 // Loading state while model initializes
@@ -273,7 +258,8 @@ export default function ChatPage() {
                 .catch( ( err ) => {
                     log.error( `[ChatPage] Auto-load failed:`, err.message )
                     set_model_loaded( false )
-                    toast.error( err.message || t( 'common:failed_to_load_model' ) )
+                    // Fixed id: a remount or retry replaces the toast instead of stacking another
+                    toast.error( err.message || t( 'common:failed_to_load_model' ), { id: `model-load-error` } )
                 } )
 
         } else {
@@ -940,12 +926,12 @@ export default function ChatPage() {
                 <NoModelText>
                     { t( 'no_model_description' ) }
                 </NoModelText>
-                <SetupButton
+                <Button
                     data-testid="setup-model-btn"
                     onClick={ () => navigate( `/` ) }
                 >
                     { t( 'set_up_a_model' ) } <ArrowRight size={ 16 } />
-                </SetupButton>
+                </Button>
             </NoModelContainer>
         }
 

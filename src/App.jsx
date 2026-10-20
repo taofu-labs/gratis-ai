@@ -53,7 +53,7 @@ export default function App() {
                 <QueryParamProvider adapter={ ReactRouter6Adapter }>
                     <Routes />
                     <Toaster
-                        position="bottom-center"
+                        position="top-center"
                         toastOptions={ {
                             duration: 3000,
                             style: {

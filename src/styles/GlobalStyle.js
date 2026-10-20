@@ -110,16 +110,21 @@ const GlobalStyle = createGlobalStyle`
     /* Subtle selection — accent used sparingly */
     ::selection {
         background: ${ ( { theme } ) => theme.colors.accent };
-        color: white;
+        color: ${ ( { theme } ) => theme.colors.accent_ink };
+    }
+
+    /* Fine Lucide strokes everywhere; CSS beats the default stroke-width attribute */
+    svg.lucide {
+        stroke-width: 1.5;
     }
 
     /* Focus indicators — never outline: none.
-       Solid accent ring (6:1 on the canvas) wrapped in a soft halo.
-       Outline, not box-shadow, so forced-colors mode keeps a system ring */
+       Thin accent line inside a soft halo that meets the surface; no hard rim.
+       Transparent outline keeps a system ring in forced-colors mode */
     :focus-visible {
-        outline: 2px solid ${ ( { theme } ) => theme.colors.accent };
+        outline: 2px solid transparent;
         outline-offset: 2px;
-        box-shadow: 0 0 0 7px ${ ( { theme } ) => theme.colors.focus_halo };
+        box-shadow: 0 0 0 1px ${ ( { theme } ) => theme.colors.accent }, 0 0 0 5px ${ ( { theme } ) => theme.colors.focus_halo };
     }
 
     :focus:not( :focus-visible ) {

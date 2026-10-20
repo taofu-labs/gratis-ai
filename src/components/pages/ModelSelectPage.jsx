@@ -8,6 +8,7 @@ import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
 import BrowserRamOverride from '../atoms/BrowserRamOverride'
+import Button from '../atoms/Button'
 import LanguageSelector from '../molecules/LanguageSelector'
 import SettingsModal from '../molecules/SettingsModal'
 import {
@@ -138,48 +139,37 @@ const CardRow = styled.div`
     }
 `
 
-// Resolve the accent color for a card variant
-const variant_color = ( theme, $variant ) =>
-    $variant === `uncensored` ? theme.colors.error
-        : $variant === `vision` ? theme.colors.info
-            : $variant === `nerd` ? theme.colors.info
-                : theme.colors.accent
-
 const OptionCard = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: ${ ( { theme } ) => theme.spacing.lg };
-    border: 2px solid ${ ( { theme, $active, $variant } ) =>
-        $active ? variant_color( theme, $variant ) : theme.colors.border };
+    padding: ${ ( { theme } ) => `${ theme.spacing.lg } ${ theme.spacing.md }` };
+    border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.lg };
     text-align: center;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.16s, background-color 0.16s;
     cursor: pointer;
-    background: transparent;
+
+    /* Selection: accent line + faint tint; never a heavy double border */
+    background: ${ ( { theme, $active } ) => $active ? `${ theme.colors.accent }0d` : `transparent` };
 
     &:hover {
-        border-color: ${ ( { theme, $active, $variant } ) =>
-        $active ? variant_color( theme, $variant ) : theme.colors.text_muted };
+        border-color: ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border_strong };
+        background: ${ ( { theme, $active } ) => $active ? `${ theme.colors.accent }14` : theme.colors.surface_hover };
     }
-
-    ${ ( { $active, $variant, theme } ) => $active && `
-        box-shadow: 0 0 0 1px ${ variant_color( theme, $variant ) };
-    ` }
 `
 
 const CardLabel = styled.h2`
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
+    text-wrap: balance;
     gap: ${ ( { theme } ) => theme.spacing.sm };
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
-    color: ${ ( { $variant, theme } ) =>
-        $variant === `faster` ? theme.colors.success
-            : $variant === `uncensored` ? theme.colors.error
-                : $variant === `vision` || $variant === `nerd` ? theme.colors.info
-                    : theme.colors.accent };
+    font-size: 1.0625rem;
+    font-weight: 500;
+    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
+    color: ${ ( { theme } ) => theme.colors.text };
 `
 
 const DownloadEstimate = styled.p`
@@ -272,7 +262,7 @@ const RecommendedCard = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: ${ ( { theme } ) => theme.spacing.lg };
+    padding: ${ ( { theme } ) => `${ theme.spacing.lg } ${ theme.spacing.md }` };
     border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
     cursor: ${ ( { role } ) => role === `button` ? `pointer` : `default` };
     border-radius: ${ ( { theme } ) => theme.border_radius.lg };
@@ -307,26 +297,8 @@ const RecommendedMeta = styled.div`
 
 // ─── Shared UI components ────────────────────────────────────────────────────────
 
-const DownloadButton = styled.button`
-    background: ${ ( { theme } ) => theme.colors.accent };
-    color: white;
-    padding: ${ ( { theme } ) => `${ theme.spacing.md } ${ theme.spacing.xl }` };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    font-size: 1rem;
-    font-weight: 600;
+const DownloadButton = styled( Button )`
     margin-top: ${ ( { theme } ) => theme.spacing.md };
-    transition: opacity 0.15s;
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    min-height: 2.75rem;
-
-    &:hover { opacity: 0.85; }
-
-    &:disabled {
-        cursor: not-allowed;
-        opacity: 0.45;
-    }
 `
 
 // Toggle buttons for expanding model lists
@@ -515,22 +487,9 @@ const CustomModelInput = styled.input`
     min-width: 0;
 
     &::placeholder { color: ${ ( { theme } ) => theme.colors.text_muted }; }
-    &:focus { outline: none; border-color: ${ ( { theme } ) => theme.colors.accent }; }
 `
 
-const LoadButton = styled.button`
-    padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md }` };
-    border: 1px solid ${ ( { theme } ) => theme.colors.accent };
-    border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    color: ${ ( { theme } ) => theme.colors.accent };
-    font-size: 0.85rem;
-    font-weight: 500;
-    white-space: nowrap;
-    transition: all 0.15s;
-
-    &:hover:not(:disabled) { background: ${ ( { theme } ) => theme.colors.accent }; color: white; }
-    &:disabled { opacity: 0.5; cursor: not-allowed; }
-`
+const LoadButton = styled( Button ).attrs( { $variant: `secondary` } )``
 
 const InlineActionButton = styled.button`
     color: ${ ( { theme } ) => theme.colors.accent };
@@ -1082,8 +1041,8 @@ export default function ModelSelectPage() {
                     onClick={ () => handle_select( model.id ) }
                     onKeyDown={ event => select_with_keyboard( event, model.id ) }
                 >
-                    <CardLabel $variant={ key }>
-                        <Icon size={ 18 } />
+                    <CardLabel>
+                        <Icon size={ 16 } />
                         { t( label ) }
                     </CardLabel>
                     { cached_badge_or_estimate( model ) }
@@ -1210,6 +1169,7 @@ export default function ModelSelectPage() {
 
         { /* ── Download action + step progress (below all model sections) ── */ }
         <DownloadButton
+            $sheen={ !!active_model && !active_model_too_large }
             data-testid="model-select-confirm-btn"
             onClick={ handle_download }
             disabled={ !active_model || active_model_too_large }
@@ -1218,7 +1178,7 @@ export default function ModelSelectPage() {
                 ? active_is_cached ? t( 'start_chatting' )
                     : active_uses_external_file ? t( 'choose_save_location' )
                         : t( 'download_and_start' )
-                : t( 'select_model_to_continue' ) } <ArrowRight size={ 18 } />
+                : t( 'select_model_to_continue' ) } <ArrowRight size={ 16 } />
         </DownloadButton>
 
         <StepIndicator data-testid="step-indicator">
