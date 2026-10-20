@@ -32,16 +32,55 @@ const GPU_LOAD_BYTES_PER_SECOND = 8 * 1024 ** 2
 const GPU_TOKEN_TIMEOUT_MS = 300_000
 const RUNTIME_EXIT_TIMEOUT_MS = 5_000
 
+// llama.cpp decodes one prompt batch per worker call and only then sees a
+// cancel. On CPU, throughput barely changes above ~128 tokens per batch, so
+// smaller batches buy finer prefill progress and a quicker stop for free.
+const CPU_PROMPT_BATCH = 128
+
 // Measured in headful Chromium on a clean 4 vCPU runner (scripts/bench):
 // flash attention plus a q8_0 KV cache decodes 23–65% faster than f16 on CPU
-// because WASM decode is memory-bandwidth bound. Smaller ubatches cost nothing
-// measurable and let a Stop interrupt prompt processing sooner. GPU loads keep
-// f16 until WebGPU FA/quantized-KV support is verified on real hardware.
+// because WASM decode is memory-bandwidth bound. GPU loads keep f16 until
+// WebGPU FA/quantized-KV support is verified on real hardware.
 const CPU_FAST_OPTIONS = {
     flash_attn: true,
     cache_type_k: `q8_0`,
     cache_type_v: `q8_0`,
-    n_ubatch: 128,
+}
+
+/** CPU-only runtime options; GPU offload keeps its larger batch and f16 KV. */
+const cpu_load_options = load_options => ( {
+    ...load_options,
+    ...CPU_FAST_OPTIONS,
+    n_gpu_layers: 0,
+    n_batch: Math.min( load_options.n_batch, CPU_PROMPT_BATCH ),
+    n_ubatch: Math.min( load_options.n_batch, CPU_PROMPT_BATCH ),
+} )
+
+/** Build the error a stopped generation rejects with. */
+const abort_error = () => Object.assign( new Error( `Generation stopped` ), { name: `AbortError` } )
+
+// Name-based on purpose: an Emscripten crash also says "Aborted()"
+const is_abort = error => error?.name === `AbortError`
+
+/**
+ * Settle with the user's stop instead of the worker. Wllama only notices an
+ * abort after its current batch returns, which can take seconds on slow CPUs.
+ * @param {Promise} promise - Pending worker call
+ * @param {AbortSignal} signal
+ * @returns {Promise}
+ */
+const until_aborted = ( promise, signal ) => {
+
+    if( signal.aborted ) return Promise.reject( abort_error() )
+
+    let on_abort
+    const aborted = new Promise( ( _, reject ) => {
+        on_abort = () => reject( abort_error() )
+        signal.addEventListener( `abort`, on_abort, { once: true } )
+    } )
+
+    return Promise.race( [ promise, aborted ] ).finally( () => signal.removeEventListener( `abort`, on_abort ) )
+
 }
 
 const WLLAMA_LOGGER = {
@@ -102,6 +141,9 @@ export default class WllamaProvider {
         this._gpu_disabled = false
         this._gpu_layers = 0
         this._reload_context = null
+
+        // Resolves once a stopped request has really left the worker
+        this._settling = Promise.resolve()
     }
 
     /**
@@ -121,6 +163,7 @@ export default class WllamaProvider {
         }
 
         if( this._wllama ) await this.unload_model()
+        await this._settling
 
         const db = await get_db()
         const cached = await db.get( `models`, model_id )
@@ -267,11 +310,7 @@ export default class WllamaProvider {
                 : `Loading model into memory...` } )
 
             try {
-                const loaded = await this._load_runtime_attempt( source, {
-                    ...load_options,
-                    ...CPU_FAST_OPTIONS,
-                    n_gpu_layers: 0,
-                }, model_size )
+                const loaded = await this._load_runtime_attempt( source, cpu_load_options( load_options ), model_size )
                 runtime_name = loaded.compat ? `wasm32 compatibility` : `Memory64`
                 this._gpu_layers = 0
             } catch ( load_error ) {
@@ -322,6 +361,7 @@ export default class WllamaProvider {
      */
     async chat( messages, opts = {} ) {
 
+        await this._settling
         this._assert_ready()
 
         const started_at = performance.now()
@@ -353,42 +393,57 @@ export default class WllamaProvider {
     }
 
     /**
-     * Streaming chat completion — yields text deltas as they arrive.
+     * Streaming chat completion. Yields text deltas as strings, plus
+     * `{ prompt_progress }` while the prompt is read and a final `{ timings }`.
+     * A stop rejects with an AbortError at once, while the worker finishes its
+     * current batch in the background; the next request waits for it.
      * @param {import('./types').ChatMessage[]} messages
      * @param {import('./types').GenerateOptions} [opts]
-     * @returns {AsyncGenerator<string>}
+     * @returns {AsyncGenerator<string|{ prompt_progress: Object }|{ timings: Object }>}
      */
     async *chat_stream( messages, opts = {} ) {
 
-        this._assert_ready()
         const abort_controller = new AbortController()
+        const { signal } = abort_controller
+        const previous_request = this._settling
         this._abort_controller = abort_controller
 
         const started_at = performance.now()
         let first_token_at = null
         let token_count = 0
+        let timings = null
         let emitted_text = false
+        let pending_stream = null
+        let iterator = null
 
         try {
 
-            const stream = await this._create_chat_completion( {
+            // A stopped predecessor may still occupy the worker's only slot
+            await until_aborted( previous_request, signal )
+            this._assert_ready()
+
+            pending_stream = this._create_chat_completion( {
                 messages,
                 ...this._build_completion_options( opts ),
                 stream: true,
-                abortSignal: abort_controller.signal,
+                return_progress: true,
+                abortSignal: signal,
             } )
 
-            const iterator = stream[ Symbol.asyncIterator ]()
+            iterator = ( await until_aborted( pending_stream, signal ) )[ Symbol.asyncIterator ]()
 
             while( true ) {
 
-                const { value: chunk, done } = await this._next_stream_chunk( iterator )
+                const { value: chunk, done } = await until_aborted( this._next_stream_chunk( iterator ), signal )
                 if( done ) break
 
-                const text = chunk.choices?.[ 0 ]?.delta?.content || ``
+                if( chunk.prompt_progress && first_token_at === null ) yield { prompt_progress: chunk.prompt_progress }
+                if( chunk.timings ) ( { timings } = chunk )
+
                 const reported_tokens = chunk.usage?.completion_tokens || chunk.timings?.predicted_n
                 if( reported_tokens ) token_count = reported_tokens
 
+                const text = chunk.choices?.[ 0 ]?.delta?.content || ``
                 if( text ) {
                     if( first_token_at === null ) first_token_at = performance.now()
                     emitted_text = true
@@ -397,20 +452,24 @@ export default class WllamaProvider {
 
             }
 
+            if( timings ) yield { timings }
+
             const elapsed_ms = performance.now() - started_at
             const ttft_ms = first_token_at === null ? elapsed_ms : first_token_at - started_at
-            const decode_ms = Math.max( elapsed_ms - ttft_ms, 0 )
-            const tokens_per_second = decode_ms > 0 ? token_count / ( decode_ms / 1000 ) : 0
+            const tokens_per_second = timings?.predicted_per_second
+                || token_count / ( Math.max( elapsed_ms - ttft_ms, 1 ) / 1000 )
             const [ model_name, model_arch ] = this._model_identity()
 
             log.info( `[wllama] [${ model_name } (${ model_arch })] ${ token_count } tokens — ttft ${ ttft_ms.toFixed( 0 ) }ms, ${ tokens_per_second.toFixed( 1 ) } tk/s` )
 
         } catch ( error ) {
-            if( error.name === `AbortError` || error.message?.includes( `abort` ) ) return
+
+            // Surface the stop to the caller; never mistake it for an empty reply
+            if( signal.aborted || is_abort( error ) ) throw abort_error()
 
             if( this._gpu_layers > 0 && this._should_reload_on_cpu( error ) ) {
                 await this._reload_on_cpu( error )
-                if( abort_controller.signal.aborted ) return
+                if( signal.aborted ) throw abort_error()
 
                 // Restart only before output becomes visible. Replaying after a
                 // partial stream could duplicate or diverge from existing text.
@@ -421,9 +480,33 @@ export default class WllamaProvider {
             }
 
             throw error
+
         } finally {
             if( this._abort_controller === abort_controller ) this._abort_controller = null
+            if( signal.aborted ) this._settling = Promise.all( [ previous_request, this._drain( pending_stream, iterator ) ] )
         }
+
+    }
+
+    /**
+     * Wait until an abandoned completion has left the worker. Wllama rejects
+     * the stream with its own AbortError once the in-flight batch returns.
+     * @param {Promise|null} pending_stream
+     * @param {AsyncIterator|null} iterator
+     * @returns {Promise<void>}
+     */
+    async _drain( pending_stream, iterator ) {
+
+        const started_at = performance.now()
+
+        try {
+            const stream_iterator = iterator || ( await pending_stream )?.[ Symbol.asyncIterator ]()
+            while( stream_iterator && !( await stream_iterator.next() ).done ) { /* discard */ }
+        } catch {
+            // The expected AbortError, or a dead worker the next call will report
+        }
+
+        log.debug( `[wllama] Stopped request released the worker after ${ ( performance.now() - started_at ).toFixed( 0 ) }ms` )
 
     }
 
@@ -645,11 +728,7 @@ export default class WllamaProvider {
         await new Promise( resolve => setTimeout( resolve, 50 ) )
 
         try {
-            await this._load_runtime_attempt( context.source, {
-                ...context.load_options,
-                ...CPU_FAST_OPTIONS,
-                n_gpu_layers: 0,
-            }, context.model_size )
+            await this._load_runtime_attempt( context.source, cpu_load_options( context.load_options ), context.model_size )
             this._gpu_layers = 0
         } catch ( cpu_error ) {
             this._loaded_model_id = null

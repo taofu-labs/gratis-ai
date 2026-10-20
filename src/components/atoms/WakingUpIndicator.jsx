@@ -1,5 +1,20 @@
 import styled, { keyframes } from 'styled-components'
 import { useTranslation } from 'react-i18next'
+import use_llm_store from '../../stores/llm_store'
+
+/**
+ * Share of the uncached prompt llama.cpp has read, or null before it reports.
+ * @param {{ total: number, cache: number, processed: number }|null} progress
+ * @returns {number|null} Whole percent, 0–99
+ */
+export const prompt_percent = progress => {
+    if( !progress?.total ) return null
+    const uncached = progress.total - ( progress.cache || 0 )
+    if( uncached <= 0 ) return null
+    const read = progress.processed - ( progress.cache || 0 )
+    // Hold at 99 % until the first token: sampling still follows the last batch
+    return Math.min( 99, Math.max( 0, Math.floor( read / uncached * 100 ) ) )
+}
 
 
 const pulse = keyframes`
@@ -40,8 +55,9 @@ const Dot = styled.span`
 
 
 /**
- * Animated "Waking up the AI" indicator shown between
- * pressing send and the first token arriving (TTFT gap).
+ * Animated indicator shown between pressing send and the first token
+ * arriving (TTFT gap). Says "Loading" while the model loads, then how much
+ * of the prompt the model has read once llama.cpp reports progress.
  *
  * @param {Object} [props]
  * @param {boolean} [props.show_hint] - Show cold-start explanation below the indicator
@@ -49,11 +65,17 @@ const Dot = styled.span`
 export default function WakingUpIndicator( { show_hint = false } = {} ) {
 
     const { t } = useTranslation( `chat` )
+    const is_loading = use_llm_store( s => s.is_loading )
+    const percent = use_llm_store( s => prompt_percent( s.prompt_progress ) )
+
+    const label = is_loading ? t( `waiting_for_model` )
+        : percent !== null ? t( `reading_message`, { percent } )
+            : t( `waking_up` )
 
     return <Wrapper data-testid="waking-up-indicator">
 
         <Indicator>
-            { t( `waking_up` ) }
+            { label }
             <Dot $delay={ 0 } />
             <Dot $delay={ 0.2 } />
             <Dot $delay={ 0.4 } />

@@ -55,6 +55,9 @@
     "aria_remove_attachment": "Bijlage verwijderen",
 
     "format_tokens": "{{tokens}} tokens · {{tps}} tok/s · {{time}}s",
+    "format_ttft": "{{ttft}}s tot eerste token",
+    "format_stopped": "Gestopt",
+    "format_interrupted": "Onderbroken",
     "format_just_now": "Zojuist",
     "format_minutes_ago": "{{count}}m geleden",
     "format_hours_ago": "{{count}}u geleden",

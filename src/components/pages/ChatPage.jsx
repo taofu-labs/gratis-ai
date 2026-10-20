@@ -21,6 +21,9 @@ import { get_model_by_id, format_file_size } from '../../utils/model_catalog'
 import { useTranslation } from 'react-i18next'
 import { storage_key, EVENTS, DISPLAY_NAME, APP_VERSION } from '../../utils/branding'
 
+// How often a streaming reply is written to IndexedDB, so a closed tab keeps it
+const PARTIAL_SAVE_INTERVAL_MS = 2_000
+
 const Container = styled.div`
     display: flex;
     flex-direction: column;
@@ -164,6 +167,8 @@ export default function ChatPage() {
     const { t } = useTranslation( 'chat' )
 
     const [ messages, set_messages ] = useState( [] )
+    // A ?q= message that arrived while the model was still loading
+    const [ pending_query, set_pending_query ] = useState( null )
     // Initialize as null = "haven't tried loading yet" to distinguish from "tried and failed"
     const [ model_loaded, set_model_loaded ] = useState( null )
     // Start as null even with a URL param — we validate it exists before accepting it
@@ -172,6 +177,11 @@ export default function ChatPage() {
     const is_generating_ref = useRef( false )
     const query_processed_ref = useRef( false )
     const pending_conversation_id_ref = useRef( null )
+    const partial_reply_ref = useRef( null )
+
+    // Latest messages for async flows (edit, regenerate) that outlive a render
+    const messages_ref = useRef( messages )
+    messages_ref.current = messages
 
     const { load_model, chat_stream, abort, is_generating, is_endpoint_warming, is_loading: is_model_loading, loaded_model_id } = use_llm()
     const {
@@ -300,6 +310,8 @@ export default function ChatPage() {
                     role: m.role,
                     content: m.content,
                     stats: m.stats,
+                    // Keep the original order when edits and regenerates rewrite history
+                    created_at: m.created_at,
                 } ) ) )
 
             } )
@@ -336,77 +348,120 @@ export default function ChatPage() {
     }, [ conversation_id ] )
 
     /**
-     * Persist the current messages to IndexedDB
+     * Save the streaming reply marked as interrupted, so a closed tab keeps
+     * what already arrived. Writes are chained: a slow one can never land
+     * after the final save and overwrite the finished reply.
+     * @param {Object} partial - The live reply tracked in partial_reply_ref
+     * @returns {Promise<void>}
      */
-    const persist_messages = useCallback( async ( conv_id, msgs ) => {
+    const save_partial_reply = useCallback( ( partial ) => {
 
-        await replace_messages( conv_id, msgs )
-        await refresh()
+        if( partial.done || !partial.text || !partial.conv_id ) return partial.saving
 
-    }, [ replace_messages, refresh ] )
+        partial.saved_at = Date.now()
+        const snapshot = { ...partial.message, content: partial.text, stats: { interrupted: true } }
+        partial.saving = partial.saving
+            .then( () => save_message( partial.conv_id, snapshot ) )
+            .catch( err => log.warn( `[ChatPage] Could not save partial reply:`, err ) )
+
+        return partial.saving
+
+    }, [ save_message ] )
+
+    // Last chance to keep a streaming reply when the tab closes or navigates away
+    useEffect( () => {
+
+        const on_pagehide = () => {
+            if( partial_reply_ref.current ) save_partial_reply( partial_reply_ref.current )
+        }
+        window.addEventListener( `pagehide`, on_pagehide )
+        return () => window.removeEventListener( `pagehide`, on_pagehide )
+
+    }, [ save_partial_reply ] )
 
     /**
-     * Re-send from existing message history (used by regenerate)
+     * Stream an assistant reply to the given history, persisting it while it
+     * streams and once it completes or is stopped.
+     * @param {string|null} conv_id - Conversation to save into; null skips saving
+     * @param {Array} history_msgs - Messages the reply answers
+     * @returns {Promise<void>}
      */
-    const send_message_from_history = useCallback( async ( history_msgs, conv_id ) => {
+    const stream_reply = useCallback( async ( conv_id, history_msgs ) => {
 
-        const assistant_msg = { id: uuid(), role: `assistant`, content: `` }
-        const new_messages = [ ...history_msgs, assistant_msg ]
-        set_messages( new_messages )
+        const assistant_msg = { id: uuid(), role: `assistant`, content: ``, created_at: Date.now() }
+        set_messages( prev => [ ...prev, assistant_msg ] )
+
+        const update_reply = changes => set_messages( prev => prev.map( m =>
+            m.id === assistant_msg.id ? { ...m, ...changes } : m
+        ) )
 
         // Model-specific system prompt takes priority (e.g. uncensored personas),
-        // falling back to user settings → env default
+        // falling back to user settings → env default. Empty replies (a stop
+        // before the first token) carry nothing for the model.
         const active_model = get_model_by_id( loaded_model_id )
         const system_prompt = active_model?.system_prompt || settings.system_prompt || ``
-        const history = history_msgs.map( ( { role, content } ) => ( { role, content } ) )
+        const history = history_msgs
+            .filter( ( { content } ) => content )
+            .map( ( { role, content } ) => ( { role, content } ) )
         if( system_prompt ) history.unshift( { role: `system`, content: system_prompt } )
 
-        const opts = get_generate_options()
+        const partial = {
+            conv_id,
+            message: assistant_msg,
+            text: ``,
+            saved_at: Date.now(),
+            saving: Promise.resolve(),
+            done: false,
+        }
+        partial_reply_ref.current = partial
 
         try {
 
-            const result = await chat_stream( history, opts, ( full_text ) => {
-                set_messages( prev => {
-                    const updated = [ ...prev ]
-                    updated[ updated.length - 1 ] = { ...updated[ updated.length - 1 ], content: full_text }
-                    return updated
-                } )
+            const result = await chat_stream( history, get_generate_options(), ( full_text ) => {
+                update_reply( { content: full_text } )
+                partial.text = full_text
+                if( Date.now() - partial.saved_at >= PARTIAL_SAVE_INTERVAL_MS ) save_partial_reply( partial )
             } )
 
-            // Final update with stats
-            set_messages( prev => {
-                const updated = [ ...prev ]
-                updated[ updated.length - 1 ] = {
-                    ...updated[ updated.length - 1 ],
-                    content: result.text,
-                    stats: result.stats,
-                }
-                // Persist final state
-                if( conv_id ) persist_messages( conv_id, updated )
-                return updated
-            } )
+            partial.done = true
+            const final_assistant = { ...assistant_msg, content: result.text, stats: result.stats }
+            update_reply( final_assistant )
 
-        } catch {
-            // Error handling done in use_llm
+            if( conv_id ) {
+                await partial.saving
+                await save_message( conv_id, final_assistant )
+                await refresh()
+            }
+
+        } catch ( err ) {
+
+            // Show the error inline so the user sees it in context. A partial
+            // reply already saved stays in history, marked as interrupted.
+            partial.done = true
+            update_reply( { content: `**Error:** ${ err.message }`, is_error: true } )
+
+        } finally {
+            if( partial_reply_ref.current === partial ) partial_reply_ref.current = null
         }
 
-    }, [ chat_stream, persist_messages, get_generate_options, settings.system_prompt, loaded_model_id ] )
+    }, [ chat_stream, save_message, save_partial_reply, refresh, get_generate_options, settings.system_prompt, loaded_model_id ] )
 
     /**
      * Regenerate the last assistant message
      */
-    const handle_regenerate = useCallback( () => {
+    const handle_regenerate = useCallback( async () => {
 
-        set_messages( prev => {
-            const without_last_assistant = prev.slice( 0, -1 )
-            const last_user = without_last_assistant[ without_last_assistant.length - 1 ]
-            if( last_user?.role === `user` ) {
-                setTimeout( () => send_message_from_history( without_last_assistant, current_conversation_id ), 0 )
-            }
-            return without_last_assistant
-        } )
+        // History stays readable while the model loads; rewriting it must wait
+        const history_msgs = messages_ref.current.slice( 0, -1 )
+        if( !has_model || history_msgs.at( -1 )?.role !== `user` ) return
 
-    }, [ send_message_from_history, current_conversation_id ] )
+        set_messages( history_msgs )
+
+        // Drop the old reply from storage first, so a reload mid-stream never shows both
+        if( current_conversation_id ) await replace_messages( current_conversation_id, history_msgs )
+        await stream_reply( current_conversation_id, history_msgs )
+
+    }, [ stream_reply, replace_messages, current_conversation_id, has_model ] )
 
     /**
      * Build a /status response with model, prompt, and system metadata.
@@ -452,19 +507,24 @@ export default function ChatPage() {
 
     }, [ loaded_model_id, settings.system_prompt, get_generate_options ] )
 
-    const send_message = useCallback( async ( text ) => {
+    /**
+     * Send a user message and stream the reply.
+     * @param {string} text
+     * @param {Array} [base_messages] - History it follows; defaults to the current chat
+     */
+    const send_message = useCallback( async ( text, base_messages = messages_ref.current ) => {
 
         // Intercept /status command — respond locally without calling the model
         if( text.trim().toLowerCase() === `/status` ) {
 
-            const user_msg = { id: uuid(), role: `user`, content: text }
-            const status_msg = { id: uuid(), role: `assistant`, content: build_status_response() }
+            const user_msg = { id: uuid(), role: `user`, content: text, created_at: Date.now() }
+            const status_msg = { id: uuid(), role: `assistant`, content: build_status_response(), created_at: Date.now() }
             set_messages( prev => [ ...prev, user_msg, status_msg ] )
             return
 
         }
 
-        const user_msg = { id: uuid(), role: `user`, content: text }
+        const user_msg = { id: uuid(), role: `user`, content: text, created_at: Date.now() }
         set_messages( prev => [ ...prev, user_msg ] )
 
         // Create conversation if this is the first message
@@ -479,67 +539,9 @@ export default function ChatPage() {
         // Save user message to IndexedDB
         await save_message( conv_id, user_msg )
 
-        // Add placeholder assistant message
-        const assistant_msg = { id: uuid(), role: `assistant`, content: `` }
-        set_messages( prev => [ ...prev, assistant_msg ] )
+        await stream_reply( conv_id, [ ...base_messages, user_msg ] )
 
-        // Model-specific system prompt takes priority (e.g. uncensored personas),
-        // falling back to user settings → env default
-        const active_model = get_model_by_id( loaded_model_id )
-        const system_prompt = active_model?.system_prompt || settings.system_prompt || ``
-        const history = [ ...messages, user_msg ].map( ( { role, content } ) => ( { role, content } ) )
-        if( system_prompt ) history.unshift( { role: `system`, content: system_prompt } )
-
-        // Build generation options from settings hook
-        const opts = get_generate_options()
-
-        try {
-
-            const result = await chat_stream( history, opts, ( full_text ) => {
-                set_messages( prev => {
-                    const updated = [ ...prev ]
-                    updated[ updated.length - 1 ] = { ...updated[ updated.length - 1 ], content: full_text }
-                    return updated
-                } )
-            } )
-
-            // Final update with stats and persist
-            const final_assistant = {
-                ...assistant_msg,
-                content: result.text,
-                stats: result.stats,
-            }
-
-            set_messages( prev => {
-                const updated = [ ...prev ]
-                updated[ updated.length - 1 ] = final_assistant
-                return updated
-            } )
-
-            // Save assistant message to IndexedDB
-            await save_message( conv_id, final_assistant )
-            await refresh()
-
-        } catch ( err ) {
-            if( err.name !== `AbortError` ) {
-
-                // Show error inline as an assistant message so the user sees it in context
-                const error_content = `**Error:** ${ err.message }`
-
-                set_messages( prev => {
-                    const updated = [ ...prev ]
-                    updated[ updated.length - 1 ] = {
-                        ...updated[ updated.length - 1 ],
-                        content: error_content,
-                        is_error: true,
-                    }
-                    return updated
-                } )
-
-            }
-        }
-
-    }, [ messages, chat_stream, current_conversation_id, create_conversation, save_message, navigate, refresh, get_generate_options, settings.system_prompt, loaded_model_id, build_status_response ] )
+    }, [ stream_reply, current_conversation_id, create_conversation, save_message, navigate, build_status_response ] )
 
     // Process query parameters (?q= and ?model=)
     useEffect( () => {
@@ -598,6 +600,18 @@ export default function ChatPage() {
                 return
             }
 
+            // Model still loading: show the message right away, send it once ready
+            if( q_param && has_pending_model && model_loaded !== false ) {
+                query_processed_ref.current = true
+                set_search_params( ( prev ) => {
+                    const next = new URLSearchParams( prev )
+                    next.delete( `q` )
+                    return next
+                }, { replace: true } )
+                set_pending_query( { id: uuid(), text: q_param } )
+                return
+            }
+
             // Only clean up URL if we're sure model state is resolved (not null = still loading)
             // This prevents wiping ?q= before the model finishes loading
             if( model_loaded !== null ) {
@@ -609,22 +623,41 @@ export default function ChatPage() {
 
         process_params()
 
-    }, [ search_params, cached_models, model_loaded, loaded_model_id, load_model, set_search_params, send_message ] )
+    }, [ search_params, cached_models, model_loaded, loaded_model_id, load_model, set_search_params, send_message, has_pending_model ] )
+
+    // Send the queued ?q= message once the model is ready. If loading fails,
+    // hand the text to the input instead of dropping it.
+    useEffect( () => {
+
+        if( !pending_query ) return
+
+        if( has_model ) {
+            set_pending_query( null )
+            send_message( pending_query.text )
+            return
+        }
+
+        if( model_loaded === false && !is_model_loading ) {
+            set_pending_query( null )
+            set_voice_text( pending_query.text )
+        }
+
+    }, [ pending_query, has_model, model_loaded, is_model_loading, send_message ] )
 
     /**
      * Edit a message and resend from that point
      */
-    const handle_edit = useCallback( ( index, new_text ) => {
+    const handle_edit = useCallback( async ( index, new_text ) => {
 
-        set_messages( prev => {
-            // Truncate at the edited message
-            const truncated = prev.slice( 0, index )
-            // Re-send with edited text
-            setTimeout( () => send_message( new_text ), 0 )
-            return truncated
-        } )
+        if( !has_model ) return
 
-    }, [ send_message ] )
+        // Truncate at the edited message, in storage too, then re-send
+        const truncated = messages_ref.current.slice( 0, index )
+        set_messages( truncated )
+        if( current_conversation_id ) await replace_messages( current_conversation_id, truncated )
+        await send_message( new_text, truncated )
+
+    }, [ send_message, replace_messages, current_conversation_id, has_model ] )
 
     const handle_stop = useCallback( () => {
         abort()
@@ -747,13 +780,27 @@ export default function ChatPage() {
         set_voice_download_error( false )
     }, [] )
 
-    const has_messages = messages.length > 0
+    const has_messages = messages.length > 0 || !!pending_query
 
     // Render the main content area based on state
     const render_content = () => {
 
-        // Model is loading — show a friendly loading state instead of the "no model" CTA
-        if( !has_model && is_loading_model ) {
+        // A ?q= message waits for the model: show it with a waiting reply below
+        if( pending_query ) {
+            return <MessageList
+                messages={ [
+                    ...messages,
+                    { id: pending_query.id, role: `user`, content: pending_query.text },
+                    { id: `${ pending_query.id }-reply`, role: `assistant`, content: `` },
+                ] }
+                is_streaming
+                is_cloud_model={ false }
+            />
+        }
+
+        // Model is loading — show a friendly loading state instead of the "no model" CTA.
+        // An existing conversation stays readable meanwhile; only the input waits.
+        if( !has_model && is_loading_model && !has_messages ) {
             return <LoadingContainer data-testid="model-loading">
                 <SpinnerIcon><LoaderCircle size={ 32 } /></SpinnerIcon>
                 <LoadingText>{ t( 'loading_your_model' ) }</LoadingText>
@@ -761,7 +808,7 @@ export default function ChatPage() {
         }
 
         // No model loaded — show a helpful, actionable CTA
-        if( !has_model ) {
+        if( !has_model && !is_loading_model ) {
             return <NoModelContainer>
                 <NoModelTitle>{ t( 'lets_get_you_set_up' ) }</NoModelTitle>
                 <NoModelText>
@@ -812,11 +859,12 @@ export default function ChatPage() {
 
             <InputSection $centered={ should_center }>
 
-                <WelcomeContent $visible={ should_center }>
+                { /* Unmounted once a chat exists, so it never lingers invisibly */ }
+                { !has_messages && <WelcomeContent $visible={ should_center } aria-hidden={ !should_center }>
                     <WelcomeTitle>{ t( 'what_can_i_help_with' ) }</WelcomeTitle>
                     <PrivacyHint>{ t( `privacy_local` ) }</PrivacyHint>
                     { is_endpoint_warming && <WakingUpIndicator /> }
-                </WelcomeContent>
+                </WelcomeContent> }
 
                 { /* Warming indicator persists above the input after the welcome area collapses */ }
                 { is_endpoint_warming && has_messages && <WakingUpIndicator show_hint /> }

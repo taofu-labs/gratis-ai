@@ -20,8 +20,11 @@
 
     "waking_up": "Budzenie AI",
     "waking_up_hint": "AI w chmurze może potrzebować 1–5 minut na uruchomienie. Usypia też po 5 minutach bezczynności.",
-    "slow_device_warning": "Twoje urządzenie wydaje się dość wolne. Zalecamy pobranie aplikacji desktopowej dla lepszej wydajności.",
-    "get_the_desktop_app": "Pobierz aplikację desktopową",
+    "slow_device_warning": "Odpowiedzi na tym urządzeniu są wolne. Mniejszy model odpowie szybciej.",
+    "pick_faster_model": "Wybierz szybszy model",
+    "waiting_for_model": "Czekam na załadowanie modelu",
+    "reading_message": "Czytam Twoją wiadomość… {{percent}}%",
+    "save_and_resend": "Zapisz i wyślij ponownie",
 
     "recording": "Nagrywanie",
     "transcribing": "Transkrybowanie",

@@ -256,6 +256,19 @@ not repair the old cached response. Couple header-policy changes to an explicit 
 download, model load, and generation are idle. Do not force the first transition from old code
 because it can interrupt a multi-gigabyte model download.
 
+## wllama64 abort only lands between worker calls (2026-10-20)
+
+`createChatCompletion` polls `get_result` in a loop and checks `abortSignal` only between calls.
+Each call runs one llama.cpp `update_slots` step: one `n_batch` of prompt (verified: progress
+arrives per 128-token batch) or one decoded token. A stop during a long prompt batch therefore
+waits for that batch, and the worker's single slot stays busy until `cancelRequest` runs.
+
+**Fix**: never await the worker for UI state. `chat_stream` races each call against the signal,
+throws `AbortError` at once, and stores the drain in `_settling`; `chat_stream`, `chat` and
+`load_model` await it first. Never `return` silently on abort: the store then sees an empty
+completion and saves the "chat template incompatible" fallback. Treat only `name === AbortError`
+as a stop; Emscripten crashes also say "Aborted()".
+
 ## wllama64 OPFS and large-model traps (2026-08-22)
 
 - `wllama64` 1.0.0's OPFS worker ignores the byte count returned by

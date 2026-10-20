@@ -533,3 +533,11 @@
 - `select_picker_models` (model_catalog.js): TPN winners lead whenever any fits the manual budget; otherwise (none announced, too large, discovery failed/offline/10 s timeout) the catalog smarter/faster/uncensored/vision cards + alternatives return. Winners that don't fit stay listed above the fallback.
 - Picker lists cached models ("On this device") with one-click reuse; cached models suppress the catalog's default selection.
 - Card estimates: size always, time only from a measured host-scoped speed sample (`get_speed_estimate`); guessed ranges are no longer shown on cards.
+
+## 2026-10-20 — Generation lifecycle fixes
+
+- Stop is UI-instant: provider races each worker call against the abort signal, throws AbortError, drains the abandoned request in the background (`_settling`); next request/load waits on it. Stopped replies keep partial text + `stats.stopped`; empty-template fallback only for unstopped empty replies.
+- CPU runtimes cap `n_batch` at 128 (finer `return_progress` + quicker worker release; CPU prefill throughput ~flat above 128). GPU keeps `select_browser_batch`.
+- Prefill shows "Reading your message… N%"; stats use `timings.predicted_*` and show TTFT.
+- ChatPage: partial replies saved every 2 s + `pagehide` as `stats.interrupted`; `?q=` queued visibly while model loads; history readable during load; welcome unmounts; edit/regenerate rewrite stored history.
+- `tests/e2e/abort_generation.spec.js` helper is stale (expects `gratisAI` heading — local `.env` sets `Gratis`; and `change-model-toggle` no longer exists on ModelSelectPage). Drove the flows with a scratch Playwright script instead.

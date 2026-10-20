@@ -20,8 +20,11 @@
 
     "waking_up": "Risveglio dell'IA",
     "waking_up_hint": "Le IA cloud possono impiegare 1–5 minuti per avviarsi. Si addormentano anche dopo 5 minuti di inattività.",
-    "slow_device_warning": "Il tuo dispositivo sembra piuttosto lento. Ti consigliamo l'app desktop per prestazioni migliori.",
-    "get_the_desktop_app": "Scarica l'app desktop",
+    "slow_device_warning": "Le risposte sono lente su questo dispositivo. Un modello più piccolo risponde più in fretta.",
+    "pick_faster_model": "Scegli un modello più veloce",
+    "waiting_for_model": "In attesa che il modello si carichi",
+    "reading_message": "Lettura del messaggio… {{percent}}%",
+    "save_and_resend": "Salva e reinvia",
 
     "recording": "Registrazione",
     "transcribing": "Trascrizione in corso",

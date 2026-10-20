@@ -55,6 +55,9 @@
     "aria_remove_attachment": "Удалить вложение",
 
     "format_tokens": "{{tokens}} токенов · {{tps}} ток/с · {{time}}с",
+    "format_ttft": "{{ttft}}с до первого токена",
+    "format_stopped": "Остановлено",
+    "format_interrupted": "Прервано",
     "format_just_now": "Только что",
     "format_minutes_ago": "{{count}} мин. назад",
     "format_hours_ago": "{{count}} ч. назад",

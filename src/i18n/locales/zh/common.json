@@ -55,6 +55,9 @@
     "aria_remove_attachment": "移除附件",
 
     "format_tokens": "{{tokens}} 个 token · {{tps}} tok/s · {{time}}秒",
+    "format_ttft": "首个 token 用时 {{ttft}}秒",
+    "format_stopped": "已停止",
+    "format_interrupted": "已中断",
     "format_just_now": "刚刚",
     "format_minutes_ago": "{{count}}分钟前",
     "format_hours_ago": "{{count}}小时前",

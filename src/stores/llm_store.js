@@ -67,6 +67,9 @@ const use_llm_store = create( ( set, get ) => ( {
     stats: null,
     error: null,
 
+    // { total, cache, processed, time_ms } while llama.cpp reads the prompt
+    prompt_progress: null,
+
     // ── Internal (not consumed by UI) ────────────────────────────────
 
     _provider: null,
@@ -74,6 +77,8 @@ const use_llm_store = create( ( set, get ) => ( {
     _provider_promise: null,
     _load_promise: null,
     _loading_model_id: null,
+    _stop_requested: false,
+    _run: null,
 
     // ── Actions ──────────────────────────────────────────────────────
 
@@ -199,7 +204,8 @@ const use_llm_store = create( ( set, get ) => ( {
 
     /**
      * Stream a chat completion.
-     * Manages is_generating flag and accumulates stats.
+     * Manages is_generating and prompt_progress, and accumulates stats.
+     * A user stop resolves with the partial text and `stats.stopped`.
      *
      * @param {Array} messages
      * @param {Object} [opts]
@@ -214,44 +220,69 @@ const use_llm_store = create( ( set, get ) => ( {
             throw new Error( `No model loaded` )
         }
 
-        set( { is_generating: true, stats: null, error: null } )
+        // Identifies this run, so a stopped predecessor settling late cannot
+        // clear the state of the reply that replaced it
+        const run = {}
+        set( { is_generating: true, prompt_progress: null, stats: null, error: null, _stop_requested: false, _run: run } )
 
         let full_text = ``
-        let token_count = 0
+        let chunk_count = 0
+        let timings = null
         const emit = per_frame( ( ...args ) => on_token?.( ...args ) )
+        const show_progress = per_frame( prompt_progress => set( { prompt_progress } ) )
         let first_token_time = null
         const start_time = performance.now()
+
+        // Prefer llama.cpp's own counts; chunk counting is the Electron fallback
+        const build_stats = extra => {
+            const elapsed_ms = performance.now() - start_time
+            const ttft_ms = first_token_time ? first_token_time - start_time : 0
+            const decode_ms = first_token_time ? elapsed_ms - ttft_ms : 0
+            return {
+                tokens_generated: timings?.predicted_n ?? chunk_count,
+                tokens_per_second: timings?.predicted_per_second
+                    ?? ( decode_ms > 0 ? chunk_count / ( decode_ms / 1000 ) : 0 ),
+                elapsed_ms,
+                ttft_ms,
+                decode_ms,
+                ... timings?.prompt_n ? { prompt_tokens: timings.prompt_n } : {},
+                ...extra,
+            }
+        }
 
         try {
 
             const stream = provider.chat_stream( messages, opts )
 
             for await ( const chunk of stream ) {
-                if( !first_token_time ) first_token_time = performance.now()
+
+                // Metadata from wllama: prompt reading progress and final timings
+                if( typeof chunk !== `string` ) {
+                    if( chunk.prompt_progress && get()._run === run ) show_progress( chunk.prompt_progress )
+                    if( chunk.timings ) ( { timings } = chunk )
+                    continue
+                }
+
+                if( !first_token_time ) {
+                    first_token_time = performance.now()
+                    show_progress.flush()
+                    set( { prompt_progress: null } )
+                }
                 full_text += chunk
-                token_count++
+                chunk_count++
                 emit( full_text, chunk )
             }
             emit.flush()
 
-            const elapsed_ms = performance.now() - start_time
-            const ttft_ms = first_token_time ? first_token_time - start_time : 0
-            const decode_ms = elapsed_ms - ttft_ms
+            const stopped = get()._stop_requested
+            const generation_stats = build_stats( stopped ? { stopped } : {} )
 
-            log.info( `[use_llm] Generation complete: ${ token_count } tokens in ${ elapsed_ms.toFixed( 0 ) }ms (TTFT ${ ttft_ms.toFixed( 0 ) }ms)` )
+            log.info( `[use_llm] Generation ${ stopped ? `stopped` : `complete` }: ${ generation_stats.tokens_generated } tokens in ${ generation_stats.elapsed_ms.toFixed( 0 ) }ms (TTFT ${ generation_stats.ttft_ms.toFixed( 0 ) }ms)` )
 
-            // When the model produces nothing, show a helpful message
-            if( token_count === 0 && !full_text ) {
+            // An empty reply that nobody stopped usually means a template problem
+            if( !stopped && !full_text ) {
                 full_text = `*The model returned an empty response. This can happen when the chat template is incompatible. Try a different model or check the browser console for details.*`
                 if( on_token ) on_token( full_text )
-            }
-
-            const generation_stats = {
-                tokens_generated: token_count,
-                tokens_per_second: decode_ms > 0 ? token_count / ( decode_ms / 1000 ) : 0,
-                elapsed_ms,
-                ttft_ms,
-                decode_ms,
             }
 
             set( { stats: generation_stats } )
@@ -261,24 +292,12 @@ const use_llm_store = create( ( set, get ) => ( {
 
             emit.flush()
 
-            if( err.name === `AbortError` || err.message?.includes( `abort` ) ) {
-
-                // User-initiated abort — return partial result silently
-                const elapsed_ms = performance.now() - start_time
-                const ttft_ms = first_token_time ? first_token_time - start_time : 0
-                const decode_ms = elapsed_ms - ttft_ms
-
-                return {
-                    text: full_text,
-                    stats: {
-                        tokens_generated: token_count,
-                        tokens_per_second: decode_ms > 0 ? token_count / ( decode_ms / 1000 ) : 0,
-                        elapsed_ms,
-                        ttft_ms,
-                        decode_ms,
-                    },
-                }
-
+            // User-initiated stop — keep the partial text and mark it
+            if( err.name === `AbortError` || get()._stop_requested ) {
+                const generation_stats = build_stats( { stopped: true } )
+                log.info( `[use_llm] Generation stopped after ${ generation_stats.tokens_generated } tokens` )
+                set( { stats: generation_stats } )
+                return { text: full_text, stats: generation_stats }
             }
 
             // Real error — log, set state, and re-throw so callers can display it
@@ -290,16 +309,19 @@ const use_llm_store = create( ( set, get ) => ( {
             throw err
 
         } finally {
-            set( { is_generating: false } )
+            show_progress.flush()
+            if( get()._run === run ) set( { is_generating: false, prompt_progress: null, _stop_requested: false, _run: null } )
         }
 
     },
 
     /**
-     * Abort current generation
+     * Abort current generation. The UI updates at once; the provider
+     * finishes its in-flight work in the background.
      */
     abort: () => {
-        const provider = get()._provider
+        const { _provider: provider, is_generating } = get()
+        if( is_generating ) set( { _stop_requested: true } )
         if( provider ) provider.abort()
     },
 
