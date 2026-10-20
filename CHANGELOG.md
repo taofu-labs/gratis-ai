@@ -33,6 +33,8 @@
 - Purge refreshes every page; cached models re-check memory fit (ed090e8)
 - Focus trap skips hidden controls; drawer breakpoint tracks resizes (ed090e8)
 - Auto-scroll follows the stream only while the reader is at the bottom (9738425)
+- New Chat no longer resurrects the previous conversation (b748bbb)
+- Route chunks preload again under Vite 8; drop less-lazy (1c8eee9)
 - Welcome start crash, WebGPU recovery and probe bounds, fit-error locales (acb3c13, febdabc)
 
 ### Removed
