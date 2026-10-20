@@ -22,11 +22,13 @@ const [ , , models_dir, rounds = `3` ] = process.argv
 const port = 4300
 
 const hardware_threads = Number( process.env.BENCH_THREADS || 4 )
+const half_threads = Math.max( 1, Math.floor( hardware_threads / 2 ) )
+
+// Mirrors src/providers/wllama_provider.js CPU options, plus the f16 baseline it replaced
 const default_configs = {
-    'app default': { n_threads: Math.max( 1, Math.floor( hardware_threads / 2 ) ), n_batch: 512, cache_type_k: `f16`, cache_type_v: `f16` },
-    'all threads': { n_threads: hardware_threads, n_batch: 512, cache_type_k: `f16`, cache_type_v: `f16` },
-    'flash attn': { n_threads: Math.max( 1, Math.floor( hardware_threads / 2 ) ), n_batch: 512, flash_attn: true },
-    'flash attn + q8 kv': { n_threads: Math.max( 1, Math.floor( hardware_threads / 2 ) ), n_batch: 512, flash_attn: true, cache_type_k: `q8_0`, cache_type_v: `q8_0` },
+    'f16 baseline': { n_threads: half_threads, n_batch: 512, cache_type_k: `f16`, cache_type_v: `f16` },
+    'app default': { n_threads: half_threads, n_batch: 128, n_ubatch: 128, flash_attn: true, cache_type_k: `q8_0`, cache_type_v: `q8_0` },
+    'app + all threads': { n_threads: hardware_threads, n_batch: 128, n_ubatch: 128, flash_attn: true, cache_type_k: `q8_0`, cache_type_v: `q8_0` },
 }
 const configs = process.env.BENCH_CONFIGS ? JSON.parse( process.env.BENCH_CONFIGS ) : default_configs
 
