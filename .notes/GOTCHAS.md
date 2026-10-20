@@ -46,16 +46,12 @@ Replaced the hard cap with `estimate_context_for_system()` — uses model archit
 data + `os.totalmem()` to estimate the largest context that fits, capped at the model's
 `context_length`. The worker retry loop still catches overestimation.
 
-## less-lazy prefetch breaks Electron chunk loading (2026-02-26)
+## Route chunk preloading (2026-10-20, replaces less-lazy)
 
-The `less-lazy` library's `prefetch()` extracts chunk filenames from `import().toString()`
-and injects `<link rel="prefetch" href="./ChunkName-hash.js">` into `<head>`. These paths
-resolve relative to the HTML document, but chunks live in `assets/` — so every lazy-loaded
-page triggers `ERR_FILE_NOT_FOUND` in Electron.
-
-**Fix**: Skip prefetch in Electron entirely via `maybe_prefetch` identity wrapper in
-`src/routes/Routes.jsx`. Prefetching is a network optimisation with zero value when
-assets load from local disk.
+`less-lazy` parsed chunk paths out of `import().toString()`; it broke Electron (paths relative to the
+HTML document) and silently stopped working under Vite 8/rolldown (`could not extract import path`).
+`src/routes/Routes.jsx` now calls each page's import function on `requestIdleCallback` (bound to
+`globalThis`, or it throws Illegal invocation). Works for every bundler format and in Electron.
 
 ## unload_model during in-flight load → zombie promise (2026-02-26)
 

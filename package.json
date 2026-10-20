@@ -31,7 +31,6 @@
         "electron-updater": "^6.8.9",
         "i18next": "^26.5.3",
         "idb": "^8.0.4",
-        "less-lazy": "^0.0.2",
         "lucide-react": "^1.60.0",
         "mentie": "^0.5.4",
         "node-llama-cpp": "^3.22.2",

@@ -1,23 +1,24 @@
 import { lazy, Suspense } from 'react'
 import { Routes as RouterRoutes, Route } from 'react-router-dom'
-import { prefetch } from 'less-lazy'
 import { storage_key } from '../utils/branding'
 
-// Prefetching injects <link rel="prefetch"> tags — a network optimisation that has
-// zero value in Electron where assets load from disk instantly. Worse, less-lazy
-// resolves chunk paths relative to the HTML document instead of the assets dir,
-// causing ERR_FILE_NOT_FOUND for every lazy-loaded chunk.
-const is_electron = typeof window !== `undefined` && window.electronAPI?.native_inference
-const maybe_prefetch = is_electron ? fn => fn : prefetch
+// Warm page chunks once the browser is idle. Calling the import itself reuses
+// the bundler's own chunk resolution, so it works for every build format and
+// in Electron, unlike parsing chunk paths out of the function source.
+const schedule_idle = globalThis.requestIdleCallback?.bind( globalThis ) || ( fn => setTimeout( fn, 1_500 ) )
+const preload = load => {
+    schedule_idle( () => load().catch( () => {} ) )
+    return load
+}
 
-// Lazy load all pages with prefetching for code splitting (web only)
-const WelcomePage = lazy( maybe_prefetch( () => import( '../components/pages/WelcomePage' ) ) )
-const HomePage = lazy( maybe_prefetch( () => import( '../components/pages/HomePage' ) ) )
-const ModelSelectPage = lazy( maybe_prefetch( () => import( '../components/pages/ModelSelectPage' ) ) )
-const DownloadPage = lazy( maybe_prefetch( () => import( '../components/pages/DownloadPage' ) ) )
-const ChatPage = lazy( maybe_prefetch( () => import( '../components/pages/ChatPage' ) ) )
-const GetAppPage = lazy( maybe_prefetch( () => import( '../components/pages/GetAppPage' ) ) )
-const NotFoundPage = lazy( maybe_prefetch( () => import( '../components/pages/NotFoundPage' ) ) )
+// Lazy load all pages for code splitting, preloaded when idle
+const WelcomePage = lazy( preload( () => import( '../components/pages/WelcomePage' ) ) )
+const HomePage = lazy( preload( () => import( '../components/pages/HomePage' ) ) )
+const ModelSelectPage = lazy( preload( () => import( '../components/pages/ModelSelectPage' ) ) )
+const DownloadPage = lazy( preload( () => import( '../components/pages/DownloadPage' ) ) )
+const ChatPage = lazy( preload( () => import( '../components/pages/ChatPage' ) ) )
+const GetAppPage = lazy( preload( () => import( '../components/pages/GetAppPage' ) ) )
+const NotFoundPage = lazy( preload( () => import( '../components/pages/NotFoundPage' ) ) )
 
 /**
  * Pick the right landing page: returning users get the search home,
