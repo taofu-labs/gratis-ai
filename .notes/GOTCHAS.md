@@ -327,3 +327,18 @@ wllama64 `exit()` terminates the worker without settling queued calls. Any promi
 request (the provider's `_settling`) must be reset on dispose, or the next load waits forever.
 Interrupted-download prefixes have no metadata; `sweep_partial_downloads` removes all but the active one.
 Two tabs downloading different models at once can therefore sweep each other's prefix (rare; accepted).
+
+## Chat replies outlive is_generating (2026-10-20)
+
+The store clears `is_generating` before `stream_reply` finishes its final IndexedDB save. Any
+history rewrite (edit, regenerate, delete) must await `replies_settled_ref` first, or a stopped
+reply's late save re-inserts the removed message. Async chat flows capture `epoch_ref` before
+awaiting storage and bail once New Chat / navigation / delete bumped it; queued `?q=` prompts
+carry their epoch too. Replies still save into their own conversation after the user leaves.
+
+## Worktrees lack public/wasm (2026-10-20)
+
+`public/wasm/` is gitignored and filled by `postinstall`. A fresh git worktree (no own
+node_modules) serves the SPA HTML for `/wasm/wllama.wasm`, so every model load aborts with
+"expected magic word" / "Model worker stopped responding". Copy `public/wasm` from the main
+checkout before running inference e2e in a worktree.
