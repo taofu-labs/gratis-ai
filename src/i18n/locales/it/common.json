@@ -55,6 +55,9 @@
     "aria_remove_attachment": "Rimuovi allegato",
 
     "format_tokens": "{{tokens}} token · {{tps}} tok/s · {{time}}s",
+    "format_ttft": "{{ttft}}s al primo token",
+    "format_stopped": "Interrotto",
+    "format_interrupted": "Troncato",
     "format_just_now": "Proprio ora",
     "format_minutes_ago": "{{count}}m fa",
     "format_hours_ago": "{{count}}h fa",

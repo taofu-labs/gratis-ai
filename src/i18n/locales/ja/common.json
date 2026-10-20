@@ -55,6 +55,9 @@
     "aria_remove_attachment": "添付ファイルを削除",
 
     "format_tokens": "{{tokens}} トークン · {{tps}} tok/s · {{time}}秒",
+    "format_ttft": "最初のトークンまで{{ttft}}秒",
+    "format_stopped": "停止しました",
+    "format_interrupted": "中断されました",
     "format_just_now": "たった今",
     "format_minutes_ago": "{{count}}分前",
     "format_hours_ago": "{{count}}時間前",

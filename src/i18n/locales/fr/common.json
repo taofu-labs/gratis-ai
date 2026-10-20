@@ -55,6 +55,9 @@
     "aria_remove_attachment": "Supprimer la pièce jointe",
 
     "format_tokens": "{{tokens}} tokens · {{tps}} tok/s · {{time}}s",
+    "format_ttft": "{{ttft}}s avant le premier token",
+    "format_stopped": "Arrêté",
+    "format_interrupted": "Interrompu",
     "format_just_now": "À l'instant",
     "format_minutes_ago": "Il y a {{count}}m",
     "format_hours_ago": "Il y a {{count}}h",

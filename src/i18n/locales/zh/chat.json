@@ -20,8 +20,11 @@
 
     "waking_up": "正在唤醒 AI",
     "waking_up_hint": "云端 AI 可能需要 1–5 分钟启动，闲置 5 分钟后也会进入休眠。",
-    "slow_device_warning": "你的设备似乎比较慢。建议下载桌面应用以获得更好的性能。",
-    "get_the_desktop_app": "获取桌面应用",
+    "slow_device_warning": "此设备上的回复较慢。较小的模型回答更快。",
+    "pick_faster_model": "选择更快的模型",
+    "waiting_for_model": "正在等待模型加载",
+    "reading_message": "正在读取你的消息… {{percent}}%",
+    "save_and_resend": "保存并重新发送",
 
     "recording": "录音中",
     "transcribing": "正在转录",

@@ -20,8 +20,11 @@
 
     "waking_up": "Waking up the AI",
     "waking_up_hint": "Cloud AIs can take 1–5 minutes to start. They also fall asleep after 5 minutes of inactivity.",
-    "slow_device_warning": "Your device appears quite slow. We recommend downloading the Desktop app for better performance.",
-    "get_the_desktop_app": "Get the Desktop app",
+    "slow_device_warning": "Replies are slow on this device. A smaller model answers faster.",
+    "pick_faster_model": "Pick a faster model",
+    "waiting_for_model": "Waiting for the model to load",
+    "reading_message": "Reading your message… {{percent}}%",
+    "save_and_resend": "Save & resend",
 
     "recording": "Recording",
     "transcribing": "Transcribing",
