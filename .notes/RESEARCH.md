@@ -256,3 +256,25 @@ All Apache-2.0, embedded chat template present. None load-tested in a real brows
 Sources: https://huggingface.co/ibm-granite/granite-4.0-h-tiny · https://huggingface.co/ibm-granite/granite-4.0-h-1b ·
 https://huggingface.co/google/gemma-4-26B-A4B-it · https://huggingface.co/Qwen/Qwen3.6-35B-A3B ·
 https://github.com/ggml-org/llama.cpp/blob/master/src/llama-arch.cpp
+
+## Browser tokens/sec benchmarks (2026-10-20)
+
+Tool: `scripts/bench/run.mjs` (headful Chromium, real wllama64, round-robin medians). Dev containers are
+too noisy (same config swung 2x); run on a clean GitHub runner via `.github/workflows/browser-bench.yml`
+(the user's fork `actuallymentor/wllama64` has `bench/*` branches with push-triggered copies, since
+taofu-labs blocks classic PAT API access).
+
+4 vCPU ubuntu runner, CPU only, n_ctx 2048, ~430-token prompt, temp 0:
+
+| model | f16 KV | FA + q8_0 KV | gain |
+| --- | --- | --- | --- |
+| Qwen3 0.6B Q4_K_M | pp 10.9 / tg 6.2 | pp 16.8 / tg 10.2 | +54% / +65% |
+| Llama 3.2 1B Q4_K_M | pp 8.4 / tg 4.8 | pp 8.7 / tg 5.9 | +4% / +23% |
+
+- q8 K alone captures ~1/3 of the gain; V quantization requires FA.
+- n_threads = all 4 vs hc/2: only +4%; keep hc/2 so the UI thread stays responsive.
+- n_ubatch 128 vs 512: no measurable cost; finer abort granularity.
+- wllama64 1.1.0 (upstream 3.8.1) == 1.0.1 speed; llama.cpp's big CPU wins are x86-only.
+- Hybrid/MoE: Granite H Tiny (7B, 1B active) tg 6.1 vs Qwen3 4B 2.3; Granite H 1B 6.3 vs Qwen3 1.7B 5.1.
+- Bench harness traps: `fetch().blob()` fails >2 GB; wllama stock OPFS cache truncates >2 GB; Playwright
+  `newPage()` incognito caps OPFS quota -> use `launchPersistentContext` + `createWritable` staging.
