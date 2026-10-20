@@ -10,7 +10,7 @@ import use_model_manager from '../../hooks/use_model_manager'
 import { clear_all_data, get_db } from '../../stores/db'
 import { clear_browser_model_cache } from '../../utils/model_download'
 import { export_conversation } from '../../utils/export'
-import { storage_key, APP_PREFIX } from '../../utils/branding'
+import { storage_key, APP_PREFIX, EVENTS } from '../../utils/branding'
 import { HF_TOKEN_SETTING } from '../../utils/hf_auth'
 import use_llm from '../../stores/llm_store'
 
@@ -265,7 +265,7 @@ export default function ModelsSettings( { settings = {}, on_setting_change, on_c
 
     const navigate = useNavigate()
     const { t } = useTranslation( `settings` )
-    const { cached_models, storage_used, storage_estimate, delete_model, refresh_models } = use_model_manager()
+    const { cached_models, storage_used, storage_estimate, delete_model } = use_model_manager()
     const unload_model = use_llm( state => state.unload_model )
     const [ confirming, set_confirming ] = useState( null )
     const [ show_danger, set_show_danger ] = useState( false )
@@ -380,7 +380,8 @@ export default function ModelsSettings( { settings = {}, on_setting_change, on_c
             log.info( `[purge] All models purged` )
             toast.success( t( `models:purge_success` ) )
 
-            await refresh_models()
+            // Every page's model list refreshes, not only this modal's
+            window.dispatchEvent( new Event( EVENTS.models_changed ) )
             on_models_purged?.()
 
         } catch ( err ) {

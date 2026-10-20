@@ -22,6 +22,7 @@ import {
     quality_score,
     benchmark_coverage,
     select_picker_models,
+    get_model_by_id,
 } from '../../utils/model_catalog'
 import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { resolve_tpn_winner_models } from '../../utils/tpn_winner_models'
@@ -800,8 +801,13 @@ export default function ModelSelectPage() {
     const active_uses_external_file = active_model && should_use_external_model_file( active_model )
 
     // Cached models skip the download page entirely
-    const use_cached_model = model_id => {
-        localStorage.setItem( storage_key( `active_model_id` ), model_id )
+    // Cached copies still face the fit check: RAM overrides or devices change
+    const use_cached_model = model => {
+        if( !can_fit_in_memory( get_model_by_id( model.id ) || model, max_model_bytes ) ) {
+            set_custom_error( t( 'model_does_not_fit' ) )
+            return
+        }
+        localStorage.setItem( storage_key( `active_model_id` ), model.id )
         navigate( `/chat` )
     }
 
@@ -813,7 +819,7 @@ export default function ModelSelectPage() {
             return
         }
 
-        if( active_is_cached ) return use_cached_model( active_model.id )
+        if( active_is_cached ) return use_cached_model( active_model )
 
         try {
             const storage_mode = should_use_external_model_file( active_model )
@@ -976,7 +982,7 @@ export default function ModelSelectPage() {
                     <LoadButton
                         type="button"
                         data-testid={ `use-cached-${ model.id }` }
-                        onClick={ () => use_cached_model( model.id ) }
+                        onClick={ () => use_cached_model( model ) }
                     >
                         { model.id === active_model_id ? t( 'continue_with_model' ) : t( 'use_model' ) }
                     </LoadButton>

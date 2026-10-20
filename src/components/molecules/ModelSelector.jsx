@@ -201,6 +201,7 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
 
         <Trigger
             data-testid="model-selector-dropdown"
+            data-focus-fallback
             aria-expanded={ is_open }
             title={ display_name }
             onClick={ () => set_is_open( !is_open ) }

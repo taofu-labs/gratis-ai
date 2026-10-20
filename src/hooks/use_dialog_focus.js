@@ -25,9 +25,12 @@ export default function use_dialog_focus( ref, is_open ) {
         // Hide the app from keyboard, pointer and screen readers
         if( app_root ) app_root.inert = true
 
-        // Prefer the first focusable control, else the dialog itself
-        const focusables = () => [ ...dialog.querySelectorAll( FOCUSABLE ) ]
-            .filter( ( el ) => el.getClientRects().length > 0 )
+        // Prefer the first focusable control, else the dialog itself. Collapsed
+        // panels use visibility:hidden, which keeps layout boxes but not focus.
+        const is_reachable = ( el ) => el.checkVisibility
+            ? el.checkVisibility( { visibilityProperty: true } )
+            : el.getClientRects().length > 0 && getComputedStyle( el ).visibility !== `hidden`
+        const focusables = () => [ ...dialog.querySelectorAll( FOCUSABLE ) ].filter( is_reachable )
         ;( focusables()[ 0 ] || dialog ).focus()
 
         // Wrap Tab / Shift+Tab at the edges
@@ -57,7 +60,9 @@ export default function use_dialog_focus( ref, is_open ) {
         return () => {
             document.removeEventListener( `keydown`, handle_keydown )
             if( app_root ) app_root.inert = false
-            if( opener?.isConnected ) opener.focus()
+            // An opener inside a closed menu is gone; return to the menu trigger instead
+            const return_target = opener?.isConnected ? opener : document.querySelector( `[data-focus-fallback]` )
+            return_target?.focus()
         }
 
     }, [ is_open, ref ] )

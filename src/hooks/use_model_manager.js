@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
 import { delete_browser_model } from '../utils/model_download'
-import { storage_key } from '../utils/branding'
+import { storage_key, EVENTS } from '../utils/branding'
 
 const active_model_key = storage_key( `active_model_id` )
 
@@ -69,9 +69,11 @@ export default function use_model_manager() {
 
     }, [] )
 
-    // Load on mount
+    // Load on mount, and again whenever any instance purges or changes models
     useEffect( () => {
         refresh_models()
+        window.addEventListener( EVENTS.models_changed, refresh_models )
+        return () => window.removeEventListener( EVENTS.models_changed, refresh_models )
     }, [ refresh_models ] )
 
     /**
@@ -101,6 +103,7 @@ export default function use_model_manager() {
 
             log.info( `[models] Deleted model ${ model_id }` )
             await refresh_models()
+            window.dispatchEvent( new Event( EVENTS.models_changed ) )
 
         } finally {
             set_is_loading( false )

@@ -8,6 +8,8 @@ import UpdateModal from '../atoms/UpdateModal'
 import use_auto_updater from '../../hooks/use_auto_updater'
 import { EVENTS } from '../../utils/branding'
 
+const PHONE_QUERY = `( max-width: 768px )`
+
 const LayoutContainer = styled.div`
     display: flex;
     flex-direction: column;
@@ -54,20 +56,22 @@ export default function AppLayout( {
 
     const updater = use_auto_updater()
 
-    const [ sidebar_collapsed, set_sidebar_collapsed ] = useState( () =>
-        typeof window !== `undefined` && window.innerWidth < 768
-    )
+    // One breakpoint for collapse, drawer mode and Sidebar CSS (max-width: 768px)
+    const [ is_phone, set_is_phone ] = useState( () => window.matchMedia( PHONE_QUERY ).matches )
+    const [ sidebar_collapsed, set_sidebar_collapsed ] = useState( is_phone )
     const [ settings_open, set_settings_open ] = useState( false )
 
     // Respond to viewport changes
     useEffect( () => {
 
-        const handle_resize = () => {
-            if( window.innerWidth < 768 ) set_sidebar_collapsed( true )
+        const query = window.matchMedia( PHONE_QUERY )
+        const handle_change = ( { matches } ) => {
+            set_is_phone( matches )
+            if( matches ) set_sidebar_collapsed( true )
         }
 
-        window.addEventListener( `resize`, handle_resize )
-        return () => window.removeEventListener( `resize`, handle_resize )
+        query.addEventListener( `change`, handle_change )
+        return () => query.removeEventListener( `change`, handle_change )
 
     }, [] )
 
@@ -89,7 +93,7 @@ export default function AppLayout( {
     const toggle_sidebar = () => set_sidebar_collapsed( prev => !prev )
 
     // Phone drawer open: the page behind is covered by a backdrop, keep focus out of it
-    const drawer_open = !sidebar_collapsed && window.matchMedia( `( max-width: 768px )` ).matches
+    const drawer_open = !sidebar_collapsed && is_phone
     const close_settings = useCallback( () => set_settings_open( false ), [] )
 
     return <LayoutContainer>
