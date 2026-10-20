@@ -24,6 +24,10 @@ const shared = {
         mobile: `768px`,
         tablet: `1024px`,
     },
+    media: {
+        // Phones and any coarse pointer — enlarge hit areas to 44px here
+        touch: `( max-width: 768px ), ( pointer: coarse )`,
+    },
 }
 
 // Dark palette — TPN brand canvas
@@ -39,12 +43,13 @@ const dark_colors = {
     accent_ink: `#101112`,
     text: `#F4F5F3`,
     text_secondary: `#9CA1A8`,
-    text_muted: `#6A6F76`,
+    text_muted: `#7E838A`,       // ≥4.5:1 on every dark surface
     user_bubble: `#FF5A1F`,
     assistant_bubble: `#131517`,
     border: `#24272C`,
     border_subtle: `#1C1F23`,
     border_control: `#2A2E33`,
+    border_strong: `#41464D`,
     error: `#F2766A`,
     success: `#5CC68A`,
     warning: `#D4A76A`,
@@ -52,6 +57,7 @@ const dark_colors = {
     input_background: `#0F1011`,
     code_background: `#16181B`,
     modal_overlay: `rgba( 0, 0, 0, 0.6 )`,
+    focus_halo: `rgba( 255, 90, 31, 0.25 )`,
 }
 
 export const dark_theme = { ...shared, colors: dark_colors, mode: `dark` }
