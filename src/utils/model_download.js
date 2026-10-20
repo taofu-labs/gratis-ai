@@ -6,6 +6,7 @@ import { get_hf_headers, normalize_hf_error } from './hf_auth'
 import {
     download_hf_model_file_to_cache,
     download_hf_model_file_to_external_file,
+    sweep_partial_downloads,
 } from './hf_sdk_download'
 import { build_download_url } from './hf_url_parser'
 import { get_model_by_id } from './model_catalog'
@@ -251,6 +252,7 @@ export const delete_browser_model = async ( model_or_id ) => {
 export const clear_browser_model_cache = async () => {
     if( window.electronAPI ) return
     await get_browser_model_manager().clear()
+    await sweep_partial_downloads( { storage_backend: browser_storage_backend } )
 }
 
 /**
@@ -365,12 +367,13 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
                 cache_manager: manager.cacheManager,
                 storage_backend: browser_storage_backend,
                 signal,
-                on_progress: ( { loaded, total } ) => {
+                on_progress: ( { loaded, total, resumed_from } ) => {
                     const bytes_total = total || model.file_size_bytes
                     report_progress( {
                         progress: bytes_total > 0 ? Math.min( loaded / bytes_total, 1 ) : 0,
                         bytes_loaded: loaded,
                         bytes_total,
+                        ... resumed_from > 0 ? { resumed_from } : {},
                         status: `Downloading...`,
                     } )
                 },

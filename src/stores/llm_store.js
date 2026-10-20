@@ -16,6 +16,8 @@ const LOAD_STAGE_PATTERNS = [
 
 const stage_from_status = ( status = `` ) => LOAD_STAGE_PATTERNS.find( ( [ pattern ] ) => pattern.test( status ) )?.[ 1 ]
 
+const HIDDEN_TAB_FLUSH_MS = 250
+
 /**
  * Coalesce streamed text updates to one per animation frame. Re-rendering and
  * markdown parsing then scale with frames instead of tokens, which leaves the
@@ -26,20 +28,39 @@ const stage_from_status = ( status = `` ) => LOAD_STAGE_PATTERNS.find( ( [ patte
 const per_frame = fn => {
 
     let pending = null
-    let frame = null
+    let cancel = null
+    let scheduled_hidden = false
+    const is_hidden = () => typeof document !== `undefined` && document.hidden
 
     const flush = () => {
-        if( frame !== null ) cancelAnimationFrame( frame )
-        frame = null
+        cancel?.()
+        cancel = null
         if( !pending ) return
         const args = pending
         pending = null
         fn( ...args )
     }
 
+    // Hidden tabs get no animation frames; a timer keeps partial saves flowing
+    const schedule = () => {
+        scheduled_hidden = is_hidden()
+        if( scheduled_hidden ) {
+            const timer = setTimeout( flush, HIDDEN_TAB_FLUSH_MS )
+            return () => clearTimeout( timer )
+        }
+        const frame = requestAnimationFrame( flush )
+        return () => cancelAnimationFrame( frame )
+    }
+
     const call = ( ...args ) => {
         pending = args
-        if( frame === null ) frame = requestAnimationFrame( flush )
+
+        // A frame queued just before the tab hid would never fire
+        if( cancel && scheduled_hidden !== is_hidden() ) {
+            cancel()
+            cancel = null
+        }
+        cancel ||= schedule()
     }
 
     call.flush = flush

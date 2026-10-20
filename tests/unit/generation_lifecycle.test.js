@@ -117,6 +117,42 @@ describe( `wllama provider stop`, () => {
 
     } )
 
+    test( `unloading after a stop never waits on the terminated worker`, async () => {
+
+        const provider = new WllamaProvider()
+        let terminated = false
+
+        // The worker is stuck mid-batch; terminate() drops its reply forever
+        provider._wllama = {
+            isModelLoaded: () => true,
+            getModelMetadata: () => ( { meta: {} } ),
+            exit: async () => {
+                terminated = true
+            },
+            createChatCompletion: async () => ( async function* () {
+                await sleep( 10 )
+                yield { prompt_progress: { total: 1, processed: 0 } }
+                await new Promise( () => {} )
+            } )(),
+        }
+
+        const stream = provider.chat_stream( [ { role: `user`, content: `x` } ] )
+        await stream.next()
+        const pending = stream.next()
+        provider.abort()
+        await expect( pending ).rejects.toMatchObject( { name: `AbortError` } )
+
+        await provider.unload_model()
+        expect( terminated ).toBe( true )
+
+        const outcome = await Promise.race( [
+            provider._settling.then( () => `settled` ),
+            sleep( 300 ).then( () => `hung` ),
+        ] )
+        expect( outcome ).toBe( `settled` )
+
+    } )
+
 } )
 
 describe( `llm store stop`, () => {

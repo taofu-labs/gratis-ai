@@ -71,6 +71,7 @@ export default function MessageList( { messages, is_streaming, is_endpoint_warmi
                 key={ message.id || index }
                 message={ message }
                 is_streaming={ is_streaming && index === messages.length - 1 && message.role === `assistant` }
+                is_busy={ is_streaming }
                 is_endpoint_warming={ is_endpoint_warming }
                 is_cloud_model={ is_cloud_model }
                 is_last_assistant={ index === last_assistant_index }

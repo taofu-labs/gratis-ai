@@ -171,6 +171,34 @@ export const get_resume_offset = ( { record, stored_size, etag, total } ) => {
 }
 
 /**
+ * Delete interrupted downloads other than `keep_key`. Their prefixes have no
+ * metadata, so no model list can show or delete them; they would only eat quota.
+ * @param {Object} options
+ * @param {{ delete: Function }} options.storage_backend
+ * @param {string|null} [options.keep_key] - Cache key of the download that may resume
+ * @param {Storage} [options.storage]
+ * @returns {Promise<void>}
+ */
+export const sweep_partial_downloads = async ( { storage_backend, keep_key = null, storage = globalThis.localStorage } ) => {
+
+    let keys = []
+    try {
+        keys = Array.from( { length: storage?.length || 0 }, ( _, index ) => storage.key( index ) )
+            .filter( key => key?.startsWith( RESUME_KEY_PREFIX ) )
+    } catch {
+        return
+    }
+
+    for( const record_key of keys ) {
+        const cache_key = record_key.slice( RESUME_KEY_PREFIX.length )
+        if( cache_key === keep_key ) continue
+        await storage_backend.delete( cache_key ).catch( () => {} )
+        write_resume_record( storage, cache_key, null )
+    }
+
+}
+
+/**
  * Download one GGUF through Hugging Face's browser SDK path and write it into
  * wllama64's OPFS cache. The SDK can use Xet metadata and adaptive parallel
  * reads anonymously; a token is only added when the user configured one.
@@ -211,6 +239,7 @@ export const download_hf_model_file_to_cache = async ( {
     const total = info.size || model.file_size_bytes || 0
     const etag = clean_etag( info.etag )
     const cache_key = await cache_manager.getNameFromURL( url )
+    await sweep_partial_downloads( { storage_backend, keep_key: cache_key, storage } )
 
     // Existing metadata belongs to an older entry the caller already judged
     // invalid. Drop it so it cannot adopt the new bytes mid-download.
@@ -230,7 +259,7 @@ export const download_hf_model_file_to_cache = async ( {
     if( offset > 0 ) log.info( `[download] Resuming ${ model.file_name } at ${ ( offset / 1e6 ).toFixed( 0 ) } MB` )
 
     write_resume_record( storage, cache_key, { etag, total, url } )
-    on_progress?.( { loaded: offset, total } )
+    on_progress?.( { loaded: offset, total, resumed_from: offset } )
 
     const discard_partial = async () => {
         await storage_backend.delete( cache_key ).catch( () => {} )

@@ -263,16 +263,14 @@ export default function DownloadPage() {
             const controller = new AbortController()
             abort_ref.current = controller
             eta_ref.current = create_download_eta_estimator()
-            let is_first_progress = true
 
             // Throttled progress handler — updates state at most every 250ms
             const on_progress = ( prog ) => {
 
                 if( controller.signal.aborted ) return
 
-                // A positive first byte count means OPFS held a resumable prefix
-                if( is_first_progress && prog.bytes_loaded > 0 ) set_resumed_from( prog.bytes_loaded )
-                if( prog.bytes_loaded > 0 ) is_first_progress = false
+                // The download layer says explicitly when OPFS held a resumable prefix
+                if( prog.resumed_from > 0 ) set_resumed_from( prog.resumed_from )
 
                 // Always track throughput in the ref (no re-render)
                 eta_ref.current.update( prog )

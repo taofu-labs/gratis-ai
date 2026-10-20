@@ -401,9 +401,16 @@ export default function ChatPage() {
         // before the first token) carry nothing for the model.
         const active_model = get_model_by_id( loaded_model_id )
         const system_prompt = active_model?.system_prompt || settings.system_prompt || ``
+        // Strict templates (Gemma, Mistral) demand alternating roles, so turns
+        // left adjacent by a dropped empty reply are merged
         const history = history_msgs
             .filter( ( { content } ) => content )
-            .map( ( { role, content } ) => ( { role, content } ) )
+            .reduce( ( turns, { role, content } ) => {
+                const previous = turns.at( -1 )
+                if( previous?.role === role ) previous.content += `\n\n${ content }`
+                else turns.push( { role, content } )
+                return turns
+            }, [] )
         if( system_prompt ) history.unshift( { role: `system`, content: system_prompt } )
 
         const partial = {
@@ -454,7 +461,7 @@ export default function ChatPage() {
 
         // History stays readable while the model loads; rewriting it must wait
         const history_msgs = messages_ref.current.slice( 0, -1 )
-        if( !has_model || history_msgs.at( -1 )?.role !== `user` ) return
+        if( !has_model || is_generating_ref.current || history_msgs.at( -1 )?.role !== `user` ) return
 
         set_messages( history_msgs )
 
@@ -650,7 +657,9 @@ export default function ChatPage() {
      */
     const handle_edit = useCallback( async ( index, new_text ) => {
 
-        if( !has_model ) return
+        // One reply at a time: a second run would steal the stop control and
+        // the first would later re-save into the truncated history
+        if( !has_model || is_generating_ref.current ) return
 
         // Truncate at the edited message, in storage too, then re-send
         const truncated = messages_ref.current.slice( 0, index )

@@ -641,7 +641,10 @@ export default class WllamaProvider {
             // The worker is already dead.
         }
 
-        if( this._wllama === runtime ) this._wllama = null
+        if( this._wllama === runtime ) {
+            this._wllama = null
+            this._settling = Promise.resolve()
+        }
 
     }
 
@@ -748,7 +751,10 @@ export default class WllamaProvider {
         const runtime = this._wllama
         if( !runtime ) return
 
+        // exit() terminates the worker without settling its queued calls, so a
+        // stopped request draining in the background would otherwise never end
         this._wllama = null
+        this._settling = Promise.resolve()
         let timeout_id
         const timeout = new Promise( ( _, reject ) => {
             timeout_id = setTimeout( () => reject( new Error( `Model worker did not exit` ) ), RUNTIME_EXIT_TIMEOUT_MS )

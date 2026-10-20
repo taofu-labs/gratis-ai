@@ -28,6 +28,12 @@ class MemoryStorage {
     removeItem( key ) {
         this.values.delete( key )
     }
+    key( index ) {
+        return [ ...this.values.keys() ][ index ] ?? null
+    }
+    get length() {
+        return this.values.size
+    }
 }
 
 const create_cache_manager = ( metadata = null ) => {
@@ -186,10 +192,36 @@ describe( `Hugging Face SDK download`, () => {
         expect( slice ).toHaveBeenCalledWith( 4 )
         expect( storage_backend.appends ).toEqual( [ { key: `cache-key`, offset: 4 } ] )
         expect( storage_backend.size ).toBe( 6 )
-        expect( progress[ 0 ] ).toEqual( { loaded: 4, total: 6 } )
+        expect( progress[ 0 ] ).toEqual( { loaded: 4, total: 6, resumed_from: 4 } )
         expect( progress.at( -1 ) ).toEqual( { loaded: 6, total: 6 } )
         expect( result.resumed_from ).toBe( 4 )
         expect( storage.getItem( resume_key ) ).toBeNull()
+    } )
+
+    test( `starting a download sweeps other interrupted prefixes`, async () => {
+        const storage = new MemoryStorage()
+        storage.setItem( `partial_download:stale-key`, JSON.stringify( { etag: `old`, total: 9, url: `https://x/old.gguf` } ) )
+        storage.setItem( `unrelated`, `kept` )
+        const storage_backend = create_backend()
+        storage_backend.delete = vi.fn( async () => {} )
+
+        await download_hf_model_file_to_cache( {
+            model,
+            url: download_url,
+            cache_manager: create_cache_manager(),
+            storage_backend,
+            storage,
+            access_token: ``,
+            sdk: {
+                fileDownloadInfo: vi.fn( async () => ( { size: 6, etag: `etag`, url: download_url } ) ),
+                downloadFile: vi.fn( async () => new Blob( [ new Uint8Array( 6 ) ] ) ),
+            },
+        } )
+
+        expect( storage_backend.delete ).toHaveBeenCalledWith( `stale-key` )
+        expect( storage_backend.delete ).not.toHaveBeenCalledWith( `cache-key` )
+        expect( storage.getItem( `partial_download:stale-key` ) ).toBeNull()
+        expect( storage.getItem( `unrelated` ) ).toBe( `kept` )
     } )
 
     test( `restarts when the remote revision changed`, async () => {

@@ -246,6 +246,7 @@ const ExpandButton = styled.button`
  * @param {Object} props
  * @param {Object} props.message - Message object
  * @param {boolean} props.is_streaming - Whether this message is currently streaming
+ * @param {boolean} props.is_busy - Whether any reply in the conversation is streaming
  * @param {boolean} props.is_last_assistant - Whether this is the last assistant message
  * @param {Function} props.on_regenerate - Regenerate handler
  * @param {number} props.index - Position in the conversation, passed back to on_edit
@@ -255,6 +256,7 @@ const ExpandButton = styled.button`
 const MessageBubble = memo( ( {
     message,
     is_streaming,
+    is_busy,
     is_endpoint_warming,
     is_cloud_model,
     is_last_assistant,
@@ -321,7 +323,7 @@ const MessageBubble = memo( ( {
         <MessageActions
             content={ message.content }
             can_regenerate={ !is_user && is_last_assistant && !is_streaming }
-            can_edit={ is_user && !is_streaming }
+            can_edit={ is_user && !is_busy }
             on_regenerate={ on_regenerate }
             on_edit={ () => set_is_editing( true ) }
         />
