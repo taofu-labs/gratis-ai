@@ -4,6 +4,7 @@ import { get_db } from '../stores/db'
 import { get_external_model_file, take_pending_external_model_file } from './external_model_files'
 import { get_hf_headers, normalize_hf_error } from './hf_auth'
 import {
+    discard_partial_download,
     download_hf_model_file_to_cache,
     download_hf_model_file_to_external_file,
     sweep_partial_downloads,
@@ -253,6 +254,21 @@ export const clear_browser_model_cache = async () => {
     if( window.electronAPI ) return
     await get_browser_model_manager().clear()
     await sweep_partial_downloads( { storage_backend: browser_storage_backend } )
+}
+
+/**
+ * Discard a model's interrupted OPFS download so an explicit cancel never
+ * resumes later. No-op in Electron and when no partial download exists.
+ * @param {Object} model - Model definition
+ * @returns {Promise<void>}
+ */
+export const discard_browser_partial_download = async ( model ) => {
+    if( window.electronAPI ) return
+    await discard_partial_download( {
+        url: build_download_url( model.hugging_face_repo, model.file_name ),
+        cache_manager: get_browser_model_manager().cacheManager,
+        storage_backend: browser_storage_backend,
+    } )
 }
 
 /**
