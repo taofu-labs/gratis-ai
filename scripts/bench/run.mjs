@@ -45,7 +45,7 @@ await new Promise( done => setTimeout( done, 500 ) )
 // Fresh browser per cell so one config cannot warm caches for the next
 const run_cell = async ( model, load_options ) => {
 
-    const browser = await chromium.launch( { headless: false } )
+    const browser = await chromium.launch( { headless: false, args: [ `--unlimited-storage` ] } )
 
     try {
         const page = await browser.newPage()
