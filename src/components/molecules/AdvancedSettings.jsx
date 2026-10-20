@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 
@@ -31,7 +32,7 @@ const Slider = styled.input`
 `
 
 const NumberInput = styled.input`
-    width: 70px;
+    width: ${ ( { $width } ) => $width || `70px` };
     padding: ${ ( { theme } ) => theme.spacing.xs };
     background: ${ ( { theme } ) => theme.colors.input_background };
     color: ${ ( { theme } ) => theme.colors.text };
@@ -39,6 +40,10 @@ const NumberInput = styled.input`
     border-radius: ${ ( { theme } ) => theme.border_radius.sm };
     text-align: center;
     font-size: 0.85rem;
+
+    @media ${ ( { theme } ) => theme.media.touch } {
+        min-height: 2.75rem;
+    }
 `
 
 const TextInput = styled.input`
@@ -65,6 +70,75 @@ const DividerLabel = styled.p`
     margin-bottom: ${ ( { theme } ) => theme.spacing.md };
 `
 
+// Fine-tuning knobs — `slider: false` renders a number field only
+const FINE_TUNING = [
+    { key: `top_p`, min: 0, max: 1, step: 0.05, fallback: 0.95 },
+    { key: `top_k`, min: 0, max: 200, fallback: 40, int: true, slider: false, width: `100px` },
+    { key: `min_p`, min: 0, max: 1, step: 0.01, fallback: 0.05 },
+    { key: `repeat_penalty`, min: 1, max: 2, step: 0.05, fallback: 1.1, empty: 1 },
+    { key: `repeat_last_n`, min: 0, max: 2048, fallback: 64, int: true, slider: false, width: `100px` },
+    { key: `frequency_penalty`, min: 0, max: 2, step: 0.1, fallback: 0 },
+    { key: `presence_penalty`, min: 0, max: 2, step: 0.1, fallback: 0 },
+    { key: `seed`, min: -1, fallback: -1, int: true, slider: false, width: `120px`, empty: -1 },
+]
+
+/**
+ * One labelled setting: label + description, slider and/or number field.
+ * The label names the slider and the number field; the description describes both.
+ * @param {Object} props
+ * @param {Object} props.field - Field config (key, min, max, step, int, slider, width, empty)
+ * @param {number} props.value - Current value
+ * @param {Function} props.on_change - Handler (key, value)
+ * @param {string} [props.testid] - data-testid prefix for slider/input
+ * @returns {JSX.Element}
+ */
+function NumberField( { field, value, on_change, testid } ) {
+
+    const { t } = useTranslation( `settings` )
+    const id = useId()
+    const { key, min, max, step, int, slider = true, width, empty = 0 } = field
+
+    const parse = ( raw ) => int ? parseInt( raw ) : parseFloat( raw )
+    const range = { min, max, step }
+    const a11y = {
+        'aria-labelledby': `${ id }-label`,
+        'aria-describedby': `${ id }-description`,
+    }
+
+    const number_input = <NumberInput
+        id={ `${ id }-input` }
+        data-testid={ testid && `${ testid }-input` }
+        type="number"
+        { ...range }
+        { ...a11y }
+        $width={ width }
+        value={ value }
+        onChange={ ( e ) => on_change( key, parse( e.target.value ) || empty ) }
+    />
+
+    return <Section>
+
+        <Label id={ `${ id }-label` } htmlFor={ `${ id }-input` }>{ t( field.label || key ) }</Label>
+        <Description id={ `${ id }-description` }>{ t( `${ field.label || key }_description` ) }</Description>
+
+        { slider
+            ? <SliderRow>
+                <Slider
+                    data-testid={ testid && `${ testid }-slider` }
+                    type="range"
+                    { ...range }
+                    { ...a11y }
+                    value={ value }
+                    onChange={ ( e ) => on_change( key, parse( e.target.value ) ) }
+                />
+                { number_input }
+            </SliderRow>
+            : number_input }
+
+    </Section>
+
+}
+
 /**
  * Advanced settings tab — includes Temperature and Max Tokens
  * (moved from Basic for progressive disclosure) plus all fine-tuning knobs.
@@ -77,189 +151,45 @@ const DividerLabel = styled.p`
 export default function AdvancedSettings( { settings, on_change } ) {
 
     const { t } = useTranslation( `settings` )
+    const stop_id = useId()
 
     return <>
 
         { /* Temperature — moved from Basic */ }
-        <Section>
-            <Label>{ t( `creativity` ) }</Label>
-            <Description>
-                { t( `creativity_description` ) }
-            </Description>
-            <SliderRow>
-                <Slider
-                    data-testid="temperature-slider"
-                    type="range"
-                    min="0"
-                    max="2"
-                    step="0.1"
-                    value={ settings.temperature }
-                    onChange={ ( e ) => on_change( `temperature`, parseFloat( e.target.value ) ) }
-                />
-                <NumberInput
-                    data-testid="temperature-input"
-                    type="number"
-                    min="0"
-                    max="2"
-                    step="0.1"
-                    value={ settings.temperature }
-                    onChange={ ( e ) => on_change( `temperature`, parseFloat( e.target.value ) || 0 ) }
-                />
-            </SliderRow>
-        </Section>
+        <NumberField
+            testid="temperature"
+            field={ { key: `temperature`, label: `creativity`, min: 0, max: 2, step: 0.1 } }
+            value={ settings.temperature }
+            on_change={ on_change }
+        />
 
         { /* Max Tokens — moved from Basic */ }
-        <Section>
-            <Label>{ t( `response_length` ) }</Label>
-            <Description>
-                { t( `response_length_description` ) }
-            </Description>
-            <NumberInput
-                data-testid="max-tokens-input"
-                type="number"
-                min="64"
-                max="32768"
-                step="64"
-                value={ settings.max_tokens }
-                onChange={ ( e ) => on_change( `max_tokens`, parseInt( e.target.value ) || 64 ) }
-                style={ { width: `120px` } }
-            />
-        </Section>
+        <NumberField
+            testid="max-tokens"
+            field={ { key: `max_tokens`, label: `response_length`, min: 64, max: 32768, step: 64, int: true, slider: false, width: `120px`, empty: 64 } }
+            value={ settings.max_tokens }
+            on_change={ on_change }
+        />
 
         <Divider />
         <DividerLabel>{ t( `fine_tuning` ) }</DividerLabel>
 
-        { /* Top P */ }
-        <Section>
-            <Label>{ t( `top_p` ) }</Label>
-            <Description>{ t( `top_p_description` ) }</Description>
-            <SliderRow>
-                <Slider
-                    type="range" min="0" max="1" step="0.05"
-                    value={ settings.top_p ?? 0.95 }
-                    onChange={ ( e ) => on_change( `top_p`, parseFloat( e.target.value ) ) }
-                />
-                <NumberInput
-                    type="number" min="0" max="1" step="0.05"
-                    value={ settings.top_p ?? 0.95 }
-                    onChange={ ( e ) => on_change( `top_p`, parseFloat( e.target.value ) || 0 ) }
-                />
-            </SliderRow>
-        </Section>
-
-        { /* Top K */ }
-        <Section>
-            <Label>{ t( `top_k` ) }</Label>
-            <Description>{ t( `top_k_description` ) }</Description>
-            <NumberInput
-                type="number" min="0" max="200"
-                value={ settings.top_k ?? 40 }
-                onChange={ ( e ) => on_change( `top_k`, parseInt( e.target.value ) || 0 ) }
-                style={ { width: `100px` } }
+        { FINE_TUNING.map( ( field ) =>
+            <NumberField
+                key={ field.key }
+                field={ field }
+                value={ settings[ field.key ] ?? field.fallback }
+                on_change={ on_change }
             />
-        </Section>
-
-        { /* Min P */ }
-        <Section>
-            <Label>{ t( `min_p` ) }</Label>
-            <Description>{ t( `min_p_description` ) }</Description>
-            <SliderRow>
-                <Slider
-                    type="range" min="0" max="1" step="0.01"
-                    value={ settings.min_p ?? 0.05 }
-                    onChange={ ( e ) => on_change( `min_p`, parseFloat( e.target.value ) ) }
-                />
-                <NumberInput
-                    type="number" min="0" max="1" step="0.01"
-                    value={ settings.min_p ?? 0.05 }
-                    onChange={ ( e ) => on_change( `min_p`, parseFloat( e.target.value ) || 0 ) }
-                />
-            </SliderRow>
-        </Section>
-
-        { /* Repeat Penalty */ }
-        <Section>
-            <Label>{ t( `repeat_penalty` ) }</Label>
-            <Description>{ t( `repeat_penalty_description` ) }</Description>
-            <SliderRow>
-                <Slider
-                    type="range" min="1" max="2" step="0.05"
-                    value={ settings.repeat_penalty ?? 1.1 }
-                    onChange={ ( e ) => on_change( `repeat_penalty`, parseFloat( e.target.value ) ) }
-                />
-                <NumberInput
-                    type="number" min="1" max="2" step="0.05"
-                    value={ settings.repeat_penalty ?? 1.1 }
-                    onChange={ ( e ) => on_change( `repeat_penalty`, parseFloat( e.target.value ) || 1 ) }
-                />
-            </SliderRow>
-        </Section>
-
-        { /* Repeat Last N */ }
-        <Section>
-            <Label>{ t( `repeat_last_n` ) }</Label>
-            <Description>{ t( `repeat_last_n_description` ) }</Description>
-            <NumberInput
-                type="number" min="0" max="2048"
-                value={ settings.repeat_last_n ?? 64 }
-                onChange={ ( e ) => on_change( `repeat_last_n`, parseInt( e.target.value ) || 0 ) }
-                style={ { width: `100px` } }
-            />
-        </Section>
-
-        { /* Frequency Penalty */ }
-        <Section>
-            <Label>{ t( `frequency_penalty` ) }</Label>
-            <Description>{ t( `frequency_penalty_description` ) }</Description>
-            <SliderRow>
-                <Slider
-                    type="range" min="0" max="2" step="0.1"
-                    value={ settings.frequency_penalty ?? 0 }
-                    onChange={ ( e ) => on_change( `frequency_penalty`, parseFloat( e.target.value ) ) }
-                />
-                <NumberInput
-                    type="number" min="0" max="2" step="0.1"
-                    value={ settings.frequency_penalty ?? 0 }
-                    onChange={ ( e ) => on_change( `frequency_penalty`, parseFloat( e.target.value ) || 0 ) }
-                />
-            </SliderRow>
-        </Section>
-
-        { /* Presence Penalty */ }
-        <Section>
-            <Label>{ t( `presence_penalty` ) }</Label>
-            <Description>{ t( `presence_penalty_description` ) }</Description>
-            <SliderRow>
-                <Slider
-                    type="range" min="0" max="2" step="0.1"
-                    value={ settings.presence_penalty ?? 0 }
-                    onChange={ ( e ) => on_change( `presence_penalty`, parseFloat( e.target.value ) ) }
-                />
-                <NumberInput
-                    type="number" min="0" max="2" step="0.1"
-                    value={ settings.presence_penalty ?? 0 }
-                    onChange={ ( e ) => on_change( `presence_penalty`, parseFloat( e.target.value ) || 0 ) }
-                />
-            </SliderRow>
-        </Section>
-
-        { /* Seed */ }
-        <Section>
-            <Label>{ t( `seed` ) }</Label>
-            <Description>{ t( `seed_description` ) }</Description>
-            <NumberInput
-                type="number" min="-1"
-                value={ settings.seed ?? -1 }
-                onChange={ ( e ) => on_change( `seed`, parseInt( e.target.value ) || -1 ) }
-                style={ { width: `120px` } }
-            />
-        </Section>
+        ) }
 
         { /* Stop Sequences */ }
         <Section>
-            <Label>{ t( `stop_sequences` ) }</Label>
-            <Description>{ t( `stop_sequences_description` ) }</Description>
+            <Label htmlFor={ `${ stop_id }-input` }>{ t( `stop_sequences` ) }</Label>
+            <Description id={ `${ stop_id }-description` }>{ t( `stop_sequences_description` ) }</Description>
             <TextInput
+                id={ `${ stop_id }-input` }
+                aria-describedby={ `${ stop_id }-description` }
                 type="text"
                 placeholder={ t( `stop_sequences_placeholder` ) }
                 value={ settings.stop_sequences ?? `` }

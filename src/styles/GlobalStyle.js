@@ -113,19 +113,28 @@ const GlobalStyle = createGlobalStyle`
         color: white;
     }
 
-    /* Focus indicators — never outline: none */
+    /* Focus indicators — never outline: none.
+       Solid accent ring (6:1 on the canvas) wrapped in a soft halo.
+       Outline, not box-shadow, so forced-colors mode keeps a system ring */
     :focus-visible {
-        outline: 3px solid rgba( 255, 90, 31, 0.35 );
+        outline: 2px solid ${ ( { theme } ) => theme.colors.accent };
         outline-offset: 2px;
+        box-shadow: 0 0 0 7px ${ ( { theme } ) => theme.colors.focus_halo };
     }
 
     :focus:not( :focus-visible ) {
         outline: none;
     }
 
-    /* Scrollbar styling — thin and subtle */
+    /* Scrollbars — thin and quiet, both axes */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: ${ ( { theme } ) => `${ theme.colors.border_control } transparent` };
+    }
+
     ::-webkit-scrollbar {
-        width: 4px;
+        width: 6px;
+        height: 6px;
     }
 
     ::-webkit-scrollbar-track {
@@ -133,12 +142,12 @@ const GlobalStyle = createGlobalStyle`
     }
 
     ::-webkit-scrollbar-thumb {
-        background: ${ ( { theme } ) => theme.colors.text_muted };
-        border-radius: 2px;
+        background: ${ ( { theme } ) => theme.colors.border_control };
+        border-radius: 3px;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: ${ ( { theme } ) => theme.colors.text_secondary };
+        background: ${ ( { theme } ) => theme.colors.text_muted };
     }
 
     /* Forced colors support */

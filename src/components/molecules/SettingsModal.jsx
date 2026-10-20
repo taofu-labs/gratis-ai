@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
-import styled from 'styled-components'
+import { useState, useEffect, useRef, useId } from 'react'
+import { createPortal } from 'react-dom'
+import styled, { keyframes } from 'styled-components'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import BasicSettings from './BasicSettings'
 import AdvancedSettings from './AdvancedSettings'
 import ModelsSettings from './ModelsSettings'
 import use_settings from '../../hooks/use_settings'
+import use_dialog_focus from '../../hooks/use_dialog_focus'
 import { EVENTS } from '../../utils/branding'
 
 const Overlay = styled.div`
@@ -16,6 +18,12 @@ const Overlay = styled.div`
     align-items: center;
     justify-content: center;
     z-index: 1000;
+`
+
+// 8px rise + fade on enter
+const rise_in = keyframes`
+    from { opacity: 0; transform: translateY( 8px ); }
+    to { opacity: 1; transform: none; }
 `
 
 const Modal = styled.div`
@@ -30,6 +38,9 @@ const Modal = styled.div`
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    animation: ${ rise_in } 0.5s cubic-bezier( 0.2, 0.8, 0.2, 1 );
+
+    &:focus-visible { outline: none; box-shadow: none; }
 `
 
 const Header = styled.div`
@@ -64,6 +75,7 @@ const TabBar = styled.div`
 
 const Tab = styled.button`
     flex: 1;
+    min-height: 2.75rem;
     padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md }` };
     font-size: 0.85rem;
     font-weight: ${ ( { $active } ) => $active ? `600` : `400` };
@@ -87,13 +99,18 @@ const Body = styled.div`
  * @param {boolean} props.is_open - Whether the modal is open
  * @param {Function} props.on_close - Handler for closing the modal
  * @param {Function} [props.on_model_switch] - Handler for switching models
+ * @param {Function} [props.on_models_purged] - Called after all models were removed
  * @returns {JSX.Element|null}
  */
-export default function SettingsModal( { is_open, on_close, on_model_switch } ) {
+export default function SettingsModal( { is_open, on_close, on_model_switch, on_models_purged } ) {
 
     const [ active_tab, set_active_tab ] = useState( `basic` )
     const { settings, update_setting } = use_settings()
     const { t } = useTranslation( `settings` )
+    const modal_ref = useRef( null )
+    const id = useId()
+
+    use_dialog_focus( modal_ref, is_open )
 
     const TABS = [
         { id: `basic`, label: t( `tab_basic` ) },
@@ -119,21 +136,46 @@ export default function SettingsModal( { is_open, on_close, on_model_switch } ) 
         if( e.target === e.currentTarget ) on_close()
     }
 
-    return <Overlay data-testid="settings-modal" onClick={ handle_overlay_click }>
-        <Modal>
+    // Arrow keys move between tabs (WAI-ARIA tabs pattern)
+    const handle_tab_keydown = ( e ) => {
+
+        const step = { ArrowRight: 1, ArrowLeft: -1 }[ e.key ]
+        if( !step ) return
+
+        const index = TABS.findIndex( ( tab ) => tab.id === active_tab )
+        const next = TABS[ ( index + step + TABS.length ) % TABS.length ]
+        set_active_tab( next.id )
+        document.getElementById( `${ id }-tab-${ next.id }` )?.focus()
+
+    }
+
+    // Portal out of #root — the app behind is made inert while open
+    return createPortal( <Overlay data-testid="settings-modal" onClick={ handle_overlay_click }>
+        <Modal
+            ref={ modal_ref }
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={ `${ id }-title` }
+            tabIndex={ -1 }
+        >
 
             <Header>
-                <Title>{ t( `title` ) }</Title>
+                <Title id={ `${ id }-title` }>{ t( `title` ) }</Title>
                 <CloseButton onClick={ on_close } aria-label={ t( `common:aria_close_settings` ) }>
                     <X size={ 18 } />
                 </CloseButton>
             </Header>
 
-            <TabBar>
+            <TabBar role="tablist" onKeyDown={ handle_tab_keydown }>
                 { TABS.map( ( tab ) =>
                     <Tab
                         key={ tab.id }
+                        id={ `${ id }-tab-${ tab.id }` }
                         data-testid={ `settings-tab-${ tab.id }` }
+                        role="tab"
+                        aria-selected={ active_tab === tab.id }
+                        aria-controls={ `${ id }-panel` }
+                        tabIndex={ active_tab === tab.id ? 0 : -1 }
                         $active={ active_tab === tab.id }
                         onClick={ () => set_active_tab( tab.id ) }
                     >
@@ -142,7 +184,11 @@ export default function SettingsModal( { is_open, on_close, on_model_switch } ) 
                 ) }
             </TabBar>
 
-            <Body>
+            <Body
+                id={ `${ id }-panel` }
+                role="tabpanel"
+                aria-labelledby={ `${ id }-tab-${ active_tab }` }
+            >
                 { active_tab === `basic` &&
                     <BasicSettings
                         system_prompt={ settings.system_prompt }
@@ -161,10 +207,11 @@ export default function SettingsModal( { is_open, on_close, on_model_switch } ) 
                         on_setting_change={ update_setting }
                         on_close={ on_close }
                         on_model_switch={ on_model_switch }
+                        on_models_purged={ on_models_purged }
                     /> }
             </Body>
 
         </Modal>
-    </Overlay>
+    </Overlay>, document.body )
 
 }

@@ -36,8 +36,10 @@ const InputPill = styled.div`
     border-radius: ${ ( { theme } ) => theme.border_radius.xl };
     transition: border-color 0.15s;
 
+    /* Neutral lift only — the textarea is auto-focused almost always,
+       so an accent border here would read as a permanent highlight */
     &:focus-within {
-        border-color: ${ ( { theme } ) => theme.colors.accent };
+        border-color: ${ ( { theme } ) => theme.colors.border_strong };
     }
 `
 
@@ -59,6 +61,7 @@ const TextArea = styled.textarea`
        already shows focus via its :focus-within border color */
     &:focus-visible {
         outline: none;
+        box-shadow: none;
     }
 
     &::placeholder {
@@ -74,12 +77,17 @@ const ButtonRow = styled.div`
     gap: ${ ( { theme } ) => theme.spacing.xs };
     flex-shrink: 0;
     align-self: flex-end;
-    border-left: none;
+
+    /* 44px hit areas; negative margin keeps the pill the same size */
+    @media ${ ( { theme } ) => theme.media.touch } {
+        gap: 0;
+        margin: -0.375rem;
+    }
 `
 
-// ── Action buttons — smaller to fit inside the pill ─────────────────
+// ── Action buttons — 32px circles, 44px hit area on touch ───────────
 
-const SendButton = styled.button`
+const RoundButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
@@ -87,25 +95,58 @@ const SendButton = styled.button`
     height: 2rem;
     line-height: 0;
     border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme } ) => theme.colors.primary };
-    color: ${ ( { theme } ) => theme.colors.background };
-    transition: opacity 0.15s;
+    background-color: ${ ( { theme } ) => theme.colors.surface_hover };
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+    transition: color 0.15s, background 0.15s, opacity 0.15s;
     flex-shrink: 0;
 
     & svg { display: block; }
 
-    &:hover { opacity: 0.8; }
+    &:hover:not( :disabled ) {
+        color: ${ ( { theme } ) => theme.colors.text };
+        background-color: ${ ( { theme } ) => theme.colors.border_subtle };
+    }
 
     &:disabled {
         opacity: 0.3;
         cursor: not-allowed;
     }
+
+    /* Grow the box, clip the fill — visual stays a 32px circle */
+    @media ${ ( { theme } ) => theme.media.touch } {
+        width: 2.75rem;
+        height: 2.75rem;
+        padding: 0.375rem;
+        background-clip: content-box;
+    }
 `
 
-const StopButton = styled( SendButton )`
-    background: ${ ( { theme } ) => theme.colors.error };
+// Accent when sendable, quiet neutral when there is nothing to send
+const SendButton = styled( RoundButton )`
+    background-color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_ink };
+
+    &:hover:not( :disabled ) {
+        background-color: ${ ( { theme } ) => theme.colors.accent_hover };
+        color: ${ ( { theme } ) => theme.colors.accent_ink };
+    }
+
+    &:disabled {
+        opacity: 1;
+        background-color: ${ ( { theme } ) => theme.colors.surface_hover };
+        color: ${ ( { theme } ) => theme.colors.text_muted };
+    }
+`
+
+const StopButton = styled( RoundButton )`
+    background-color: ${ ( { theme } ) => theme.colors.error };
     color: white;
-    &:hover { opacity: 0.8; }
+
+    &:hover:not( :disabled ) {
+        background-color: ${ ( { theme } ) => theme.colors.error };
+        color: white;
+        opacity: 0.8;
+    }
 `
 
 // Pulsing red animation for active recording
@@ -114,33 +155,15 @@ const pulse_recording = keyframes`
     50% { transform: scale( 1.05 ); opacity: 0.7; }
 `
 
-const MicButton = styled.button`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    line-height: 0;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme } ) => theme.colors.surface_hover };
+const MicButton = styled( RoundButton )`
     color: ${ ( { theme, $is_recording } ) => $is_recording
         ? theme.colors.error
         : theme.colors.text_muted };
-    transition: color 0.15s, background 0.15s;
-    flex-shrink: 0;
 
-    & svg { display: block; }
-
-    &:hover {
+    &:hover:not( :disabled ) {
         color: ${ ( { theme, $is_recording } ) => $is_recording
         ? theme.colors.error
         : theme.colors.text };
-        background: ${ ( { theme } ) => theme.colors.border_subtle };
-    }
-
-    &:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
     }
 
     ${ ( { $is_recording } ) => $is_recording && css`
@@ -209,31 +232,7 @@ const RemoveAttachment = styled.button`
     &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
-const AttachButton = styled.button`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    line-height: 0;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme } ) => theme.colors.surface_hover };
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    transition: color 0.15s, background 0.15s;
-    flex-shrink: 0;
-
-    & svg { display: block; }
-
-    &:hover {
-        color: ${ ( { theme } ) => theme.colors.text };
-        background: ${ ( { theme } ) => theme.colors.border_subtle };
-    }
-
-    &:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-    }
-`
+const AttachButton = RoundButton
 
 const HiddenFileInput = styled.input`
     display: none;

@@ -71,6 +71,7 @@
     "export_all_conversations": "导出所有对话",
 
     "danger_zone": "危险操作",
+    "purge_models_description": "删除所有已下载的模型。对话和设置会保留。",
     "danger_zone_description": "这将永久删除所有对话、模型和设置。",
     "delete_everything": "删除所有内容",
     "confirm_delete_all": "这将删除所有对话、缓存的模型和设置。此操作无法撤销。"

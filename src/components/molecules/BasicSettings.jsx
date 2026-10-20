@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 
@@ -66,14 +67,17 @@ export default function BasicSettings( {
 } ) {
 
     const { t } = useTranslation( `settings` )
+    const id = useId()
 
     return <>
 
         { /* System Prompt */ }
         <Section>
-            <Label>{ t( `custom_instructions` ) }</Label>
-            <Description>{ t( `custom_instructions_description` ) }</Description>
+            <Label htmlFor={ `${ id }-prompt` }>{ t( `custom_instructions` ) }</Label>
+            <Description id={ `${ id }-prompt-description` }>{ t( `custom_instructions_description` ) }</Description>
             <Textarea
+                id={ `${ id }-prompt` }
+                aria-describedby={ `${ id }-prompt-description` }
                 data-testid="system-prompt-input"
                 value={ system_prompt }
                 onChange={ ( e ) => on_system_prompt_change( e.target.value ) }
@@ -83,7 +87,7 @@ export default function BasicSettings( {
 
         { /* Keyboard Shortcuts Reference */ }
         <ShortcutsSection>
-            <Label>{ t( `keyboard_shortcuts` ) }</Label>
+            <Label as="div">{ t( `keyboard_shortcuts` ) }</Label>
             <ShortcutRow>
                 <span>{ t( `shortcut_new_chat` ) }</span>
                 <ShortcutKey>Ctrl+N</ShortcutKey>

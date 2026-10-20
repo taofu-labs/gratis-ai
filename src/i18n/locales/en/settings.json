@@ -79,6 +79,7 @@
     "export_all_conversations": "Export All Conversations",
 
     "danger_zone": "Danger Zone",
+    "purge_models_description": "Delete every downloaded model. Conversations and settings stay.",
     "danger_zone_description": "This will permanently delete all conversations, models, and settings.",
     "delete_everything": "Delete Everything",
     "confirm_delete_all": "This will delete all conversations, cached models, and settings. This cannot be undone."

@@ -11,6 +11,19 @@ const ActionsBar = styled.div`
     position: absolute;
     top: -28px;
     right: 0;
+
+    /* Keyboard users reach the actions without hovering */
+    &:focus-within { opacity: 1; }
+
+    /* Touch has no hover: dock the bar under the bubble, always visible */
+    @media ${ ( { theme } ) => theme.media.touch } {
+        position: static;
+        order: 1;
+        opacity: 1;
+        gap: 0;
+        justify-content: flex-end;
+        margin-right: -0.5rem;
+    }
 `
 
 const ActionButton = styled.button`
@@ -24,9 +37,15 @@ const ActionButton = styled.button`
     opacity: 0.5;
     transition: opacity 0.15s;
 
-    &:hover {
+    &:hover, &:focus-visible {
         opacity: 1;
         color: ${ ( { theme } ) => theme.colors.text };
+    }
+
+    @media ${ ( { theme } ) => theme.media.touch } {
+        width: 2.75rem;
+        height: 2.75rem;
+        opacity: 0.8;
     }
 `
 

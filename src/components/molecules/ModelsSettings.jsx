@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { log } from 'mentie'
 import { useTranslation } from 'react-i18next'
 import { format_file_size } from '../../utils/model_catalog'
 import use_model_manager from '../../hooks/use_model_manager'
@@ -115,7 +116,7 @@ const DeleteButton = styled( SmallButton )`
 
     &:hover:not(:disabled) {
         background: ${ ( { theme } ) => theme.colors.error };
-        color: white;
+        color: ${ ( { theme } ) => theme.colors.accent_ink };
     }
 `
 
@@ -214,7 +215,7 @@ const DangerToggle = styled.button`
 
 const DangerPanel = styled.div`
     overflow: hidden;
-    max-height: ${ ( { $expanded } ) => $expanded ? `200px` : `0px` };
+    max-height: ${ ( { $expanded } ) => $expanded ? `400px` : `0px` };
     opacity: ${ ( { $expanded } ) => $expanded ? 1 : 0 };
     visibility: ${ ( { $expanded } ) => $expanded ? `visible` : `hidden` };
     transition: max-height 0.3s ease, opacity 0.2s ease, visibility 0.3s ease;
@@ -230,13 +231,22 @@ const DangerZone = styled.div`
     margin-top: ${ ( { theme } ) => theme.spacing.sm };
 `
 
+const DangerItem = styled.div`
+    & + & { margin-top: ${ ( { theme } ) => theme.spacing.md }; }
+`
+
 const DangerButton = styled( Button )`
     border-color: ${ ( { theme } ) => theme.colors.error };
     color: ${ ( { theme } ) => theme.colors.error };
 
-    &:hover {
+    &:hover:not( :disabled ) {
         background: ${ ( { theme } ) => theme.colors.error };
-        color: white;
+        color: ${ ( { theme } ) => theme.colors.accent_ink };
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: progress;
     }
 `
 
@@ -248,17 +258,20 @@ const DangerButton = styled( Button )`
  * @param {Function} props.on_setting_change - Handler for updating settings
  * @param {Function} props.on_close - Handler to close settings modal
  * @param {Function} props.on_model_switch - Handler for switching models
+ * @param {Function} [props.on_models_purged] - Called after all models were removed
  * @returns {JSX.Element}
  */
-export default function ModelsSettings( { settings = {}, on_setting_change, on_close, on_model_switch } ) {
+export default function ModelsSettings( { settings = {}, on_setting_change, on_close, on_model_switch, on_models_purged } ) {
 
     const navigate = useNavigate()
     const { t } = useTranslation( `settings` )
-    const { cached_models, storage_used, storage_estimate, delete_model } = use_model_manager()
+    const { cached_models, storage_used, storage_estimate, delete_model, refresh_models } = use_model_manager()
     const unload_model = use_llm( state => state.unload_model )
     const [ confirming, set_confirming ] = useState( null )
     const [ show_danger, set_show_danger ] = useState( false )
     const [ show_hf_token, set_show_hf_token ] = useState( false )
+    const [ is_purging, set_is_purging ] = useState( false )
+    const id = useId()
     const active_model_id = localStorage.getItem( storage_key( `active_model_id` ) )
     const hf_token = settings[ HF_TOKEN_SETTING ] || ``
 
@@ -323,6 +336,58 @@ export default function ModelsSettings( { settings = {}, on_setting_change, on_c
             toast.success( t( conversations.length !== 1 ? `common:exported_conversations_plural` : `common:exported_conversations`, { count: conversations.length } ) )
         } catch ( err ) {
             toast.error( t( `common:export_failed`, { message: err.message } ) )
+        }
+
+    }
+
+    /**
+     * Remove every downloaded model; conversations and settings stay.
+     */
+    const handle_purge = async () => {
+
+        if( !confirm( t( `models:purge_confirm` ) ) ) return
+
+        set_is_purging( true )
+
+        try {
+
+            // Release inference first so no worker holds model files open
+            await unload_model()
+
+            if( window.electronAPI?.native_inference ) {
+
+                // Electron: delete each model via IPC
+                const all = await window.electronAPI.list_models()
+                for( const m of all ) {
+                    try {
+                        await window.electronAPI.delete_model( m.id )
+                    } catch ( err ) {
+                        log.warn( `[purge] Failed to delete local model ${ m.id }: ${ err.message }` )
+                    }
+                }
+
+            } else {
+
+                // Browser weights live in OPFS; IndexedDB contains metadata.
+                // Clear both or multi-GB orphan files remain invisible on disk.
+                await clear_browser_model_cache()
+                const db = await get_db()
+                await db.clear( `models` )
+
+            }
+
+            localStorage.removeItem( storage_key( `active_model_id` ) )
+            log.info( `[purge] All models purged` )
+            toast.success( t( `models:purge_success` ) )
+
+            await refresh_models()
+            on_models_purged?.()
+
+        } catch ( err ) {
+            log.error( `[purge] Error:`, err.message )
+            toast.error( t( `models:purge_error`, { error: err.message } ) )
+        } finally {
+            set_is_purging( false )
         }
 
     }
@@ -410,11 +475,13 @@ export default function ModelsSettings( { settings = {}, on_setting_change, on_c
 
         { /* Hugging Face access */ }
         <Section>
-            <SectionTitle>{ t( `huggingface_access` ) }</SectionTitle>
-            <Description>{ t( `huggingface_access_description` ) }</Description>
+            <SectionTitle id={ `${ id }-hf-title` }>{ t( `huggingface_access` ) }</SectionTitle>
+            <Description id={ `${ id }-hf-description` }>{ t( `huggingface_access_description` ) }</Description>
             <TokenRow>
                 <TokenInput
                     data-testid="hf-token-input"
+                    aria-labelledby={ `${ id }-hf-title` }
+                    aria-describedby={ `${ id }-hf-description` }
                     type={ show_hf_token ? `text` : `password` }
                     value={ hf_token }
                     placeholder="hf_..."
@@ -481,23 +548,42 @@ export default function ModelsSettings( { settings = {}, on_setting_change, on_c
         { /* Danger Zone — hidden behind toggle for safety */ }
         <DangerToggle
             data-testid="danger-zone-toggle"
+            aria-expanded={ show_danger }
+            aria-controls={ `${ id }-danger` }
             onClick={ () => set_show_danger( !show_danger ) }
         >
             { t( `danger_zone` ) }
             { show_danger ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
         </DangerToggle>
 
-        <DangerPanel $expanded={ show_danger }>
+        <DangerPanel id={ `${ id }-danger` } $expanded={ show_danger }>
             <DangerZone>
-                <Description>{ t( `danger_zone_description` ) }</Description>
-                <ButtonRow>
-                    <DangerButton
-                        data-testid="clear-all-data-btn"
-                        onClick={ handle_clear_all }
-                    >
-                        { t( `delete_everything` ) }
-                    </DangerButton>
-                </ButtonRow>
+
+                { cached_models.length > 0 && <DangerItem>
+                    <Description>{ t( `purge_models_description` ) }</Description>
+                    <ButtonRow>
+                        <DangerButton
+                            data-testid="purge-models-btn"
+                            onClick={ handle_purge }
+                            disabled={ is_purging }
+                        >
+                            { t( `models:purge_models` ) }
+                        </DangerButton>
+                    </ButtonRow>
+                </DangerItem> }
+
+                <DangerItem>
+                    <Description>{ t( `danger_zone_description` ) }</Description>
+                    <ButtonRow>
+                        <DangerButton
+                            data-testid="clear-all-data-btn"
+                            onClick={ handle_clear_all }
+                        >
+                            { t( `delete_everything` ) }
+                        </DangerButton>
+                    </ButtonRow>
+                </DangerItem>
+
             </DangerZone>
         </DangerPanel>
 

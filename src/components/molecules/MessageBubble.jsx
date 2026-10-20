@@ -3,10 +3,10 @@ import styled, { keyframes } from 'styled-components'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
-import { Copy, Check, ChevronRight, LoaderCircle } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { ChevronRight, LoaderCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import StreamingIndicator from '../atoms/StreamingIndicator'
+import CodeBlock from '../atoms/CodeBlock'
 import WakingUpIndicator from '../atoms/WakingUpIndicator'
 import GenerationStats from '../atoms/GenerationStats'
 import SlowDeviceWarning from '../atoms/SlowDeviceWarning'
@@ -86,14 +86,7 @@ const Bubble = styled.div`
         padding: 0.1em 0.3em;
         border-radius: ${ ( { theme } ) => theme.border_radius.sm };
     }
-    pre {
-        position: relative;
-        background: ${ ( { theme } ) => theme.colors.code_background };
-        border-radius: ${ ( { theme } ) => theme.border_radius.md };
-        padding: ${ ( { theme } ) => theme.spacing.md };
-        overflow-x: auto;
-        margin: 0.5em 0;
-    }
+    /* Block code frame lives in atoms/CodeBlock */
     pre code {
         background: none;
         padding: 0;
@@ -148,24 +141,6 @@ const SubmitButton = styled( EditButton )`
 
 const CancelButton = styled( EditButton )`
     color: ${ ( { theme } ) => theme.colors.text_secondary };
-    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
-`
-
-const CodeCopyButton = styled.button`
-    position: absolute;
-    top: ${ ( { theme } ) => theme.spacing.sm };
-    right: ${ ( { theme } ) => theme.spacing.sm };
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.sm };
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    opacity: 0;
-    transition: opacity 0.15s;
-
-    pre:hover & { opacity: 1; }
     &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
@@ -265,34 +240,6 @@ const ExpandButton = styled.button`
     &:hover { color: ${ ( { theme } ) => theme.colors.text_secondary }; }
 `
 
-
-/**
- * Custom pre component with copy button for code blocks
- */
-const CodeBlock = ( { children, ...props } ) => {
-
-    const { t } = useTranslation()
-    const [ copied, set_copied ] = useState( false )
-
-    const handle_copy = async () => {
-        const code = children?.props?.children || ``
-        try {
-            await navigator.clipboard.writeText( code )
-            set_copied( true )
-            setTimeout( () => set_copied( false ), 2000 )
-        } catch {
-            toast.error( t( `common:failed_to_copy_code` ) )
-        }
-    }
-
-    return <pre { ...props }>
-        { children }
-        <CodeCopyButton onClick={ handle_copy } aria-label={ t( `common:aria_copy_code` ) }>
-            { copied ? <Check size={ 14 } /> : <Copy size={ 14 } /> }
-        </CodeCopyButton>
-    </pre>
-
-}
 
 /**
  * Individual message bubble with markdown rendering and actions

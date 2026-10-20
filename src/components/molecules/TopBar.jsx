@@ -50,6 +50,7 @@ const ChangeModelButton = styled.button`
     display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.xs };
+    min-height: 2.75rem;
     padding: ${ ( { theme } ) => `${ theme.spacing.xs } ${ theme.spacing.sm }` };
     font-size: 0.75rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
@@ -58,18 +59,8 @@ const ChangeModelButton = styled.button`
     white-space: nowrap;
 
     &:hover { color: ${ ( { theme } ) => theme.colors.text_secondary }; }
-`
 
-// Hide model selector on mobile — it lives in the sidebar instead
-const DesktopOnly = styled.span`
-    display: contents;
-    @media ( max-width: ${ ( { theme } ) => theme.breakpoints.mobile } ) {
-        display: none;
-    }
-`
-
-// Hide "Change Model" text label on mobile, keep the icon
-const ChangeModelLabel = styled.span`
+    /* Phones: the model name itself is the control (its menu has "Add model") */
     @media ( max-width: ${ ( { theme } ) => theme.breakpoints.mobile } ) {
         display: none;
     }
@@ -78,6 +69,7 @@ const ChangeModelLabel = styled.span`
 /**
  * Top navigation bar with model selector and settings
  * @param {Object} props
+ * @param {boolean} [props.inert] - Take the bar out of focus/a11y (e.g. behind the phone drawer)
  * @param {Function} props.on_settings_open - Handler for opening settings
  * @param {boolean} props.sidebar_collapsed - Whether sidebar is currently collapsed
  * @param {Function} props.on_toggle_sidebar - Handler for toggling sidebar visibility
@@ -88,6 +80,7 @@ const ChangeModelLabel = styled.span`
  * @returns {JSX.Element}
  */
 export default function TopBar( {
+    inert,
     on_settings_open,
     sidebar_collapsed,
     on_toggle_sidebar,
@@ -95,7 +88,6 @@ export default function TopBar( {
     active_model_id,
     is_model_switching,
     on_model_switch,
-    on_models_purged,
 } ) {
 
     const navigate = useNavigate()
@@ -104,7 +96,7 @@ export default function TopBar( {
     // While a model loads nothing is "loaded" yet; name the incoming model instead of "No model"
     const loading_model_id = use_llm_store( s => s._loading_model_id )
 
-    return <Bar>
+    return <Bar inert={ inert }>
 
         { /* Left: sidebar toggle + model selector + change model */ }
         <LeftSection>
@@ -115,23 +107,20 @@ export default function TopBar( {
             >
                 <PanelLeft size={ 18 } />
             </IconButton> }
-            <DesktopOnly>
-                <ModelSelector
-                    cached_models={ cached_models }
-                    active_model_id={ active_model_id || loading_model_id }
-                    is_switching={ is_model_switching }
-                    on_switch={ on_model_switch }
-                    on_open_settings={ on_settings_open }
-                    on_models_purged={ on_models_purged }
-                />
-            </DesktopOnly>
+            <ModelSelector
+                cached_models={ cached_models }
+                active_model_id={ active_model_id || loading_model_id }
+                is_switching={ is_model_switching }
+                on_switch={ on_model_switch }
+                on_open_settings={ on_settings_open }
+            />
             <ChangeModelButton
                 data-testid="change-model-btn"
                 onClick={ () => navigate( `/select-model` ) }
                 aria-label={ t( `common:aria_change_model` ) }
             >
                 <ArrowLeftRight size={ 14 } />
-                <ChangeModelLabel>{ t( `change_model` ) }</ChangeModelLabel>
+                { t( `change_model` ) }
             </ChangeModelButton>
         </LeftSection>
 
