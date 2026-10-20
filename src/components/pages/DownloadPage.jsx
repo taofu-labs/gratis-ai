@@ -2,19 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { X, CheckCircle } from 'lucide-react'
+import { X, CheckCircle, LoaderCircle } from 'lucide-react'
 import { log } from 'mentie'
 import { download_model, is_model_cached } from '../../utils/model_download'
 import { format_file_size } from '../../utils/model_catalog'
 import { storage_key } from '../../utils/branding'
-import { format_download_duration } from '../../utils/network_speed'
-
-const SPEED_SAMPLE_WINDOW_MS = 30_000
-const STABLE_SPEED_WINDOW_MS = 10_000
-const SHORT_SPEED_WINDOW_MS = 5_000
-const SPEED_SMOOTHING = 0.18
-const ETA_SMOOTHING = 0.22
-const ONE_MIB = 1024 ** 2
+import { create_download_eta_estimator, format_download_duration } from '../../utils/network_speed'
+import use_llm from '../../hooks/use_llm'
+import ModelLoadStage from '../atoms/ModelLoadStage'
 
 const Container = styled.div`
     display: flex;
@@ -144,6 +139,21 @@ const fade_in = keyframes`
     to { opacity: 1; transform: scale( 1 ); }
 `
 
+const spin = keyframes`
+    to { transform: rotate( 360deg ); }
+`
+
+const LoadingSpinner = styled.div`
+    display: flex;
+    color: ${ ( { theme } ) => theme.colors.accent };
+    margin-bottom: ${ ( { theme } ) => theme.spacing.md };
+    animation: ${ spin } 1s linear infinite;
+
+    @media ( prefers-reduced-motion: reduce ) {
+        animation: none;
+    }
+`
+
 const SuccessIcon = styled.div`
     color: ${ ( { theme } ) => theme.colors.success };
     animation: ${ fade_in } 0.3s ease-out;
@@ -154,7 +164,8 @@ const SuccessIcon = styled.div`
 `
 
 /**
- * Download page - shows model download progress with friendly feedback
+ * Download page - shows model download progress with friendly feedback,
+ * then loads the model into memory before handing over to chat.
  * @returns {JSX.Element}
  */
 export default function DownloadPage() {
@@ -162,23 +173,22 @@ export default function DownloadPage() {
     const navigate = useNavigate()
     const location = useLocation()
     const { t } = useTranslation( 'models' )
+    const { load_model } = use_llm()
     const model = location.state?.model
     const storage_mode = location.state?.storage_mode || `opfs`
     const return_to = location.state?.return_to || `/chat`
 
     const [ progress, set_progress ] = useState( { progress: 0, bytes_loaded: 0, bytes_total: 0, status: t( 'preparing' ) } )
     const [ error, set_error ] = useState( null )
-    const [ is_complete, set_is_complete ] = useState( false )
+    const [ phase, set_phase ] = useState( `downloading` )
+    const [ resumed_from, set_resumed_from ] = useState( 0 )
     const abort_ref = useRef( null )
 
-    // Track download speed for ETA calculation
-    const speed_ref = useRef( {
-        start_time: null,
-        samples: [],
-        display_bps: null,
-        eta_seconds: null,
-        is_slowed: false,
-    } )
+    // Set on cancel or unmount: nothing may navigate or persist afterwards
+    const cancelled_ref = useRef( false )
+
+    // Observed-throughput ETA, kept in a ref so progress does not re-render per chunk
+    const eta_ref = useRef( create_download_eta_estimator() )
 
     // Guard against StrictMode double-mount starting two downloads
     const download_started_ref = useRef( false )
@@ -187,97 +197,45 @@ export default function DownloadPage() {
     const last_update_ref = useRef( 0 )
     const pending_progress_ref = useRef( null )
     const raf_ref = useRef( null )
+    const redirect_timer_ref = useRef( null )
 
-    const on_complete = useCallback( () => {
+    const on_complete = useCallback( async () => {
 
-        // Save active model ID to localStorage
-        if( model ) {
-            localStorage.setItem( storage_key( `active_model_id` ), model.id )
+        if( cancelled_ref.current || !model ) return
+
+        localStorage.setItem( storage_key( `active_model_id` ), model.id )
+
+        // Load into memory here so the user sees stages instead of a bare spinner.
+        // A load failure still hands over: the chat page owns load-error recovery.
+        set_phase( `loading` )
+        log.info( `[download] Complete, loading ${ model.id }` )
+        try {
+            await load_model( model.id )
+        } catch ( load_error ) {
+            log.warn( `[download] Model load after download failed:`, load_error?.message )
         }
+
+        if( cancelled_ref.current ) return
 
         // Brief success flash before navigating
-        log.info( `[download] Complete, redirecting to chat` )
-        set_is_complete( true )
-        setTimeout( () => navigate( return_to, { replace: true } ), 800 )
+        set_phase( `complete` )
+        redirect_timer_ref.current = setTimeout( () => {
+            if( !cancelled_ref.current ) navigate( return_to, { replace: true } )
+        }, 800 )
 
-    }, [ model, navigate, return_to ] )
+    }, [ model, navigate, return_to, load_model ] )
 
-    const update_speed_metrics = useCallback( ( prog ) => {
-
-        const bytes_loaded = Number( prog.bytes_loaded )
-        const bytes_total = Number( prog.bytes_total ) || model?.file_size_bytes || 0
-        if( !Number.isFinite( bytes_loaded ) || bytes_loaded <= 0 ) return
-
-        const time = Date.now()
-        const metrics = speed_ref.current
-        metrics.start_time ??= time
-
-        const previous = metrics.samples.at( -1 )
-        if( previous && bytes_loaded < previous.bytes ) {
-            metrics.samples = []
-            metrics.display_bps = null
-            metrics.eta_seconds = null
-            metrics.is_slowed = false
+    // Unmount = cancel: abort the pipeline and forbid any later navigation.
+    // Reset on (re)mount so StrictMode's simulated unmount does not stick.
+    useEffect( () => {
+        cancelled_ref.current = false
+        return () => {
+            cancelled_ref.current = true
+            abort_ref.current?.abort()
+            if( raf_ref.current ) cancelAnimationFrame( raf_ref.current )
+            clearTimeout( redirect_timer_ref.current )
         }
-
-        metrics.samples.push( { time, bytes: bytes_loaded } )
-        metrics.samples = metrics.samples
-            .filter( sample => time - sample.time <= SPEED_SAMPLE_WINDOW_MS )
-            .slice( -160 )
-
-        const stable_anchor = [ ...metrics.samples ].reverse()
-            .find( sample => time - sample.time >= STABLE_SPEED_WINDOW_MS )
-            || metrics.samples[ 0 ]
-        const stable_elapsed_ms = time - stable_anchor.time
-        const stable_bytes = bytes_loaded - stable_anchor.bytes
-
-        if( stable_elapsed_ms >= 1_500 && stable_bytes >= ONE_MIB / 4 ) {
-            const rolling_bps = stable_bytes / stable_elapsed_ms * 1000
-            const total_elapsed_ms = Math.max( 1, time - metrics.start_time )
-            const total_bps = bytes_loaded / total_elapsed_ms * 1000
-            const observed_bps = stable_elapsed_ms < STABLE_SPEED_WINDOW_MS
-                ? Math.min( rolling_bps, total_bps )
-                : rolling_bps
-
-            metrics.display_bps = metrics.display_bps
-                ? metrics.display_bps * ( 1 - SPEED_SMOOTHING ) + observed_bps * SPEED_SMOOTHING
-                : observed_bps
-        }
-
-        const short_anchor = [ ...metrics.samples ].reverse()
-            .find( sample => time - sample.time >= SHORT_SPEED_WINDOW_MS )
-            || metrics.samples[ 0 ]
-        const short_elapsed_ms = time - short_anchor.time
-        const short_bytes = bytes_loaded - short_anchor.bytes
-        const short_bps = short_elapsed_ms >= 2_000 && short_bytes > 0
-            ? short_bytes / short_elapsed_ms * 1000
-            : null
-
-        metrics.is_slowed = Boolean(
-            metrics.display_bps
-            && short_bps
-            && time - metrics.start_time >= 20_000
-            && bytes_total > bytes_loaded
-            && short_bps < metrics.display_bps * 0.4
-        )
-
-        if( bytes_total > bytes_loaded && metrics.display_bps > 0 ) {
-            const raw_eta_seconds = ( bytes_total - bytes_loaded ) / metrics.display_bps
-            if( metrics.eta_seconds === null ) {
-                metrics.eta_seconds = raw_eta_seconds
-            } else {
-                const bounded_eta = Math.max(
-                    metrics.eta_seconds * 0.7,
-                    Math.min( raw_eta_seconds, metrics.eta_seconds * 1.4 ),
-                )
-                metrics.eta_seconds = metrics.eta_seconds * ( 1 - ETA_SMOOTHING ) + bounded_eta * ETA_SMOOTHING
-            }
-        } else if( bytes_total > 0 && bytes_loaded >= bytes_total ) {
-            metrics.eta_seconds = 0
-            metrics.is_slowed = false
-        }
-
-    }, [ model?.file_size_bytes ] )
+    }, [] )
 
     useEffect( () => {
 
@@ -293,6 +251,8 @@ export default function DownloadPage() {
         // Check if already cached (also validates the source repo/file match)
         is_model_cached( model.id, model.hugging_face_repo, model.file_name ).then( cached => {
 
+            if( cancelled_ref.current ) return
+
             if( cached ) {
                 log.info( `[download] Model already cached, skipping` )
                 on_complete()
@@ -302,21 +262,20 @@ export default function DownloadPage() {
             // Start download
             const controller = new AbortController()
             abort_ref.current = controller
-            speed_ref.current = {
-                start_time: Date.now(),
-                samples: [],
-                display_bps: null,
-                eta_seconds: null,
-                is_slowed: false,
-            }
+            eta_ref.current = create_download_eta_estimator()
+            let is_first_progress = true
 
             // Throttled progress handler — updates state at most every 250ms
             const on_progress = ( prog ) => {
 
-                // Always track speed samples in the ref (no re-render)
-                if( prog.bytes_loaded > 0 ) {
-                    update_speed_metrics( prog )
-                }
+                if( controller.signal.aborted ) return
+
+                // A positive first byte count means OPFS held a resumable prefix
+                if( is_first_progress && prog.bytes_loaded > 0 ) set_resumed_from( prog.bytes_loaded )
+                if( prog.bytes_loaded > 0 ) is_first_progress = false
+
+                // Always track throughput in the ref (no re-render)
+                eta_ref.current.update( prog )
 
                 // Stash latest progress, only flush to state at throttled intervals
                 pending_progress_ref.current = prog
@@ -334,64 +293,79 @@ export default function DownloadPage() {
 
             download_model( model, on_progress, controller.signal, { storage_mode } )
                 .then( () => {
+                    if( controller.signal.aborted ) return
                     // Flush final progress so the bar shows 100% before transitioning
                     if( pending_progress_ref.current ) set_progress( pending_progress_ref.current )
                     on_complete()
                 } )
                 .catch( err => {
-                    if( err.name !== `AbortError` ) {
+                    if( err.name !== `AbortError` && !controller.signal.aborted ) {
                         set_error( err.message )
                     }
                 } )
 
+        } ).catch( err => {
+            if( !cancelled_ref.current ) set_error( err.message )
         } )
 
-        return () => {
-            if( abort_ref.current ) abort_ref.current.abort()
-            if( raf_ref.current ) cancelAnimationFrame( raf_ref.current )
-        }
-
-    }, [ model, navigate, on_complete, storage_mode, update_speed_metrics ] )
+    }, [ model, navigate, on_complete, storage_mode ] )
 
     const handle_cancel = () => {
         log.info( `[download] Aborted by user` )
-        if( abort_ref.current ) abort_ref.current.abort()
+        cancelled_ref.current = true
+        abort_ref.current?.abort()
         navigate( `/select-model`, { replace: true } )
-    }
-
-    // Calculate ETA from speed samples
-    const get_eta = () => {
-        const remaining_seconds = speed_ref.current.eta_seconds
-        if( !Number.isFinite( remaining_seconds ) || remaining_seconds <= 0 || progress.bytes_total <= 0 ) return ``
-
-        return t( `common:eta_remaining`, {
-            duration: format_download_duration( remaining_seconds, t ),
-        } )
-    }
-
-    const get_speed_feedback = () => {
-        const { display_bps, is_slowed } = speed_ref.current
-        if( is_slowed ) return t( `download_speed_limited` )
-        if( display_bps ) {
-            return t( `download_speed`, {
-                speed: format_file_size( display_bps ),
-            } )
-        }
-        if( progress.bytes_loaded > 0 && progress.bytes_total > 0 ) return t( `download_eta_stabilizing` )
-        return ``
     }
 
     if( !model ) return null
 
+    const eta_state = eta_ref.current.snapshot()
+
+    // Remaining time from observed throughput, shown once beside the bar
+    const get_eta = () => {
+        const { eta_seconds } = eta_state
+        if( !Number.isFinite( eta_seconds ) || eta_seconds <= 0 || progress.bytes_total <= 0 ) return ``
+
+        return t( `common:eta_remaining`, {
+            duration: format_download_duration( eta_seconds, t ),
+        } )
+    }
+
+    const get_speed_feedback = () => {
+        const { bps, is_slowed } = eta_state
+        if( is_slowed ) return t( `download_speed_limited` )
+        if( bps ) return t( `download_speed`, { speed: format_file_size( bps ) } )
+        if( resumed_from > 0 ) return t( `download_resuming`, { size: format_file_size( resumed_from ) } )
+        return ``
+    }
+
     const percent = Math.round( progress.progress * 100 )
     const eta = get_eta()
     const speed_feedback = get_speed_feedback()
+    const show_stabilizing = !eta && progress.bytes_loaded > 0 && progress.progress < 1
 
     // Show success state briefly
-    if( is_complete ) {
+    if( phase === `complete` ) {
         return <Container>
             <SuccessIcon><CheckCircle size={ 48 } /></SuccessIcon>
             <Title style={ { marginTop: `1rem` } }>{ t( 'ready_to_chat' ) }</Title>
+        </Container>
+    }
+
+    // Weights are on disk; now they are read into memory
+    if( phase === `loading` ) {
+        return <Container data-testid="download-loading-model">
+            <StepIndicator data-testid="step-indicator">
+                <StepDot $done />
+                <StepLine $done />
+                <StepDot $done />
+                <StepLine $done />
+                <StepDot $done />
+            </StepIndicator>
+            <Title>{ t( 'preparing_your_model' ) }</Title>
+            <StatusMessage>{ t( 'preparing_your_model_detail', { name: model.name } ) }</StatusMessage>
+            <LoadingSpinner aria-hidden="true"><LoaderCircle size={ 28 } /></LoadingSpinner>
+            <ModelLoadStage />
         </Container>
     }
 
@@ -421,14 +395,14 @@ export default function DownloadPage() {
             </ProgressBar>
             <ProgressDetails>
                 <span>{ format_file_size( progress.bytes_loaded ) } / { format_file_size( progress.bytes_total ) }</span>
-                { eta ? <span>{ eta }</span> : progress.bytes_loaded > 0 && <span>{ t( `download_eta_stabilizing` ) }</span> }
+                <span data-testid="download-eta">{ eta || ( show_stabilizing ? t( `download_eta_stabilizing` ) : `` ) }</span>
             </ProgressDetails>
         </ProgressContainer>
 
         { /* Always render to reserve space and avoid layout shift */ }
-        <ETAText>{ speed_feedback }</ETAText>
+        <ETAText data-testid="download-speed">{ speed_feedback }</ETAText>
 
-        <CancelButton onClick={ handle_cancel }>
+        <CancelButton onClick={ handle_cancel } data-testid="cancel-download-btn">
             <X size={ 16 } />
             { t( 'cancel_download' ) }
         </CancelButton>
