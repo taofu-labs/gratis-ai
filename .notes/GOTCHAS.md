@@ -318,3 +318,16 @@ as a stop; Emscripten crashes also say "Aborted()".
 disappears. Seeding the IndexedDB `models` store (`gratisai-db`) is enough to exercise the
 "On this device" list (`cached-model-{id}`, `use-cached-{id}`) without a real download.
 `tests/playwright.config.js` reuses any server on :5173 — on shared machines use a private port.
+
+## mentie dev logging keys off the URL (2026-10-20)
+
+mentie enables `log.info` only when the page URL contains `localhost` (or `?loglevel=`). Tests that assert
+on `[wllama] Loaded …` console lines must use a `localhost` base URL, not `127.0.0.1`. Playwright binds Vite
+to 127.0.0.1 (it may otherwise pick only `[::1]`) while keeping `baseURL: http://localhost:5173`.
+
+## Stopped wllama requests and worker teardown (2026-10-20)
+
+wllama64 `exit()` terminates the worker without settling queued calls. Any promise chained on an in-flight
+request (the provider's `_settling`) must be reset on dispose, or the next load waits forever.
+Interrupted-download prefixes have no metadata; `sweep_partial_downloads` removes all but the active one.
+Two tabs downloading different models at once can therefore sweep each other's prefix (rare; accepted).

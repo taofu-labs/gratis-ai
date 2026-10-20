@@ -541,3 +541,13 @@
 - Prefill shows "Reading your message… N%"; stats use `timings.predicted_*` and show TTFT.
 - ChatPage: partial replies saved every 2 s + `pagehide` as `stats.interrupted`; `?q=` queued visibly while model loads; history readable during load; welcome unmounts; edit/regenerate rewrite stored history.
 - `tests/e2e/abort_generation.spec.js` helper is stale (expects `gratisAI` heading — local `.env` sets `Gratis`; and `change-model-toggle` no longer exists on ModelSelectPage). Drove the flows with a scratch Playwright script instead.
+
+## 2026-10-20 — Overhaul: runtime, speed, UX
+
+- wllama64 fork synced to upstream 3.8.1 and released as 1.1.0 (daily sync was blocked on an infra review gate).
+- Measured CPU tk/s in clean CI: flash attention + q8_0 KV ships for CPU loads (+22-66% decode). Added
+  `scripts/bench` + `browser-bench.yml`. Discrete GPUs no longer capped by WASM RAM slack.
+- Chat stopped re-rendering every bubble per token; updates coalesce per frame.
+- UX audit fixes: picker fallback + cached models, real cancel/resume downloads, honest ETA, load stages,
+  instant Stop, prompt progress, partial-reply persistence, accessible settings dialog, contrast, touch targets.
+- Toolchain majors (Vite 8 set, Electron 44). Granite 4.0 H hybrids added and browser-verified.
