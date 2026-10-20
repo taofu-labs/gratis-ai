@@ -350,3 +350,13 @@ huggingface.co (API, resolve, and CDN redirects). In the browser that surfaces a
 every model download on Workers deployments. `index.html` sets `<meta name="referrer" content="no-referrer">`;
 a unit test in `deployment_headers.test.js` guards it. Chrome also force-upgrades `.dev` hosts to HTTPS (HSTS
 preload), so a local `*.workers.dev` host-resolver simulation cannot work; verify on the real deployment.
+
+## Primary buttons: use `atoms/Button`, ink is `accent_ink`
+White on `#FF5A1F` is ~3:1 (fails normal text). Primary fills use `theme.colors.accent_ink` (~6.9:1).
+New CTAs should use `atoms/Button` (`$variant="secondary"` for outline, `$sheen` for the next pending
+action) rather than re-declaring pill styles. Its invisible 44px hit area is `::before`; don't add
+`overflow: hidden` to it. Dev runs under StrictMode, so mount effects fire twice: give toasts an `id`.
+
+## Storage prefix is `gratis:` not `gratisai:`
+`.env` sets `VITE_APP_NAME=Gratis`, so localStorage/IDB keys are `gratis:settings:*` / `gratis-db`.
+Scripts seeding state with the code default (`gratisai`) silently do nothing.

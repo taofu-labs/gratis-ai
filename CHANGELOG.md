@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.45.0] - 2026-10-20
+
+### Changed
+- Shared small pill Button; dark ink on orange for contrast; 44px hit areas (854234e)
+- Soft focus halo, finer 1.5 Lucide strokes, settings tab underline (854234e)
+- Calmer model cards and sidebar rows; error banner wraps on phones (854234e)
+
+### Fixed
+- Model-load error toast no longer stacks; toasts no longer cover the input (854234e)
+
 ## [0.44.0] - 2026-10-20
 
 ### Added
