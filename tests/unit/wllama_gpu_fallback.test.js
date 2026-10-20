@@ -53,6 +53,7 @@ vi.mock( `wllama64`, () => {
             this.source = source
             this.load_options = options
             if( mocks.load_delay_ms ) await new Promise( resolve => setTimeout( resolve, mocks.load_delay_ms ) )
+            if( mocks.load_hangs ) await new Promise( () => {} )
             if( options.n_gpu_layers > 0 && mocks.fail_gpu ) throw new Error( `WebGPU backend failed` )
             if( options.n_gpu_layers === 0 && mocks.fail_cpu ) {
                 throw new WllamaError( `Model failed`, `load_error` )
@@ -132,6 +133,7 @@ describe( `Wllama WebGPU fallback`, () => {
         mocks.fail_cpu = false
         mocks.fail_quantized_kv = false
         mocks.load_delay_ms = 0
+        mocks.load_hangs = false
         mocks.fail_gpu_inference = false
         mocks.fail_benign_inference = false
         mocks.probed = true
@@ -342,6 +344,36 @@ describe( `Wllama WebGPU fallback`, () => {
         await provider.unload_model()
 
         await expect( loading ).rejects.toThrow( /interrupted/i )
+    } )
+
+    test( `an unload during the f16 retry window does not resurrect the model`, async () => {
+        mocks.probed = false
+        mocks.fail_quantized_kv = true
+        const provider = new WllamaProvider()
+
+        const loading = provider.load_model( `smollm2-360m-q4km` )
+        // The q8_0 attempt fails at once; unload inside the 50 ms retry gap
+        await new Promise( resolve => setTimeout( resolve, 20 ) )
+        await provider.unload_model()
+
+        await expect( loading ).rejects.toThrow( /interrupted/i )
+        expect( provider.is_ready() ).toBe( false )
+    } )
+
+    test( `an unload releases a load whose worker never answers`, async () => {
+        mocks.probed = false
+        mocks.load_hangs = true
+        const provider = new WllamaProvider()
+
+        const loading = provider.load_model( `smollm2-360m-q4km` )
+        await new Promise( resolve => setTimeout( resolve, 20 ) )
+        await provider.unload_model()
+        await expect( loading ).rejects.toThrow( /interrupted/i )
+
+        // The queue is free: the next load runs immediately
+        mocks.load_hangs = false
+        await provider.load_model( `smollm2-360m-q4km` )
+        expect( provider.is_ready() ).toBe( true )
     } )
 
     test( `retries CPU loads with f16 KV when the quantized cache is rejected`, async () => {

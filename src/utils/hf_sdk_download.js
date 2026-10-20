@@ -231,6 +231,10 @@ export const sweep_partial_downloads = async ( {
         // ifAvailable: a held lock means a live download, possibly in another tab
         await locks.request( lock_name( cache_key ), { ifAvailable: true }, async lock => {
             if( !lock ) return log.debug( `[download] Skipping sweep of active download ${ cache_key }` )
+
+            // Another tab may have finished it since the key snapshot; a
+            // completed download has no record left and must not be touched
+            if( !read_resume_record( storage, cache_key ) ) return
             try {
                 await storage_backend.delete( cache_key )
                 write_resume_record( storage, cache_key, null )

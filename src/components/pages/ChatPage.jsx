@@ -22,6 +22,15 @@ import { useTranslation } from 'react-i18next'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 import { storage_key, EVENTS, DISPLAY_NAME, APP_VERSION } from '../../utils/branding'
 
+// stream_reply appends this banner to a failed reply; error messages may span lines
+const ERROR_BANNER = `**Error:** `
+const strip_error_banner = ( content = `` ) => {
+    const start = content.lastIndexOf( ERROR_BANNER )
+    if( start === 0 ) return ``
+    if( start < 0 || content.slice( start - 2, start ) !== `\n\n` ) return content
+    return content.slice( 0, start - 2 )
+}
+
 // How often a streaming reply is written to IndexedDB, so a closed tab keeps it
 const PARTIAL_SAVE_INTERVAL_MS = 2_000
 
@@ -186,6 +195,7 @@ export default function ChatPage() {
     const replies_settled_ref = useRef( Promise.resolve() )
     // An edit or regenerate is waiting on storage; blocks a second one
     const rewriting_ref = useRef( false )
+    const [ is_rewriting, set_is_rewriting ] = useState( false )
 
     // Bumped whenever the visible chat is swapped out (New Chat, navigation,
     // delete). Async flows capture it up front and drop their work once stale.
@@ -439,7 +449,9 @@ export default function ChatPage() {
         // Strict templates (Gemma, Mistral) demand alternating roles, so turns
         // left adjacent by a dropped empty reply are merged
         const history = history_msgs
-            .map( ( { role, content, model_content } ) => ( { role, content: model_content ?? content } ) )
+            // The model only ever sees what it said, never our error banner,
+            // which may come back from storage inside the content itself
+            .map( ( { role, content } ) => ( { role, content: role === `assistant` ? strip_error_banner( content ) : content } ) )
             .filter( ( { content } ) => content )
             .reduce( ( turns, { role, content } ) => {
                 const previous = turns.at( -1 )
@@ -487,8 +499,7 @@ export default function ChatPage() {
                 await save_partial_reply( partial )
                 partial.done = true
                 const error_content = [ partial.text, `**Error:** ${ err.message }` ].filter( Boolean ).join( `\n\n` )
-                // The model only ever sees what it said, never our error banner
-                update_reply( { content: error_content, is_error: true, model_content: partial.text } )
+                update_reply( { content: error_content, is_error: true } )
 
             } finally {
                 if( partial_reply_ref.current === partial ) partial_reply_ref.current = null
@@ -506,19 +517,30 @@ export default function ChatPage() {
      * stopped reply's late final save cannot re-insert what was just removed.
      * @param {Function} is_current - Epoch check; a swapped-out chat skips the write
      * @param {Array} msgs - The history to keep
-     * @returns {Promise<boolean>} Whether the caller may continue
+     * @param {Function} next - Starts the replacement reply once storage is rewritten
+     * @returns {Promise<void>}
      */
-    const rewrite_history = useCallback( async ( is_current, msgs ) => {
+    const rewrite_history = useCallback( async ( is_current, msgs, next ) => {
 
+        // Held until the replacement reply has started, so a user send can
+        // never land in history that is about to be rewritten
         rewriting_ref.current = true
+        set_is_rewriting( true )
+        const release = () => {
+            rewriting_ref.current = false
+            set_is_rewriting( false )
+        }
 
         try {
             await replies_settled_ref.current
-            if( !is_current() ) return false
+            if( !is_current() ) return
             if( current_conversation_id ) await replace_messages( current_conversation_id, msgs )
-            return is_current()
+            if( !is_current() ) return
+            const run = next()
+            release()
+            await run
         } finally {
-            rewriting_ref.current = false
+            release()
         }
 
     }, [ replace_messages, current_conversation_id ] )
@@ -537,8 +559,7 @@ export default function ChatPage() {
         set_messages( history_msgs )
 
         // Drop the old reply from storage first, so a reload mid-stream never shows both
-        if( !await rewrite_history( is_current, history_msgs ) ) return
-        await stream_reply( current_conversation_id, history_msgs )
+        await rewrite_history( is_current, history_msgs, () => stream_reply( current_conversation_id, history_msgs ) )
 
     }, [ stream_reply, rewrite_history, current_conversation_id, has_model ] )
 
@@ -627,6 +648,12 @@ export default function ChatPage() {
         await stream_reply( conv_id, [ ...base_messages, user_msg ] )
 
     }, [ stream_reply, current_conversation_id, create_conversation, save_message, navigate, build_status_response ] )
+
+    // User sends wait out a pending history rewrite; internal resends bypass this
+    const handle_send = useCallback( text => {
+        if( rewriting_ref.current ) return
+        return send_message( text )
+    }, [ send_message ] )
 
     // Process query parameters (?q= and ?model=)
     useEffect( () => {
@@ -748,8 +775,7 @@ export default function ChatPage() {
         const is_current = capture_epoch()
         const truncated = messages_ref.current.slice( 0, index )
         set_messages( truncated )
-        if( !await rewrite_history( is_current, truncated ) ) return
-        await send_message( new_text, truncated )
+        await rewrite_history( is_current, truncated, () => send_message( new_text, truncated ) )
 
     }, [ send_message, rewrite_history, has_model ] )
 
@@ -980,10 +1006,10 @@ export default function ChatPage() {
 
                 <ChatInput
                     ref={ chat_input_ref }
-                    on_send={ send_message }
+                    on_send={ handle_send }
                     on_stop={ handle_stop }
                     is_generating={ is_generating }
-                    disabled={ !has_model }
+                    disabled={ !has_model || is_rewriting }
                     auto_focus
                     on_mic_click={ handle_mic_click }
                     on_mic_stop={ handle_mic_stop }

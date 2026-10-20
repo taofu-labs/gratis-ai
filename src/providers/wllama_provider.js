@@ -65,15 +65,6 @@ const deferred = () => {
     return { promise, resolve }
 }
 
-/** Reject with `message` if `promise` has not settled within `timeout_ms`. */
-const wait_or_throw = ( promise, timeout_ms, message ) => {
-    let timeout_id
-    const timeout = new Promise( ( _, reject ) => {
-        timeout_id = setTimeout( () => reject( new Error( message ) ), timeout_ms )
-    } )
-    return Promise.race( [ promise, timeout ] ).finally( () => clearTimeout( timeout_id ) )
-}
-
 /** Allocation failures; a retry with larger buffers cannot succeed. */
 const is_memory_error = error => error instanceof RangeError
     || /memory|out of bounds|allocation failed|cannot allocate/i.test( error?.message || `` )
@@ -172,6 +163,14 @@ export default class WllamaProvider {
         this._runtime_epoch = 0
         this._epoch_ended = deferred()
         this._load_chain = Promise.resolve()
+
+        // Bumped by unload_model(); a load from an older generation must stop
+        this._load_generation = 0
+    }
+
+    /** Throw if an unload happened since `generation` started loading. */
+    _assert_load_current( generation ) {
+        if( this._load_generation !== generation ) throw new Error( `Model load was interrupted. Try again.` )
     }
 
     /** Release waiters on the disposed worker and start a fresh epoch. */
@@ -194,14 +193,18 @@ export default class WllamaProvider {
 
         // One load at a time: a second load would dispose the runtime the
         // first is still initialising
-        const run = this._load_chain.then( () => this._load_model_now( model_id, on_progress ) )
+        const generation = this._load_generation
+        const run = this._load_chain.then( () => {
+            this._assert_load_current( generation )
+            return this._load_model_now( model_id, on_progress, generation )
+        } )
         this._load_chain = run.catch( () => {} )
         return run
 
     }
 
     /** Load body; callers go through load_model() so loads never interleave. */
-    async _load_model_now( model_id, on_progress ) {
+    async _load_model_now( model_id, on_progress, generation ) {
 
         if( this._loaded_model_id === model_id && this._wllama?.isModelLoaded() ) {
             log.info( `[wllama] Model ${ model_id } already loaded, skipping reload` )
@@ -209,7 +212,7 @@ export default class WllamaProvider {
             return
         }
 
-        if( this._wllama ) await this.unload_model()
+        if( this._wllama ) await this._release_model()
         await this._settling
 
         const db = await get_db()
@@ -373,10 +376,11 @@ export default class WllamaProvider {
         log.info( `[wllama] Loaded ${ model_id } (${ file_size_mb } MB, ${ runtime_name }, ${ backend_name }, ${ n_threads } threads, ${ n_ctx } ctx)` )
 
         // An unload during the load disposed the runtime it just created
+        this._assert_load_current( generation )
         if( !this._wllama?.isModelLoaded() ) throw new Error( `Model load was interrupted. Try again.` )
 
         if( !this._wllama.getChatTemplate() ) {
-            await this.unload_model()
+            await this._release_model()
             throw new Error( `This GGUF has no embedded chat template. Choose an instruct/chat model instead of a base model.` )
         }
 
@@ -537,7 +541,7 @@ export default class WllamaProvider {
             if( this._abort_controller === abort_controller ) this._abort_controller = null
             // A request from a disposed runtime must not block its replacement
             if( signal.aborted && this._runtime_epoch === epoch ) {
-                const drained = Promise.race( [ this._drain( pending_stream, iterator ), epoch_ended ] )
+                const drained = this._drain( pending_stream, iterator, epoch, epoch_ended )
                 this._settling = Promise.all( [ previous_request, drained ] )
             }
         }
@@ -551,7 +555,7 @@ export default class WllamaProvider {
      * @param {AsyncIterator|null} iterator
      * @returns {Promise<void>}
      */
-    async _drain( pending_stream, iterator ) {
+    async _drain( pending_stream, iterator, epoch, epoch_ended ) {
 
         const started_at = performance.now()
         const drain = async () => {
@@ -559,15 +563,30 @@ export default class WllamaProvider {
             while( stream_iterator && !( await stream_iterator.next() ).done ) { /* discard */ }
         }
 
+        // Disposal ends the wait at once; a GPU batch also gets a deadline
+        const waits = [ drain(), epoch_ended ]
+        let timeout_id
+        if( this._gpu_layers > 0 ) waits.push( new Promise( ( _, reject ) => {
+            timeout_id = setTimeout( () => reject( new Error( `GPU inference stopped responding` ) ), GPU_TOKEN_TIMEOUT_MS )
+        } ) )
+
         try {
-            // A wedged GPU never returns its batch; past the deadline, recover on CPU
-            if( this._gpu_layers > 0 ) await wait_or_throw( drain(), GPU_TOKEN_TIMEOUT_MS, `GPU inference stopped responding` )
-            else await drain()
+            await Promise.race( waits )
         } catch ( error ) {
-            // The expected AbortError, or a dead worker the next call will report
-            if( /gpu inference stopped responding/i.test( error?.message || `` ) ) {
-                await this._reload_on_cpu( error ).catch( reload_error => log.warn( `[wllama] CPU recovery after a wedged stop failed:`, reload_error ) )
+
+            // A wedged GPU never returns its batch. Retire only that runtime:
+            // the next load starts fresh on CPU through the normal load path.
+            if( /gpu inference stopped responding/i.test( error?.message || `` ) && this._runtime_epoch === epoch ) {
+                log.warn( `[wllama] Stopped GPU request never returned; disposing its runtime` )
+                this._gpu_disabled = true
+                this._force_dispose_runtime( this._wllama, error )
+                this._loaded_model_id = null
             }
+
+            // Otherwise the expected AbortError, or a dead worker the next call reports
+
+        } finally {
+            clearTimeout( timeout_id )
         }
 
         log.debug( `[wllama] Stopped request released the worker after ${ ( performance.now() - started_at ).toFixed( 0 ) }ms` )
@@ -586,6 +605,12 @@ export default class WllamaProvider {
      * @returns {Promise<void>}
      */
     async unload_model() {
+        this._load_generation++
+        await this._release_model()
+    }
+
+    /** Dispose the runtime and forget the model, without cancelling queued loads. */
+    async _release_model() {
         if( this._wllama ) log.info( `[wllama] Unloading model ${ this._loaded_model_id }` )
         await this._dispose_runtime()
         this._loaded_model_id = null
@@ -677,10 +702,15 @@ export default class WllamaProvider {
         }, 10 )
 
         try {
+            // exit() never settles the pending load; disposal must end it too
+            const disposed = this._epoch_ended.promise.then( () => {
+                throw new Error( `Model load was interrupted. Try again.` )
+            } )
             await Promise.race( [
                 runtime.loadModel( source, load_options ),
                 worker_failure,
                 timeout,
+                disposed,
             ] )
         } catch ( error ) {
             this._force_dispose_runtime( runtime, error )
@@ -705,6 +735,7 @@ export default class WllamaProvider {
     async _load_cpu_runtime( source, load_options, model_size ) {
 
         const fast_options = cpu_load_options( load_options )
+        const generation = this._load_generation
 
         try {
             return await this._load_runtime_attempt( source, fast_options, model_size )
@@ -717,6 +748,7 @@ export default class WllamaProvider {
 
             log.warn( `[wllama] q8_0 KV load failed, retrying with f16 KV:`, error?.message )
             await new Promise( resolve => setTimeout( resolve, 50 ) )
+            this._assert_load_current( generation )
             return this._load_runtime_attempt( source, {
                 ...fast_options,
                 cache_type_k: `f16`,
