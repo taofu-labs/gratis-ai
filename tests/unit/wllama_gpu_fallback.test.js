@@ -56,6 +56,9 @@ vi.mock( `wllama64`, () => {
             if( options.n_gpu_layers === 0 && mocks.fail_cpu ) {
                 throw new WllamaError( `Model failed`, `load_error` )
             }
+            if( options.cache_type_k === `q8_0` && mocks.fail_quantized_kv ) {
+                throw new WllamaError( `Model failed`, `load_error` )
+            }
             this.loaded = true
         }
         isModelLoaded() {
@@ -126,6 +129,7 @@ describe( `Wllama WebGPU fallback`, () => {
         mocks.instances.length = 0
         mocks.fail_gpu = false
         mocks.fail_cpu = false
+        mocks.fail_quantized_kv = false
         mocks.fail_gpu_inference = false
         mocks.fail_benign_inference = false
         mocks.probed = true
@@ -305,7 +309,22 @@ describe( `Wllama WebGPU fallback`, () => {
 
         await expect( provider.load_model( `smollm2-360m-q4km` ) )
             .rejects.toThrow( `could not be loaded by the browser runtime` )
-        expect( mocks.instances ).toHaveLength( 2 )
+
+        // GPU, then CPU with q8_0 KV, then CPU with f16 KV
+        expect( mocks.instances ).toHaveLength( 3 )
+        expect( mocks.instances[ 2 ].load_options.cache_type_k ).toBe( `f16` )
+    } )
+
+    test( `retries CPU loads with f16 KV when the quantized cache is rejected`, async () => {
+        mocks.fail_gpu = true
+        mocks.fail_quantized_kv = true
+        const provider = new WllamaProvider()
+
+        await provider.load_model( `smollm2-360m-q4km` )
+
+        const cpu_attempts = mocks.instances.slice( 1 ).map( ( { load_options } ) => load_options.cache_type_k )
+        expect( cpu_attempts ).toEqual( [ `q8_0`, `f16` ] )
+        expect( provider.is_ready() ).toBe( true )
     } )
 
     test( `reloads on CPU and retries an inference that loses WebGPU`, async () => {

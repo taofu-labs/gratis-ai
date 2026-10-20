@@ -153,6 +153,45 @@ describe( `wllama provider stop`, () => {
 
     } )
 
+    test( `a request queued behind a disposed worker never blocks the next runtime`, async () => {
+
+        const provider = new WllamaProvider()
+        const stuck_runtime = () => ( {
+            isModelLoaded: () => true,
+            getModelMetadata: () => ( { meta: {} } ),
+            exit: async () => {},
+            createChatCompletion: async () => ( async function* () {
+                await sleep( 10 )
+                yield { prompt_progress: { total: 1, processed: 0 } }
+                await new Promise( () => {} )
+            } )(),
+        } )
+        provider._wllama = stuck_runtime()
+
+        // A is stopped mid-batch and keeps draining forever
+        const request_a = provider.chat_stream( [ { role: `user`, content: `a` } ] )
+        await request_a.next()
+        const pending_a = request_a.next()
+        provider.abort()
+        await expect( pending_a ).rejects.toMatchObject( { name: `AbortError` } )
+
+        // B queues behind A, then the model is switched out from under both
+        const request_b = provider.chat_stream( [ { role: `user`, content: `b` } ] )
+        const pending_b = request_b.next()
+        await sleep( 10 )
+        await provider.unload_model()
+        provider._wllama = stuck_runtime()
+        provider.abort()
+        await pending_b.catch( () => {} )
+
+        const outcome = await Promise.race( [
+            provider._settling.then( () => `settled` ),
+            sleep( 300 ).then( () => `hung` ),
+        ] )
+        expect( outcome ).toBe( `settled` )
+
+    } )
+
 } )
 
 describe( `llm store stop`, () => {

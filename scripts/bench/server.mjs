@@ -1,12 +1,13 @@
 /**
  * Minimal static server for the browser inference benchmark.
  * Serves COOP/COEP so shared Memory64 memory and pthreads are available.
+ * Loopback only, and requests cannot escape their mounted directory.
  *
  * Usage: node server.mjs <port> <url_prefix>=<dir> [...]
  */
 import { createServer } from 'node:http'
 import { createReadStream, statSync } from 'node:fs'
-import { extname, join } from 'node:path'
+import { extname, resolve, sep } from 'node:path'
 
 const [ , , port, ...mounts ] = process.argv
 const routes = Object.fromEntries( mounts.map( mount => mount.split( `=` ) ) )
@@ -25,7 +26,10 @@ createServer( ( request, response ) => {
     const prefix = prefixes.find( candidate => path.startsWith( candidate ) )
     if( !prefix ) return response.writeHead( 404 ).end()
 
-    const file = join( routes[ prefix ], path.slice( prefix.length ) || `index.html` )
+    // Resolve inside the mount only: an encoded ../ must not escape it
+    const root = resolve( routes[ prefix ] )
+    const file = resolve( root, `.${ sep }${ path.slice( prefix.length ) || `index.html` }` )
+    if( !file.startsWith( `${ root }${ sep }` ) ) return response.writeHead( 403 ).end()
 
     try {
         const { size } = statSync( file )
@@ -52,4 +56,4 @@ createServer( ( request, response ) => {
         response.writeHead( 404 ).end()
     }
 
-} ).listen( Number( port ) )
+} ).listen( Number( port ), `127.0.0.1` )

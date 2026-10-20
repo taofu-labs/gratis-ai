@@ -56,6 +56,28 @@ const cpu_load_options = load_options => ( {
     n_ubatch: Math.min( load_options.n_batch, CPU_PROMPT_BATCH ),
 } )
 
+/** Promise with external resolve. */
+const deferred = () => {
+    let resolve
+    const promise = new Promise( done => {
+        resolve = done
+    } )
+    return { promise, resolve }
+}
+
+/** Reject with `message` if `promise` has not settled within `timeout_ms`. */
+const wait_or_throw = ( promise, timeout_ms, message ) => {
+    let timeout_id
+    const timeout = new Promise( ( _, reject ) => {
+        timeout_id = setTimeout( () => reject( new Error( message ) ), timeout_ms )
+    } )
+    return Promise.race( [ promise, timeout ] ).finally( () => clearTimeout( timeout_id ) )
+}
+
+/** Allocation failures; a retry with larger buffers cannot succeed. */
+const is_memory_error = error => error instanceof RangeError
+    || /memory|out of bounds|allocation failed|cannot allocate/i.test( error?.message || `` )
+
 /** Build the error a stopped generation rejects with. */
 const abort_error = () => Object.assign( new Error( `Generation stopped` ), { name: `AbortError` } )
 
@@ -144,6 +166,19 @@ export default class WllamaProvider {
 
         // Resolves once a stopped request has really left the worker
         this._settling = Promise.resolve()
+
+        // Each runtime is one epoch. Disposal ends it, releasing everything
+        // that waited on a worker that will never answer again.
+        this._runtime_epoch = 0
+        this._epoch_ended = deferred()
+    }
+
+    /** Release waiters on the disposed worker and start a fresh epoch. */
+    _end_runtime_epoch() {
+        this._runtime_epoch++
+        this._settling = Promise.resolve()
+        this._epoch_ended.resolve()
+        this._epoch_ended = deferred()
     }
 
     /**
@@ -310,7 +345,7 @@ export default class WllamaProvider {
                 : `Loading model into memory...` } )
 
             try {
-                const loaded = await this._load_runtime_attempt( source, cpu_load_options( load_options ), model_size )
+                const loaded = await this._load_cpu_runtime( source, load_options, model_size )
                 runtime_name = loaded.compat ? `wasm32 compatibility` : `Memory64`
                 this._gpu_layers = 0
             } catch ( load_error ) {
@@ -405,7 +440,9 @@ export default class WllamaProvider {
 
         const abort_controller = new AbortController()
         const { signal } = abort_controller
-        const previous_request = this._settling
+        const epoch = this._runtime_epoch
+        const epoch_ended = this._epoch_ended.promise
+        const previous_request = Promise.race( [ this._settling, epoch_ended ] )
         this._abort_controller = abort_controller
 
         const started_at = performance.now()
@@ -483,7 +520,11 @@ export default class WllamaProvider {
 
         } finally {
             if( this._abort_controller === abort_controller ) this._abort_controller = null
-            if( signal.aborted ) this._settling = Promise.all( [ previous_request, this._drain( pending_stream, iterator ) ] )
+            // A request from a disposed runtime must not block its replacement
+            if( signal.aborted && this._runtime_epoch === epoch ) {
+                const drained = Promise.race( [ this._drain( pending_stream, iterator ), epoch_ended ] )
+                this._settling = Promise.all( [ previous_request, drained ] )
+            }
         }
 
     }
@@ -498,12 +539,20 @@ export default class WllamaProvider {
     async _drain( pending_stream, iterator ) {
 
         const started_at = performance.now()
-
-        try {
+        const drain = async () => {
             const stream_iterator = iterator || ( await pending_stream )?.[ Symbol.asyncIterator ]()
             while( stream_iterator && !( await stream_iterator.next() ).done ) { /* discard */ }
-        } catch {
+        }
+
+        try {
+            // A wedged GPU never returns its batch; past the deadline, recover on CPU
+            if( this._gpu_layers > 0 ) await wait_or_throw( drain(), GPU_TOKEN_TIMEOUT_MS, `GPU inference stopped responding` )
+            else await drain()
+        } catch ( error ) {
             // The expected AbortError, or a dead worker the next call will report
+            if( /gpu inference stopped responding/i.test( error?.message || `` ) ) {
+                await this._reload_on_cpu( error ).catch( reload_error => log.warn( `[wllama] CPU recovery after a wedged stop failed:`, reload_error ) )
+            }
         }
 
         log.debug( `[wllama] Stopped request released the worker after ${ ( performance.now() - started_at ).toFixed( 0 ) }ms` )
@@ -630,6 +679,37 @@ export default class WllamaProvider {
 
     }
 
+    /**
+     * Load on CPU with the fast q8_0 KV cache, retrying once with f16. Quantized
+     * KV needs head sizes divisible by 32, which some custom GGUFs lack.
+     * @param {Blob[]|import('wllama64').Model} source
+     * @param {Object} load_options
+     * @param {number} model_size
+     * @returns {Promise<{compat: boolean}>}
+     */
+    async _load_cpu_runtime( source, load_options, model_size ) {
+
+        const fast_options = cpu_load_options( load_options )
+
+        try {
+            return await this._load_runtime_attempt( source, fast_options, model_size )
+        } catch ( error ) {
+
+            // More cache bytes cannot cure an out-of-memory failure
+            if( is_memory_error( error ) ) throw error
+
+            log.warn( `[wllama] q8_0 KV load failed, retrying with f16 KV:`, error?.message )
+            await new Promise( resolve => setTimeout( resolve, 50 ) )
+            return this._load_runtime_attempt( source, {
+                ...fast_options,
+                cache_type_k: `f16`,
+                cache_type_v: `f16`,
+            }, model_size )
+
+        }
+
+    }
+
     /** Reject pinned runtime tasks and terminate a worker that stopped replying. */
     _force_dispose_runtime( runtime, error ) {
 
@@ -643,7 +723,7 @@ export default class WllamaProvider {
 
         if( this._wllama === runtime ) {
             this._wllama = null
-            this._settling = Promise.resolve()
+            this._end_runtime_epoch()
         }
 
     }
@@ -651,11 +731,7 @@ export default class WllamaProvider {
     /** Convert the final CPU load failure into an actionable user error. */
     _friendly_load_error( load_error, model_id, file_size_mb ) {
 
-        const message = load_error?.message || ``
-        const is_memory_error = load_error instanceof RangeError
-            || /memory|out of bounds|allocation failed|cannot allocate/i.test( message )
-
-        if( is_memory_error ) {
+        if( is_memory_error( load_error ) ) {
             log.error( `[wllama] Out of memory loading ${ model_id } (${ file_size_mb } MB)` )
             return new Error( `This model is too large for your browser's available memory. Try a smaller model or close other tabs.` )
         }
@@ -731,7 +807,7 @@ export default class WllamaProvider {
         await new Promise( resolve => setTimeout( resolve, 50 ) )
 
         try {
-            await this._load_runtime_attempt( context.source, cpu_load_options( context.load_options ), context.model_size )
+            await this._load_cpu_runtime( context.source, context.load_options, context.model_size )
             this._gpu_layers = 0
         } catch ( cpu_error ) {
             this._loaded_model_id = null
@@ -754,7 +830,7 @@ export default class WllamaProvider {
         // exit() terminates the worker without settling its queued calls, so a
         // stopped request draining in the background would otherwise never end
         this._wllama = null
-        this._settling = Promise.resolve()
+        this._end_runtime_epoch()
         let timeout_id
         const timeout = new Promise( ( _, reject ) => {
             timeout_id = setTimeout( () => reject( new Error( `Model worker did not exit` ) ), RUNTIME_EXIT_TIMEOUT_MS )
