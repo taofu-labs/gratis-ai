@@ -127,6 +127,82 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( page.getByTestId( `model-option-qwen3-14b-q4km` ) ).toHaveCount( 0 )
     } )
 
+    test( `no TPN winners falls back to device recommendations`, async ( { page } ) => {
+        await page.route( /\/api\/collections\?owner=tpnlabs&limit=50$/, route => route.fulfill( {
+            contentType: `application/json`,
+            json: [ { title: `TPN-001`, slug: `tpnlabs/tpn-001`, items: [] } ],
+        } ) )
+        await page.goto( `/select-model` )
+
+        await expect( page.getByTestId( `catalog-fallback` ) ).toContainText( `No TPN winner` )
+        await expect( page.getByTestId( `tpn-model-list` ) ).toHaveCount( 0 )
+        await expect( page.locator( `[data-testid^="model-option-"]` ).first() ).toBeVisible()
+    } )
+
+    test( `unreachable TPN collection still offers models`, async ( { page } ) => {
+        await page.route( /\/api\/collections\?owner=tpnlabs/, route => route.abort( `internetdisconnected` ) )
+        await page.goto( `/select-model` )
+
+        await expect( page.getByTestId( `catalog-fallback` ) ).toContainText( `Couldn't reach` )
+        await expect( page.getByTestId( `tpn-models-error` ) ).toBeVisible()
+    } )
+
+    test( `cached models are listed with one-click reuse`, async ( { page } ) => {
+        await mock_tpn_winners( page )
+        await page.goto( `/select-model` )
+        await expect( page.getByTestId( `tpn-model-list` ) ).toBeVisible()
+
+        // Wait for the app to create its schema (name follows VITE_APP_NAME), then seed
+        // a record the way a finished download stores it
+        const db_name = async () => ( await page.evaluate( () => indexedDB.databases() ) )
+            .map( ( { name } ) => name )
+            .find( name => name.endsWith( `-db` ) )
+        await expect.poll( db_name ).toBeTruthy()
+        const name = await db_name()
+
+        await page.evaluate( ( { name } ) => new Promise( ( resolve, reject ) => {
+            const request = indexedDB.open( name )
+            request.onerror = () => reject( request.error )
+            request.onsuccess = () => {
+                const tx = request.result.transaction( `models`, `readwrite` )
+                tx.objectStore( `models` ).put( {
+                    id: `smollm2-360m-q4km`,
+                    name: `SmolLM2 360M`,
+                    parameters_label: `360M`,
+                    file_size_bytes: 271_000_000,
+                    last_used_at: Date.now(),
+                } )
+                tx.oncomplete = () => resolve()
+                tx.onerror = () => reject( tx.error )
+            }
+            localStorage.setItem( `${ name.replace( /-db$/, `` ) }:settings:active_model_id`, `smollm2-360m-q4km` )
+        } ), { name } )
+        await page.reload()
+
+        await expect( page.getByTestId( `cached-model-smollm2-360m-q4km` ) ).toContainText( `360M parameters` )
+        await expect( page.getByTestId( `back-to-chat-btn` ) ).toBeVisible()
+        await page.getByTestId( `use-cached-smollm2-360m-q4km` ).click()
+        await expect( page ).toHaveURL( /\/chat/ )
+    } )
+
+    test( `offline custom model lookup shows a friendly message`, async ( { page } ) => {
+        await mock_tpn_winners( page )
+        await page.goto( `/select-model` )
+        await page.route( /\/api\/models\/bartowski\//, route => route.abort( `internetdisconnected` ) )
+
+        await page.getByTestId( `custom-model-input` ).fill( `hf.co/bartowski/SmolLM2-360M-Instruct-GGUF:Q4_K_M` )
+        await page.getByTestId( `custom-model-load-btn` ).click()
+
+        await expect( page.getByTestId( `custom-model-error` ) ).toContainText( `Couldn't reach Hugging Face` )
+        await expect( page.getByTestId( `custom-model-error` ) ).not.toContainText( `Failed to fetch` )
+    } )
+
+    test( `language switcher stays available on the picker`, async ( { page } ) => {
+        await mock_tpn_winners( page )
+        await page.goto( `/select-model` )
+        await expect( page.getByTestId( `language-selector` ) ).toBeVisible()
+    } )
+
     test( `model select shows step progress`, async ( { page } ) => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
