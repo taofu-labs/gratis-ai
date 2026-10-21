@@ -81,10 +81,12 @@ const Tab = styled.button`
     font-size: 0.875rem;
     font-weight: 500;
     color: ${ ( { theme, $active } ) => $active ? theme.colors.text : theme.colors.text_muted };
-    transition: color 0.16s, box-shadow 0.28s;
+    transition: color 0.16s, border-color 0.28s;
 
-    /* Active underline sits on the bar's divider, not as a filled pill */
-    box-shadow: inset 0 -2px 0 ${ ( { theme, $active } ) => $active ? theme.colors.accent : `transparent` };
+    /* Active underline sits on the bar's divider, not as a filled pill.
+       A border, not box-shadow, so the global focus halo still shows */
+    border-bottom: 2px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : `transparent` };
+    margin-bottom: -1px;
 
     &:hover {
         color: ${ ( { theme } ) => theme.colors.text };

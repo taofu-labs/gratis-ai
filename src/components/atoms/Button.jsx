@@ -33,7 +33,11 @@ const Button = styled.button`
     font-size: 0.9375rem;
     font-weight: 500;
     line-height: 1.2;
-    white-space: nowrap;
+    text-align: center;
+
+    /* Wrap and grow with enlarged text; never squeezed by a flex column */
+    max-width: 100%;
+    flex-shrink: 0;
     transition: transform 0.16s, background-color 0.16s, border-color 0.16s, color 0.16s;
 
     ${ ( { theme, $variant } ) => $variant === `secondary` ? css`

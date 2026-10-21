@@ -178,7 +178,9 @@ const ErrorMessage = styled.span`
 
 const ErrorActions = styled.div`
     display: flex;
-    gap: ${ ( { theme } ) => theme.spacing.md };
+    flex-wrap: wrap;
+    align-items: center;
+    gap: ${ ( { theme } ) => `0 ${ theme.spacing.md }` };
     margin-left: auto;
 `
 

@@ -109,9 +109,10 @@ const ConversationItem = styled.div`
     transition: background 0.16s, color 0.16s;
     min-height: 2.75rem;
 
-    /* Active: faint tint + thin accent edge; hover: full-row tint */
+    /* Active: faint tint + thin accent edge; hover: full-row tint.
+       Edge is a border so the global focus halo (box-shadow) stays visible */
     background: ${ ( { theme, $active } ) => $active ? theme.colors.border_subtle : `transparent` };
-    box-shadow: ${ ( { theme, $active } ) => $active ? `inset 2px 0 0 ${ theme.colors.accent }` : `none` };
+    border-left: 2px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : `transparent` };
 
     &:hover {
         background: ${ ( { theme } ) => theme.colors.border_subtle };
