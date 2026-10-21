@@ -268,6 +268,8 @@ const create_window = () => {
     main_window = new BrowserWindow( {
         width: 1536,
         height: 960,
+        minWidth: 480,
+        minHeight: 600,
         webPreferences: {
             preload: path.join( __dirname, `../preload/preload.cjs` ),
             contextIsolation: true,
@@ -593,6 +595,12 @@ const setup_auto_updater = () => {
     // electron-updater reads app-update.yml from the packaged resources
     // automatically, so we must NOT call setFeedURL() manually.
     if( !app.isPackaged ) return
+
+    // Linux can only self-update an AppImage; other installs have no APPIMAGE env and the updater would error
+    if( process.platform === `linux` && !process.env.APPIMAGE ) {
+        console.log( `[updater] Not running from an AppImage, auto-update disabled` )
+        return
+    }
 
     _updater_active = true
 

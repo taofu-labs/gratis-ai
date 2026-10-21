@@ -13,6 +13,9 @@
 - Mac auto-update could offer Apple Silicon users the Intel build (zip names lost the arm64 token)
 - Native inference binaries are unpacked from the asar in packaged builds
 - Dev update feed points at taofu-labs
+- Linux installs outside an AppImage skip auto-update instead of erroring
+- GPU backend load failures are logged and reported in system info
+- Desktop window has a minimum size
 
 ## [0.45.1] - 2026-10-21
 
