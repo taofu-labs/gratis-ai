@@ -689,8 +689,19 @@ const setup_runpod_cors = () => {
 
 }
 
+// Single instance: a second launch would start a second inference worker on the same models dir
+const has_instance_lock = app.requestSingleInstanceLock()
+if( !has_instance_lock ) app.quit()
+
+// Focus the existing window instead
+app.on( `second-instance`, () => {
+    if( !main_window ) return
+    if( main_window.isMinimized() ) main_window.restore()
+    main_window.focus()
+} )
+
 // App lifecycle
-app.whenReady().then( () => {
+if( has_instance_lock ) app.whenReady().then( () => {
 
     ensure_models_dir()
     register_ipc_handlers()

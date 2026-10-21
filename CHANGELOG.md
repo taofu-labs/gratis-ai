@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Desktop app has a real icon; second launch focuses the running window instead of starting another worker
+
+### Changed
+- Electron 45, in-range dependency updates, current GitHub Actions majors
+- Mac releases from taofu-labs fail instead of shipping unsigned
+
+### Fixed
+- Mac auto-update could offer Apple Silicon users the Intel build (zip names lost the arm64 token)
+- Native inference binaries are unpacked from the asar in packaged builds
+- Dev update feed points at taofu-labs
+
 ## [0.45.1] - 2026-10-21
 
 ### Fixed
