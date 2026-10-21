@@ -278,3 +278,33 @@ taofu-labs blocks classic PAT API access).
 - Hybrid/MoE: Granite H Tiny (7B, 1B active) tg 6.1 vs Qwen3 4B 2.3; Granite H 1B 6.3 vs Qwen3 1.7B 5.1.
 - Bench harness traps: `fetch().blob()` fails >2 GB; wllama stock OPFS cache truncates >2 GB; Playwright
   `newPage()` incognito caps OPFS quota -> use `launchPersistentContext` + `createWritable` staging.
+
+## Model landscape survey + browser speed mechanics (2026-10-21)
+
+Full report (99 rows, recs, device map): https://claude.ai/artifact/FyvUnMfyLvieNeJbDBQwXA. Nothing implemented yet; user decides.
+
+### WASM kernel coverage (source-verified, llama.cpp master `ggml-cpu/arch-fallback.h` `__wasm__` block)
+- SIMD128: Q4_0/Q4_1/Q5_0/Q5_1/Q8_0, Q2_K–Q5_K; Q6_K partial.
+- **Scalar generic**: all IQ*, MXFP4, NVFP4, TQ, Q1_0/Q2_0; all repacked GEMV/GEMM; no llamafile sgemm. Est 1.5–3× slower/byte (unmeasured).
+- => Browser CPU: prefer Q4_0 / QAT Q4_0 / K-quants; squeeze with Q3_K not IQ3. IQ/MXFP4 fine on WebGPU + native.
+- Hit: catalog `gemma4-26b-a4b-iq4xs`, `qwen36-35b-a3b-iq3xxs`, `gpt-oss-20b-mxfp4` (unsloth gpt-oss quants all keep MXFP4 experts, ~11.5 GB each).
+- Speed est (CI 4 vCPU, 2 thr): `tg ≈ 5 GB/s ÷ (active weight GB + KV GB)`, ×0.65–0.85 MoE; ~2 GB/s for scalar quants. `pp ≈ 8 ÷ active B` (no tiled GEMM => prefill ~1.5× decode).
+- Arch: low-active MoE = 5–8× over dense of equal file; hybrids (GDN/Mamba2/LFM conv) ≈ transformer at short ctx, win via flat KV. GDN/SSM ops present + SIMD in shipped wasm.
+- Suggested bench: Qwen3 0.6B quant sweep (Q4_0, Q4_K_M, Q6_K, Q8_0, IQ4_XS, IQ4_NL, Q3_K_M, UD-IQ3_XXS) to measure IQ penalty.
+
+### Vision
+- wllama64 links libmtmd (MTMD_VIDEO OFF): image + audio in browser. API: `loadModel([llm, mmproj])` / `mmprojUrl`, `image_max_tokens`, default n_ctx 1024 too small. Unsloth repos ship only BF16/F16 mmproj.
+- Qwen3.5 0.8B/2B/4B/9B natively multimodal (mmproj 0.2/0.67/0.67/0.92 GB). Gemma 4 12B projector only 175 MB (cheap encode). Gemma 4 E2B/E4B = vision + audio.
+
+### Uncensored
+- UGI (2026-10-17): heretic/MPOA/derestricted Qwen3.5/Gemma 4 = W/10 9–10, NatInt ~base at ≥24B. Dolphin3 1B 3.2, Dolphin-X1-8B 6.0, Venice 24B 7.8 (+1.3 over stock Mistral Small), Hermes 4 70B 3.2.
+- Policy change proposed (in HUMAN.md). Avoid Huihui ≤9B (NatInt 31→19.8), DavidAU merges, HauhauCS.
+
+### Key new models (exact bytes, HF API)
+- MiniCPM5 1B Q4_K_M 688,065,920 / 2B Q4_K_M 1,561,318,368 (arch `llama`, Apache, AA 8.8 / 12).
+- Granite 4.2 3B Q4_K_M 2,244,011,552 (dense now, thinking).
+- Gemma 4 12B QAT Q4_0 6,975,879,296 (google/gemma-4-12B-it-qat-q4_0-gguf); 26B-A4B QAT Q4_0 14,439,363,584 (+mmproj 1,194,828,160).
+- Mellum 2.1 12B-A2.5B Q4_K_M 8,071,295,264 (JetBrains, Apache).
+- Heretic Gemma 4 26B-A4B i1-Q4_0 14,488,052,256 (mradermacher).
+- Desktop: Qwen3.8 27B UD-Q4_K_M 16,464,440,224; Qwen3.6 35B-A3B UD-Q4_K_M 22,134,528,992; Nemotron 3.5 Bolt 24GB 22,018,326,528; Super VL 120B UD-IQ3_XXS 59,764,210,568; Qwen3.8 Flash-Next UD-IQ4_XS 93,682,584,224 (arch `qwen4exp`, verify node-llama-cpp).
+- Flags: LFM2.5 (revenue cap), EXAONE (NC), Hunyuan (geo). Unverified vendor claims: Nanbeige 4.2, Ornith 1.5. Dory (NVIDIA looped) needs llama.cpp fork.

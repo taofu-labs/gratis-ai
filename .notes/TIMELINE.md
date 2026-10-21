@@ -558,3 +558,4 @@
 - No public TPN brand guide exists online; the brand = `theme.js` + fonts from commit d7b8a7f.
 
 - 2026-10-21: PRs #7/#8 merged (0.45.0 released); 0.45.1 fixes home error banner clipping (Container min-width: 0)
+- 2026-10-21: Model landscape + browser-speed research (no code changes). Found IQ/MXFP4 scalar on WASM; recommended lineup published as artifact; decisions in HUMAN.md.

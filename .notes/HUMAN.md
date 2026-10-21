@@ -30,3 +30,11 @@ or prefer a sub-2 GB first-run default.
 CPU loads use flash attention + q8_0 KV (+22-66% decode, measured). GPU-offload loads still use f16 KV and
 no FA because no real GPU was available to verify ggml-webgpu support. Benchmark on real hardware with
 `scripts/bench` (add n_gpu_layers to BENCH_CONFIGS) before extending CPU_FAST_OPTIONS to GPU loads.
+
+## Model catalog decisions pending (2026-10-21)
+
+Report: https://claude.ai/artifact/FyvUnMfyLvieNeJbDBQwXA
+- Uncensored policy: switch from "training-based only" to UGI evidence gate (W/10 ≥ 9, NatInt ≥ 85–90% of base)? Data says Dolphin entries are barely uncensored.
+- Include LFM2.5 (revenue-capped license)?
+- Approve CI quant sweep before swapping IQ/MXFP4 browser entries to Q4_0/K-quants.
+- Build mmproj download support to enable vision on Qwen3.5 / Gemma 4.
