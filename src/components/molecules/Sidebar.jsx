@@ -104,14 +104,19 @@ const ConversationItem = styled.div`
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
     text-align: left;
     font-size: 0.85rem;
-    color: ${ ( { theme } ) => theme.colors.text };
-    font-weight: ${ ( { $active } ) => $active ? `600` : `400` };
-    background: transparent;
-    transition: background 0.15s;
+    color: ${ ( { theme, $active } ) => $active ? theme.colors.text : theme.colors.text_secondary };
+    font-weight: ${ ( { $active } ) => $active ? `500` : `400` };
+    transition: background 0.16s, color 0.16s;
     min-height: 2.75rem;
 
+    /* Active: faint tint + thin accent edge; hover: full-row tint.
+       Edge is a border so the global focus halo (box-shadow) stays visible */
+    background: ${ ( { theme, $active } ) => $active ? theme.colors.border_subtle : `transparent` };
+    border-left: 2px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : `transparent` };
+
     &:hover {
-        background: ${ ( { theme } ) => theme.colors.surface_hover };
+        background: ${ ( { theme } ) => theme.colors.border_subtle };
+        color: ${ ( { theme } ) => theme.colors.text };
     }
 
     &:hover .conv-actions {

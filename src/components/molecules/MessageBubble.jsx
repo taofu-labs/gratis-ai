@@ -135,7 +135,7 @@ const EditButton = styled.button`
 
 const SubmitButton = styled( EditButton )`
     background: ${ ( { theme } ) => theme.colors.accent };
-    color: white;
+    color: ${ ( { theme } ) => theme.colors.accent_ink };
     &:hover { opacity: 0.85; }
 `
 

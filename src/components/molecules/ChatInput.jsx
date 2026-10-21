@@ -140,11 +140,11 @@ const SendButton = styled( RoundButton )`
 
 const StopButton = styled( RoundButton )`
     background-color: ${ ( { theme } ) => theme.colors.error };
-    color: white;
+    color: ${ ( { theme } ) => theme.colors.accent_ink };
 
     &:hover:not( :disabled ) {
         background-color: ${ ( { theme } ) => theme.colors.error };
-        color: white;
+        color: ${ ( { theme } ) => theme.colors.accent_ink };
         opacity: 0.8;
     }
 `

@@ -551,3 +551,8 @@
 - UX audit fixes: picker fallback + cached models, real cancel/resume downloads, honest ETA, load stages,
   instant Stop, prompt progress, partial-reply persistence, accessible settings dialog, contrast, touch targets.
 - Toolchain majors (Vite 8 set, Electron 44). Granite 4.0 H hybrids added and browser-verified.
+
+## 2026-10-20 — TPN-branded design pass (branch design/tpn-mentor-pass)
+- Mentor design prefs applied under TPN brand precedence: TPN palette/fonts/dark-only canvas/heading
+  underline motif kept; Mentor rules for button size, hit areas, focus halo, strokes, tabs, cards, rows.
+- No public TPN brand guide exists online; the brand = `theme.js` + fonts from commit d7b8a7f.

@@ -71,16 +71,22 @@ const CloseButton = styled.button`
 const TabBar = styled.div`
     display: flex;
     padding: ${ ( { theme } ) => `0 ${ theme.spacing.md }` };
+    border-bottom: 1px solid ${ ( { theme } ) => theme.colors.border_subtle };
 `
 
 const Tab = styled.button`
     flex: 1;
     min-height: 2.75rem;
     padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md }` };
-    font-size: 0.85rem;
-    font-weight: ${ ( { $active } ) => $active ? `600` : `400` };
+    font-size: 0.875rem;
+    font-weight: 500;
     color: ${ ( { theme, $active } ) => $active ? theme.colors.text : theme.colors.text_muted };
-    transition: color 0.15s;
+    transition: color 0.16s, border-color 0.28s;
+
+    /* Active underline sits on the bar's divider, not as a filled pill.
+       A border, not box-shadow, so the global focus halo still shows */
+    border-bottom: 2px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : `transparent` };
+    margin-bottom: -1px;
 
     &:hover {
         color: ${ ( { theme } ) => theme.colors.text };

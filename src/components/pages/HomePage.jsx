@@ -156,8 +156,9 @@ const LoadingDot = styled.span`
 
 const ErrorBanner = styled.div`
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
+    gap: ${ ( { theme } ) => `${ theme.spacing.xs } ${ theme.spacing.sm }` };
     margin-top: ${ ( { theme } ) => theme.spacing.lg };
     padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md }` };
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
@@ -168,14 +169,35 @@ const ErrorBanner = styled.div`
     width: 100%;
 `
 
-const ErrorAction = styled.button`
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.accent };
-    white-space: nowrap;
-    transition: opacity 0.15s;
+// Message takes the row; actions drop below it on narrow screens
+const ErrorMessage = styled.span`
+    flex: 1 1 14rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+`
 
-    &:hover { opacity: 0.7; }
+const ErrorActions = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: ${ ( { theme } ) => `0 ${ theme.spacing.md }` };
+    margin-left: auto;
+`
+
+const ErrorAction = styled.button`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 2.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: ${ ( { theme } ) => theme.colors.accent };
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    white-space: nowrap;
+    transition: color 0.16s;
+
+    &:hover { color: ${ ( { theme } ) => theme.colors.accent_hover }; }
 `
 
 // ── Component ───────────────────────────────────────────────────────
@@ -468,19 +490,21 @@ export default function HomePage() {
             { /* Error banner — only after loading settles, never mid-load */ }
             { !is_loading && load_error && <ErrorBanner data-testid="home-load-error">
                 <AlertCircle size={ 14 } />
-                <span>{ is_model_fit_error( load_error )
+                <ErrorMessage>{ is_model_fit_error( load_error )
                     ? t( `models:model_does_not_fit` )
-                    : load_error.message || t( 'failed_to_load' ) }</span>
-                { !is_model_fit_error( load_error ) && <ErrorAction onClick={ handle_retry } data-testid="home-retry-btn">
-                    <RotateCcw size={ 12 } /> { t( 'common:retry' ) }
-                </ErrorAction> }
-                { is_model_fit_error( load_error ) && <BrowserRamOverride
-                    on_change={ handle_retry }
-                    data-testid="home-ram-override"
-                /> }
-                <ErrorAction onClick={ () => navigate( `/select-model` ) } data-testid="home-choose-another-btn">
-                    { t( 'choose_another' ) }
-                </ErrorAction>
+                    : load_error.message || t( 'failed_to_load' ) }</ErrorMessage>
+                <ErrorActions>
+                    { !is_model_fit_error( load_error ) && <ErrorAction onClick={ handle_retry } data-testid="home-retry-btn">
+                        <RotateCcw size={ 12 } /> { t( 'common:retry' ) }
+                    </ErrorAction> }
+                    { is_model_fit_error( load_error ) && <BrowserRamOverride
+                        on_change={ handle_retry }
+                        data-testid="home-ram-override"
+                    /> }
+                    <ErrorAction onClick={ () => navigate( `/select-model` ) } data-testid="home-choose-another-btn">
+                        { t( 'choose_another' ) }
+                    </ErrorAction>
+                </ErrorActions>
             </ErrorBanner> }
 
         </Container>

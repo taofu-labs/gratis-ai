@@ -76,7 +76,7 @@ const CancelButton = styled( Button )`
 
 const RestartButton = styled( Button )`
     background: ${ ( { theme } ) => theme.colors.accent };
-    color: white;
+    color: ${ ( { theme } ) => theme.colors.accent_ink };
 `
 
 /**

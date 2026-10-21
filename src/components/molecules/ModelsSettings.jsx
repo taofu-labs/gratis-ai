@@ -168,11 +168,6 @@ const TokenInput = styled.input`
     &::placeholder {
         color: ${ ( { theme } ) => theme.colors.text_muted };
     }
-
-    &:focus {
-        outline: none;
-        border-color: ${ ( { theme } ) => theme.colors.accent };
-    }
 `
 
 const IconButton = styled.button`

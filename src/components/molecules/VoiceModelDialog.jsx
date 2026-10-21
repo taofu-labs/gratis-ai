@@ -117,7 +117,7 @@ const CancelButton = styled( Button )`
 
 const ConfirmButton = styled( Button )`
     background: ${ ( { theme } ) => theme.colors.accent };
-    color: white;
+    color: ${ ( { theme } ) => theme.colors.accent_ink };
 `
 
 // Progress bar components
