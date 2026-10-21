@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.47.0] - 2026-10-21
+
+### Added
+- Web app links to the desktop downloads: /get-app lists Mac, Intel Mac, Windows and Linux builds from the latest release; promo banner is back (web only)
+
+### Fixed
+- Web builds point downloads at the repo that deployed them
+
 ## [0.46.0] - 2026-10-21
 
 ### Added
