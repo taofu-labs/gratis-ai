@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.45.1] - 2026-10-21
+
+### Fixed
+- Home RAM error banner no longer clips at 375px with 200% text (3281099)
+
 ## [0.45.0] - 2026-10-20
 
 ### Changed

@@ -556,3 +556,5 @@
 - Mentor design prefs applied under TPN brand precedence: TPN palette/fonts/dark-only canvas/heading
   underline motif kept; Mentor rules for button size, hit areas, focus halo, strokes, tabs, cards, rows.
 - No public TPN brand guide exists online; the brand = `theme.js` + fonts from commit d7b8a7f.
+
+- 2026-10-21: PRs #7/#8 merged (0.45.0 released); 0.45.1 fixes home error banner clipping (Container min-width: 0)
