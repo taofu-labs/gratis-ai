@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.46.0] - 2026-10-21
 
 ### Added
 - Desktop app has a real icon; second launch focuses the running window instead of starting another worker
