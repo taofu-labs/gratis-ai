@@ -30,3 +30,10 @@ or prefer a sub-2 GB first-run default.
 CPU loads use flash attention + q8_0 KV (+22-66% decode, measured). GPU-offload loads still use f16 KV and
 no FA because no real GPU was available to verify ggml-webgpu support. Benchmark on real hardware with
 `scripts/bench` (add n_gpu_layers to BENCH_CONFIGS) before extending CPU_FAST_OPTIONS to GPU loads.
+
+## Open: taofu-labs mac signing secrets missing (2026-10-21)
+
+v0.45.x on taofu-labs/gratis-ai shipped UNSIGNED (no secrets in the org repo; the "signed/notarized" v0.44.0 note above
+applies to upstream only). Needed: MAC_CERTIFICATE_P12, MAC_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD,
+APPLE_TEAM_ID. Owner is setting them. Workflow now fails the mac job in taofu-labs without them. Windows unsigned by decision.
+Branch chore/desktop-release-parity (not pushed, not merged). After secrets: verify a release dmg with codesign -dv, spctl -a -vv, stapler validate.
