@@ -35,6 +35,7 @@ const Container = styled.div`
     align-items: center;
     justify-content: center;
     flex: 1;
+    min-width: 0;
     padding: ${ ( { theme } ) => theme.spacing.xl };
 `
 
@@ -182,6 +183,8 @@ const ErrorActions = styled.div`
     align-items: center;
     gap: ${ ( { theme } ) => `0 ${ theme.spacing.md }` };
     margin-left: auto;
+    min-width: 0;
+    max-width: 100%;
 `
 
 const ErrorAction = styled.button`
