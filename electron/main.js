@@ -3,6 +3,8 @@ const { autoUpdater } = require( `electron-updater` )
 const path = require( `path` )
 const fs = require( `fs` )
 const os = require( `os` )
+const { LlamaServer, resolve_server_binary } = require( `./llama_server.js` )
+const { mmproj_local_name, has_gguf_magic } = require( `./model_files.js` )
 
 // ---------------------------------------------------
 // Console forwarding — pipes Node.js console output
@@ -58,6 +60,38 @@ let inference_worker = null
 let active_download_controller = null
 let _is_quitting = false
 let _updater_active = false
+
+// ---------------------------------------------------
+// Vision sidecar — models with an mmproj projector run in
+// a bundled llama-server (node-llama-cpp has no multimodal)
+// ---------------------------------------------------
+
+let _llama_server = null
+
+/**
+ * Lazily create the sidecar controller (does not spawn anything yet)
+ * @returns {LlamaServer}
+ */
+const get_llama_server = () => {
+
+    if( _llama_server ) return _llama_server
+
+    const binary_path = resolve_server_binary( {
+        is_packaged: app.isPackaged,
+        resources_path: process.resourcesPath,
+        app_root: app.getAppPath(),
+    } )
+
+    _llama_server = new LlamaServer( { binary_path } )
+    return _llama_server
+
+}
+
+/** True when the vision sidecar owns the loaded model */
+const sidecar_active = () => !!_llama_server?.is_active()
+
+// Last-chance cleanup so a hard exit never leaves the sidecar running
+process.on( `exit`, () => _llama_server?.kill_sync() )
 
 // ---------------------------------------------------
 // Inference worker bridge — spawns a utilityProcess
@@ -248,8 +282,10 @@ const estimate_context_for_system = ( model ) => {
     // KV cache = 2 (key + value) × layers × kv_heads × head_dim × 2 bytes (FP16) per token
     const kv_per_token = 2 * model.layers * model.kv_heads * model.head_dim * 2
 
+    // The vision projector lives in the same memory as the weights
+    const weights_bytes = ( model.file_size_bytes || 0 ) + ( model.mmproj_size_bytes || 0 )
     const budget = os.totalmem() * MEMORY_FRACTION
-    const available = budget - ( model.file_size_bytes || 0 ) - RUNTIME_OVERHEAD
+    const available = budget - weights_bytes - RUNTIME_OVERHEAD
 
     if( available <= 0 ) return FALLBACK
 
@@ -259,6 +295,113 @@ const estimate_context_for_system = ( model ) => {
     return Math.max( FALLBACK, Math.min( max_ctx, estimated ) )
 
 }
+
+/**
+ * Absolute path of a model's vision projector, or null when it has none
+ * @param {Object} model - Manifest entry
+ * @returns {string|null}
+ */
+const mmproj_path_for = ( model ) => model.mmproj_file_name
+    ? path.join( MODELS_DIR, mmproj_local_name( model.file_name, model.mmproj_file_name ) )
+    : null
+
+/**
+ * Drop attachments before handing messages to node-llama-cpp — it is text-only,
+ * and there is no point copying image bytes into the worker.
+ * @param {Array} messages
+ * @returns {Array}
+ */
+const strip_attachments = ( messages ) => messages.map( ( { attachments, ...message } ) => message )
+
+/**
+ * Turn a failed Hugging Face response into a user-facing error
+ * @param {Response} response
+ * @returns {Error}
+ */
+const download_error = ( response ) => {
+
+    if( response.status === 401 || response.status === 403 ) {
+        return new Error( `Hugging Face rejected the token or this account does not have access to the model. Check the read token in Settings > Models.` )
+    }
+    if( response.status === 429 ) {
+        return new Error( `Hugging Face is throttling this download. Add a read token in Settings > Models or retry after the limit resets.` )
+    }
+    return new Error( `Download failed: ${ response.status } ${ response.statusText }` )
+
+}
+
+/**
+ * Stream one URL to disk via a `.part` file, renamed only once complete
+ * and GGUF-valid. Never holds the full file in memory.
+ * @param {Object} params
+ * @param {string} params.url
+ * @param {string} params.dest - Final file path
+ * @param {Object} params.request_options - fetch options (signal, headers)
+ * @param {( total: number ) => void} params.on_total - Called with the real size once known
+ * @param {( bytes: number ) => void} params.on_bytes - Called per written chunk
+ * @returns {Promise<number>} Bytes written
+ */
+const download_gguf = async ( { url, dest, request_options, on_total, on_bytes } ) => {
+
+    const part_path = `${ dest }.part`
+
+    try {
+
+        const response = await fetch( url, request_options )
+        if( !response.ok ) throw download_error( response )
+
+        const content_length = parseInt( response.headers.get( `content-length` ) ) || 0
+        if( content_length ) on_total( content_length )
+
+        const reader = response.body.getReader()
+        let fd
+        try {
+
+            fd = fs.openSync( part_path, `w`, 0o644 )
+
+            while( true ) {
+                const { done, value } = await reader.read()
+                if( done ) break
+                fs.writeSync( fd, value )
+                on_bytes( value.byteLength )
+            }
+
+            // Flush before node-llama-cpp / llama-server mmap() the file
+            fs.fsyncSync( fd )
+
+        } finally {
+            if( fd !== undefined ) fs.closeSync( fd )
+        }
+
+        const written_size = fs.statSync( part_path ).size
+        if( content_length > 0 && written_size !== content_length ) {
+            throw new Error( `Size mismatch: expected ${ content_length }, wrote ${ written_size }` )
+        }
+        if( !has_gguf_magic( part_path ) ) {
+            throw new Error( `Downloaded file is not a GGUF model: ${ path.basename( dest ) }` )
+        }
+
+        fs.renameSync( part_path, dest )
+        return written_size
+
+    } catch ( err ) {
+        if( fs.existsSync( part_path ) ) fs.unlinkSync( part_path )
+        throw err
+    }
+
+}
+
+/**
+ * True when a file is already on disk at the expected size with a GGUF header —
+ * lets "add image support" fetch only the projector for an installed model.
+ * @param {string} file_path
+ * @param {number} [expected_size]
+ * @returns {boolean}
+ */
+const is_complete_gguf = ( file_path, expected_size ) => !!expected_size
+    && fs.existsSync( file_path )
+    && fs.statSync( file_path ).size === expected_size
+    && has_gguf_magic( file_path )
 
 /**
  * Create the main application window
@@ -346,112 +489,111 @@ const register_ipc_handlers = () => {
 
     } )
 
-    // Download a model by streaming directly to disk — avoids buffering
-    // the entire file in renderer memory (which fails for large models)
-    ipcMain.handle( `llm:download_model`, async ( _event, { url, id, file_name, metadata, expected_size, headers = {} } ) => {
+    // Download a model (and its vision projector, if any) by streaming directly
+    // to disk — avoids buffering multi-GB files in renderer memory. Progress is
+    // summed over both files; the manifest entry is written only once both are
+    // on disk and GGUF-valid, so a model is never "installed" half-way.
+    ipcMain.handle( `llm:download_model`, async ( _event, { url, id, file_name, metadata, expected_size, headers = {}, mmproj } ) => {
 
         ensure_models_dir()
 
         active_download_controller = new AbortController()
-        const model_path = path.join( MODELS_DIR, file_name )
+
+        const request_headers = Object.fromEntries(
+            Object.entries( headers || {} )
+                .filter( ( [ key, value ] ) => key && typeof value === `string` )
+        )
+        const request_options = {
+            signal: active_download_controller.signal,
+            ... Object.keys( request_headers ).length ? { headers: request_headers } : {},
+        }
+
+        // Everything this call needs on disk, model first
+        const files = [
+            { url, dest: path.join( MODELS_DIR, file_name ), expected_size },
+            ... mmproj ? [ {
+                url: mmproj.url,
+                dest: path.join( MODELS_DIR, mmproj_local_name( file_name, mmproj.file_name ) ),
+                expected_size: mmproj.expected_size,
+            } ] : [],
+        ]
+
+        // Summed progress — sizes start from the catalog and are corrected by content-length
+        const totals = files.map( ( file ) => file.expected_size || 0 )
+        let bytes_loaded = 0
+        let last_progress_time = 0
+
+        const send_progress = ( status, force = false ) => {
+            const now = Date.now()
+            if( !force && now - last_progress_time < 250 ) return
+            last_progress_time = now
+            const bytes_total = totals.reduce( ( sum, size ) => sum + size, 0 )
+            main_window?.webContents?.send( `llm:download-progress`, {
+                progress: bytes_total > 0 ? Math.min( bytes_loaded / bytes_total, 1 ) : 0,
+                bytes_loaded,
+                bytes_total,
+                status,
+            } )
+        }
+
+        // Files written by this call, removed again if anything fails
+        const written = []
 
         try {
 
-            const request_headers = Object.fromEntries(
-                Object.entries( headers || {} )
-                    .filter( ( [ key, value ] ) => key && typeof value === `string` )
-            )
-            const request_options = {
-                signal: active_download_controller.signal,
-                ... Object.keys( request_headers ).length ? { headers: request_headers } : {},
-            }
-            const response = await fetch( url, request_options )
-            if( !response.ok ) {
-                if( response.status === 401 || response.status === 403 ) {
-                    throw new Error( `Hugging Face rejected the token or this account does not have access to the model. Check the read token in Settings > Models.` )
-                }
-                if( response.status === 429 ) {
-                    throw new Error( `Hugging Face is throttling this download. Add a read token in Settings > Models or retry after the limit resets.` )
-                }
-                throw new Error( `Download failed: ${ response.status } ${ response.statusText }` )
-            }
+            for( const [ index, file ] of files.entries() ) {
 
-            const content_length = parseInt( response.headers.get( `content-length` ) ) || expected_size || 0
-            const reader = response.body.getReader()
-            let bytes_loaded = 0
-            let last_progress_time = 0
-
-            // Stream chunks directly to disk — never holds the full file in memory
-            let fd
-            try {
-
-                fd = fs.openSync( model_path, `w`, 0o644 )
-
-                while( true ) {
-
-                    const { done, value } = await reader.read()
-                    if( done ) break
-
-                    fs.writeSync( fd, value )
-                    bytes_loaded += value.byteLength
-
-                    // Throttle progress events to ~4 updates/sec
-                    const now = Date.now()
-                    if( now - last_progress_time >= 250 ) {
-                        last_progress_time = now
-                        main_window?.webContents?.send( `llm:download-progress`, {
-                            progress: content_length > 0 ? bytes_loaded / content_length : 0,
-                            bytes_loaded,
-                            bytes_total: content_length,
-                            status: `Downloading...`,
-                        } )
-                    }
-
+                // Already complete (e.g. adding image support to an installed model)
+                if( is_complete_gguf( file.dest, file.expected_size ) ) {
+                    bytes_loaded += file.expected_size
+                    continue
                 }
 
-                fs.fsyncSync( fd )
+                const size = await download_gguf( {
+                    url: file.url,
+                    dest: file.dest,
+                    request_options,
+                    on_total: ( total ) => totals[ index ] = total,
+                    on_bytes: ( bytes ) => {
+                        bytes_loaded += bytes
+                        send_progress( `Downloading...` )
+                    },
+                } )
 
-            } finally {
-                if( fd !== undefined ) fs.closeSync( fd )
-            }
+                written.push( file.dest )
+                file.size = size
 
-            // Verify written size matches expected
-            const written_size = fs.statSync( model_path ).size
-            if( content_length > 0 && written_size !== content_length ) {
-                fs.unlinkSync( model_path )
-                throw new Error( `Size mismatch: expected ${ content_length }, wrote ${ written_size }` )
             }
 
             // Update manifest
+            const [ model_file, mmproj_file ] = files
             const manifest = read_manifest()
             const now = Date.now()
             const existing_index = manifest.findIndex( ( m ) => m.id === id )
+            const previous = existing_index === -1 ? null : manifest[ existing_index ]
             if( existing_index !== -1 ) manifest.splice( existing_index, 1 )
 
             manifest.push( {
                 ...metadata,
                 id,
                 file_name,
-                file_size_bytes: written_size,
-                cached_at: now,
+                file_size_bytes: fs.statSync( model_file.dest ).size,
+                ... mmproj ? {
+                    mmproj_file_name: mmproj.file_name,
+                    mmproj_size_bytes: fs.statSync( mmproj_file.dest ).size,
+                } : {},
+                cached_at: previous?.cached_at || now,
                 last_used_at: now,
             } )
 
             write_manifest( manifest )
-
-            // Final progress event
-            main_window?.webContents?.send( `llm:download-progress`, {
-                progress: 1,
-                bytes_loaded: written_size,
-                bytes_total: written_size,
-                status: `Complete`,
-            } )
+            send_progress( `Complete`, true )
 
             return { success: true }
 
-        } catch( err ) {
-            // Clean up partial file on failure
-            if( fs.existsSync( model_path ) ) fs.unlinkSync( model_path )
+        } catch ( err ) {
+            // Clean up files this call created — never a pre-existing installed model
+            for( const dest of written ) if( fs.existsSync( dest ) ) fs.unlinkSync( dest )
             throw err
         } finally {
             active_download_controller = null
@@ -470,7 +612,9 @@ const register_ipc_handlers = () => {
 
     } )
 
-    // Load a model by ID — resolves the path here, sends to worker for loading
+    // Load a model by ID. Models with a downloaded vision projector run in the
+    // llama-server sidecar; everything else in the node-llama-cpp worker.
+    // Only one backend holds a model at a time — the other is unloaded first.
     ipcMain.handle( `llm:load`, async ( _event, model_id ) => {
 
         const manifest = read_manifest()
@@ -485,42 +629,103 @@ const register_ipc_handlers = () => {
         // If we overshoot, the worker's VRAM retry loop will halve down safely.
         const requested_ctx = estimate_context_for_system( model )
 
+        // Update last_used_at
+        model.last_used_at = Date.now()
+        write_manifest( manifest )
+
+        const mmproj_path = mmproj_path_for( model )
+        const wants_vision = mmproj_path && fs.existsSync( mmproj_path )
+
+        if( wants_vision ) {
+
+            // Free node-llama-cpp's copy before the sidecar maps its own
+            if( inference_worker ) await worker_request( `unload` )
+
+            try {
+
+                const info = await get_llama_server().start( {
+                    model_id,
+                    model_path,
+                    mmproj_path,
+                    n_ctx: requested_ctx,
+                    reasoning_enabled: model.reasoning_enabled,
+                } )
+
+                return {
+                    success: true,
+                    context_size: info.context_size,
+                    context_reduced: info.context_size < ( model.context_length || requested_ctx ),
+                    has_image_input: info.has_image_input,
+                }
+
+            } catch ( err ) {
+                // Missing binary or a sidecar that cannot start: keep text chat working
+                console.warn( `[llama-server] Vision sidecar unavailable, loading text-only: ${ err.message }` )
+                await _llama_server?.stop()
+            }
+
+        }
+
+        // Text-only path — stop the sidecar first so its memory is released
+        await _llama_server?.stop()
+
         const result = await worker_request( `load`, {
             model_path,
             opts: { n_ctx: requested_ctx },
         } )
 
-        // Update last_used_at
-        model.last_used_at = Date.now()
-        write_manifest( manifest )
-
         return {
             success: true,
             context_size: result.context_size,
             context_reduced: result.context_size < ( model.context_length || requested_ctx ),
+            has_image_input: false,
         }
 
     } )
 
-    // Single-shot chat completion — forwarded to worker
+    // Single-shot chat completion
     ipcMain.handle( `llm:chat`, ( _event, messages, opts ) => {
-        return worker_request( `chat`, { messages, opts } )
+        if( sidecar_active() ) return _llama_server.chat_stream( messages, opts )
+        return worker_request( `chat`, { messages: strip_attachments( messages ), opts } )
     } )
 
-    // Streaming chat — worker sends stream-token / stream-done events
-    // which the message handler above forwards to the renderer
-    ipcMain.handle( `llm:chat_stream`, ( _event, messages, opts ) => {
-        return worker_request( `chat_stream`, { messages, opts } )
+    // Streaming chat — both backends emit the same stream-token / stream-done
+    // events, so the renderer provider does not care which one is running.
+    // Sidecar chunks may also be `{ prompt_progress }` / `{ timings }` objects.
+    ipcMain.handle( `llm:chat_stream`, async ( _event, messages, opts ) => {
+
+        if( !sidecar_active() ) return worker_request( `chat_stream`, { messages: strip_attachments( messages ), opts } )
+
+        try {
+            await _llama_server.chat_stream( messages, opts, ( chunk ) => {
+                main_window?.webContents?.send( `llm:stream-token`, chunk )
+            } )
+        } finally {
+            main_window?.webContents?.send( `llm:stream-done` )
+        }
+
+        return { success: true }
+
     } )
 
     // Abort current generation
-    ipcMain.handle( `llm:abort`, () => worker_request( `abort` ) )
+    ipcMain.handle( `llm:abort`, () => {
+        if( sidecar_active() ) return _llama_server.abort()
+        return worker_request( `abort` )
+    } )
 
-    // Unload the current model
-    ipcMain.handle( `llm:unload`, () => worker_request( `unload` ) )
+    // Unload the current model from whichever backend holds it
+    ipcMain.handle( `llm:unload`, async () => {
+        await _llama_server?.stop()
+        if( inference_worker ) await worker_request( `unload` )
+        return { success: true }
+    } )
 
     // Get current model status
-    ipcMain.handle( `llm:status`, () => worker_request( `status` ) )
+    ipcMain.handle( `llm:status`, () => {
+        if( sidecar_active() ) return { loaded: true, model_id: _llama_server.config.model_id, has_image_input: true }
+        return worker_request( `status` )
+    } )
 
     // List all cached models
     ipcMain.handle( `llm:list_models`, async () => {
@@ -529,7 +734,7 @@ const register_ipc_handlers = () => {
 
     } )
 
-    // Delete a model
+    // Delete a model and its vision projector
     ipcMain.handle( `llm:delete_model`, async ( _event, model_id ) => {
 
         const manifest = read_manifest()
@@ -537,15 +742,17 @@ const register_ipc_handlers = () => {
         if( index === -1 ) throw new Error( `Model not found` )
 
         const model = manifest[ index ]
-        const model_path = path.join( MODELS_DIR, model.file_name )
+
+        // The sidecar holds the files open (Windows refuses to delete them)
+        if( _llama_server?.config?.model_id === model_id ) await _llama_server.stop()
 
         // Remove from manifest
         manifest.splice( index, 1 )
         write_manifest( manifest )
 
-        // Delete file
-        if( fs.existsSync( model_path ) ) {
-            fs.unlinkSync( model_path )
+        // Delete files
+        for( const file_path of [ path.join( MODELS_DIR, model.file_name ), mmproj_path_for( model ) ] ) {
+            if( file_path && fs.existsSync( file_path ) ) fs.unlinkSync( file_path )
         }
 
         return { success: true }
@@ -559,7 +766,7 @@ const register_ipc_handlers = () => {
         try {
             const result = await autoUpdater.checkForUpdates()
             return { status: `ok`, version: result?.updateInfo?.version }
-        } catch( err ) {
+        } catch ( err ) {
             console.error( `[updater] Check failed:`, err?.message || err )
             return { status: `error`, message: err?.message || `Update check failed` }
         }
@@ -570,7 +777,7 @@ const register_ipc_handlers = () => {
         try {
             await autoUpdater.downloadUpdate()
             return { status: `ok` }
-        } catch( err ) {
+        } catch ( err ) {
             console.error( `[updater] Download failed:`, err?.message || err )
             return { status: `error`, message: err?.message || `Download failed` }
         }
@@ -719,7 +926,9 @@ app.on( `before-quit`, ( event ) => {
         active_download_controller = null
     }
 
-    shutdown_worker().then( () => app.quit() )
+    // Stop the vision sidecar and the node-llama-cpp worker in parallel
+    const stop_sidecar = _llama_server?.stop().catch( () => {} )
+    Promise.all( [ shutdown_worker(), stop_sidecar ] ).then( () => app.quit() )
 
 } )
 

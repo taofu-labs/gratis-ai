@@ -19,8 +19,16 @@ contextBridge.exposeInMainWorld( `electronAPI`, {
     // Inference
     chat: ( messages, opts ) => ipcRenderer.invoke( `llm:chat`, messages, opts ),
     start_stream: ( messages, opts ) => ipcRenderer.invoke( `llm:chat_stream`, messages, opts ),
-    on_stream_token: ( callback ) => ipcRenderer.on( `llm:stream-token`, ( _, token ) => callback( token ) ),
-    on_stream_done: ( callback ) => ipcRenderer.on( `llm:stream-done`, () => callback() ),
+    on_stream_token: ( callback ) => {
+        const handler = ( _, token ) => callback( token )
+        ipcRenderer.on( `llm:stream-token`, handler )
+        return () => ipcRenderer.removeListener( `llm:stream-token`, handler )
+    },
+    on_stream_done: ( callback ) => {
+        const handler = () => callback()
+        ipcRenderer.on( `llm:stream-done`, handler )
+        return () => ipcRenderer.removeListener( `llm:stream-done`, handler )
+    },
     abort: () => ipcRenderer.invoke( `llm:abort` ),
 
     // Model management

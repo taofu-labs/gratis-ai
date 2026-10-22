@@ -326,6 +326,13 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
                 expected_size: model.file_size_bytes,
                 headers,
                 metadata: cache_metadata( model ),
+
+                // Vision projector — main downloads it alongside the model (summed progress)
+                ... model.mmproj ? { mmproj: {
+                    url: build_download_url( model.mmproj.hugging_face_repo || model.hugging_face_repo, model.mmproj.file_name ),
+                    file_name: model.mmproj.file_name,
+                    expected_size: model.mmproj.file_size_bytes,
+                } } : {},
             } )
         } catch ( err ) {
             if( err?.message?.includes( `abort` ) ) {

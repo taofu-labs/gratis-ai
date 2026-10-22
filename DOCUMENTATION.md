@@ -31,7 +31,23 @@ Build targets are configured in `electron-builder.yml` (macOS dmg + zip, Windows
 
 The Electron app checks GitHub Releases for new versions on launch. When an update is available, a slim banner appears below the top bar with options to download and install. Updates require code-signed builds — unsigned dev/fork builds skip the check silently. Set `VITE_GITHUB_REPO=owner/repo` at build time (the CI workflow does this automatically via `github.repository`).
 
-The Electron code lives in `electron/` — `main.js` (window + IPC), `preload.js` (context bridge), and `native_inference.js` (node-llama-cpp wrapper). The renderer auto-detects Electron at runtime and swaps providers.
+The Electron code lives in `electron/` — `main.js` (window + IPC), `preload.js` (context bridge), `inference_worker.js` (node-llama-cpp in a utilityProcess) and `llama_server.js` (vision sidecar). The renderer auto-detects Electron at runtime and swaps providers.
+
+### Vision sidecar (llama-server)
+
+node-llama-cpp 3.x has no multimodal support (v4 pending), so vision models run in a bundled llama.cpp `llama-server`. Users never pick a backend.
+
+| | |
+|---|---|
+| Routing | `llm:load` → manifest entry has `mmproj_file_name` and the projector is on disk → sidecar; else node-llama-cpp. Sidecar fails to start → text-only node-llama-cpp. One backend holds a model at a time. |
+| Process | `127.0.0.1`, free port, random `--api-key` per launch, `--jinja --reasoning-format none --parallel 1 --image-max-tokens 1024 --ubatch-size 1024`. GPU layers = llama.cpp `auto`/`--fit`. Waits on `/health`, reads `n_ctx` + `modalities.vision` from `/props`. |
+| Failure | Crash during load on GPU → retry `--device none` (CPU). Crash later → restart on next request. Killed on unload, model switch, delete, app quit (`process.on('exit')` safety net). |
+| Chat | Full history → OpenAI `/v1/chat/completions` (SSE). Image `attachments[].data` (ArrayBuffer over IPC) → `image_url` data URIs. Same `llm:stream-token` / `llm:stream-done` events; extra `{ prompt_progress }` / `{ timings }` chunks. Load result carries `has_image_input`; provider exposes `has_image_input()`. |
+| Download | `download_model( { …, mmproj: { url, file_name, expected_size } } )` → both files, summed progress, `.part` + GGUF magic check; manifest gets `mmproj_file_name` only when both exist. Projector stored as `<model stem>.<mmproj name>`. Complete files are skipped, so re-downloading with `mmproj` adds image support to an installed model. Delete removes both. |
+| Binaries | `scripts/fetch_llama_server.js` — pinned llama.cpp release + sha256 → `vendor/llama-server/<os>-<arch>/` (gitignored). `predev:electron` / `prebuild:electron` fetch the current platform; CI fetches per matrix target. `extraResources` copies it to `resources/llama-server`. Override with `GRATIS_LLAMA_SERVER=/path/to/llama-server`. |
+| Builds | mac-arm64 Metal · mac-x64 CPU · win-x64 + linux-x64 Vulkan (CPU backends included; ggml loads backends dynamically, so no Vulkan driver = CPU). |
+| Signing | osx-sign signs every Mach-O under `Contents/` (incl. Resources) with hardened runtime + `entitlementsInherit`; the fetch script flattens dylib symlinks so codesign sees plain files. |
+| Bump | Change `TAG` + digests in the fetch script (digests: GitHub API `releases/tags/<tag>` → `assets[].digest`). |
 
 ### Desktop App Promotion
 
@@ -45,6 +61,7 @@ Web users see a slim accent-colored banner encouraging them to try the desktop a
 | `npm run build` | Production build (browser) |
 | `npm run dev:electron` | Electron dev with hot-reload |
 | `npm run build:electron` | Package Electron app |
+| `npm run fetch:llama-server` | Fetch the vision sidecar for this platform (`-- --os mac --arch all` for others) |
 | `npm run test` | Playwright E2E tests |
 | `npm run test:unit` | Vitest model and service unit tests |
 | `npm run lint` | ESLint with auto-fix |
