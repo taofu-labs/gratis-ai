@@ -44,3 +44,10 @@ launches `Contents/Resources/llama-server/llama-server` (osx-sign should sign it
 entitlementsInherit); (2) Metal on Apple Silicon and Vulkan on a cheap Intel-iGPU Windows laptop — if Vulkan is
 flaky there, the CPU retry kicks in only on crash, not on garbage output; consider `--device none` default on win.
 (3) A hard-killed app (SIGKILL / Task Manager) orphans the sidecar until reboot — no parent-death signal in Node.
+
+## Open: taofu-labs mac signing secrets missing (2026-10-21)
+
+v0.45.x on taofu-labs/gratis-ai shipped UNSIGNED (no secrets in the org repo; the "signed/notarized" v0.44.0 note above
+applies to upstream only). Needed: MAC_CERTIFICATE_P12, MAC_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD,
+APPLE_TEAM_ID. Owner is setting them. Workflow now fails the mac job in taofu-labs without them. Windows unsigned by decision.
+Branch chore/desktop-release-parity (not pushed, not merged). After secrets: verify a release dmg with codesign -dv, spctl -a -vv, stapler validate.

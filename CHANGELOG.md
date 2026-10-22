@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.47.0] - 2026-10-21
+
+### Added
+- Web app links to the desktop downloads: /get-app lists Mac, Intel Mac, Windows and Linux builds from the latest release; promo banner is back (web only)
+
+### Fixed
+- Web builds point downloads at the repo that deployed them
+
+## [0.46.0] - 2026-10-21
+
+### Added
+- Desktop app has a real icon; second launch focuses the running window instead of starting another worker
+
+### Changed
+- Electron 45, in-range dependency updates, current GitHub Actions majors
+- Mac releases from taofu-labs fail instead of shipping unsigned
+
+### Fixed
+- Mac auto-update could offer Apple Silicon users the Intel build (zip names lost the arm64 token)
+- Native inference binaries are unpacked from the asar in packaged builds
+- Dev update feed points at taofu-labs
+- Linux installs outside an AppImage skip auto-update instead of erroring
+- GPU backend load failures are logged and reported in system info
+- Desktop window has a minimum size
+
 ## [0.45.1] - 2026-10-21
 
 ### Fixed

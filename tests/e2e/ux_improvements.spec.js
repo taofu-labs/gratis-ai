@@ -68,13 +68,15 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( toggle ).toContainText( `Hide` )
     } )
 
-    test( `get app page shows in-progress desktop copy`, async ( { page } ) => {
+    test( `get app page links to the latest release assets`, async ( { page } ) => {
         await page.goto( `/get-app` )
 
-        await expect( page.getByRole( `heading`, { name: `Desktop app in the works` } ) ).toBeVisible()
-        await expect( page.getByText( /desktop builds are being prepared/i ) ).toBeVisible()
-        await expect( page.getByText( `Continue in your browser` ) ).toBeVisible()
-        await expect( page.getByText( `Get more power with the same privacy — try the desktop app` ) ).toHaveCount( 0 )
+        await expect( page.getByText( `Download for macOS` ) ).toBeVisible()
+        await expect( page.locator( `a[href$="/releases/latest/download/Gratis-mac.dmg"]` ) ).toHaveCount( 1 )
+        await expect( page.locator( `a[href$="/releases/latest/download/Gratis-win.exe"]` ) ).toHaveCount( 1 )
+        await expect( page.locator( `a[href$="/releases/latest/download/Gratis-linux.AppImage"]` ) ).toHaveCount( 1 )
+        await expect( page.locator( `a[href$="/releases/latest/download/Gratis-mac-intel.dmg"]` ) ).toHaveCount( 1 )
+        await expect( page.getByText( `Or continue in your browser` ) ).toBeVisible()
         await expect( page.locator( `body` ) ).not.toContainText( `desktop_in_works_title` )
     } )
 

@@ -24,7 +24,7 @@ jobs:
       changed: ${{ steps.diff.outputs.changed }}
       version: ${{ steps.diff.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -109,10 +109,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Create GitHub Release (draft until all builds finish)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: v${{ needs.check-version.outputs.version }}
@@ -155,9 +155,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -170,7 +170,7 @@ jobs:
 
       # ── Caching: Electron binary + electron-builder packaging tools ──
       - name: Cache Electron binary
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/electron
@@ -180,7 +180,7 @@ jobs:
           restore-keys: electron-${{ matrix.platform }}-
 
       - name: Cache electron-builder
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/electron-builder
@@ -199,6 +199,12 @@ jobs:
           [ -n "$WIN_CERT" ] && echo "can-sign-win=true" >> "$GITHUB_OUTPUT" \
                              || echo "can-sign-win=false" >> "$GITHUB_OUTPUT"
 
+          # Official repo must ship signed mac builds; forks fall back to unsigned
+          if [ "$PLATFORM" = "mac" ] && [ -z "$MAC_CERT" ] && [ "$REPO_OWNER" = "taofu-labs" ]; then
+            echo "::error::MAC_CERTIFICATE_P12 missing — refusing to publish an unsigned mac build"
+            exit 1
+          fi
+
           # Warn when the current platform lacks its signing secret
           if [ "$PLATFORM" = "mac" ] && [ -z "$MAC_CERT" ]; then
             echo "::warning::No signing secrets found for mac — building unsigned"
@@ -207,13 +213,14 @@ jobs:
           fi
         env:
           PLATFORM: ${{ matrix.platform }}
+          REPO_OWNER: ${{ github.repository_owner }}
           MAC_CERT: ${{ secrets.MAC_CERTIFICATE_P12 }}
           WIN_CERT: ${{ secrets.WIN_CERTIFICATE_PFX }}
 
       # macOS: import Developer ID certificate for codesigning
       - name: Import macOS codesign certificate
         if: matrix.platform == 'mac' && steps.signing.outputs.can-sign-mac == 'true'
-        uses: apple-actions/import-codesign-certs@v3
+        uses: apple-actions/import-codesign-certs@v7
         with:
           p12-file-base64: ${{ secrets.MAC_CERTIFICATE_P12 }}
           p12-password: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
@@ -258,22 +265,18 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
-      # Rename mac assets to user-friendly names (arm64 → default, x64 → intel)
-      - name: Rename macOS assets
+      # Friendly dmg names for the download links. The zips and latest-mac.yml keep their
+      # arm64/x64 names: electron-updater picks the mac arch by the "arm64" token in the filename
+      - name: Add friendly macOS dmg names
         if: matrix.platform == 'mac'
         run: |
           cd release
           ls -la
-          mv Gratis-mac-arm64.dmg Gratis-mac.dmg
-          mv Gratis-mac-x64.dmg Gratis-mac-intel.dmg
-          mv Gratis-mac-arm64.zip Gratis-mac.zip
-          mv Gratis-mac-x64.zip Gratis-mac-intel.zip
-          mv Gratis-mac-arm64.dmg.blockmap Gratis-mac.dmg.blockmap 2>/dev/null || true
-          mv Gratis-mac-x64.dmg.blockmap Gratis-mac-intel.dmg.blockmap 2>/dev/null || true
-          sed -i '' 's/Gratis-mac-arm64/Gratis-mac/g; s/Gratis-mac-x64/Gratis-mac-intel/g' latest*.yml
+          cp Gratis-mac-arm64.dmg Gratis-mac.dmg
+          cp Gratis-mac-x64.dmg Gratis-mac-intel.dmg
 
       - name: Upload artifacts to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.check-version.outputs.version }}
           draft: true

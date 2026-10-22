@@ -1,6 +1,6 @@
 {
     "name": "gratisai",
-    "version": "0.45.1",
+    "version": "0.47.0",
     "description": "Privacy-first, offline-capable local LLM chat application",
     "repository": {
         "type": "git",
@@ -57,7 +57,7 @@
         "@playwright/test": "^1.64.1",
         "@vitejs/plugin-react": "^6.1.2",
         "airier": "^0.1.1",
-        "electron": "^44.9.1",
+        "electron": "^45.0.0",
         "electron-builder": "^26.15.3",
         "electron-vite": "^6.0.0",
         "eslint": "^9.39.5",

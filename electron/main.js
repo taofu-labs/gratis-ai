@@ -411,6 +411,8 @@ const create_window = () => {
     main_window = new BrowserWindow( {
         width: 1536,
         height: 960,
+        minWidth: 480,
+        minHeight: 600,
         webPreferences: {
             preload: path.join( __dirname, `../preload/preload.cjs` ),
             contextIsolation: true,
@@ -803,6 +805,12 @@ const setup_auto_updater = () => {
     // automatically, so we must NOT call setFeedURL() manually.
     if( !app.isPackaged ) return
 
+    // Linux can only self-update an AppImage; other installs have no APPIMAGE env and the updater would error
+    if( process.platform === `linux` && !process.env.APPIMAGE ) {
+        console.log( `[updater] Not running from an AppImage, auto-update disabled` )
+        return
+    }
+
     _updater_active = true
 
     autoUpdater.autoDownload = true
@@ -898,8 +906,19 @@ const setup_runpod_cors = () => {
 
 }
 
+// Single instance: a second launch would start a second inference worker on the same models dir
+const has_instance_lock = app.requestSingleInstanceLock()
+if( !has_instance_lock ) app.quit()
+
+// Focus the existing window instead
+app.on( `second-instance`, () => {
+    if( !main_window ) return
+    if( main_window.isMinimized() ) main_window.restore()
+    main_window.focus()
+} )
+
 // App lifecycle
-app.whenReady().then( () => {
+if( has_instance_lock ) app.whenReady().then( () => {
 
     ensure_models_dir()
     register_ipc_handlers()

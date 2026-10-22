@@ -190,7 +190,9 @@ The `release-electron` workflow builds for macOS (arm64 + x64), Windows (x64), a
 | `WIN_CERTIFICATE_PFX` | Windows | Base64-encoded code signing cert (.pfx) — `base64 -i cert.pfx` |
 | `WIN_CERTIFICATE_PASSWORD` | Windows | Password for the .pfx |
 
-> **Note:** Electron signing secrets are optional. Forks and new setups can build and release unsigned artifacts without configuring any of the macOS/Windows secrets above. The workflow emits a warning annotation when signing is skipped.
+> **Note:** Electron signing secrets are optional for forks: unsigned artifacts are built with a warning annotation. In the `taofu-labs` org the mac job **fails** without `MAC_CERTIFICATE_P12`. Windows signing is not enforced yet.
+>
+> mac assets keep `-arm64`/`-x64` in zip names and `latest-mac.yml` (electron-updater picks the arch by that token); only the dmgs are copied to `Gratis-mac.dmg` / `Gratis-mac-intel.dmg` for download links.
 
 ## Model Selection
 

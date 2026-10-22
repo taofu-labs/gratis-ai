@@ -352,7 +352,11 @@ class NativeInference {
 
             info.gpu.device_names = await llama.getGpuDeviceNames()
 
-        } catch {
+        } catch ( error ) {
+
+            // Surface why the GPU backend is unavailable (missing driver, absent native package, ...)
+            console.error( `[system-info] GPU backend unavailable:`, error?.message || error )
+            info.gpu.error = error?.message || String( error )
 
             // Fallback: Apple Silicon always has Metal
             if( process.platform === `darwin` && process.arch === `arm64` ) {
