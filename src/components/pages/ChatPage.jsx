@@ -928,7 +928,7 @@ export default function ChatPage() {
 
         if( capabilities.image_input ) return null
         const loaded_model = get_model_by_id( loaded_model_id ) || cached_models.find( ( { id } ) => id === loaded_model_id )
-        const choose_model = { testid: `choose-vision-model`, label: t( `choose_vision_model` ), on_click: () => navigate( `/select-model?need=vision` ) }
+        const choose_model = { testid: `choose-vision-model`, label: t( `choose_vision_model` ), on_click: () => navigate( `/select-model?need=vision`, { state: { return_to: location.pathname } } ) }
 
         // The model reads images once its projector is downloaded
         if( capabilities.image_blocked === `projector_missing` && loaded_model ) {

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import styled from 'styled-components'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { log } from 'mentie'
 import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, SlidersHorizontal, List } from 'lucide-react'
@@ -375,6 +375,9 @@ export default function ModelSelectPage() {
     const navigate = useNavigate()
     const { t } = useTranslation( 'models' )
     const [ search_params ] = useSearchParams()
+
+    // The conversation that sent us here (e.g. `?need=vision`); its draft waits there
+    const return_to = useLocation().state?.return_to || `/chat`
     const hero_ref = useRef( null )
 
     // `?need=vision` arrives from "this model can't read images" prompts
@@ -581,7 +584,7 @@ export default function ModelSelectPage() {
             return
         }
         localStorage.setItem( storage_key( `active_model_id` ), model.id )
-        navigate( `/chat` )
+        navigate( return_to )
     }
 
     const handle_download = async () => {
@@ -597,7 +600,7 @@ export default function ModelSelectPage() {
         try {
             const storage_mode = active_uses_external_file ? `external-file` : `opfs`
             if( storage_mode === `external-file` ) await choose_external_model_file( active_model )
-            navigate( `/download`, { state: { model: active_model, storage_mode } } )
+            navigate( `/download`, { state: { model: active_model, storage_mode, return_to } } )
         } catch ( error ) {
             if( error?.name !== `AbortError` ) set_action_error( error.message || t( 'download_storage_failed' ) )
         }
@@ -674,7 +677,7 @@ export default function ModelSelectPage() {
             <BackButton
                 data-testid="back-to-chat-btn"
                 aria-label={ t( 'back_to_chat' ) }
-                onClick={ () => navigate( `/chat` ) }
+                onClick={ () => navigate( return_to ) }
             >
                 <ArrowLeft size={ 16 } />
                 <span>{ t( 'back_to_chat' ) }</span>
