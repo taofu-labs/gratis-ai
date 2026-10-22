@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Model picker v2: one "Recommended starting model" with download size/time, speed band and privacy line; optional Adjust (faster / balanced / better answers, photos, fewer refusals); Browse all models with filters
+- Image input: paste, drag or attach photos and screenshots for vision models, in the browser and the desktop app (llama.cpp llama-server sidecar)
+- Document upload: PDF and text files are read into the conversation
+- Downloaded models can be deleted straight from the "On this device" list (tap the trash icon twice)
+
+### Changed
+- Deleting the active model unloads it first instead of refusing
+
 ## [0.47.0] - 2026-10-21
 
 ### Added

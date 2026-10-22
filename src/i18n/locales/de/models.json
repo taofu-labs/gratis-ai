@@ -67,6 +67,7 @@
     "on_this_device_subtitle": "Bereits heruntergeladen. Startet sofort, kein Download nötig.",
     "use_model": "Verwenden",
     "continue_with_model": "Weiter",
+    "delete_model_aria": "{{name}} von diesem Gerät löschen",
     "back_to_chat": "Zurück zum Chat",
     "tpn_fallback_unreachable": "Die TPN-Gewinnerliste war nicht erreichbar, daher haben wir Modelle gewählt, die zu deinem Gerät passen.",
     "retry_tpn_winners": "TPN-Gewinner erneut laden",

@@ -67,6 +67,7 @@
     "on_this_device_subtitle": "Już pobrany. Startuje od razu, bez pobierania.",
     "use_model": "Użyj",
     "continue_with_model": "Kontynuuj",
+    "delete_model_aria": "Usuń {{name}} z tego urządzenia",
     "back_to_chat": "Wróć do czatu",
     "tpn_fallback_unreachable": "Nie udało się pobrać listy zwycięzców TPN, więc wybraliśmy modele pasujące do Twojego urządzenia.",
     "retry_tpn_winners": "Wczytaj zwycięzców TPN ponownie",

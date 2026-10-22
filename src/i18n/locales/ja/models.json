@@ -67,6 +67,7 @@
     "on_this_device_subtitle": "ダウンロード済み。ダウンロード不要ですぐに始められます。",
     "use_model": "使う",
     "continue_with_model": "続ける",
+    "delete_model_aria": "このデバイスから{{name}}を削除",
     "back_to_chat": "チャットに戻る",
     "tpn_fallback_unreachable": "TPN優勝モデルの一覧に接続できなかったため、このデバイスに合うモデルを選びました。",
     "retry_tpn_winners": "TPN優勝モデルを再読み込み",

@@ -174,13 +174,13 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( page.getByTestId( `tpn-models-error` ) ).toContainText( `Couldn't reach` )
     } )
 
-    test( `cached models are listed with one-click reuse`, async ( { page } ) => {
-        await mock_tpn_winners( page )
-        await page.goto( `/select-model` )
-        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
+    /**
+     * Seed SmolLM2 as a finished download and the active model, the way the app stores it
+     * @param {import('@playwright/test').Page} page
+     */
+    const seed_cached_model = async page => {
 
-        // Wait for the app to create its schema (name follows VITE_APP_NAME), then seed
-        // a record the way a finished download stores it
+        // Wait for the app to create its schema (name follows VITE_APP_NAME)
         const db_name = async () => ( await page.evaluate( () => indexedDB.databases() ) )
             .map( ( { name } ) => name )
             .find( name => name.endsWith( `-db` ) )
@@ -206,10 +206,42 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         } ), { name } )
         await page.reload()
 
+    }
+
+    test( `cached models are listed with one-click reuse`, async ( { page } ) => {
+        await mock_tpn_winners( page )
+        await page.goto( `/select-model` )
+        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
+        await seed_cached_model( page )
+
         await expect( page.getByTestId( `cached-model-smollm2-360m-q4km` ) ).toContainText( `360M parameters` )
         await expect( page.getByTestId( `back-to-chat-btn` ) ).toBeVisible()
         await page.getByTestId( `use-cached-smollm2-360m-q4km` ).click()
         await expect( page ).toHaveURL( /\/chat/ )
+    } )
+
+    test( `cached models can be deleted with a confirming second tap`, async ( { page } ) => {
+        await mock_tpn_winners( page )
+        await page.goto( `/select-model` )
+        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
+        await seed_cached_model( page )
+
+        // First tap only arms the button
+        const delete_btn = page.getByTestId( `delete-cached-smollm2-360m-q4km` )
+        await expect( delete_btn ).toHaveAccessibleName( `Delete SmolLM2 360M from this device` )
+        await delete_btn.click()
+        await expect( delete_btn ).toHaveText( `Delete` )
+        await expect( page.getByTestId( `cached-model-smollm2-360m-q4km` ) ).toBeVisible()
+
+        // Second tap deletes it; it was active, so there is no chat to go back to
+        await delete_btn.click()
+        await expect( page.getByTestId( `cached-model-list` ) ).toHaveCount( 0 )
+        await expect( page.getByTestId( `back-to-chat-btn` ) ).toHaveCount( 0 )
+
+        // Still gone after a reload
+        await page.reload()
+        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
+        await expect( page.getByTestId( `cached-model-list` ) ).toHaveCount( 0 )
     } )
 
     test( `offline custom model lookup shows a friendly message`, async ( { page } ) => {

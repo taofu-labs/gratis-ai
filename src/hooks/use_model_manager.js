@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
 import { delete_browser_model } from '../utils/model_download'
+import use_llm from '../stores/llm_store'
 import { storage_key, EVENTS } from '../utils/branding'
 
 const active_model_key = storage_key( `active_model_id` )
@@ -77,19 +78,22 @@ export default function use_model_manager() {
     }, [ refresh_models ] )
 
     /**
-     * Delete a cached model
+     * Delete a cached model. Deleting the active model unloads it first, since
+     * OPFS cannot remove a file the WASM worker still holds open.
      * @param {string} model_id - The model ID to delete
      * @returns {Promise<void>}
      */
     const delete_model = useCallback( async ( model_id ) => {
 
-        const active_id = localStorage.getItem( active_model_key )
-        if( model_id === active_id ) {
-            throw new Error( `Cannot delete the currently active model. Switch to another model first.` )
-        }
+        const was_active = model_id === localStorage.getItem( active_model_key )
 
         set_is_loading( true )
         try {
+
+            if( was_active ) {
+                await use_llm.getState().unload_model()
+                localStorage.removeItem( active_model_key )
+            }
 
             if( is_electron ) {
                 // Electron path: delete via IPC
@@ -104,6 +108,12 @@ export default function use_model_manager() {
             log.info( `[models] Deleted model ${ model_id }` )
             await refresh_models()
             window.dispatchEvent( new Event( EVENTS.models_changed ) )
+
+        } catch ( err ) {
+
+            // Files are still there: keep it as the active model
+            if( was_active ) localStorage.setItem( active_model_key, model_id )
+            throw err
 
         } finally {
             set_is_loading( false )

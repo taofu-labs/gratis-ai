@@ -67,6 +67,7 @@
     "on_this_device_subtitle": "Já baixado. Começa na hora, sem download.",
     "use_model": "Usar",
     "continue_with_model": "Continuar",
+    "delete_model_aria": "Excluir {{name}} deste dispositivo",
     "back_to_chat": "Voltar ao chat",
     "tpn_fallback_unreachable": "Não foi possível acessar a lista de vencedores do TPN, então escolhemos modelos que cabem no seu dispositivo.",
     "retry_tpn_winners": "Carregar vencedores do TPN novamente",

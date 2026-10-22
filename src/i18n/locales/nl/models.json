@@ -72,6 +72,7 @@
     "on_this_device_subtitle": "Al gedownload. Start direct, geen download nodig.",
     "use_model": "Gebruiken",
     "continue_with_model": "Doorgaan",
+    "delete_model_aria": "{{name}} van dit apparaat verwijderen",
     "back_to_chat": "Terug naar chat",
     "tpn_fallback_unreachable": "De lijst met TPN-winnaars was niet bereikbaar, dus we kozen modellen die op je apparaat passen.",
     "retry_tpn_winners": "TPN-winnaars opnieuw laden",

@@ -3,7 +3,8 @@ import styled from 'styled-components'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { log } from 'mentie'
-import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, SlidersHorizontal, List } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, SlidersHorizontal, List, Trash2 } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
@@ -172,6 +173,8 @@ const OptionName = styled.div`
     font-weight: 500;
     font-size: 0.9rem;
     margin-bottom: 2px;
+
+    svg { flex-shrink: 0; }
 `
 
 const OptionMeta = styled.div`
@@ -282,6 +285,29 @@ const CustomModelInput = styled.input`
 `
 
 const LoadButton = styled( Button ).attrs( { $variant: `secondary` } )``
+
+// Quiet trash icon; the first tap arms it into a red "Delete" label
+const DeleteButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0 ${ ( { theme } ) => theme.spacing.sm };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: ${ ( { theme, $confirming } ) => $confirming ? theme.colors.error : theme.colors.text_muted };
+    transition: color 0.15s, background 0.15s;
+
+    &:hover:not(:disabled) {
+        color: ${ ( { theme } ) => theme.colors.error };
+        background: ${ ( { theme } ) => theme.colors.surface_hover };
+    }
+
+    &:disabled { opacity: 0.5; }
+`
 
 const InlineActionButton = styled.button`
     min-height: 2.75rem;
@@ -397,7 +423,8 @@ export default function ModelSelectPage() {
 
     // Device memory budget and cached model detection
     const { capabilities, max_model_bytes, is_detecting } = use_device_capabilities()
-    const { cached_models } = use_model_manager()
+    const { cached_models, delete_model } = use_model_manager()
+    const [ confirming_delete, set_confirming_delete ] = useState( null )
     const [ tpn_models, set_tpn_models ] = useState( [] )
     const [ tpn_loading, set_tpn_loading ] = useState( true )
     const [ tpn_error, set_tpn_error ] = useState( null )
@@ -587,6 +614,25 @@ export default function ModelSelectPage() {
         navigate( return_to )
     }
 
+    // Two taps to delete: the first arms the button for a few seconds
+    const handle_delete_cached = async model => {
+
+        if( confirming_delete !== model.id ) {
+            set_confirming_delete( model.id )
+            setTimeout( () => set_confirming_delete( id => id === model.id ? null : id ), 5000 )
+            return
+        }
+
+        set_confirming_delete( null )
+        try {
+            await delete_model( model.id )
+            toast.success( t( `common:deleted_model`, { name: model.name } ) )
+        } catch ( err ) {
+            toast.error( err.message )
+        }
+
+    }
+
     const handle_download = async () => {
 
         if( !active_model ) return
@@ -722,6 +768,16 @@ export default function ModelSelectPage() {
                         >
                             { model.id === active_model_id ? t( 'continue_with_model' ) : t( 'use_model' ) }
                         </LoadButton>
+                        <DeleteButton
+                            type="button"
+                            data-testid={ `delete-cached-${ model.id }` }
+                            $confirming={ confirming_delete === model.id }
+                            aria-label={ t( 'delete_model_aria', { name: model.name } ) }
+                            onClick={ () => handle_delete_cached( model ) }
+                        >
+                            <Trash2 size={ 16 } />
+                            { confirming_delete === model.id && t( 'common:delete' ) }
+                        </DeleteButton>
                     </CachedRow> ) }
                 </ModelList>
             </Section> }
