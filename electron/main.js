@@ -656,6 +656,7 @@ const register_ipc_handlers = () => {
                     context_size: info.context_size,
                     context_reduced: info.context_size < ( model.context_length || requested_ctx ),
                     has_image_input: info.has_image_input,
+                    has_projector: true,
                 }
 
             } catch ( err ) {
@@ -679,6 +680,7 @@ const register_ipc_handlers = () => {
             context_size: result.context_size,
             context_reduced: result.context_size < ( model.context_length || requested_ctx ),
             has_image_input: false,
+            has_projector: !!wants_vision,
         }
 
     } )

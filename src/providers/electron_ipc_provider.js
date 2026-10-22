@@ -1,16 +1,19 @@
 import { log } from 'mentie'
+import { MAX_HISTORY_IMAGES, limit_images } from '../utils/attachments'
+import { get_model_by_id, has_image_input } from '../utils/model_catalog'
 
 /**
  * Prepare renderer messages for IPC. Image Blobs cannot cross the context
  * bridge, so they become ArrayBuffers (main turns them into data URIs for
- * the vision sidecar). Without image input, attachments are dropped.
+ * the vision sidecar). Same image cap as the browser (`limit_images`); without
+ * image input every image becomes a note.
  * @param {Array} messages
  * @param {boolean} with_images
  * @returns {Promise<Array>}
  */
-export const to_ipc_messages = ( messages, with_images ) => Promise.all( messages.map( async ( { attachments, ...message } ) => {
+export const to_ipc_messages = ( messages, with_images ) => Promise.all( limit_images( messages, with_images ? MAX_HISTORY_IMAGES : 0 ).map( async ( { attachments, ...message } ) => {
 
-    const images = with_images ? ( attachments || [] ).filter( ( { kind, data } ) => kind === `image` && data ) : []
+    const images = ( attachments || [] ).filter( ( { kind, data } ) => kind === `image` && data )
     if( !images.length ) return message
 
     return {
@@ -33,6 +36,7 @@ export default class ElectronIPCProvider {
     constructor() {
         this._loaded_model_id = null
         this._has_image_input = false
+        this._capabilities = { image_blocked: null, context_size: 0 }
     }
 
     /**
@@ -51,6 +55,10 @@ export default class ElectronIPCProvider {
 
         // Vision models run in the llama-server sidecar when their projector is installed
         this._has_image_input = !!result?.has_image_input
+
+        // A catalog vision model installed before its projector existed: offer the download
+        const projector_missing = !this._has_image_input && result?.has_projector === false && has_image_input( get_model_by_id( model_id ) )
+        this._capabilities = { image_blocked: projector_missing ? `projector_missing` : null, context_size: result?.context_size || 0 }
 
         // Let the caller know if context was reduced due to VRAM limits
         if( result?.context_reduced ) {
@@ -172,6 +180,7 @@ export default class ElectronIPCProvider {
         await window.electronAPI.unload_model()
         this._loaded_model_id = null
         this._has_image_input = false
+        this._capabilities = { image_blocked: null, context_size: 0 }
 
     }
 
@@ -181,6 +190,14 @@ export default class ElectronIPCProvider {
      */
     get_loaded_model() {
         return this._loaded_model_id
+    }
+
+    /**
+     * What the loaded model can read; same shape as the wllama provider
+     * @returns {{ image_input: boolean, image_blocked: string|null, context_size: number }}
+     */
+    get_capabilities() {
+        return { ...this._capabilities, image_input: this._has_image_input }
     }
 
     /**

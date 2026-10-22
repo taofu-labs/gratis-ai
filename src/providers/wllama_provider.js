@@ -11,6 +11,7 @@ import { ModelFitError } from '../utils/model_fit_error'
 import { classify_webgpu_adapter, wait_for_existing_webgpu_memory_probe } from '../utils/webgpu_memory'
 import {
     estimate_model_memory,
+    projector_memory,
     get_model_by_id,
     select_browser_batch,
     select_browser_context,
@@ -18,7 +19,7 @@ import {
 import { get_external_model_file } from '../utils/external_model_files'
 import { resolve_hf_model } from '../utils/hf_url_parser'
 import { get_browser_cached_model, get_browser_cached_projector, projector_source } from '../utils/model_download'
-import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, to_wllama_messages } from '../utils/attachments'
+import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, MAX_HISTORY_IMAGES, to_wllama_messages } from '../utils/attachments'
 
 // Memory64 is the primary runtime. The matching wasm32 build remains local so
 // Safari and older browsers never need to fetch executable code from a CDN.
@@ -52,9 +53,6 @@ const CPU_FAST_OPTIONS = {
 // non-causal image attention (Gemma 3) need the whole image in one
 // micro-batch, so vision loads raise n_batch/n_ubatch to match.
 const VISION_MIN_CONTEXT = 4096
-
-/** Room the projector's compute buffers need beyond its weights. */
-const PROJECTOR_OVERHEAD = 1.25
 
 /** CPU-only runtime options; GPU offload keeps its larger batch and f16 KV. */
 const cpu_load_options = load_options => {
@@ -281,7 +279,7 @@ export default class WllamaProvider {
             ...model,
             file_size_bytes: model.file_size_bytes || cached.file_size_bytes || cached.blob?.size || 0,
         }
-        const projector_bytes = projector ? Math.ceil( model.mmproj.file_size_bytes * PROJECTOR_OVERHEAD ) : 0
+        const projector_bytes = projector ? projector_memory( model ) : 0
         const vision_model = { ...text_model, file_size_bytes: text_model.file_size_bytes + projector_bytes }
         const required_memory = estimate_model_memory( text_model )
 
@@ -705,16 +703,13 @@ export default class WllamaProvider {
         return this._capabilities.image_input
     }
 
-    /** Turn app messages into wllama's shape, refusing images it cannot read. */
-    async _prepare_messages( messages ) {
-
-        const has_images = messages.some( ( { attachments } ) => attachments?.some( ( { kind } ) => kind === `image` ) )
-        if( has_images && !this._capabilities.image_input ) {
-            throw new Error( `This model cannot read images. Choose a model with image support.` )
-        }
-
-        return to_wllama_messages( messages )
-
+    /**
+     * Turn app messages into wllama's shape. Without image input (e.g. after
+     * switching from a vision model) history images become a short note
+     * instead of failing every later turn.
+     */
+    _prepare_messages( messages ) {
+        return to_wllama_messages( messages, this._capabilities.image_input ? MAX_HISTORY_IMAGES : 0 )
     }
 
     /** Assert that inference can start. */

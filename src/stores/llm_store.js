@@ -25,11 +25,15 @@ const DEFAULT_CAPABILITIES = Object.freeze( { image_input: false, image_blocked:
  * Provider capabilities, tolerating providers that report less. Image input
  * is gated on `has_image_input()`, which both runtimes implement.
  */
-const read_capabilities = provider => ( {
-    ...DEFAULT_CAPABILITIES,
-    ...provider?.get_capabilities?.(),
-    image_input: !!provider?.has_image_input?.(),
-} )
+const read_capabilities = provider => {
+    const reported = provider?.get_capabilities?.() || {}
+    return {
+        ...DEFAULT_CAPABILITIES,
+        ...reported,
+        context_size: reported.context_size || DEFAULT_CAPABILITIES.context_size,
+        image_input: !!provider?.has_image_input?.(),
+    }
+}
 
 /**
  * Coalesce streamed text updates to one per animation frame. Re-rendering and

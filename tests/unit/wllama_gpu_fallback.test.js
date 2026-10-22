@@ -76,7 +76,8 @@ vi.mock( `wllama64`, () => {
         getModelMetadata() {
             return { meta: { 'general.name': `Test model`, 'general.architecture': `test` } }
         }
-        async createChatCompletion() {
+        async createChatCompletion( { messages } ) {
+            mocks.last_messages = messages
             if( this.load_options.n_gpu_layers > 0 && mocks.fail_benign_inference ) {
                 throw new WllamaError( `KV cache full`, `kv_cache_full` )
             }
@@ -466,9 +467,12 @@ describe( `Wllama WebGPU fallback`, () => {
 
             expect( mocks.instances.at( -1 ).source ).toEqual( [ model_blob ] )
             expect( provider.get_capabilities() ).toMatchObject( { image_input: false, image_blocked: `projector_missing` } )
-            await expect( provider.chat( [ { role: `user`, content: `hi`, attachments: [ { kind: `image`, data: new Blob( [ `x` ] ) } ] } ] ) )
-                .rejects.toThrow( /cannot read images/ )
             await expect( provider.chat( [ { role: `user`, content: `hi` } ] ) ).resolves.toBe( `cpu answer` )
+
+            // History images from an earlier vision model become a note, not an error
+            await expect( provider.chat( [ { role: `user`, content: `hi`, attachments: [ { kind: `image`, data: new Blob( [ `x` ] ) } ] } ] ) )
+                .resolves.toBe( `cpu answer` )
+            expect( mocks.last_messages ).toEqual( [ { role: `user`, content: `[1 earlier image omitted]\nhi` } ] )
         } )
 
         test( `drops the projector when memory only fits the text model`, async () => {

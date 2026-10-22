@@ -144,9 +144,17 @@ describe( `Electron IPC message preparation`, () => {
 
     } )
 
-    test( `drops attachments for text-only models`, async () => {
+    test( `drops attachments for text-only models, leaving a note`, async () => {
         const [ message ] = await to_ipc_messages( [ { role: `user`, content: `hi`, attachments: [ { kind: `image`, data: new Blob() } ] } ], false )
-        expect( message ).toEqual( { role: `user`, content: `hi` } )
+        expect( message ).toEqual( { role: `user`, content: `[1 earlier image omitted]\nhi` } )
+    } )
+
+    test( `sends only the newest images, like the browser runtime`, async () => {
+        const image = () => ( { kind: `image`, mime: `image/png`, name: `a.png`, data: new Blob( [ png_bytes ] ) } )
+        const messages = Array.from( { length: 6 }, () => ( { role: `user`, content: `look`, attachments: [ image() ] } ) )
+        const prepared = await to_ipc_messages( messages, true )
+        expect( prepared.filter( ( { attachments } ) => attachments ).length ).toBe( 4 )
+        expect( prepared[ 0 ].content ).toBe( `[1 earlier image omitted]\nlook` )
     } )
 
 } )

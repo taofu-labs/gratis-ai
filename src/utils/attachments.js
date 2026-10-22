@@ -290,10 +290,14 @@ export const compose_user_message = ( { text, images = [], documents = [], budge
  * @param {Array} messages
  * @returns {number}
  */
-export const estimate_history_tokens = messages => messages.reduce( ( total, { content = ``, attachments } ) => {
-    const images = attachments?.filter( ( { kind } ) => kind === `image` ).length || 0
-    return total + estimate_tokens( content ) + Math.min( images, MAX_HISTORY_IMAGES ) * IMAGE_MAX_TOKENS + 8
-}, 0 )
+export const estimate_history_tokens = messages => {
+
+    // Only the newest MAX_HISTORY_IMAGES images reach the model (limit_images)
+    const images = messages.reduce( ( count, { attachments } ) => count + ( attachments?.filter( ( { kind } ) => kind === `image` ).length || 0 ), 0 )
+    const text = messages.reduce( ( total, { content = `` } ) => total + estimate_tokens( content ) + 8, 0 )
+    return text + Math.min( images, MAX_HISTORY_IMAGES ) * IMAGE_MAX_TOKENS
+
+}
 
 /**
  * Tokens left for documents in the next message. Reserves room for the reply
@@ -315,38 +319,57 @@ export const document_token_budget = ( { context_size, history_tokens = 0, max_t
 // ─── Provider shape ────────────────────────────────────────────────────────────
 
 /**
- * App messages → wllama chat messages. User turns with images become content
- * parts `[ image…, text ]`; only the newest MAX_HISTORY_IMAGES images are sent.
+ * Keep only the newest `max_images` images across the conversation; older
+ * ones leave a short note in their message. Both runtimes re-encode every
+ * image on each turn, and a text-only model gets none (max_images = 0).
  * @param {Array<{ role: string, content: string, attachments?: Array }>} messages
- * @returns {Promise<Array>}
+ * @param {number} [max_images]
+ * @returns {Array}
  */
-export const to_wllama_messages = async messages => {
+export const limit_images = ( messages, max_images = MAX_HISTORY_IMAGES ) => {
 
-    // Count images from the end so the newest ones survive
-    let images_left = MAX_HISTORY_IMAGES
-    const keep = new Set()
-    for( const message of [ ...messages ].reverse() ) {
-        for( const attachment of [ ...message.attachments || [] ].reverse() ) {
-            if( attachment.kind !== `image` || images_left <= 0 ) continue
-            keep.add( attachment )
-            images_left--
+    // Walk newest first so the newest images survive
+    let images_left = max_images
+
+    return [ ...messages ].reverse().map( message => {
+
+        const images = message.attachments?.filter( ( { kind } ) => kind === `image` ) || []
+        if( !images.length ) return message
+
+        const keep_count = Math.min( images.length, images_left )
+        images_left -= keep_count
+        const omitted = images.length - keep_count
+        if( !omitted ) return message
+
+        const others = message.attachments.filter( ( { kind } ) => kind !== `image` )
+        const note = `[${ omitted } earlier image${ omitted > 1 ? `s` : `` } omitted]\n`
+        return {
+            ...message,
+            content: `${ note }${ message.content }`,
+            attachments: [ ...images.slice( omitted ), ...others ],
         }
-    }
 
-    return Promise.all( messages.map( async ( { role, content, attachments } ) => {
-
-        const images = attachments?.filter( ( { kind } ) => kind === `image` ) || []
-        if( role !== `user` || !images.length ) return { role, content }
-
-        const omitted = images.filter( image => !keep.has( image ) ).length
-        const parts = await Promise.all( images.filter( image => keep.has( image ) ).map( async ( { data } ) => ( {
-            type: `image`,
-            data: data instanceof Blob ? await data.arrayBuffer() : data,
-        } ) ) )
-        const note = omitted ? `[${ omitted } earlier image${ omitted > 1 ? `s` : `` } omitted]\n` : ``
-
-        return { role, content: [ ...parts, { type: `text`, text: `${ note }${ content }` } ] }
-
-    } ) )
+    } ).reverse()
 
 }
+
+/**
+ * App messages → wllama chat messages. User turns with images become content
+ * parts `[ image…, text ]`, after `limit_images`.
+ * @param {Array<{ role: string, content: string, attachments?: Array }>} messages
+ * @param {number} [max_images]
+ * @returns {Promise<Array>}
+ */
+export const to_wllama_messages = ( messages, max_images ) => Promise.all( limit_images( messages, max_images ).map( async ( { role, content, attachments } ) => {
+
+    const images = attachments?.filter( ( { kind } ) => kind === `image` ) || []
+    if( role !== `user` || !images.length ) return { role, content }
+
+    const parts = await Promise.all( images.map( async ( { data } ) => ( {
+        type: `image`,
+        data: data instanceof Blob ? await data.arrayBuffer() : data,
+    } ) ) )
+
+    return { role, content: [ ...parts, { type: `text`, text: content } ] }
+
+} ) )

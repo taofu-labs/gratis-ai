@@ -111,6 +111,10 @@ describe( `document budget`, () => {
             { role: `assistant`, content: `ok` },
         ] )
         expect( tokens ).toBe( 10 + 8 + MAX_HISTORY_IMAGES * IMAGE_MAX_TOKENS + 1 + 8 )
+
+        // The cap spans the conversation, not each message
+        const spread = Array( MAX_HISTORY_IMAGES + 2 ).fill( { role: `user`, content: ``, attachments: [ image ] } )
+        expect( estimate_history_tokens( spread ) ).toBe( spread.length * 8 + MAX_HISTORY_IMAGES * IMAGE_MAX_TOKENS )
     } )
 
 } )
@@ -189,6 +193,10 @@ describe( `images`, () => {
         expect( converted[ 3 ].content.map( ( { type } ) => type ) ).toEqual( [ `image`, `image`, `image`, `text` ] )
         expect( [ ...new Uint8Array( converted[ 3 ].content[ 0 ].data ) ] ).toEqual( [ 3 ] )
         expect( converted[ 3 ].content.at( -1 ) ).toEqual( { type: `text`, text: `second` } )
+
+        // A text-only model gets notes instead of images
+        const text_only = await to_wllama_messages( messages, 0 )
+        expect( text_only[ 3 ] ).toEqual( { role: `user`, content: `[3 earlier images omitted]\nsecond` } )
 
     } )
 
