@@ -30,3 +30,11 @@ or prefer a sub-2 GB first-run default.
 CPU loads use flash attention + q8_0 KV (+22-66% decode, measured). GPU-offload loads still use f16 KV and
 no FA because no real GPU was available to verify ggml-webgpu support. Benchmark on real hardware with
 `scripts/bench` (add n_gpu_layers to BENCH_CONFIGS) before extending CPU_FAST_OPTIONS to GPU loads.
+
+## Review: llama-server sidecar on macOS / Windows unverified (2026-10-22)
+
+Only Linux was exercised (CPU). Before release, check on real hardware: (1) signed + notarized mac build still
+launches `Contents/Resources/llama-server/llama-server` (osx-sign should sign it with hardened runtime +
+entitlementsInherit); (2) Metal on Apple Silicon and Vulkan on a cheap Intel-iGPU Windows laptop — if Vulkan is
+flaky there, the CPU retry kicks in only on crash, not on garbage output; consider `--device none` default on win.
+(3) A hard-killed app (SIGKILL / Task Manager) orphans the sidecar until reboot — no parent-death signal in Node.

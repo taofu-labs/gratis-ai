@@ -360,3 +360,13 @@ action) rather than re-declaring pill styles. Its invisible 44px hit area is `::
 ## Storage prefix is `gratis:` not `gratisai:`
 `.env` sets `VITE_APP_NAME=Gratis`, so localStorage/IDB keys are `gratis:settings:*` / `gratis-db`.
 Scripts seeding state with the code default (`gratisai`) silently do nothing.
+
+## Electron vision sidecar (2026-10-22)
+
+- `vendor/llama-server/<os>-<arch>/` is gitignored; `npm run fetch:llama-server` (auto via predev/prebuild:electron).
+  Without it vision models silently load text-only through node-llama-cpp (`has_image_input: false`).
+- Projectors are stored as `<model stem>.<mmproj name>` — every HF repo names theirs `mmproj-F16.gguf`.
+  Manifest `mmproj_file_name` keeps the catalog name; `mmproj_local_name()` maps to disk.
+- node-llama-cpp's stream hides thinking; llama-server streams `<think>` in content (`--reasoning-format none`).
+  Tiny Qwen3 test prompts need `/no_think` or a big `max_tokens` on the node-llama-cpp path, or text is empty.
+- Tests: `pgrep -f pattern` inside `execSync` matches its own `sh -c`; use a `[ ]` bracket in the regex.

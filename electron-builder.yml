@@ -8,6 +8,23 @@ asar: true
 asarUnpack:
   - "node_modules/node-llama-cpp/**"
 
+# Vision sidecar: llama.cpp llama-server + its shared libraries, fetched per
+# platform/arch by scripts/fetch_llama_server.js (run before packaging).
+# Lands in <resources>/llama-server, outside the asar, where electron/llama_server.js
+# looks for it.
+#
+# macOS signing: @electron/osx-sign walks the whole .app (Contents/Resources
+# included) and signs every Mach-O file it finds, so llama-server and its dylibs
+# get our Developer ID, hardened runtime and `entitlementsInherit` like any helper.
+# The dylibs are plain files (no symlinks) named by their @rpath install names, so
+# re-signing keeps library validation happy and notarization sees no unsigned code.
+extraResources:
+  - from: "vendor/llama-server/${os}-${arch}"
+    to: "llama-server"
+    filter:
+      - "**/*"
+      - "!.version"
+
 publish:
   provider: github
   owner: taofu-labs

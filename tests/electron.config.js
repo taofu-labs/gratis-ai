@@ -19,7 +19,7 @@ export default defineConfig( {
         // Inference tests — native node-llama-cpp inference through Electron
         {
             name: `inference`,
-            testMatch: /\b(inference|multi_architecture|model_management|electron_chat_history|electron_model_switching|electron_settings_inference)\.spec\.js$/,
+            testMatch: /\b(inference|multi_architecture|model_management|electron_chat_history|electron_model_switching|electron_settings_inference|vision_sidecar)\.spec\.js$/,
             retries: 0,
             workers: 1,
             timeout: 600_000,

@@ -168,3 +168,6 @@ out/
 # Playwright artifacts
 test-results/
 playwright-report/
+
+# llama-server sidecar binaries (scripts/fetch_llama_server.js)
+vendor/

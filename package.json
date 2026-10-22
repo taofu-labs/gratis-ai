@@ -12,7 +12,9 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
+        "predev:electron": "node scripts/fetch_llama_server.js",
         "dev:electron": "electron-vite dev",
+        "prebuild:electron": "node scripts/fetch_llama_server.js",
         "build:electron": "electron-vite build && electron-builder",
         "test": "playwright test --config=tests/playwright.config.js",
         "test:pwa": "playwright test --config=tests/pwa.config.js",
@@ -21,7 +23,8 @@
         "test:unit": "vitest run tests/unit/",
         "lint": "eslint --fix src",
         "postinstall": "node scripts/ensure_platform_deps.js && node scripts/copy_wasm.js",
-        "prepare": "husky"
+        "prepare": "husky",
+        "fetch:llama-server": "node scripts/fetch_llama_server.js"
     },
     "dependencies": {
         "@fontsource-variable/montserrat": "^5.3.0",

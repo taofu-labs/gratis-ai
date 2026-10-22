@@ -1,6 +1,29 @@
 import { log } from 'mentie'
 
 /**
+ * Prepare renderer messages for IPC. Image Blobs cannot cross the context
+ * bridge, so they become ArrayBuffers (main turns them into data URIs for
+ * the vision sidecar). Without image input, attachments are dropped.
+ * @param {Array} messages
+ * @param {boolean} with_images
+ * @returns {Promise<Array>}
+ */
+export const to_ipc_messages = ( messages, with_images ) => Promise.all( messages.map( async ( { attachments, ...message } ) => {
+
+    const images = with_images ? ( attachments || [] ).filter( ( { kind, data } ) => kind === `image` && data ) : []
+    if( !images.length ) return message
+
+    return {
+        ...message,
+        attachments: await Promise.all( images.map( async ( { data, ...image } ) => ( {
+            ...image,
+            data: data instanceof Blob ? await data.arrayBuffer() : data,
+        } ) ) ),
+    }
+
+} ) )
+
+/**
  * Electron IPC-based LLM provider
  * Forwards LLMProvider interface calls over IPC to the main process
  * where node-llama-cpp runs natively
@@ -9,6 +32,7 @@ export default class ElectronIPCProvider {
 
     constructor() {
         this._loaded_model_id = null
+        this._has_image_input = false
     }
 
     /**
@@ -24,6 +48,9 @@ export default class ElectronIPCProvider {
 
         const result = await window.electronAPI.load_model( model_id )
         this._loaded_model_id = model_id
+
+        // Vision models run in the llama-server sidecar when their projector is installed
+        this._has_image_input = !!result?.has_image_input
 
         // Let the caller know if context was reduced due to VRAM limits
         if( result?.context_reduced ) {
@@ -46,7 +73,7 @@ export default class ElectronIPCProvider {
      * @returns {Promise<string>}
      */
     async chat( messages, opts = {} ) {
-        return window.electronAPI.chat( messages, opts )
+        return window.electronAPI.chat( await to_ipc_messages( messages, this._has_image_input ), opts )
     }
 
     /**
@@ -85,11 +112,16 @@ export default class ElectronIPCProvider {
             }
         }
 
-        window.electronAPI.on_stream_token( token_handler )
-        window.electronAPI.on_stream_done( done_handler )
+        const remove_token_listener = window.electronAPI.on_stream_token( token_handler )
+        const remove_done_listener = window.electronAPI.on_stream_done( done_handler )
 
-        // Fire off the stream — don't await, tokens arrive via IPC events
-        const stream_promise = window.electronAPI.start_stream( messages, opts )
+        // Fire off the stream — don't await, tokens arrive via IPC events.
+        // Chunks are text, or `{ prompt_progress }` / `{ timings }` from the sidecar.
+        const ipc_messages = await to_ipc_messages( messages, this._has_image_input )
+        const stream_promise = window.electronAPI.start_stream( ipc_messages, opts )
+
+        // A failed stream may never send stream-done — unblock the loop so the error surfaces below
+        stream_promise.catch( () => done_handler() )
 
         // Yield tokens as they arrive
         try {
@@ -115,8 +147,10 @@ export default class ElectronIPCProvider {
             await stream_promise
 
         } finally {
-            // Clean up listener
+            // Release this stream's listeners so later streams do not pile them up
             done_handler()
+            remove_token_listener?.()
+            remove_done_listener?.()
         }
 
     }
@@ -137,6 +171,7 @@ export default class ElectronIPCProvider {
         log.debug( `[electron] Unloading model` )
         await window.electronAPI.unload_model()
         this._loaded_model_id = null
+        this._has_image_input = false
 
     }
 
@@ -146,6 +181,14 @@ export default class ElectronIPCProvider {
      */
     get_loaded_model() {
         return this._loaded_model_id
+    }
+
+    /**
+     * Whether the loaded model accepts image attachments
+     * @returns {boolean}
+     */
+    has_image_input() {
+        return this._has_image_input
     }
 
     /**

@@ -558,3 +558,10 @@
 - No public TPN brand guide exists online; the brand = `theme.js` + fonts from commit d7b8a7f.
 
 - 2026-10-21: PRs #7/#8 merged (0.45.0 released); 0.45.1 fixes home error banner clipping (Container min-width: 0)
+
+## 2026-10-22 — Electron vision via llama-server sidecar (W4)
+- node-llama-cpp 3.22.2 has no multimodal (v4 pending). Vision models (manifest `mmproj_file_name`) now run in a
+  bundled llama.cpp `llama-server` (pinned b11818, sha256-verified, `scripts/fetch_llama_server.js`); text models
+  stay on node-llama-cpp. Win/Linux ship the Vulkan build (CPU backends included, CPU retry on GPU crash).
+- Verified on Linux: Electron e2e reads a red-square PNG, keeps full history, switches back to node-llama-cpp,
+  real HF download of model + projector, packaged `--dir` build contains `resources/llama-server`.
