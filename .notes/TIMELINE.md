@@ -558,3 +558,4 @@
 - No public TPN brand guide exists online; the brand = `theme.js` + fonts from commit d7b8a7f.
 
 - 2026-10-21: PRs #7/#8 merged (0.45.0 released); 0.45.1 fixes home error banner clipping (Container min-width: 0)
+- 2026-10-22 (W3): picker v2 — 4 flat cards → "Recommended starting model" hero + optional Adjust (Faster/Balanced/Better, photos, fewer refusals) + "Browse all models". `select_for_preferences` filters (runtime ceiling, memory incl. mmproj, capabilities) before scoring (curated `quality` vs bandwidth-model reply speed). Catalog v2: 16 HF-verified entries; 31 obsolete entries `hidden: true`.

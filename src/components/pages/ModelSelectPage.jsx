@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import styled from 'styled-components'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { log } from 'mentie'
-import { Check, ChevronDown, ChevronUp, ArrowLeft, ArrowRight, Sparkles, AlertTriangle, LoaderCircle, Link, Zap, ShieldOff, Eye, HardDrive, Settings } from 'lucide-react'
+import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, SlidersHorizontal, List } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
@@ -11,19 +11,29 @@ import BrowserRamOverride from '../atoms/BrowserRamOverride'
 import Button from '../atoms/Button'
 import LanguageSelector from '../molecules/LanguageSelector'
 import SettingsModal from '../molecules/SettingsModal'
+import ModelHero from '../molecules/ModelHero'
+import ModelPreferences from '../molecules/ModelPreferences'
+import ModelBrowser from '../molecules/ModelBrowser'
 import {
-    BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
+    build_device_profile,
     read_browser_ram_override,
     supports_browser_ram_override,
 } from '../../utils/device_detection'
 import {
+    DEFAULT_PREFERENCES,
+    MODEL_CATALOG,
+    check_fit,
+    describe_models,
+    estimate_reply_speed,
+    fit_level,
     format_file_size,
-    can_fit_in_memory,
-    estimate_model_memory,
-    quality_score,
-    benchmark_coverage,
-    select_picker_models,
     get_model_by_id,
+    has_image_input,
+    model_download_bytes,
+    quality_score,
+    runtime_memory,
+    select_picker_models,
+    speed_band,
 } from '../../utils/model_catalog'
 import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { resolve_tpn_winner_models } from '../../utils/tpn_winner_models'
@@ -40,7 +50,7 @@ const Container = styled.div`
     align-items: center;
     flex: 1;
     min-height: 0;
-    padding: ${ ( { theme } ) => theme.spacing.xl };
+    padding: ${ ( { theme } ) => theme.spacing.xl } ${ ( { theme } ) => theme.spacing.md };
     overflow-y: auto;
 
     /* Flex spacers center content when it fits, collapse when it overflows */
@@ -96,264 +106,47 @@ const IconButton = styled.button`
     color: ${ ( { theme } ) => theme.colors.text_muted };
     transition: color 0.15s;
 
-    &:hover {
-        color: ${ ( { theme } ) => theme.colors.text };
-    }
+    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
 const Title = styled.h1`
     font-size: clamp( 1.5rem, 1.2rem + 1.5vw, 2rem );
     color: ${ ( { theme } ) => theme.colors.text };
     border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
-    margin-bottom: 2rem;
+    margin: ${ ( { theme } ) => theme.spacing.xl } 0 ${ ( { theme } ) => theme.spacing.lg };
 `
 
-const Subtitle = styled.p`
-    color: ${ ( { theme } ) => theme.colors.text_secondary };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
-    text-align: center;
-    max-width: 520px;
-    line-height: 1.5;
-`
-
-
-// ─── Two-card recommendation layout ─────────────────────────────────────────────
-
-const CardRow = styled.div`
+// One column for everything below the title: hero, adjust, browse
+const Column = styled.div`
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.md };
     width: 100%;
-    max-width: 960px;
-    margin-bottom: ${ ( { theme } ) => theme.spacing.md };
-
-    /* Cards don't stretch — stays centered when count is uneven */
-    & > * {
-        flex: 0 0 calc( 25% - 0.75rem );
-        min-width: 160px;
-    }
-
-    @media ( max-width: 680px ) {
-        & > * { flex: 1 1 100%; min-width: 0; }
-    }
+    max-width: 520px;
 `
 
-const OptionCard = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: ${ ( { theme } ) => `${ theme.spacing.lg } ${ theme.spacing.md }` };
-    border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
-    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
-    text-align: center;
-    transition: border-color 0.16s, background-color 0.16s;
-    cursor: pointer;
-
-    /* Selection: accent line + faint tint; never a heavy double border */
-    background: ${ ( { theme, $active } ) => $active ? `${ theme.colors.accent }0d` : `transparent` };
-
-    &:hover {
-        border-color: ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border_strong };
-        background: ${ ( { theme, $active } ) => $active ? `${ theme.colors.accent }14` : theme.colors.surface_hover };
-    }
-`
-
-const CardLabel = styled.h2`
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    text-wrap: balance;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    font-size: 1.0625rem;
-    font-weight: 500;
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
-    color: ${ ( { theme } ) => theme.colors.text };
-`
-
-const DownloadEstimate = styled.p`
-    font-size: 0.85rem;
-    color: ${ ( { theme } ) => theme.colors.text_secondary };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
-`
-
-const CachedBadge = styled.div`
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: ${ ( { theme } ) => theme.colors.success };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
-`
-
-const UncensoredTag = styled.span`
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.error };
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-left: 6px;
-    flex-shrink: 0;
-`
-
-const VisionTag = styled.span`
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.info };
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-left: 6px;
-    flex-shrink: 0;
-`
-
-const QualityBadge = styled.span`
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.accent };
-`
-
-const BenchmarkGrid = styled.div`
-    display: flex;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    flex-wrap: wrap;
-    margin-top: ${ ( { theme } ) => theme.spacing.xs };
-    font-size: 0.7rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-`
-
-const BenchmarkLabel = styled.span`
-    text-transform: uppercase;
-    opacity: 0.7;
-    margin-right: 2px;
-`
-
-const CardDetailsToggle = styled.button`
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    margin-top: ${ ( { theme } ) => theme.spacing.xs };
-    transition: color 0.15s;
-
-    &:hover { color: ${ ( { theme } ) => theme.colors.text_secondary }; }
-`
-
-const CardDetails = styled.div`
-    overflow: hidden;
-    max-height: ${ ( { $open } ) => $open ? `120px` : `0px` };
-    opacity: ${ ( { $open } ) => $open ? 1 : 0 };
-    transition: max-height 0.2s ease, opacity 0.15s ease;
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    margin-top: ${ ( { $open, theme } ) => $open ? theme.spacing.xs : `0` };
-
-    @media ( prefers-reduced-motion: reduce ) {
-        transition: none;
-    }
-`
-
-
-// ─── Single-card fallback (when no faster option exists) ─────────────────────────
-
-const RecommendedCard = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: ${ ( { theme } ) => `${ theme.spacing.lg } ${ theme.spacing.md }` };
-    border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
-    cursor: ${ ( { role } ) => role === `button` ? `pointer` : `default` };
-    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
-    max-width: 420px;
+const Section = styled.section`
     width: 100%;
-    margin-bottom: ${ ( { theme } ) => theme.spacing.md };
 `
 
-const RecommendedBadge = styled.div`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.accent };
-    font-weight: 600;
-    margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
-`
-
-const RecommendedName = styled.div`
+const SectionTitle = styled.h2`
     font-size: 1rem;
     font-weight: 600;
     color: ${ ( { theme } ) => theme.colors.text };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
 `
 
-const RecommendedMeta = styled.div`
-    font-size: 0.85rem;
-    color: ${ ( { theme } ) => theme.colors.text_secondary };
-    text-align: center;
-    line-height: 1.45;
-`
-
-// ─── Shared UI components ────────────────────────────────────────────────────────
-
-const DownloadButton = styled( Button )`
-    margin-top: ${ ( { theme } ) => theme.spacing.md };
-`
-
-// Toggle buttons for expanding model lists
-const ToggleButton = styled.button`
-    display: flex;
-    align-items: center;
-    gap: ${ ( { theme } ) => theme.spacing.xs };
-    margin-top: ${ ( { theme } ) => theme.spacing.lg };
-    font-size: 0.85rem;
+const SectionSubtitle = styled.p`
+    font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
-    transition: color 0.15s;
-    min-height: 2.75rem;
-
-    &:hover { color: ${ ( { theme } ) => theme.colors.text_secondary }; }
-`
-
-const ExpandPanel = styled.div`
-    overflow: hidden;
-    max-height: ${ ( { $expanded } ) => $expanded ? `2000px` : `0px` };
-    opacity: ${ ( { $expanded } ) => $expanded ? 1 : 0 };
-    visibility: ${ ( { $expanded } ) => $expanded ? `visible` : `hidden` };
-    transition: max-height 0.3s ease, opacity 0.2s ease, visibility 0.3s ease;
-    flex-shrink: 0;
-    width: 100%;
-    max-width: 420px;
-
-    @media ( prefers-reduced-motion: reduce ) {
-        transition: none;
-    }
+    margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
 `
 
 const ModelList = styled.div`
     display: flex;
     flex-direction: column;
-    gap: ${ ( { theme } ) => theme.spacing.sm };
-    padding-top: ${ ( { theme } ) => theme.spacing.md };
+    gap: ${ ( { theme } ) => theme.spacing.xs };
     width: 100%;
-    max-width: 520px;
-`
-
-const ModelOption = styled.button`
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    width: 100%;
-    padding: ${ ( { theme } ) => theme.spacing.md };
-    border: 1px solid ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
-    border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    text-align: left;
-    background: ${ ( { theme, $active } ) => $active ? `${ theme.colors.accent }10` : `transparent` };
-    transition: border-color 0.15s, background 0.15s;
-
-    &:hover {
-        border-color: ${ ( { theme } ) => theme.colors.text_muted };
-    }
 `
 
 // Cached rows hold their own action button, so the row itself is not a button
@@ -362,10 +155,9 @@ const CachedRow = styled.div`
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.sm };
     width: 100%;
-    padding: ${ ( { theme } ) => theme.spacing.md };
+    padding: ${ ( { theme } ) => theme.spacing.sm } ${ ( { theme } ) => theme.spacing.md };
     border: 1px solid ${ ( { theme } ) => theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    text-align: left;
 `
 
 const OptionInfo = styled.div`
@@ -389,46 +181,27 @@ const OptionMeta = styled.div`
     overflow-wrap: anywhere;
 `
 
-const CheckIcon = styled.div`
-    color: ${ ( { theme } ) => theme.colors.accent };
-    flex-shrink: 0;
-`
-
-// Step progress indicator
-const StepIndicator = styled.div`
+const Disclosure = styled.button`
     display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.xs };
-    margin-top: ${ ( { theme } ) => theme.spacing.lg };
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
+    min-height: 2.75rem;
+    font-size: 0.9rem;
+    color: ${ ( { theme } ) => theme.colors.text_secondary };
+    transition: color 0.15s;
+
+    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
-const StepDot = styled.div`
-    width: 8px;
-    height: 8px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
-    background: ${ ( { theme, $active, $done } ) =>
-        $done ? theme.colors.accent
-            : $active ? theme.colors.accent
-                : theme.colors.border };
-`
-
-const StepLine = styled.div`
-    width: 24px;
-    height: 2px;
-    background: ${ ( { theme, $done } ) => $done ? theme.colors.accent : theme.colors.border };
-`
-
-const MemoryWarning = styled.div`
+const Notice = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
     gap: ${ ( { theme } ) => theme.spacing.xs };
     font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.warning || `#c49660` };
-    margin-top: ${ ( { theme } ) => theme.spacing.sm };
+    color: ${ ( { theme } ) => theme.colors.warning };
+    text-align: center;
 `
 
 // Low free RAM warning banner (Electron only)
@@ -439,29 +212,48 @@ const LowMemoryWarning = styled.div`
     gap: ${ ( { theme } ) => theme.spacing.sm };
     padding: ${ ( { theme } ) => theme.spacing.md };
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
-    background: ${ ( { theme } ) => theme.colors.warning ? `${ theme.colors.warning }18` : `#c4966018` };
-    border: 1px solid ${ ( { theme } ) => theme.colors.warning || `#c49660` };
+    background: ${ ( { theme } ) => `${ theme.colors.warning }18` };
+    border: 1px solid ${ ( { theme } ) => theme.colors.warning };
     color: ${ ( { theme } ) => theme.colors.text };
     font-size: 0.85rem;
     line-height: 1.45;
     text-align: center;
     width: 100%;
-    max-width: 680px;
-    margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
 
-    svg { flex-shrink: 0; color: ${ ( { theme } ) => theme.colors.warning || `#c49660` }; }
+    svg { flex-shrink: 0; color: ${ ( { theme } ) => theme.colors.warning }; }
+`
+
+const Quiet = styled.div`
+    font-size: 0.8rem;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+`
+
+const EmptyTitle = styled.p`
+    font-size: 1rem;
+    color: ${ ( { theme } ) => theme.colors.text };
+`
+
+const EmptyBody = styled.p`
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: ${ ( { theme } ) => theme.colors.text_secondary };
+`
+
+const RelaxedList = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
 `
 
 // Custom model input section
 const CustomModelSection = styled.div`
-    margin-top: ${ ( { theme } ) => theme.spacing.md };
     padding-top: ${ ( { theme } ) => theme.spacing.md };
     border-top: 1px solid ${ ( { theme } ) => theme.colors.border };
     width: 100%;
-    max-width: 420px;
 `
 
-const CustomModelLabel = styled.div`
+const CustomModelLabel = styled.label`
     display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.xs };
@@ -492,10 +284,11 @@ const CustomModelInput = styled.input`
 const LoadButton = styled( Button ).attrs( { $variant: `secondary` } )``
 
 const InlineActionButton = styled.button`
+    min-height: 2.75rem;
     color: ${ ( { theme } ) => theme.colors.accent };
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    min-height: 1.5rem;
+    text-align: left;
 
     &:hover { text-decoration: underline; }
 `
@@ -503,7 +296,7 @@ const InlineActionButton = styled.button`
 const CustomModelStatus = styled.div`
     font-size: 0.8rem;
     margin-top: ${ ( { theme } ) => theme.spacing.xs };
-    color: ${ ( { $error, theme } ) => $error ?  theme.colors.error || `#b85c5c`  : theme.colors.text_muted };
+    color: ${ ( { $error, theme } ) => $error ? theme.colors.error : theme.colors.text_muted };
     display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.xs };
@@ -514,42 +307,26 @@ const Spinner = styled( LoaderCircle )`
     @keyframes spin { to { transform: rotate( 360deg ); } }
 `
 
-// ─── Section headers ──────────────────────────────────────────────────────────
-
-const SectionHeader = styled.div`
-    text-align: center;
-    margin-top: ${ ( { theme } ) => theme.spacing.xl };
-    margin-bottom: ${ ( { theme } ) => theme.spacing.md };
-    width: 100%;
-    max-width: 720px;
-
-    &:first-of-type { margin-top: 0; }
+// Step progress indicator
+const StepIndicator = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
+    margin-top: ${ ( { theme } ) => theme.spacing.lg };
 `
 
-const SectionTitle = styled.h2`
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.text };
-    margin-bottom: 2px;
+const StepDot = styled.div`
+    width: 8px;
+    height: 8px;
+    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    background: ${ ( { theme, $active, $done } ) => $done || $active ? theme.colors.accent : theme.colors.border };
 `
 
-const SectionSubtitle = styled.p`
-    font-size: 0.8rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
+const StepLine = styled.div`
+    width: 24px;
+    height: 2px;
+    background: ${ ( { theme, $done } ) => $done ? theme.colors.accent : theme.colors.border };
 `
-
-// ─── Benchmark display ────────────────────────────────────────────────────────
-
-const BENCHMARK_LABELS = { mmlu: `MMLU`, gpqa: `GPQA`, humaneval: `Code`, math: `Math`, gsm8k: `GSM8K` }
-
-function BenchmarkRow( { benchmarks } ) {
-    return <BenchmarkGrid>
-        { Object.entries( BENCHMARK_LABELS ).map( ( [ key, label ] ) =>
-            benchmarks[ key ] != null &&
-                <span key={ key }><BenchmarkLabel>{ label }</BenchmarkLabel>{ benchmarks[ key ] }/100</span>
-        ) }
-    </BenchmarkGrid>
-}
 
 
 // ─── Plain-language helpers ─────────────────────────────────────────────────────
@@ -561,15 +338,6 @@ const timed_fetch = ( url, options = {} ) =>
     fetch( url, { ...options, signal: AbortSignal.timeout( TPN_DISCOVERY_TIMEOUT_MS ) } )
 
 const has_parameter_label = ( { parameters_label } ) => !!parameters_label && parameters_label !== `Custom`
-
-// Rough speed/quality class: parameter count, or ~2 params per byte at Q4 when unknown
-const speed_hint_key = ( { parameters, file_size_bytes = 0 } ) => {
-    const size_class = parameters || file_size_bytes * 2
-    if( size_class < 1_000_000_000 ) return `hint_tiny`
-    if( size_class < 4_000_000_000 ) return `hint_small`
-    if( size_class < 10_000_000_000 ) return `hint_medium`
-    return `hint_large`
-}
 
 // Network failures surface as browser-specific TypeErrors ("Failed to fetch", "Load failed")
 const is_network_error = error =>
@@ -585,28 +353,36 @@ const model_download_url = model => model?.hugging_face_repo && model?.file_name
     ? build_download_url( model.hugging_face_repo, model.file_name )
     : null
 
-// Recommendation card variants, in display order
-const CARD_VARIANTS = [
-    { key: `faster`, icon: Zap, label: `faster_option` },
-    { key: `smarter`, icon: Sparkles, label: `smarter_option` },
-    { key: `uncensored`, icon: ShieldOff, label: `uncensored_option` },
-    { key: `vision`, icon: Eye, label: `vision_option` },
-]
+const BAND_ORDER = [ `slow`, `steady`, `quick` ]
+
+// A quality gap smaller than this is noise between vendor benchmark tables
+const NOTICEABLE_QUALITY_GAP = 8
+
+const scroll_into_view = element => {
+    const reduced = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches
+    element?.scrollIntoView( { behavior: reduced ? `instant` : `smooth`, block: `nearest` } )
+}
 
 
 /**
- * Model selection page — TPN winners first; when none fit or exist, the catalog's
- * device-fit recommendations. Lists cached models for instant reuse and accepts
- * custom Hugging Face GGUF links.
+ * Model selection page. One calm recommendation (TPN winner when one fits,
+ * else the catalog's device-aware pick), optional tailoring, and an expert
+ * view of the whole catalog. Downloaded models stay one click away.
  * @returns {JSX.Element}
  */
 export default function ModelSelectPage() {
 
     const navigate = useNavigate()
     const { t } = useTranslation( 'models' )
-    const [ show_alternatives, set_show_alternatives ] = useState( false )
+    const [ search_params ] = useSearchParams()
+    const hero_ref = useRef( null )
+
+    // `?need=vision` arrives from "this model can't read images" prompts
+    const needs_vision = search_params.get( `need` ) === `vision`
+    const [ preferences, set_preferences ] = useState( () => ( { ...DEFAULT_PREFERENCES, vision: needs_vision } ) )
+    const [ adjust_open, set_adjust_open ] = useState( needs_vision )
+    const [ browse_open, set_browse_open ] = useState( false )
     const [ settings_open, set_settings_open ] = useState( false )
-    const expand_panel_ref = useRef( null )
 
     useEffect( () => {
 
@@ -615,23 +391,6 @@ export default function ModelSelectPage() {
         return () => window.removeEventListener( EVENTS.open_settings, handle_open_settings )
 
     }, [] )
-
-    // Auto-scroll the alternatives panel into view on mobile when expanded
-    useEffect( () => {
-
-        if( !show_alternatives || !expand_panel_ref.current ) return
-
-        const timer = setTimeout( () => {
-            const prefers_reduced = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches
-            expand_panel_ref.current?.scrollIntoView( {
-                behavior: prefers_reduced ? 'instant' : 'smooth',
-                block: 'nearest',
-            } )
-        }, 80 )
-
-        return () => clearTimeout( timer )
-
-    }, [ show_alternatives ] )
 
     // Device memory budget and cached model detection
     const { capabilities, max_model_bytes, is_detecting } = use_device_capabilities()
@@ -643,8 +402,7 @@ export default function ModelSelectPage() {
     // Returning users can go straight back to their current chat
     const active_model_id = localStorage.getItem( storage_key( `active_model_id` ) )
 
-    const is_cached = ( model_id ) =>
-        cached_models.some( m => m.id === model_id )
+    const is_cached = useCallback( model_id => cached_models.some( m => m.id === model_id ), [ cached_models ] )
 
     const load_tpn_models = useCallback( async () => {
 
@@ -668,102 +426,158 @@ export default function ModelSelectPage() {
         load_tpn_models()
     }, [ load_tpn_models ] )
 
-    // Automatic browser picks stay conservative even when Chromium reports the
-    // host's full RAM. Larger, receipt-backed models remain explicit choices.
-    const is_browser = capabilities?.runtime === `browser`
-    const automatic_model_budget = is_browser
-        ? Math.min( max_model_bytes, BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
-        : max_model_bytes
+    // ── What this device can run, and what we recommend ──
 
-    // TPN winners lead; the catalog only fills in when no winner fits this device
-    const { winners, use_catalog, recommendations, alternatives: alternative_models } = useMemo(
-        () => select_picker_models( {
-            winners: tpn_models,
-            max_bytes: max_model_bytes,
-            automatic_bytes: automatic_model_budget,
-            receipt_ceiling_bytes: is_browser ? BROWSER_AUTOMATIC_MODEL_CEILING_BYTES : null,
-        } ),
-        [ tpn_models, max_model_bytes, automatic_model_budget, is_browser ],
+    const device = useMemo( () => build_device_profile( capabilities, max_model_bytes ), [ capabilities, max_model_bytes ] )
+    const picks = useMemo(
+        () => select_picker_models( { winners: tpn_models, device, preferences } ),
+        [ tpn_models, device, preferences ],
     )
+    const baseline = useMemo( () => select_picker_models( { winners: tpn_models, device } ), [ tpn_models, device ] )
 
-    // Hold the catalog back until discovery settles, so winners don't pop in over it
-    const show_catalog = use_catalog && !tpn_loading && !is_detecting
-    const { smarter } = recommendations
-    const recommended_cards = show_catalog
-        ? CARD_VARIANTS.filter( ( { key } ) => recommendations[ key ] )
-        : []
+    // Hold the recommendation back until discovery settles, so winners don't pop in over it
+    const deciding = tpn_loading || is_detecting || !capabilities
 
-    // Track user selection — winners need an explicit pick, the catalog defaults to smarter
-    const [ selected_model_id, set_selected_model_id ] = useState( null )
+    const catalog_rows = useMemo( () => describe_models( MODEL_CATALOG.filter( m => !m.hidden ), device ), [ device ] )
+    const retired_rows = useMemo( () => describe_models( MODEL_CATALOG.filter( m => m.hidden ), device ), [ device ] )
+    const winner_rows = useMemo( () => describe_models( picks.winners, device ), [ picks.winners, device ] )
 
-    // Per-card "show details" toggle
-    const [ details_open, set_details_open ] = useState( {} )
-    const toggle_details = ( id ) => set_details_open( prev => ( { ...prev, [ id ]: !prev[ id ] } ) )
+    // ── Selection: custom > explicit choice > recommendation ──
 
-    // Custom model state
+    const [ selected_id, set_selected_id ] = useState( null )
     const [ custom_url, set_custom_url ] = useState( `` )
     const [ custom_model, set_custom_model ] = useState( null )
     const [ custom_loading, set_custom_loading ] = useState( false )
     const [ custom_error, set_custom_error ] = useState( null )
+    const [ action_error, set_action_error ] = useState( null )
 
-    const selectable_models = [
-        ...winners,
-        ...show_catalog ? [ ...recommended_cards.map( ( { key } ) => recommendations[ key ] ), ...alternative_models ] : [],
-    ]
-
-    const selected_model = selected_model_id
-        ? selectable_models.find( m => m.id === selected_model_id ) ?? null
+    const selected_model = selected_id
+        ? [ ...winner_rows, ...catalog_rows, ...retired_rows ].find( ( { model } ) => model.id === selected_id )?.model
         : null
 
-    // Resolve the active model — custom > explicit pick > catalog default.
-    // Cached models already offer one-click reuse, so they suppress the default download.
-    const active_model = custom_model
-        || selected_model
-        || ( show_catalog && !cached_models.length ? smarter : null )
+    const recommendation = deciding ? null : picks.pick
+    const active_model = custom_model || selected_model || recommendation
+    const hero_kind = custom_model ? `custom`
+        : selected_model && selected_model.id !== recommendation?.id ? `choice`
+            : picks.from_winner ? `winner`
+                : `recommended`
+
+    const active_fit = active_model ? check_fit( active_model, device ) : null
+    const active_is_cached = !!active_model && is_cached( active_model.id )
+    const active_uses_external_file = !!active_model && should_use_external_model_file( active_model )
+
+    // Adjusting tailors the recommendation, so it replaces any explicit pick
+    const update_preferences = patch => {
+        set_preferences( current => ( { ...current, ...patch } ) )
+        set_selected_id( null )
+        set_custom_model( null )
+        set_action_error( null )
+    }
+
+    const choose_model = model_id => {
+        set_custom_model( null )
+        set_action_error( null )
+        set_selected_id( model_id )
+        scroll_into_view( hero_ref.current )
+    }
+
+    const reset_choice = () => {
+        set_custom_model( null )
+        set_action_error( null )
+        set_selected_id( null )
+    }
+
+    // ── Plain-language facts ──
 
     // Same host-scoped estimator the download page records into; probe only the active pick
     const speed_target_url = model_download_url( active_model )
-    const { speed_bps, is_estimating, run_estimate } = use_speed_estimate( speed_target_url )
+    const { speed_bps, run_estimate } = use_speed_estimate( speed_target_url )
 
     useEffect( () => {
-        if( is_detecting || !speed_target_url ) return
+        if( deciding || !speed_target_url ) return
         const timer = setTimeout( run_estimate, 250 )
         return () => clearTimeout( timer )
-    }, [ is_detecting, run_estimate, speed_target_url ] )
+    }, [ deciding, run_estimate, speed_target_url ] )
 
     // Size always; time only from a real measurement, never a guessed range
-    const download_estimate = model => {
+    const download_text = model => {
 
-        const size = format_file_size( model.file_size_bytes )
+        const bytes = model_download_bytes( model )
+        const size = format_file_size( bytes )
         const url = model_download_url( model )
-        const bps = speed_bps ||  url && get_speed_estimate( url )?.bps 
+        const bps = speed_bps || url && get_speed_estimate( url )?.bps
 
-        if( bps ) return t( 'download_size_with_time', {
-            size,
-            time: format_download_duration( model.file_size_bytes / bps, t ),
-        } )
-        if( is_estimating && model.id === active_model?.id ) return t( 'measuring_download_speed' )
+        if( bps ) return t( 'download_size_with_time', { size, time: format_download_duration( bytes / bps, t ) } )
         return t( 'download_size', { size } )
 
     }
 
-    const active_is_cached = active_model && is_cached( active_model.id )
+    const device_name = t( `device_${ device.kind }` )
+
+    // Why this model: a fit sentence for runnable models, the blocker otherwise
+    const fit_reason = fit => {
+        if( fit.reason === `too_big_for_runtime` ) return t( `reason_too_big_browser` )
+        if( fit.reason === `untested_in_browser` ) return t( `reason_untested` )
+        if( fit.reason === `needs_more_memory` ) return t( `reason_needs_memory`, {
+            required: format_file_size( fit.memory ),
+            budget: format_file_size( device.budget_bytes ),
+        } )
+        return null
+    }
+
+    const fit_sentence = fit => {
+        const level = fit_level( fit, device )
+        if( !level ) return fit_reason( fit )
+        return device.ram_gb
+            ? t( `fit_${ level }`, { ram: device.ram_gb, device: device_name } )
+            : t( `fit_${ level }_unknown`, { device: device_name } )
+    }
+
+    const band_of = model => speed_band( estimate_reply_speed( model, device ) )
+
+    // What the adjustments changed compared to the default recommendation
+    const describe_change = () => {
+
+        const from = baseline.pick
+        const to = picks.pick
+        if( hero_kind !== `recommended` || !from || !to || from.id === to.id ) return null
+
+        const size_delta = model_download_bytes( to ) - model_download_bytes( from )
+        const band_delta = BAND_ORDER.indexOf( band_of( to ) ) - BAND_ORDER.indexOf( band_of( from ) )
+        const quality_delta = quality_score( to ) - quality_score( from )
+
+        const changes = [
+            size_delta > 0 && t( `change_bigger`, { size: format_file_size( size_delta ) } ),
+            size_delta < 0 && t( `change_smaller`, { size: format_file_size( -size_delta ) } ),
+            band_delta > 0 && t( `change_faster` ),
+            band_delta < 0 && t( `change_slower` ),
+            quality_delta >= NOTICEABLE_QUALITY_GAP && t( `change_smarter` ),
+            quality_delta <= -NOTICEABLE_QUALITY_GAP && t( `change_simpler` ),
+        ].filter( Boolean )
+
+        return changes.length ? t( `change_vs_default`, { changes: changes.join( `, ` ) } ) : null
+
+    }
+
+    const action_label = !active_model ? t( 'select_model_to_continue' )
+        : active_is_cached ? t( 'start_chatting' )
+            : active_uses_external_file ? t( 'choose_save_location' )
+                : t( 'download_cta', { size: format_file_size( model_download_bytes( active_model ) ) } )
 
     // Warn Electron users when free RAM is dangerously low for the selected model
-    const is_electron = capabilities?.runtime === 'electron'
     const free_bytes = capabilities?.memory?.free_bytes
-    const model_needs = active_model ? estimate_model_memory( active_model ) : 0
-    const low_memory = is_electron && free_bytes && model_needs > 0 && free_bytes < model_needs * 1.2
-    const active_model_too_large = !!active_model && !can_fit_in_memory( active_model, max_model_bytes )
-    const has_ram_override = supports_browser_ram_override() && !!read_browser_ram_override()
+    const model_needs = active_model ? runtime_memory( active_model ) : 0
+    const low_memory = device.runtime === `electron` && free_bytes && model_needs > 0 && free_bytes < model_needs * 1.2
 
-    const active_uses_external_file = active_model && should_use_external_model_file( active_model )
+    const can_override_ram = supports_browser_ram_override()
+    const has_ram_override = can_override_ram && !!read_browser_ram_override()
 
-    // Cached models skip the download page entirely
+    // ── Actions ──
+
     // Cached copies still face the fit check: RAM overrides or devices change
     const use_cached_model = model => {
-        if( !can_fit_in_memory( get_model_by_id( model.id ) || model, max_model_bytes ) ) {
-            set_custom_error( t( 'model_does_not_fit' ) )
+        if( !check_fit( get_model_by_id( model.id ) || model, device ).fits ) {
+            set_action_error( t( 'model_does_not_fit' ) )
             return
         }
         localStorage.setItem( storage_key( `active_model_id` ), model.id )
@@ -773,38 +587,21 @@ export default function ModelSelectPage() {
     const handle_download = async () => {
 
         if( !active_model ) return
-        if( active_model_too_large ) {
-            set_custom_error( t( 'model_does_not_fit' ) )
+        if( !active_fit.fits ) {
+            set_action_error( t( 'model_does_not_fit' ) )
             return
         }
 
         if( active_is_cached ) return use_cached_model( active_model )
 
         try {
-            const storage_mode = should_use_external_model_file( active_model )
-                ? `external-file`
-                : `opfs`
-
+            const storage_mode = active_uses_external_file ? `external-file` : `opfs`
             if( storage_mode === `external-file` ) await choose_external_model_file( active_model )
             navigate( `/download`, { state: { model: active_model, storage_mode } } )
         } catch ( error ) {
-            if( error?.name !== `AbortError` ) {
-                set_custom_error( error.message || t( 'download_storage_failed' ) )
-            }
+            if( error?.name !== `AbortError` ) set_action_error( error.message || t( 'download_storage_failed' ) )
         }
 
-    }
-
-    const handle_select = ( model_id ) => {
-        set_custom_model( null )
-        set_custom_error( null )
-        set_selected_model_id( model_id )
-    }
-
-    const select_with_keyboard = ( event, model_id ) => {
-        if( ![ `Enter`, ` ` ].includes( event.key ) ) return
-        event.preventDefault()
-        handle_select( model_id )
     }
 
     // Resolve a custom HuggingFace URL into a model definition
@@ -820,12 +617,14 @@ export default function ModelSelectPage() {
 
         set_custom_loading( true )
         set_custom_error( null )
+        set_action_error( null )
         set_custom_model( null )
-        set_selected_model_id( null )
+        set_selected_id( null )
 
         try {
             const model = await resolve_hf_model( parsed )
             set_custom_model( model )
+            scroll_into_view( hero_ref.current )
         } catch ( err ) {
             log.warn( `[models] Custom model lookup failed:`, err )
             set_custom_error( friendly_lookup_error( err, t ) )
@@ -841,58 +640,33 @@ export default function ModelSelectPage() {
         format_file_size( model.file_size_bytes ),
     ].filter( Boolean ).join( ` · ` )
 
-    const cached_badge_or_estimate = model => is_cached( model.id )
-        ? <CachedBadge><Check size={ 12 } /> { t( 'already_downloaded' ) }</CachedBadge>
-        : <DownloadEstimate>{ download_estimate( model ) }</DownloadEstimate>
+    // ── Hero content when nothing fits ──
 
-    // Cards are clickable themselves, so the toggle must not also select
-    const details_toggle = id => <CardDetailsToggle
-        aria-expanded={ !!details_open[ id ] }
-        onClick={ e => {
-            e.stopPropagation()
-            toggle_details( id )
-        } }
-        onKeyDown={ e => e.stopPropagation() }
-    >
-        { t( 'show_details' ) } { details_open[ id ] ? <ChevronUp size={ 12 } /> : <ChevronDown size={ 12 } /> }
-    </CardDetailsToggle>
+    const relaxed_label = { vision: `relaxed_without_photos`, fewer_refusals: `relaxed_without_fewer_refusals` }
 
-    // Plain-language card: name, size, speed hint; jargon stays behind "Show details"
-    const summary_card = ( model, badge, card_props ) => <RecommendedCard
-        data-testid={ `model-option-${ model.id }` }
-        { ...card_props }
-    >
-        <RecommendedBadge>
-            <Sparkles size={ 14 } />
-            { badge }
-        </RecommendedBadge>
-        <RecommendedName>{ model.name }</RecommendedName>
-        <RecommendedMeta>
-            { [
-                has_parameter_label( model ) && t( 'parameters_count', { params: model.parameters_label } ),
-                t( speed_hint_key( model ) ),
-            ].filter( Boolean ).join( ` · ` ) }
-        </RecommendedMeta>
-        { cached_badge_or_estimate( model ) }
-        { details_toggle( model.id ) }
-        <CardDetails $open={ !!details_open[ model.id ] }>
-            { model.hugging_face_repo && <div>{ model.hugging_face_repo }</div> }
-            { model.file_name && <div>{ model.file_name }</div> }
-            <div>
-                { model.quantization || t( 'unknown_quantization' ) }
-                { model.context_length && ` — ${ t( 'context_window_label', { context: model.context_length.toLocaleString() } ) }` }
-            </div>
-            { model.benchmarks && <BenchmarkRow benchmarks={ model.benchmarks } /> }
-        </CardDetails>
-    </RecommendedCard>
+    const empty_state = !deciding && !active_model && ( picks.relaxed.length
+        ? <div data-testid="nothing-fits-combination">
+            <EmptyTitle>{ t( `nothing_fits_title` ) }</EmptyTitle>
+            <EmptyBody>{ t( `nothing_fits_body` ) }</EmptyBody>
+            <RelaxedList>
+                { picks.relaxed.map( ( { drop, model } ) => <InlineActionButton
+                    key={ drop }
+                    type="button"
+                    data-testid={ `relaxed-${ drop }` }
+                    onClick={ () => update_preferences( { [ drop ]: false } ) }
+                >
+                    { t( relaxed_label[ drop ], { name: model.name, size: format_file_size( model_download_bytes( model ) ) } ) }
+                </InlineActionButton> ) }
+            </RelaxedList>
+        </div>
+        : <EmptyBody data-testid="no-fitting-local-model">{ t( 'no_local_model_fits' ) }</EmptyBody> )
 
-    // Explain why the catalog is showing instead of TPN winners
-    const catalog_reason = tpn_error ? t( 'tpn_fallback_unreachable' )
-        : winners.length ? t( 'tpn_fallback_too_large' )
-            : t( 'tpn_fallback_none_yet' )
-
-    const card_count = recommended_cards.length
-    const show_card_row = card_count >= 2
+    const ram_budget = can_override_ram && <Notice data-testid="browser-ram-budget">
+        { has_ram_override
+            ? t( 'ram_override_budget_active', { budget: format_file_size( device.budget_bytes ) } )
+            : t( 'ram_budget_hint', { budget: format_file_size( device.budget_bytes ) } ) }
+        <BrowserRamOverride data-testid="model-select-ram-override" />
+    </Notice>
 
     return <Container>
 
@@ -920,266 +694,159 @@ export default function ModelSelectPage() {
 
         <Title>{ t( 'pick_a_model' ) }</Title>
 
-        { /* ── Models already on this device: one click, no download ── */ }
-        { cached_models.length > 0 && <>
-            <SectionHeader>
+        <Column>
+
+            { /* ── Models already on this device: one click, no download ── */ }
+            { cached_models.length > 0 && <Section>
                 <SectionTitle>{ t( 'on_this_device_section' ) }</SectionTitle>
                 <SectionSubtitle>{ t( 'on_this_device_subtitle' ) }</SectionSubtitle>
-            </SectionHeader>
 
-            <ModelList data-testid="cached-model-list">
-                { cached_models.map( model => <CachedRow key={ model.id } data-testid={ `cached-model-${ model.id }` }>
-                    <OptionInfo>
-                        <OptionName>
-                            <HardDrive size={ 14 } />
-                            { model.is_tpn_winner && model.tpn_competition
-                                ? t( 'tpn_winner_label', { competition: model.tpn_competition } )
-                                : model.name }
-                        </OptionName>
-                        <OptionMeta>{ friendly_meta( model ) }</OptionMeta>
-                    </OptionInfo>
-                    <LoadButton
-                        type="button"
-                        data-testid={ `use-cached-${ model.id }` }
-                        onClick={ () => use_cached_model( model ) }
-                    >
-                        { model.id === active_model_id ? t( 'continue_with_model' ) : t( 'use_model' ) }
-                    </LoadButton>
-                </CachedRow> ) }
-            </ModelList>
-        </> }
-
-        { /* ── TPN winners: the primary choice whenever any exist ── */ }
-        { ( tpn_loading || winners.length > 0 ) && <>
-            <SectionHeader>
-                <SectionTitle>{ t( 'tpn_winner_models_section' ) }</SectionTitle>
-                <SectionSubtitle>{ t( 'tpn_winner_models_subtitle' ) }</SectionSubtitle>
-            </SectionHeader>
-
-            <Subtitle>{ t( 'tpn_winner_subtitle' ) }</Subtitle>
-        </> }
-
-        { tpn_loading && <MemoryWarning data-testid="tpn-models-loading">
-            <Spinner size={ 14 } />
-            { t( 'loading_tpn_winners' ) }
-        </MemoryWarning> }
-
-        { /* ── Low free RAM warning (Electron only) ── */ }
-        { low_memory && <LowMemoryWarning>
-            <AlertTriangle size={ 16 } />
-            <span>{ t( 'low_memory_warning', {
-                free: format_file_size( free_bytes ),
-                needed: format_file_size( model_needs ),
-            } ) }</span>
-        </LowMemoryWarning> }
-
-        { winners.length > 0 && <ModelList data-testid="tpn-model-list">
-            { winners.map( model => {
-                const is_selected = !custom_model && model.id === selected_model_id
-
-                return <ModelOption
-                    key={ model.id }
-                    data-testid={ `model-option-${ model.id }` }
-                    $active={ is_selected }
-                    aria-pressed={ is_selected }
-                    onClick={ () => handle_select( model.id ) }
-                >
-                    <OptionInfo>
-                        <OptionName>
-                            <Sparkles size={ 14 } />
-                            { t( 'tpn_winner_label', { competition: model.tpn_competition || `TPN` } ) }
-                        </OptionName>
-                        <OptionMeta>{ model.hugging_face_repo }</OptionMeta>
-                        <OptionMeta>
-                            { model.quantization || t( 'unknown_quantization' ) }
-                            { ` - ${ format_file_size( model.file_size_bytes ) }` }
-                            { model.file_name && ` - ${ model.file_name }` }
-                        </OptionMeta>
-                        { model.context_length && <OptionMeta>
-                            { t( 'context_window_label', { context: model.context_length.toLocaleString() } ) }
-                            { is_cached( model.id ) ? ` - ${ t( 'downloaded' ) }` : `` }
-                        </OptionMeta> }
-                    </OptionInfo>
-                    { is_selected && <CheckIcon><Check size={ 16 } /></CheckIcon> }
-                </ModelOption>
-            } ) }
-        </ModelList> }
-
-        { /* ── Catalog fallback: device-fit recommendations ── */ }
-        { show_catalog && <>
-            <SectionHeader data-testid="catalog-fallback">
-                <SectionTitle>{ t( 'local_models_section' ) }</SectionTitle>
-                <SectionSubtitle>{ catalog_reason }</SectionSubtitle>
-            </SectionHeader>
-
-            { tpn_error && <MemoryWarning data-testid="tpn-models-error">
-                <InlineActionButton type="button" onClick={ load_tpn_models }>
-                    { t( 'retry_tpn_winners' ) }
-                </InlineActionButton>
-            </MemoryWarning> }
-
-            { card_count > 0 && <Subtitle>
-                { card_count >= 4 ? t( 'subtitle_four_cards' )
-                    : card_count >= 3 ? t( 'subtitle_three_cards' )
-                        : show_card_row ? t( 'subtitle_two_cards' )
-                            : t( 'subtitle_single_card' ) }
-            </Subtitle> }
-        </> }
-
-        { show_card_row && <CardRow>
-            { recommended_cards.map( ( { key, icon: Icon, label } ) => {
-                const model = recommendations[ key ]
-
-                return <OptionCard
-                    key={ key }
-                    data-testid={ `model-option-${ model.id }` }
-                    role="button"
-                    tabIndex={ 0 }
-                    aria-pressed={ !custom_model && active_model?.id === model.id }
-                    $active={ !custom_model && active_model?.id === model.id }
-                    $variant={ key }
-                    onClick={ () => handle_select( model.id ) }
-                    onKeyDown={ event => select_with_keyboard( event, model.id ) }
-                >
-                    <CardLabel>
-                        <Icon size={ 16 } />
-                        { t( label ) }
-                    </CardLabel>
-                    { cached_badge_or_estimate( model ) }
-                    { details_toggle( model.id ) }
-                    <CardDetails $open={ !!details_open[ model.id ] }>
-                        { model.name } — { format_file_size( model.file_size_bytes ) } — { model.quantization }
-                        { model.benchmarks && <BenchmarkRow benchmarks={ model.benchmarks } /> }
-                    </CardDetails>
-                </OptionCard>
-            } ) }
-        </CardRow> }
-
-        { show_catalog && card_count === 0 && !custom_model && <MemoryWarning data-testid="no-fitting-local-model">
-            <AlertTriangle size={ 14 } />
-            { t( 'no_local_model_fits' ) }
-        </MemoryWarning> }
-
-        { /* ── Single catalog pick ── */ }
-        { show_catalog && card_count === 1 && summary_card( smarter, t( 'recommended_for_device' ), {
-            role: `button`,
-            tabIndex: 0,
-            'aria-pressed': !custom_model && active_model?.id === smarter.id,
-            $active: !custom_model && active_model?.id === smarter.id,
-            onClick: () => handle_select( smarter.id ),
-            onKeyDown: event => select_with_keyboard( event, smarter.id ),
-        } ) }
-
-        { /* ── Loaded custom model ── */ }
-        { custom_model && summary_card( custom_model, t( 'custom_model_found' ), { $active: true } ) }
-
-        { /* All alternatives in one list — catalog fallback only */ }
-        { show_catalog && alternative_models.length > 0 && <>
-            <ToggleButton
-                data-testid="change-model-toggle"
-                aria-expanded={ show_alternatives }
-                onClick={ () => set_show_alternatives( !show_alternatives ) }
-            >
-                { t( 'choose_different_model' ) }
-                { show_alternatives ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
-            </ToggleButton>
-
-            <ExpandPanel ref={ expand_panel_ref } $expanded={ show_alternatives }>
-                <ModelList>
-                    { alternative_models.map( ( model ) => {
-                        const is_selected = !custom_model && model.id === active_model?.id
-                        return <ModelOption
-                            key={ model.id }
-                            data-testid={ `model-option-${ model.id }` }
-                            $active={ is_selected }
-                            aria-pressed={ is_selected }
-                            onClick={ () => handle_select( model.id ) }
+                <ModelList data-testid="cached-model-list">
+                    { cached_models.map( model => <CachedRow key={ model.id } data-testid={ `cached-model-${ model.id }` }>
+                        <OptionInfo>
+                            <OptionName>
+                                <HardDrive size={ 14 } />
+                                { model.is_tpn_winner && model.tpn_competition
+                                    ? t( 'tpn_winner_label', { competition: model.tpn_competition } )
+                                    : model.name }
+                            </OptionName>
+                            <OptionMeta>{ friendly_meta( model ) }</OptionMeta>
+                        </OptionInfo>
+                        <LoadButton
+                            type="button"
+                            data-testid={ `use-cached-${ model.id }` }
+                            onClick={ () => use_cached_model( model ) }
                         >
-                            <OptionInfo>
-                                <OptionName>
-                                    { model.name }
-                                    { model.uncensored && <UncensoredTag>{ t( 'uncensored' ) }</UncensoredTag> }
-                                    { model.vision && <VisionTag>{ t( 'vision' ) }</VisionTag> }
-                                </OptionName>
-                                <OptionMeta>
-                                    { friendly_meta( model ) }
-                                    { benchmark_coverage( model ) === 5 && <> · <QualityBadge>{ t( 'quality_score', { score: quality_score( model ).toFixed( 0 ) } ) }</QualityBadge></> }
-                                    { is_cached( model.id ) ? ` · ✓ ${ t( 'downloaded' ) }` : `` }
-                                </OptionMeta>
-                            </OptionInfo>
-                            { is_selected && <CheckIcon><Check size={ 16 } /></CheckIcon> }
-                        </ModelOption>
-                    } ) }
+                            { model.id === active_model_id ? t( 'continue_with_model' ) : t( 'use_model' ) }
+                        </LoadButton>
+                    </CachedRow> ) }
                 </ModelList>
-            </ExpandPanel>
-        </> }
+            </Section> }
 
-        { /* Custom HuggingFace model input */ }
-        <CustomModelSection>
-            <CustomModelLabel>
-                <Link size={ 14 } />
-                { t( 'custom_hf_model' ) }
-            </CustomModelLabel>
+            { /* ── Low free RAM warning (Electron only) ── */ }
+            { low_memory && <LowMemoryWarning>
+                <AlertTriangle size={ 16 } />
+                <span>{ t( 'low_memory_warning', {
+                    free: format_file_size( free_bytes ),
+                    needed: format_file_size( model_needs ),
+                } ) }</span>
+            </LowMemoryWarning> }
 
-            <CustomModelRow onSubmit={ handle_custom_load }>
-                <CustomModelInput
-                    data-testid="custom-model-input"
-                    type="text"
-                    placeholder="hf.co/org/repo:Q4_K_M"
-                    aria-label={ t( 'custom_hf_model' ) }
-                    value={ custom_url }
-                    onChange={ ( e ) => set_custom_url( e.target.value ) }
-                    disabled={ custom_loading }
-                />
-                <LoadButton
-                    data-testid="custom-model-load-btn"
-                    type="submit"
-                    disabled={ custom_loading || !custom_url.trim() }
+            { /* ── The recommendation ── */ }
+            <Section ref={ hero_ref }>
+                <ModelHero
+                    loading={ deciding && !custom_model && !selected_model }
+                    model={ active_model }
+                    kind={ hero_kind }
+                    reason={ active_fit && fit_sentence( active_fit ) }
+                    band={ active_model && band_of( active_model ) }
+                    photos={ has_image_input( active_model ) }
+                    download_text={ active_model && download_text( active_model ) }
+                    cached={ active_is_cached }
+                    action_label={ action_label }
+                    disabled={ !active_model || !active_fit?.fits }
+                    on_confirm={ handle_download }
+                    change={ describe_change() }
+                    fallback={ hero_kind === `recommended` || hero_kind === `winner` ? picks.fallback : null }
+                    on_fallback={ () => choose_model( picks.fallback.id ) }
+                    on_reset={ hero_kind === `choice` || hero_kind === `custom` ? reset_choice : null }
                 >
-                    { custom_loading ? t( 'common:loading' ) : t( 'common:load' ) }
-                </LoadButton>
-            </CustomModelRow>
+                    { empty_state }
+                    { active_model && !active_fit.fits && ram_budget }
+                    { active_uses_external_file && !active_is_cached && <OptionMeta>
+                        { t( 'large_model_external_storage' ) }
+                    </OptionMeta> }
+                    { action_error && <CustomModelStatus $error data-testid="model-action-error">
+                        <AlertTriangle size={ 12 } /> { action_error }
+                    </CustomModelStatus> }
+                </ModelHero>
+            </Section>
 
-            { custom_loading && <CustomModelStatus>
-                <Spinner size={ 12 } /> { t( 'common:resolving' ) }
-            </CustomModelStatus> }
+            { /* ── Optional tailoring ── */ }
+            <Section>
+                <Disclosure
+                    type="button"
+                    aria-expanded={ adjust_open }
+                    data-testid="adjust-toggle"
+                    onClick={ () => set_adjust_open( !adjust_open ) }
+                >
+                    <SlidersHorizontal size={ 16 } />
+                    { t( 'adjust' ) }
+                    { adjust_open ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
+                </Disclosure>
+                { adjust_open && <ModelPreferences preferences={ preferences } on_change={ update_preferences } /> }
+            </Section>
 
-            { custom_error && <CustomModelStatus $error data-testid="custom-model-error">
-                <AlertTriangle size={ 12 } /> { custom_error }
-            </CustomModelStatus> }
+            { /* ── Expert view: the whole catalog ── */ }
+            <Section>
+                <Disclosure
+                    type="button"
+                    aria-expanded={ browse_open }
+                    data-testid="browse-models-toggle"
+                    onClick={ () => set_browse_open( !browse_open ) }
+                >
+                    <List size={ 16 } />
+                    { t( 'browse_all' ) }
+                    { browse_open ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
+                </Disclosure>
 
-        </CustomModelSection>
+                { browse_open && <ModelBrowser
+                    rows={ catalog_rows }
+                    retired_rows={ retired_rows }
+                    winner_rows={ winner_rows }
+                    recommended_id={ recommendation?.id }
+                    selected_id={ custom_model ? null : active_model?.id }
+                    on_select={ choose_model }
+                    is_cached={ is_cached }
+                    fit_reason={ fit => fit_reason( fit ) || ( fit_level( fit, device ) === `tight` ? t( `reason_tight` ) : null ) }
+                >
+                    { tpn_error && <Quiet data-testid="tpn-models-error">
+                        { t( 'tpn_fallback_unreachable' ) }
+                        <InlineActionButton type="button" onClick={ load_tpn_models }>
+                            { t( 'retry_tpn_winners' ) }
+                        </InlineActionButton>
+                    </Quiet> }
 
-        { ( active_model_too_large || has_ram_override ) && <MemoryWarning data-testid="browser-ram-budget">
-            { active_model_too_large && <AlertTriangle size={ 14 } /> }
-            { active_model_too_large && t( 'model_memory_budget_warning', {
-                required: format_file_size( model_needs ),
-                budget: format_file_size( max_model_bytes ),
-            } ) }
-            { has_ram_override && !active_model_too_large && t( 'ram_override_budget_active', {
-                budget: format_file_size( max_model_bytes ),
-            } ) }
-            <BrowserRamOverride data-testid="model-select-ram-override" />
-        </MemoryWarning> }
+                    { ram_budget }
 
-        { active_uses_external_file && !active_is_cached && <MemoryWarning>
-            <HardDrive size={ 14 } />
-            { t( 'large_model_external_storage' ) }
-        </MemoryWarning> }
+                    { /* Custom HuggingFace model input */ }
+                    <CustomModelSection>
+                        <CustomModelLabel htmlFor="custom-model-url">
+                            <Link size={ 14 } />
+                            { t( 'custom_hf_model' ) }
+                        </CustomModelLabel>
 
-        { /* ── Download action + step progress (below all model sections) ── */ }
-        <DownloadButton
-            $sheen={ !!active_model && !active_model_too_large }
-            data-testid="model-select-confirm-btn"
-            onClick={ handle_download }
-            disabled={ !active_model || active_model_too_large }
-        >
-            { active_model
-                ? active_is_cached ? t( 'start_chatting' )
-                    : active_uses_external_file ? t( 'choose_save_location' )
-                        : t( 'download_and_start' )
-                : t( 'select_model_to_continue' ) } <ArrowRight size={ 16 } />
-        </DownloadButton>
+                        <CustomModelRow onSubmit={ handle_custom_load }>
+                            <CustomModelInput
+                                id="custom-model-url"
+                                data-testid="custom-model-input"
+                                type="text"
+                                placeholder="hf.co/org/repo:Q4_K_M"
+                                value={ custom_url }
+                                onChange={ ( e ) => set_custom_url( e.target.value ) }
+                                disabled={ custom_loading }
+                            />
+                            <LoadButton
+                                data-testid="custom-model-load-btn"
+                                type="submit"
+                                disabled={ custom_loading || !custom_url.trim() }
+                            >
+                                { custom_loading ? t( 'common:loading' ) : t( 'common:load' ) }
+                            </LoadButton>
+                        </CustomModelRow>
+
+                        { custom_loading && <CustomModelStatus>
+                            <Spinner size={ 12 } /> { t( 'common:resolving' ) }
+                        </CustomModelStatus> }
+
+                        { custom_error && <CustomModelStatus $error data-testid="custom-model-error">
+                            <AlertTriangle size={ 12 } /> { custom_error }
+                        </CustomModelStatus> }
+                    </CustomModelSection>
+                </ModelBrowser> }
+            </Section>
+
+        </Column>
 
         <StepIndicator data-testid="step-indicator">
             <StepDot $done />

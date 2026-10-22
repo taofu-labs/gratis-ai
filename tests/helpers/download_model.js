@@ -49,29 +49,25 @@ export async function download_model_via_ui( page, model, opts = {} ) {
 /**
  * Select a specific model on the model select page.
  *
- * The page may show a two-card layout ("Faster Option" / "Smarter Option")
- * or a single-card layout. Model names are inside the card details block,
- * which is collapsed by default. We check the page text content without
- * expanding toggles, then fall back to the alternatives list.
+ * The recommendation may already be the target. Otherwise open "Browse all
+ * models", and for retired models also "Show older models", then pick its row.
  *
  * @param {import('@playwright/test').Page} page
  * @param {Object} model - Model fixture from test_models.js
  */
 export async function select_model_on_page( page, model ) {
 
-    // Wait for the model select page to be fully rendered before inspecting
-    await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible( { timeout: 10_000 } )
+    // Wait for the recommendation to settle before inspecting
+    await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible( { timeout: 15_000 } )
+
+    const hero_name = page.getByTestId( `model-hero-name` )
+    if( ( await hero_name.textContent() )?.includes( model.name ) ) return
+
+    const browse = page.getByTestId( `browse-models-toggle` )
+    if( await browse.getAttribute( `aria-expanded` ) !== `true` ) await browse.click()
 
     const option = page.getByTestId( `model-option-${ model.id }` )
-    if( await option.isVisible() ) {
-        await option.click()
-        return
-    }
-
-    // The model is in the collapsed alternatives list.
-    const toggle = page.getByTestId( `change-model-toggle` )
-    await expect( toggle ).toBeVisible( { timeout: 5_000 } )
-    await toggle.click()
+    if( !await option.isVisible() ) await page.getByTestId( `show-retired-toggle` ).click()
 
     await expect( option ).toBeVisible( { timeout: 5_000 } )
     await option.click()

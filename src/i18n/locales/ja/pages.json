@@ -3,6 +3,7 @@
     "value_prop_privacy": "会話はお使いのデバイスに保存されます — クラウドには一切送信されません",
     "value_prop_offline": "初回セットアップ後はインターネットなしで動作します",
     "get_started": "はじめる",
+    "next_step_hint": "次に、このデバイスに合うモデルをおすすめします。いつでも変更できます。",
     "checking_device": "デバイスを確認中...",
     "show_device_details": "デバイスの詳細を表示",
     "hide_device_details": "デバイスの詳細を非表示",

@@ -3,6 +3,7 @@
     "value_prop_privacy": "对话保存在你的设备上 — 不会发送到云端",
     "value_prop_offline": "初次设置后无需联网即可使用",
     "get_started": "开始使用",
+    "next_step_hint": "接下来，我们会推荐一个适合此设备的模型。你可以随时更换。",
     "checking_device": "正在检测设备...",
     "show_device_details": "显示设备详情",
     "hide_device_details": "隐藏设备详情",

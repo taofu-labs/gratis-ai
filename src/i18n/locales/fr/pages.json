@@ -3,6 +3,7 @@
     "value_prop_privacy": "Vos conversations restent sur votre appareil — rien n'est envoyé dans le cloud",
     "value_prop_offline": "Fonctionne sans internet après la configuration initiale",
     "get_started": "Commencer",
+    "next_step_hint": "Ensuite, nous vous proposons un modèle adapté à cet appareil. Vous pourrez le changer à tout moment.",
     "checking_device": "Analyse de votre appareil...",
     "show_device_details": "Afficher les détails de l'appareil",
     "hide_device_details": "Masquer les détails de l'appareil",

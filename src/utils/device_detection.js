@@ -542,3 +542,109 @@ export const probe_capabilities_gpu_memory = async ( capabilities, { cached_only
     }
 
 }
+
+
+// ─── Picker device profile ───────────────────────────────────────────────────────
+
+/**
+ * What kind of device this is, in words a person would use.
+ * @param {DeviceCapabilities} capabilities
+ * @param {string} [user_agent]
+ * @param {number} [touch_points]
+ * @returns {'iphone'|'ipad'|'phone'|'mac'|'computer'}
+ */
+export const detect_device_kind = (
+    capabilities,
+    user_agent = globalThis.navigator?.userAgent || ``,
+    touch_points = globalThis.navigator?.maxTouchPoints || 0,
+) => {
+
+    if( capabilities?.runtime === `electron` ) return capabilities.platform === `darwin` ? `mac` : `computer`
+    if( /iPhone|iPod/.test( user_agent ) ) return `iphone`
+
+    // iPadOS reports a Mac user agent; touch support gives it away
+    if( /iPad/.test( user_agent ) || /Macintosh/.test( user_agent ) && touch_points > 1 ) return `ipad`
+    if( /Android|Mobile/.test( user_agent ) ) return `phone`
+    if( /Macintosh/.test( user_agent ) ) return `mac`
+    return `computer`
+
+}
+
+// Decode bandwidth classes (GB/s). Browser values are calibrated on the
+// 2-thread CI runner; phones run WASM on fewer, slower cores; native desktops
+// run real SIMD/GPU kernels.
+const BANDWIDTH_GBS = {
+    browser_mobile: 3,
+    browser_desktop: 5,
+    native_cpu: 15,
+    native_gpu: 40,
+    native_unified: 60,
+}
+
+// Phones get killed by the OS long before a desktop tab would: cap automatic
+// picks at half the reported RAM, or a safe guess when the browser hides it.
+const MOBILE_RAM_SHARE = 0.5
+const MOBILE_UNKNOWN_RAM_BYTES = 2_400_000_000
+
+/**
+ * Everything the model picker needs to know about this device.
+ *
+ * @param {DeviceCapabilities} capabilities
+ * @param {number} max_bytes - Manual budget from estimate_max_model_bytes()
+ * @returns {import('./model_catalog').DeviceProfile & { kind: string, ram_gb: number|null, mobile: boolean }}
+ */
+export const build_device_profile = ( capabilities, max_bytes ) => {
+
+    const kind = detect_device_kind( capabilities )
+    const mobile = [ `iphone`, `ipad`, `phone` ].includes( kind )
+
+    // Native desktop: no WASM ceiling, real kernels, bandwidth by accelerator
+    if( capabilities?.runtime === `electron` ) {
+
+        const gpu = capabilities.gpu || {}
+        const bandwidth_gbs = gpu.unified_memory > 0 || gpu.metal ? BANDWIDTH_GBS.native_unified
+            : gpu.cuda || gpu.vulkan ? BANDWIDTH_GBS.native_gpu
+                : BANDWIDTH_GBS.native_cpu
+        const total_bytes = capabilities.memory?.total_bytes
+
+        return {
+            runtime: `electron`,
+            kind,
+            mobile: false,
+            ram_gb: total_bytes ? Math.round( total_bytes / 1024 ** 3 ) : null,
+            ceiling_bytes: Infinity,
+            budget_bytes: max_bytes,
+            automatic_bytes: max_bytes,
+            bandwidth_gbs,
+        }
+
+    }
+
+    const memory64 = capabilities?.wasm?.memory64 === true
+    const ram_override = memory64 ? read_browser_ram_override() : null
+    const reported_ram = capabilities?.memory?.device_memory || null
+
+    // Chromium clamps deviceMemory at 8, so "8" only means "8 or more"
+    const ram_gb = ram_override || ( reported_ram && reported_ram < 8 ? reported_ram : null )
+
+    // Declared RAM is trusted for automatic picks; reported RAM stays conservative
+    const mobile_cap = reported_ram ? reported_ram * 1_000_000_000 * MOBILE_RAM_SHARE : MOBILE_UNKNOWN_RAM_BYTES
+    const automatic_bytes = Math.min(
+        max_bytes,
+        ram_override ? max_bytes : BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
+        mobile && !ram_override ? mobile_cap : Infinity,
+    )
+
+    return {
+        runtime: `browser`,
+        kind,
+        mobile,
+        ram_gb,
+        ceiling_bytes: memory64 ? MEMORY64_MODEL_CEILING_BYTES : WASM32_MODEL_CEILING_BYTES,
+        budget_bytes: max_bytes,
+        automatic_bytes,
+        receipt_bytes: BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
+        bandwidth_gbs: mobile ? BANDWIDTH_GBS.browser_mobile : BANDWIDTH_GBS.browser_desktop,
+    }
+
+}
