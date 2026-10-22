@@ -374,7 +374,7 @@ Scripts seeding state with the code default (`gratisai`) silently do nothing.
 
 `tests/unit/picker_personas.test.js` pins recommended IDs for cheap Android / iPhone / 8 GB laptop / 32 GB Mac.
 Catalog or weight changes that move a pick must update that matrix deliberately. `quality` is curated (≈ vendor
-MMLU-Pro); `reasoning_enabled: true` divides reply speed by 3. `runtime_memory()` = estimate + projector bytes —
+MMLU-Pro); `reasoning_enabled: true` divides reply speed by 3. `runtime_memory()` = estimate + `projector_memory()` (×1.25, shared with wllama) —
 if `estimate_model_memory` ever includes the mmproj itself, drop the addition. Retire models with `hidden: true`,
 never deletion: installed users still load them by ID.
 
@@ -392,3 +392,5 @@ never deletion: installed users still load them by ID.
 - Documents are inlined into `content` as `<document name>` blocks; bubbles strip them (`split_documents`), edits
   re-prepend them. Token estimate: ASCII/4 + 1 per non-ASCII char (wllama V3 has no tokenize()).
 - HomePage → `/chat?q=` cannot carry images: ChatInput only accepts images with `allow_images` (ChatPage).
+- `limit_images()` (attachments.js) is the one image cap for BOTH runtimes (wllama + Electron IPC); text-only
+  models get 0 images → "[N earlier images omitted]" note, never an error (history from a prior vision model).
