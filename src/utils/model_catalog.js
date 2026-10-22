@@ -64,6 +64,7 @@
  * @property {string} [specialist] - Niche focus (e.g. 'coding'): listed for experts, never auto-picked
  * @property {string} [license_flag] - Short flag for non-Apache/MIT terms (e.g. 'Gemma terms')
  * @property {{ score: number, willingness: number, date: string }} [ugi] - UGI leaderboard evidence for `uncensored`
+ * @property {{ kld: number, report: string }} [tpn] - TPN Workbench build: mean KLD vs BF16 and its public report URL
  */
 
 /**
@@ -94,11 +95,13 @@
 // ─── The catalog ────────────────────────────────────────────────────────────────
 
 /**
- * Complete model catalog — all preset models available in gratisAI.
- * The selection engine picks from the full catalog based on memory budget.
+ * Community GGUF builds. Gratis only offers TPN-optimised builds (below), so
+ * every local entry here is retired: installed copies stay loadable and
+ * removable, and their architecture facts seed the TPN builds.
+ * Cloud entries (OpenRouter / Venice) are unaffected.
  * @type {ModelDefinition[]}
  */
-export const MODEL_CATALOG = [
+const COMMUNITY_MODELS = [
 
     // ── Sub-1B models ─────────────────────────────────────────────────────
 
@@ -1986,6 +1989,166 @@ export const MODEL_CATALOG = [
 } ) )
 
 
+// ─── TPN-optimised builds ─────────────────────────────────────────────────────────
+
+/**
+ * Builds quantised and measured by TPN Workbench, published under `tpnlabs` on
+ * Hugging Face. Each inherits the architecture facts of the community entry it
+ * replaces (`from`) and overrides the files. `kld` is TPN's mean KL divergence
+ * vs the BF16 original; `report` is the public measurement report.
+ * Where a runtime wants a different format (K-quants in the browser, IQ and
+ * tuned formats natively), both are listed and the picker chooses.
+ */
+const TPN_BUILDS = [
+
+    {
+        from: `qwen35-0.8b-q4km`,
+        id: `qwen35-0.8b-tpn-q5km`,
+        hugging_face_repo: `tpnlabs/Qwen3.5-0.8B-TPN-GGUF`,
+        file_name: `Qwen3.5-0.8B-Q5_K_M.gguf`,
+        file_size_bytes: 592_636_608,
+        quantization: `Q5_K_M`,
+        kld: 0.0151,
+        report: `https://bench.trueperformancenetwork.com/r/XZsIPWHtZ1ojKTdLYqFYOA`,
+        mmproj: { file_name: `mmproj-Qwen3.5-0.8B-F16.gguf`, file_size_bytes: 204_986_560 },
+        browser_verified: true,
+    },
+
+    {
+        from: `minicpm5-1b-q4km`,
+        id: `minicpm5-1b-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/MiniCPM5-1B-TPN-GGUF`,
+        file_name: `MiniCPM5-1B-Q4_K_M.gguf`,
+        file_size_bytes: 688_066_176,
+        quantization: `Q4_K_M`,
+        kld: 0.0865,
+        report: `https://bench.trueperformancenetwork.com/r/AK3RgkmOPXqaNB4xGCJ_XQ`,
+    },
+
+    {
+        from: `minicpm5-1b-q4km`,
+        id: `minicpm5-1b-tpn-q50t`,
+        hugging_face_repo: `tpnlabs/MiniCPM5-1B-TPN-GGUF`,
+        file_name: `MiniCPM5-1B-Q5_0-tuned.gguf`,
+        file_size_bytes: 774_954_368,
+        quantization: `Q5_0+`,
+        kld: 0.0166,
+        report: `https://bench.trueperformancenetwork.com/r/AK3RgkmOPXqaNB4xGCJ_XQ`,
+    },
+
+    {
+        from: `qwen35-2b-q4km`,
+        id: `qwen35-2b-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/Qwen3.5-2B-TPN-GGUF`,
+        file_name: `Qwen3.5-2B-Q4_K_M.gguf`,
+        file_size_bytes: 1_312_164_544,
+        quantization: `Q4_K_M`,
+        kld: 0.0308,
+        report: `https://bench.trueperformancenetwork.com/r/3D_JqOSgex3t5CxN0yayQg`,
+        mmproj: { file_name: `mmproj-Qwen3.5-2B-F16.gguf`, file_size_bytes: 668_226_592 },
+    },
+
+    {
+        from: `qwen35-4b-heresy-q4km`,
+        id: `qwen35-4b-heresy-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/Qwen3.5-4B-SOMPOA-heresy-v2-TPN-GGUF`,
+        file_name: `Qwen3.5-4B-SOMPOA-heresy-v2-Q4_K_M.gguf`,
+        file_size_bytes: 2_708_804_288,
+        quantization: `Q4_K_M`,
+        kld: 0.0314,
+        report: `https://bench.trueperformancenetwork.com/r/WhE5KikJiH_-xN0MfsRtgQ`,
+        mmproj: { file_name: `mmproj-Qwen3.5-4B-SOMPOA-heresy-v2-F16.gguf`, file_size_bytes: 672_422_944 },
+        browser_verified: true,
+    },
+
+    {
+        from: `qwen35-9b-vision-q4km`,
+        id: `qwen35-9b-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/Qwen3.5-9B-TPN-GGUF`,
+        file_name: `Qwen3.5-9B-Q4_K_M.gguf`,
+        file_size_bytes: 5_780_090_496,
+        quantization: `Q4_K_M`,
+        kld: 0.0266,
+        report: `https://bench.trueperformancenetwork.com/r/bOLZSRrgN-DUOOYoedOK8w`,
+        mmproj: { file_name: `mmproj-Qwen3.5-9B-F16.gguf`, file_size_bytes: 918_165_440 },
+        browser_verified: true,
+    },
+
+    {
+        from: `qwen35-9b-vision-q4km`,
+        id: `qwen35-9b-tpn-iq4xs`,
+        hugging_face_repo: `tpnlabs/Qwen3.5-9B-TPN-GGUF`,
+        file_name: `Qwen3.5-9B-IQ4_XS.gguf`,
+        file_size_bytes: 5_326_417_536,
+        quantization: `IQ4_XS`,
+        kld: 0.0213,
+        report: `https://bench.trueperformancenetwork.com/r/bOLZSRrgN-DUOOYoedOK8w`,
+        mmproj: { file_name: `mmproj-Qwen3.5-9B-F16.gguf`, file_size_bytes: 918_165_440 },
+    },
+
+    {
+        from: `qwen35-9b-heretic-q4km`,
+        id: `qwen35-9b-heretic-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/Qwen3.5-9B-heretic-v2-TPN-GGUF`,
+        file_name: `Qwen3.5-9B-heretic-v2-Q4_K_M.gguf`,
+        file_size_bytes: 5_629_108_960,
+        quantization: `Q4_K_M`,
+        kld: 0.0305,
+        report: `https://bench.trueperformancenetwork.com/r/akW7L6fSnz3Sg4lJlBSCNw`,
+        mmproj: { file_name: `mmproj-Qwen3.5-9B-heretic-v2-F16.gguf`, file_size_bytes: 918_165_440 },
+        browser_verified: true,
+    },
+
+    {
+        from: `qwen35-9b-heretic-q4km`,
+        id: `qwen35-9b-heretic-tpn-iq4xs`,
+        hugging_face_repo: `tpnlabs/Qwen3.5-9B-heretic-v2-TPN-GGUF`,
+        file_name: `Qwen3.5-9B-heretic-v2-IQ4_XS.gguf`,
+        file_size_bytes: 5_196_440_288,
+        quantization: `IQ4_XS`,
+        kld: 0.0253,
+        report: `https://bench.trueperformancenetwork.com/r/akW7L6fSnz3Sg4lJlBSCNw`,
+        mmproj: { file_name: `mmproj-Qwen3.5-9B-heretic-v2-F16.gguf`, file_size_bytes: 918_165_440 },
+    },
+
+]
+
+/**
+ * Expand a TPN build into a full catalog entry
+ * @param {Object} build - `TPN_BUILDS` row
+ * @returns {ModelDefinition}
+ */
+const tpn_model = ( { from, kld, report, ...files } ) => {
+
+    const base = COMMUNITY_MODELS.find( model => model.id === from )
+    const bpw = Math.round( files.file_size_bytes * 8 / base.parameters * 100 ) / 100
+
+    return {
+        ...base,
+        ...files,
+        bpw,
+        tpn: { kld, report },
+
+        // A shipped projector means image input, even for bases listed text-only
+        vision: base.vision || !!files.mmproj,
+
+        // A receipt covers one exact file: the community artifact's doesn't carry over
+        browser_verified: files.browser_verified === true,
+    }
+
+}
+
+/**
+ * Complete model catalog: TPN builds, then retired community builds and
+ * cloud models.
+ * @type {ModelDefinition[]}
+ */
+export const MODEL_CATALOG = [
+    ...TPN_BUILDS.map( tpn_model ),
+    ...COMMUNITY_MODELS.map( model => model.cloud_only ? model : { ...model, hidden: true } ),
+]
+
+
 // ─── Lookup ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -2149,8 +2312,9 @@ export const benchmark_coverage = model => BENCHMARK_FIELDS
  */
 export const quality_score = ( model ) => {
 
-    // Curated index wins: vendor benchmark sets no longer overlap across families
-    if( model.quality != null ) return model.quality
+    // Curated index wins: vendor benchmark sets no longer overlap across families.
+    // TPN builds lose the share of the original their quantisation gave up
+    if( model.quality != null ) return model.quality * ( 1 - ( model.tpn?.kld || 0 ) )
     if( !model.benchmarks ) return 0
 
     const published_scores = BENCHMARK_FIELDS
@@ -2291,8 +2455,10 @@ export const projector_memory = model => Math.ceil( ( model?.mmproj?.file_size_b
 export const runtime_memory = model => estimate_model_memory( model ) + projector_memory( model )
 
 // WASM has SIMD kernels for Q4_0…Q8_0 and K-quants only; IQ* and MXFP4 run
-// scalar C there (llama.cpp arch-fallback.h). Native builds are unaffected.
-const SCALAR_WASM_QUANT = /(^|[^a-z])(iq\d|mxfp4)/i
+// scalar C there (llama.cpp arch-fallback.h). Legacy Q5_0 / Q5_1 have SIMD on
+// paper but measured 2-3× slower than Q4_K_M in wllama (TPN Q5_0+ bench).
+// Native builds are unaffected.
+const SCALAR_WASM_QUANT = /(^|[^a-z])(iq\d|mxfp4|q5_[01])/i
 const SCALAR_WASM_PENALTY = 2.5
 
 // Routing, top-k and barriers cost MoE ~25% of its byte advantage (CI bench)

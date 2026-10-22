@@ -324,3 +324,4 @@ Qwen3.5-0.8B hybrid, 2 threads, ~220-token prompt, 64 gen, 3 independent passes 
 - Browser default = **Q4_K_M** (fastest decode, ~40% over IQ4_XS). Q8_0 costs no speed, only bytes. Q4_0 not faster than Q4_K_M (Qwen3 0.6B dense: Q4_0 ≈ Q4_K_M within noise).
 - IQ penalty measured ≈ 1.2-1.6× (estimate above said 1.5-3×). IQ4_XS fine for native (TPN often recommends it: best KLD/byte).
 - 4B cells exceed the 15 min page timeout on a loaded 4-core box; rerun on idle hardware if needed.
+- **TPN tuned `Q5_0+` (Q5_0 body + Q6_K output) is 2-3× slower than Q4_K_M in wllama** (MiniCPM5 1B: tg 0.9-2.0 vs 3.3-4.2, pp 1.7-2.4 vs 4.0-6.1, 2 runs). Legacy `_0`/`_1` dots are weak in the WASM build despite SIMD128 on paper (cf. Qwen3.5 0.8B Q4_0 < Q4_K_M). => Browser default stays Q4_K_M/Q5_K_M; tuned legacy formats are native/desktop or opt-in "better answers".

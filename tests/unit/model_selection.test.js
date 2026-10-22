@@ -50,8 +50,12 @@ const ALL_BROWSER_VERIFIED_IDS = [
     `granite4-h-tiny-q4km`,
     `ministral3-14b-q4km`,
     `ministral3-3b-q4km`,
+    `qwen35-0.8b-tpn-q5km`,
     `qwen35-2b-q4km`,
+    `qwen35-4b-heresy-tpn-q4km`,
     `qwen35-4b-q4km`,
+    `qwen35-9b-heretic-tpn-q4km`,
+    `qwen35-9b-tpn-q4km`,
     `qwen35-9b-vision-q4km`,
 ]
 
@@ -91,6 +95,12 @@ describe( `model selection`, () => {
     test( `curates every offered local model`, () => {
         const offered = MODEL_CATALOG.filter( model => !model.hidden && !model.cloud_only )
         offered.forEach( model => {
+
+            // Product policy: only TPN-optimised builds are offered
+            expect( model.hugging_face_repo, model.id ).toMatch( /^tpnlabs\// )
+            expect( model.tpn.kld, model.id ).toBeGreaterThan( 0 )
+            expect( model.tpn.report, model.id ).toMatch( /^https:\/\/bench\.trueperformancenetwork\.com\/r\// )
+
             expect( model.quality, model.id ).toBeGreaterThan( 0 )
             if( model.vision ) expect( model.mmproj?.file_size_bytes, model.id ).toBeGreaterThan( 0 )
             if( model.uncensored ) expect( has_fewer_refusals( model ), model.id ).toBe( true )

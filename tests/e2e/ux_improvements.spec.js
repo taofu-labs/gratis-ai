@@ -99,7 +99,7 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         await page.getByTestId( `browse-models-toggle` ).click()
-        await page.getByTestId( `model-option-minicpm5-1b-q4km` ).click()
+        await page.getByTestId( `model-option-minicpm5-1b-tpn-q4km` ).click()
 
         await expect( page.getByTestId( `model-hero-name` ) ).toContainText( `MiniCPM5 1B` )
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toContainText( `Download · 688 MB` )
@@ -130,15 +130,18 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
     } )
 
-    test( `large models show why they won't fit this browser`, async ( { page } ) => {
+    test( `models too large for this device show why`, async ( { page } ) => {
+        await page.addInitScript( () => {
+            Object.defineProperty( navigator, `deviceMemory`, { configurable: true, value: 4 } )
+        } )
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         await page.getByTestId( `browse-models-toggle` ).click()
-        await expect( page.getByTestId( `model-option-qwen38-27b-q4km` ) ).toHaveCount( 0 )
+        await expect( page.getByTestId( `model-option-qwen35-9b-tpn-q4km` ) ).toHaveCount( 0 )
 
         await page.getByTestId( `show-unfit-toggle` ).click()
-        await expect( page.getByTestId( `model-option-qwen38-27b-q4km` ) ).toBeDisabled()
-        await expect( page.getByTestId( `model-option-qwen38-27b-q4km` ) ).toContainText( `Too large to run in this browser` )
+        await expect( page.getByTestId( `model-option-qwen35-9b-tpn-q4km` ) ).toBeDisabled()
+        await expect( page.getByTestId( `model-option-qwen35-9b-tpn-q4km` ) ).toContainText( `Needs about` )
         await expect( page.getByTestId( `model-option-qwen3-14b-q4km` ) ).toHaveCount( 0 )
     } )
 

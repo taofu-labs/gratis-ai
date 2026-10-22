@@ -394,3 +394,6 @@ never deletion: installed users still load them by ID.
 - HomePage → `/chat?q=` cannot carry images: ChatInput only accepts images with `allow_images` (ChatPage).
 - `limit_images()` (attachments.js) is the one image cap for BOTH runtimes (wllama + Electron IPC); text-only
   models get 0 images → "[N earlier images omitted]" note, never an error (history from a prior vision model).
+
+## Heretic/abliterated Qwen3.5 GGUFs declare an MTP layer they don't have
+TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predict_layers = 1` and a `recurrent_layers` array of layers + 1, but heretic safetensors carry no MTP weights. Native llama.cpp b11818 loads it; wllama does NOT (`Model failed to load`; real error only with native logs: `BENCH_NATIVE_LOG=1`). Fix = rewrite metadata to match tensors (scratchpad `tpn/fix_mtp.py`, gguf `copy_with_new_metadata`); in-place patch of block_count alone breaks on the array length check. Header rewrite can change file size by a few bytes => update catalog `file_size_bytes`. Run fix_mtp.py on every TPN build before publishing (no-op when fine).

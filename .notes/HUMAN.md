@@ -51,3 +51,9 @@ v0.45.x on taofu-labs/gratis-ai shipped UNSIGNED (no secrets in the org repo; th
 applies to upstream only). Needed: MAC_CERTIFICATE_P12, MAC_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD,
 APPLE_TEAM_ID. Owner is setting them. Workflow now fails the mac job in taofu-labs without them. Windows unsigned by decision.
 Branch chore/desktop-release-parity (not pushed, not merged). After secrets: verify a release dmg with codesign -dv, spctl -a -vv, stapler validate.
+
+## TPN-only catalog (2026-10-22)
+
+- Gratis now offers only tpnlabs builds. TPN's top-fidelity pick is not always the browser pick: tuned `Q5_0+` (MiniCPM5 1B) and IQ4_XS (9B) are 2-3× / ~1.4× slower in wllama, so both formats are listed and the picker chooses per runtime (browser K-quant, desktop TPN pick). "Better answers" on phones picks MiniCPM Q5_0+ (slow band) — deliberate trade, review if it feels too slow on a real phone.
+- Gaps until open orders land: 32 GB Mac desktop gets Qwen3.5 9B (was Gemma 4 26B community) → g26; iPhone "fewer refusals" finds nothing → d17b; Windows "better answers" = 2B → q4b (Qwen3.5 4B base).
+- Model cards are written by us (card.py) from TPN data + report PNGs; TPN's API gives no card markdown. Each card links a public, noindexed TPN share report.
