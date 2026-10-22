@@ -17,10 +17,10 @@ import use_settings from '../../hooks/use_settings'
 import use_voice_input from '../../hooks/use_voice_input'
 import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
-import { get_model_by_id, format_file_size, has_image_input, model_download_bytes, select_best_vision } from '../../utils/model_catalog'
+import { MODEL_CATALOG, get_model_by_id, format_file_size, has_image_input, model_download_bytes, select_for_preferences } from '../../utils/model_catalog'
 import { estimate_history_tokens, split_documents } from '../../utils/attachments'
 import { projector_source } from '../../utils/model_download'
-import { detect_capabilities, estimate_max_model_bytes } from '../../utils/device_detection'
+import { build_device_profile, detect_capabilities, estimate_max_model_bytes } from '../../utils/device_detection'
 import { useTranslation } from 'react-i18next'
 import Button from '../atoms/Button'
 import ModelLoadStage from '../atoms/ModelLoadStage'
@@ -914,8 +914,9 @@ export default function ChatPage() {
         if( capabilities.image_input ) return
         let cancelled = false
         detect_capabilities()
-            .then( device => select_best_vision( estimate_max_model_bytes( device ) ) )
-            .then( best => !cancelled && set_vision_candidate( has_image_input( best ) ? best : null ) )
+            .then( device_capabilities => build_device_profile( device_capabilities, estimate_max_model_bytes( device_capabilities ) ) )
+            .then( device => select_for_preferences( MODEL_CATALOG, device, { vision: true } ).pick )
+            .then( pick => !cancelled && set_vision_candidate( has_image_input( pick ) ? pick : null ) )
             .catch( error => log.debug( `[ChatPage] No vision suggestion:`, error?.message ) )
         return () => {
             cancelled = true
