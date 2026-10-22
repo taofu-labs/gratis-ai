@@ -370,3 +370,10 @@ Scripts seeding state with the code default (`gratisai`) silently do nothing.
 - node-llama-cpp's stream hides thinking; llama-server streams `<think>` in content (`--reasoning-format none`).
   Tiny Qwen3 test prompts need `/no_think` or a big `max_tokens` on the node-llama-cpp path, or text is empty.
 - Tests: `pgrep -f pattern` inside `execSync` matches its own `sh -c`; use a `[ ]` bracket in the regex.
+## Picker scoring is pinned by a persona matrix (2026-10-22)
+
+`tests/unit/picker_personas.test.js` pins recommended IDs for cheap Android / iPhone / 8 GB laptop / 32 GB Mac.
+Catalog or weight changes that move a pick must update that matrix deliberately. `quality` is curated (≈ vendor
+MMLU-Pro); `reasoning_enabled: true` divides reply speed by 3. `runtime_memory()` = estimate + projector bytes —
+if `estimate_model_memory` ever includes the mmproj itself, drop the addition. Retire models with `hidden: true`,
+never deletion: installed users still load them by ID.

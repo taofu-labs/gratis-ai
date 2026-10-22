@@ -80,22 +80,30 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
 
     // ── Model Select Page ─────────────────────────────────────────────
 
-    test( `model select shows TPN winner models and custom loader`, async ( { page } ) => {
+    test( `a fitting TPN winner is the recommendation, with the catalog one click away`, async ( { page } ) => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         await expect( page.getByText( `Pick a model` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-hero-name` ) ).toContainText( `TPN-001 winner` )
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
+
+        await page.getByTestId( `browse-models-toggle` ).click()
         await expect( page.getByTestId( `tpn-model-list` ) ).toBeVisible()
         await expect( page.getByTestId( `model-option-${ TPN_MODEL_ID }` ) ).toBeVisible()
         await expect( page.getByTestId( `custom-model-input` ) ).toBeVisible()
-        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible()
-        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeDisabled()
     } )
 
-    test( `model select enables continue after choosing a TPN winner`, async ( { page } ) => {
+    test( `choosing another model replaces the recommendation until reset`, async ( { page } ) => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
-        await page.getByTestId( `model-option-${ TPN_MODEL_ID }` ).click()
-        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
+        await page.getByTestId( `browse-models-toggle` ).click()
+        await page.getByTestId( `model-option-minicpm5-1b-q4km` ).click()
+
+        await expect( page.getByTestId( `model-hero-name` ) ).toContainText( `MiniCPM5 1B` )
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toContainText( `Download · 688 MB` )
+
+        await page.getByTestId( `model-hero-reset` ).click()
+        await expect( page.getByTestId( `model-hero-name` ) ).toContainText( `TPN-001 winner` )
     } )
 
     test( `declared RAM raises the Memory64 model budget`, async ( { page } ) => {
@@ -104,27 +112,42 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         } )
         await mock_tpn_winners( page, { file_size: 7_200_000_000 } )
         await page.goto( `/select-model` )
-        await page.getByTestId( `model-option-${ TPN_MODEL_ID }` ).click()
+        await page.getByTestId( `browse-models-toggle` ).click()
 
-        await expect( page.getByTestId( `browser-ram-budget` ) ).toContainText( `needs about` )
+        const winner_row = page.getByTestId( `model-option-${ TPN_MODEL_ID }` )
+        await expect( winner_row ).toBeDisabled()
+        await expect( winner_row ).toContainText( `Needs about` )
         await expect( page.getByTestId( `browser-ram-budget` ) ).toContainText( `5.6 GB` )
-        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeDisabled()
 
         page.once( `dialog`, dialog => dialog.accept() )
         await page.getByTestId( `model-select-ram-override` ).selectOption( `16` )
 
         await expect( page.getByTestId( `browser-ram-budget` ) ).toContainText( `9.6 GB` )
+        await expect( winner_row ).toBeEnabled()
+        await winner_row.click()
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
     } )
 
-    test( `large browser alternatives obey the current device memory budget`, async ( { page } ) => {
+    test( `large models show why they won't fit this browser`, async ( { page } ) => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
-        const toggle = page.getByTestId( `change-model-toggle` )
-        if( await toggle.isVisible() ) await toggle.click()
+        await page.getByTestId( `browse-models-toggle` ).click()
+        await expect( page.getByTestId( `model-option-qwen38-27b-q4km` ) ).toHaveCount( 0 )
 
-        await expect( page.getByTestId( `model-option-qwen35-9b-vision-q4km` ) ).toHaveCount( 0 )
+        await page.getByTestId( `show-unfit-toggle` ).click()
+        await expect( page.getByTestId( `model-option-qwen38-27b-q4km` ) ).toBeDisabled()
+        await expect( page.getByTestId( `model-option-qwen38-27b-q4km` ) ).toContainText( `Too large to run in this browser` )
         await expect( page.getByTestId( `model-option-qwen3-14b-q4km` ) ).toHaveCount( 0 )
+    } )
+
+    test( `retired models stay installable behind "older models"`, async ( { page } ) => {
+        await mock_tpn_winners( page )
+        await page.goto( `/select-model` )
+        await page.getByTestId( `browse-models-toggle` ).click()
+
+        await expect( page.getByTestId( `model-option-smollm2-360m-q4km` ) ).toHaveCount( 0 )
+        await page.getByTestId( `show-retired-toggle` ).click()
+        await expect( page.getByTestId( `model-option-smollm2-360m-q4km` ) ).toBeVisible()
     } )
 
     test( `no TPN winners falls back to device recommendations`, async ( { page } ) => {
@@ -134,23 +157,25 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         } ) )
         await page.goto( `/select-model` )
 
-        await expect( page.getByTestId( `catalog-fallback` ) ).toContainText( `No TPN winner` )
+        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-hero-name` ) ).not.toContainText( `winner` )
+        await page.getByTestId( `browse-models-toggle` ).click()
         await expect( page.getByTestId( `tpn-model-list` ) ).toHaveCount( 0 )
-        await expect( page.locator( `[data-testid^="model-option-"]` ).first() ).toBeVisible()
     } )
 
     test( `unreachable TPN collection still offers models`, async ( { page } ) => {
         await page.route( /\/api\/collections\?owner=tpnlabs/, route => route.abort( `internetdisconnected` ) )
         await page.goto( `/select-model` )
 
-        await expect( page.getByTestId( `catalog-fallback` ) ).toContainText( `Couldn't reach` )
-        await expect( page.getByTestId( `tpn-models-error` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
+        await page.getByTestId( `browse-models-toggle` ).click()
+        await expect( page.getByTestId( `tpn-models-error` ) ).toContainText( `Couldn't reach` )
     } )
 
     test( `cached models are listed with one-click reuse`, async ( { page } ) => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
-        await expect( page.getByTestId( `tpn-model-list` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
 
         // Wait for the app to create its schema (name follows VITE_APP_NAME), then seed
         // a record the way a finished download stores it
@@ -189,6 +214,7 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         await page.route( /\/api\/models\/bartowski\//, route => route.abort( `internetdisconnected` ) )
+        await page.getByTestId( `browse-models-toggle` ).click()
 
         await page.getByTestId( `custom-model-input` ).fill( `hf.co/bartowski/SmolLM2-360M-Instruct-GGUF:Q4_K_M` )
         await page.getByTestId( `custom-model-load-btn` ).click()
@@ -224,7 +250,6 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
             request.url().includes( `/resolve/main/${ TPN_MODEL_FILE }` ) && !!request.headers().range )
 
         await page.goto( `/select-model` )
-        await page.getByTestId( `model-option-${ TPN_MODEL_ID }` ).click()
         expect( ( await request ).headers().range ).toMatch( /^bytes=0-\d+$/ )
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
         await expect( page.getByText( `Measuring download speed…` ) ).toHaveCount( 0, { timeout: 10_000 } )

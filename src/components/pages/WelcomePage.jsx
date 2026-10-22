@@ -100,6 +100,15 @@ const IconCircle = styled.div`
 `
 
 // Step indicator showing the 3-step onboarding
+// Sets expectations for the picker: one suggestion, never a lock-in
+const NextStep = styled.p`
+    max-width: 380px;
+    margin-top: ${ ( { theme } ) => theme.spacing.md };
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+`
+
 const StepIndicator = styled.div`
     display: flex;
     align-items: center;
@@ -213,6 +222,8 @@ export default function WelcomePage() {
             >
                 { t( 'get_started' ) } <ArrowRight size={ 16 } />
             </Button>
+
+            <NextStep>{ t( 'next_step_hint' ) }</NextStep>
 
             { /* Step progress indicator */ }
             <StepIndicator data-testid="step-indicator">

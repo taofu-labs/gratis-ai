@@ -566,3 +566,4 @@
   stay on node-llama-cpp. Win/Linux ship the Vulkan build (CPU backends included, CPU retry on GPU crash).
 - Verified on Linux: Electron e2e reads a red-square PNG, keeps full history, switches back to node-llama-cpp,
   real HF download of model + projector, packaged `--dir` build contains `resources/llama-server`.
+- 2026-10-22 (W3): picker v2 — 4 flat cards → "Recommended starting model" hero + optional Adjust (Faster/Balanced/Better, photos, fewer refusals) + "Browse all models". `select_for_preferences` filters (runtime ceiling, memory incl. mmproj, capabilities) before scoring (curated `quality` vs bandwidth-model reply speed). Catalog v2: 16 HF-verified entries; 31 obsolete entries `hidden: true`.

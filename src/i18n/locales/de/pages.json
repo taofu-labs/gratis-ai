@@ -3,6 +3,7 @@
     "value_prop_privacy": "Deine Unterhaltungen bleiben auf deinem Gerät — nichts wird in die Cloud gesendet",
     "value_prop_offline": "Funktioniert nach der Ersteinrichtung ohne Internet",
     "get_started": "Loslegen",
+    "next_step_hint": "Als Nächstes schlagen wir ein Modell vor, das zu diesem Gerät passt. Du kannst es jederzeit ändern.",
     "checking_device": "Gerät wird überprüft…",
     "show_device_details": "Gerätedetails anzeigen",
     "hide_device_details": "Gerätedetails ausblenden",

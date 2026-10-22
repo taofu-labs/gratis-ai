@@ -3,6 +3,7 @@
     "value_prop_privacy": "Twoje rozmowy pozostają na Twoim urządzeniu — nic nie jest wysyłane do chmury",
     "value_prop_offline": "Działa bez internetu po początkowej konfiguracji",
     "get_started": "Rozpocznij",
+    "next_step_hint": "Następnie zaproponujemy model dopasowany do tego urządzenia. Możesz go zmienić w każdej chwili.",
     "checking_device": "Sprawdzanie urządzenia…",
     "show_device_details": "Pokaż szczegóły urządzenia",
     "hide_device_details": "Ukryj szczegóły urządzenia",

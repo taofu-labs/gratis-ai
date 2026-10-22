@@ -12,10 +12,13 @@ import {
     decode_bytes,
     estimate_model_memory,
     get_model_by_id,
+    has_fewer_refusals,
+    has_image_input,
+    model_download_bytes,
     quality_score,
     select_browser_batch,
     select_browser_context,
-    select_model_options,
+    select_for_preferences,
 } from '../../src/utils/model_catalog'
 
 const VERIFIED_MODELS = {
@@ -71,10 +74,27 @@ describe( `model selection`, () => {
         }
     } )
 
-    test( `treats Qwen 3.5 language weights as text-only`, () => {
+    test( `gives the legacy Qwen 3.5 "vision" ID a real projector`, () => {
         const model = get_model_by_id( `qwen35-9b-vision-q4km` )
-        expect( model.vision ).toBe( false )
+        expect( has_image_input( model ) ).toBe( true )
         expect( model.reasoning_enabled ).toBe( false )
+        expect( model_download_bytes( model ) ).toBe( 5_680_522_464 + 918_166_080 )
+    } )
+
+    test( `keeps retired models loadable but out of every pick`, () => {
+        const retired = MODEL_CATALOG.filter( model => model.hidden )
+        expect( retired.length ).toBeGreaterThan( 0 )
+        retired.forEach( model => expect( get_model_by_id( model.id ) ).toBe( model ) )
+        expect( get_model_by_id( `smollm2-360m-q4km` ).hidden ).toBe( true )
+    } )
+
+    test( `curates every offered local model`, () => {
+        const offered = MODEL_CATALOG.filter( model => !model.hidden && !model.cloud_only )
+        offered.forEach( model => {
+            expect( model.quality, model.id ).toBeGreaterThan( 0 )
+            if( model.vision ) expect( model.mmproj?.file_size_bytes, model.id ).toBeGreaterThan( 0 )
+            if( model.uncensored ) expect( has_fewer_refusals( model ), model.id ).toBe( true )
+        } )
     } )
 
     test( `keeps automatic browser recommendations conservative`, () => {
@@ -86,7 +106,6 @@ describe( `model selection`, () => {
         const automatic_budget = estimate_max_model_bytes( reported_eight_gb )
 
         expect( automatic_budget ).toBe( 5_600_000_000 )
-        expect( select_model_options( automatic_budget ).smarter.id ).toBe( `granite4-h-tiny-q4km` )
         expect( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES ).toBe( automatic_budget )
         expect( MEMORY64_MODEL_CEILING_BYTES ).toBe( 15_000_000_000 )
         expect( WASM32_MODEL_CEILING_BYTES ).toBe( 3_400_000_000 )
@@ -107,12 +126,8 @@ describe( `model selection`, () => {
     } )
 
     test( `returns no recommendation when even the smallest runtime cannot fit`, () => {
-        expect( select_model_options( 500_000_000 ) ).toEqual( {
-            smarter: null,
-            faster: null,
-            uncensored: null,
-            vision: null,
-        } )
+        const device = { runtime: `browser`, ceiling_bytes: 500_000_000, budget_bytes: 500_000_000, automatic_bytes: 500_000_000, bandwidth_gbs: 5 }
+        expect( select_for_preferences( MODEL_CATALOG, device ) ).toEqual( { pick: null, fit: null, fallback: null, relaxed: [] } )
     } )
 
     test( `keeps transformer block counts separate from hybrid KV layers`, () => {
@@ -126,13 +141,14 @@ describe( `model selection`, () => {
         } )
     } )
 
-    test( `does not let one published benchmark dominate complete coverage`, () => {
-        const sparse = get_model_by_id( `qwen35-4b-q4km` )
+    test( `prefers the curated index, else does not let one benchmark dominate`, () => {
+        const curated = get_model_by_id( `qwen35-4b-q4km` )
+        const sparse = { ...curated, quality: undefined }
         const complete = get_model_by_id( `qwen3-4b-q4km` )
 
+        expect( quality_score( curated ) ).toBe( 79 )
         expect( quality_score( sparse ) ).toBeCloseTo( 55.24 )
         expect( quality_score( complete ) ).toBeCloseTo( 63.06 )
-        expect( quality_score( sparse ) ).toBeLessThan( quality_score( complete ) )
         expect( benchmark_coverage( sparse ) ).toBe( 1 )
         expect( benchmark_coverage( complete ) ).toBe( 5 )
     } )
@@ -153,22 +169,6 @@ describe( `model selection`, () => {
         expect( decode_bytes( dense ) ).toBe( dense.file_size_bytes )
         expect( decode_bytes( moe ) ).toBe( Math.round( 4_230_976_352 * 1_000_000_000 / 6_939_037_248 ) )
         expect( decode_bytes( moe ) ).toBeLessThan( decode_bytes( dense ) )
-    } )
-
-    test( `picks the faster card by decode bytes, not file size`, () => {
-        const { smarter, faster } = select_model_options( 8_000_000_000 )
-
-        // The 4.2 GB MoE streams ~0.6 GB per token: ~10× faster than the dense 8B.
-        expect( smarter.id ).toBe( `qwen3-8b-q5km` )
-        expect( faster.id ).toBe( `granite4-h-tiny-q4km` )
-        expect( faster.file_size_bytes ).toBeGreaterThan( smarter.file_size_bytes * 0.5 )
-    } )
-
-    test( `skips a toy faster card when the smarter pick is already a fast MoE`, () => {
-        const { smarter, faster } = select_model_options( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
-
-        expect( smarter.id ).toBe( `granite4-h-tiny-q4km` )
-        expect( faster ).toBeNull()
     } )
 
     test( `caps sliding-window KV at the window instead of the context`, () => {
