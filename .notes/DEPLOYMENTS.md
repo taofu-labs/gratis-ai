@@ -2,7 +2,7 @@
 
 | Target | Where | How it ships |
 | --- | --- | --- |
-| Web (taofu-labs) | https://gratis-trueperformancenetwork.ruben-7e1.workers.dev | `deploy-web.yml` on push to `main` (Cloudflare Workers Static Assets) |
+| Web (taofu-labs) | https://gratis.trueperformancenetwork.com (custom domain of gratis-trueperformancenetwork.ruben-7e1.workers.dev) | `deploy-web.yml` on push to `main` (Cloudflare Workers Static Assets) |
 | Web (upstream fork) | https://ai.gratis.sh | Same workflow when the repo is `actuallymentor/gratis-ai` |
 | Desktop | GitHub Releases of taofu-labs/gratis-ai | `release-electron.yml` when `package.json` version changes on `main` |
 
