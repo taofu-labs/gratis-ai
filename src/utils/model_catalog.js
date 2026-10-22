@@ -2271,13 +2271,24 @@ export const has_image_input = model => !!( model?.vision && model?.mmproj )
 /** "Fewer refusals" needs the flag AND leaderboard evidence. */
 export const has_fewer_refusals = model => !!( model?.uncensored && model?.ugi )
 
+/** Room the vision projector's compute buffers need beyond its weights. */
+const PROJECTOR_OVERHEAD = 1.25
+
+/**
+ * Memory the vision projector takes when loaded; 0 without one. Shared by the
+ * picker and the browser runtime so both agree on what fits.
+ * @param {ModelDefinition} model
+ * @returns {number} bytes
+ */
+export const projector_memory = model => Math.ceil( ( model?.mmproj?.file_size_bytes || 0 ) * PROJECTOR_OVERHEAD )
+
 /**
  * Runtime memory of a local install: weights + KV + overhead, plus the
  * projector, which loads next to the weights whenever it is installed.
  * @param {ModelDefinition} model
  * @returns {number} bytes
  */
-export const runtime_memory = model => estimate_model_memory( model ) + ( model?.mmproj?.file_size_bytes || 0 )
+export const runtime_memory = model => estimate_model_memory( model ) + projector_memory( model )
 
 // WASM has SIMD kernels for Q4_0…Q8_0 and K-quants only; IQ* and MXFP4 run
 // scalar C there (llama.cpp arch-fallback.h). Native builds are unaffected.
