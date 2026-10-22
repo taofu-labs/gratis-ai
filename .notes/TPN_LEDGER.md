@@ -15,3 +15,10 @@ Queued: g26 google/gemma-4-26B-A4B-it (exp ~45.75, max ~197.66) once round-1 hol
 - `tune` step skipped when a plain ladder format meets the size goal => no Q4_0+ variants delivered.
 - gsm8k/ifeval benchmarks fail on Qwen3.5 hybrid (`model_artifact_runtime_incompatible`) => KLD/ppl/top-1 only.
 - mmproj ships under the Q8_0 variant's files.
+
+## Published (tpnlabs, public)
+| order | repo | files | smoke |
+| --- | --- | --- | --- |
+| h9b | tpnlabs/Qwen3.5-9B-heretic-v2-TPN-GGUF | IQ4_XS (TPN pick, native), Q4_K_M (browser), Q8_0, mmproj F16, README + 3 report PNGs | llama-server b11818: text + image OK |
+
+Pipeline (scratchpad/tpn): `fetch.sh <name> <variants>` (sha256-checked) → report-only share + `report_pngs.mjs` → `card.py` → `push.py` (venv hfvenv, huggingface_hub 2.x: no upload_large_folder).
