@@ -7,6 +7,7 @@
  * Env:   BENCH_ONLY   substring filter on file names (e.g. "Qwen3.5-4B")
  *        BENCH_THREADS (default: half the cores, like the app)
  *        BENCH_RUNS (3), BENCH_PROMPT_REPS (50 ~ 500 tokens), BENCH_MAX_TOKENS (128)
+ *        BENCH_NATIVE_LOG=1 prints llama.cpp's own log (load failures)
  * Files must be named <model>-<QUANT>.gguf; sizes for bpw come from BF16_BYTES.
  * Needs puppeteer (global install is fine) and `npm run copy_wasm` output in public/wasm.
  */
@@ -79,8 +80,9 @@ try {
             model: entry.file, threads, runs,
             prompt_reps: process.env.BENCH_PROMPT_REPS || 50,
             max_tokens: process.env.BENCH_MAX_TOKENS || 128,
+            native_log: process.env.BENCH_NATIVE_LOG || 0,
         } )
-        page.on( `console`, message => message.type() === `warn` && console.log( `  [page] ${ message.text() }` ) )
+        page.on( `console`, message => ( process.env.BENCH_NATIVE_LOG || [ `warn`, `error` ].includes( message.type() ) ) && console.log( `  [page] ${ message.text() }` ) )
         await page.goto( `http://localhost:${ port }/quant_bench.html?${ query }` )
         await page.waitForFunction( () => window.__result, { timeout: 900_000 } )
         const result = await page.evaluate( () => window.__result )

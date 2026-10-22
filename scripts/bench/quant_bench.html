@@ -30,7 +30,7 @@
 
     const run = async () => {
 
-        const wllama = new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: true } )
+        const wllama = new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: query.native_log !== `1` } )
 
         // Stage on OPFS: in-memory blobs fail past ~2 GB
         const root = await navigator.storage.getDirectory()
