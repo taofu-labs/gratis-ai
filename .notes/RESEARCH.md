@@ -290,7 +290,7 @@ Full report (99 rows, recs, device map): https://claude.ai/artifact/FyvUnMfyLvie
 - Hit: catalog `gemma4-26b-a4b-iq4xs`, `qwen36-35b-a3b-iq3xxs`, `gpt-oss-20b-mxfp4` (unsloth gpt-oss quants all keep MXFP4 experts, ~11.5 GB each).
 - Speed est (CI 4 vCPU, 2 thr): `tg ≈ 5 GB/s ÷ (active weight GB + KV GB)`, ×0.65–0.85 MoE; ~2 GB/s for scalar quants. `pp ≈ 8 ÷ active B` (no tiled GEMM => prefill ~1.5× decode).
 - Arch: low-active MoE = 5–8× over dense of equal file; hybrids (GDN/Mamba2/LFM conv) ≈ transformer at short ctx, win via flat KV. GDN/SSM ops present + SIMD in shipped wasm.
-- Suggested bench: Qwen3 0.6B quant sweep (Q4_0, Q4_K_M, Q6_K, Q8_0, IQ4_XS, IQ4_NL, Q3_K_M, UD-IQ3_XXS) to measure IQ penalty.
+- Bench measured 2026-10-22, see "WASM quant bench, measured" below.
 
 ### Vision
 - wllama64 links libmtmd (MTMD_VIDEO OFF): image + audio in browser. API: `loadModel([llm, mmproj])` / `mmprojUrl`, `image_max_tokens`, default n_ctx 1024 too small. Unsloth repos ship only BF16/F16 mmproj.
@@ -308,3 +308,19 @@ Full report (99 rows, recs, device map): https://claude.ai/artifact/FyvUnMfyLvie
 - Heretic Gemma 4 26B-A4B i1-Q4_0 14,488,052,256 (mradermacher).
 - Desktop: Qwen3.8 27B UD-Q4_K_M 16,464,440,224; Qwen3.6 35B-A3B UD-Q4_K_M 22,134,528,992; Nemotron 3.5 Bolt 24GB 22,018,326,528; Super VL 120B UD-IQ3_XXS 59,764,210,568; Qwen3.8 Flash-Next UD-IQ4_XS 93,682,584,224 (arch `qwen4exp`, verify node-llama-cpp).
 - Flags: LFM2.5 (revenue cap), EXAONE (NC), Hunyuan (geo). Unverified vendor claims: Nanbeige 4.2, Ornith 1.5. Dory (NVIDIA looped) needs llama.cpp fork.
+
+## WASM quant bench, measured (2026-10-22)
+
+Harness `scripts/bench/quant_bench.{mjs,html}` (headful Chrome, wllama64, CPU). Box was shared (load 6-16) => relative only.
+Qwen3.5-0.8B hybrid, 2 threads, ~220-token prompt, 64 gen, 3 independent passes agree:
+
+| quant | MB | pp t/s | tg t/s |
+| --- | --- | --- | --- |
+| Q4_K_M | 533 | 5.6 | 3.6 |
+| Q8_0 | 812 | 6.1 | 3.2 |
+| Q4_0 | 507 | 3.9 | 2.9 |
+| IQ4_XS | 493 | 2.8 | 2.2 |
+
+- Browser default = **Q4_K_M** (fastest decode, ~40% over IQ4_XS). Q8_0 costs no speed, only bytes. Q4_0 not faster than Q4_K_M (Qwen3 0.6B dense: Q4_0 ≈ Q4_K_M within noise).
+- IQ penalty measured ≈ 1.2-1.6× (estimate above said 1.5-3×). IQ4_XS fine for native (TPN often recommends it: best KLD/byte).
+- 4B cells exceed the 15 min page timeout on a loaded 4-core box; rerun on idle hardware if needed.

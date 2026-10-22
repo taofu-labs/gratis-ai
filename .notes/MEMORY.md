@@ -10,3 +10,4 @@
 - [`TIMELINE.md`](TIMELINE.md) — load when historical decisions, release chronology, or regression context matter.
 - [`HUMAN.md`](HUMAN.md) — load before publishing Electron releases or when an external account action may block CI.
 - [`DEPLOYMENTS.md`](DEPLOYMENTS.md) — load when asked to check prod, deploy, or release.
+- [`TPN_LEDGER.md`](TPN_LEDGER.md) — load before ordering/spending on TPN Workbench (budget, order ids, holds).

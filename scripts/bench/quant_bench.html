@@ -1,0 +1,95 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>wllama64 quant bench</title>
+<pre id="out">running</pre>
+<script type="module">
+
+    // One cell: load a GGUF on CPU, warm up, then time pp + tg `runs` times.
+    // Query: model, threads, runs, prompt_reps, max_tokens
+    import { Wllama } from '/wllama/index.js'
+
+    const query = Object.fromEntries( new URLSearchParams( location.search ) )
+    const out = document.getElementById( `out` )
+
+    // Greedy chat completion; llama.cpp timings give exact pp / tg rates
+    const complete = async ( wllama, content, max_tokens ) => {
+
+        let timings = null
+        const stream = await wllama.createChatCompletion( {
+            messages: [ { role: `user`, content } ],
+            max_tokens,
+            temperature: 0,
+            seed: 1,
+            cache_prompt: false,
+            stream: true,
+        } )
+        for await ( const chunk of stream ) if( chunk.timings ) timings = chunk.timings
+        return timings
+
+    }
+
+    const run = async () => {
+
+        const wllama = new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: true } )
+
+        // Stage on OPFS: in-memory blobs fail past ~2 GB
+        const root = await navigator.storage.getDirectory()
+        const handle = await root.getFileHandle( query.model, { create: true } )
+        const response = await fetch( `/models/${ query.model }` )
+        await response.body.pipeTo( await handle.createWritable() )
+        const file = await handle.getFile()
+
+        // Mirrors cpu_load_options in src/providers/wllama_provider.js
+        await wllama.loadModel( [ file ], {
+            n_ctx: 2048,
+            n_parallel: 1,
+            n_threads: Number( query.threads ),
+            n_batch: 128,
+            n_ubatch: 128,
+            flash_attn: true,
+            cache_type_k: `q8_0`,
+            cache_type_v: `q8_0`,
+            n_gpu_layers: 0,
+            jinja: true,
+            reasoning: false,
+            default_template_kwargs: { enable_thinking: false },
+        } )
+
+        const filler = `The quick brown fox jumps over the lazy dog. `.repeat( Number( query.prompt_reps ) )
+        const story = `${ filler }\nWrite a long story about a lighthouse keeper.`
+
+        console.warn( `loaded` )
+
+        // Warmup: page in weights, spin up the thread pool
+        await complete( wllama, story.slice( 0, 400 ), 8 )
+
+        const pp = []
+        const tg = []
+        let prompt_n = 0
+        let predicted_n = 0
+
+        for( let i = 0; i < Number( query.runs ); i++ ) {
+
+            // One pass yields both: prompt rate (pp) and decode rate (tg)
+            const timings = await complete( wllama, story, Number( query.max_tokens ) )
+            pp.push( timings.prompt_per_second )
+            tg.push( timings.predicted_per_second )
+            prompt_n = timings.prompt_n
+            predicted_n = timings.predicted_n
+            console.warn( `run ${ i + 1 }: pp ${ timings.prompt_per_second.toFixed( 1 ) } tg ${ timings.predicted_per_second.toFixed( 1 ) }` )
+
+        }
+
+        const diagnostics = { cross_origin_isolated: crossOriginIsolated, multithread: wllama.isMultithread?.(), hardware_concurrency: navigator.hardwareConcurrency }
+        await wllama.exit()
+        await root.removeEntry( query.model )
+        return { pp, tg, prompt_n, predicted_n, diagnostics }
+
+    }
+
+    run()
+        .then( result => window.__result = result )
+        .catch( error => window.__result = { error: String( error?.stack || error ) } )
+        .finally( () => out.textContent = JSON.stringify( window.__result ) )
+
+</script>
