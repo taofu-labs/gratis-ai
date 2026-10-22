@@ -47,6 +47,8 @@
     "download_resuming": "Verder waar je gebleven was ({{size}} al opgeslagen)",
     "preparing_your_model": "Je model wordt klaargemaakt",
     "preparing_your_model_detail": "{{name}} is gedownload en wordt nu in het geheugen geladen — dit kan tot een minuut duren.",
+    "adding_image_support": "Beeldondersteuning toevoegen",
+    "adding_image_support_detail": "{{name}} staat er al. Het deel waarmee het afbeeldingen kan lezen wordt gedownload.",
     "measuring_download_speed": "Downloadsnelheid meten…",
     "download_range_under_minute": "minder dan een minuut",
     "download_range_1_3_minutes": "1–3 minuten",

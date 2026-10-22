@@ -3,7 +3,7 @@ import styled, { keyframes } from 'styled-components'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
-import { ChevronRight, LoaderCircle } from 'lucide-react'
+import { ChevronRight, LoaderCircle, FileText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import StreamingIndicator from '../atoms/StreamingIndicator'
 import CodeBlock from '../atoms/CodeBlock'
@@ -12,6 +12,8 @@ import GenerationStats from '../atoms/GenerationStats'
 import SlowDeviceWarning from '../atoms/SlowDeviceWarning'
 import MessageActions from './MessageActions'
 import { render_emoji_text } from '../../utils/emoji_text'
+import { split_documents } from '../../utils/attachments'
+import use_object_url from '../../hooks/use_object_url'
 
 
 /**
@@ -238,6 +240,56 @@ const ReplyError = styled.p`
     white-space: pre-wrap;
 `
 
+// --- Attachments on user messages ---
+
+const AttachmentRow = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
+    margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
+`
+
+const ImageFrame = styled.img`
+    display: block;
+    max-width: min( 15rem, 100% );
+    max-height: 15rem;
+    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    object-fit: contain;
+    background: ${ ( { theme } ) => theme.colors.surface_hover };
+`
+
+const DocumentChip = styled.div`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    font-size: 0.8rem;
+    color: ${ ( { theme } ) => theme.colors.text_secondary };
+    max-width: 100%;
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    small {
+        color: ${ ( { theme } ) => theme.colors.text_muted };
+        font-size: inherit;
+        white-space: nowrap;
+    }
+`
+
+/** A stored image; the object URL lives exactly as long as the bubble. */
+const MessageImage = ( { image } ) => {
+    const url = use_object_url( image.data )
+    return url ? <ImageFrame data-testid="message-image" src={ url } alt={ image.name } width={ image.width } height={ image.height } /> : null
+}
+
 const ExpandButton = styled.button`
     font-size: 0.75rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
@@ -274,15 +326,22 @@ const MessageBubble = memo( ( {
 
     const { t } = useTranslation( `chat` )
     const is_user = message.role === `user`
+
+    // A user message shows what was typed; inlined documents become chips
+    const { text: user_text, names: document_names } = is_user ? split_documents( message.content ) : {}
+    const images = message.attachments?.filter( ( { kind } ) => kind === `image` ) || []
+    const stored_documents = message.attachments?.filter( ( { kind } ) => kind === `document` ) || []
+    const documents = stored_documents.length ? stored_documents : ( document_names || [] ).map( name => ( { name } ) )
+
     const [ is_editing, set_is_editing ] = useState( false )
-    const [ edit_text, set_edit_text ] = useState( message.content )
+    const [ edit_text, set_edit_text ] = useState( is_user ? user_text : message.content )
     const [ show_thinking, set_show_thinking ] = useState( false )
     const [ thinking_expanded, set_thinking_expanded ] = useState( false )
     const thinking_ref = useRef( null )
 
     // Parse thinking blocks from assistant messages
     const { thinking, response, is_thinking } = is_user
-        ? { thinking: null, response: message.content, is_thinking: false }
+        ? { thinking: null, response: user_text, is_thinking: false }
         : parse_thinking( message.content, is_streaming )
     const display_thinking = render_emoji_text( thinking )
     const display_response = render_emoji_text( response )
@@ -298,15 +357,16 @@ const MessageBubble = memo( ( {
         }
     }, [ thinking, is_thinking, thinking_expanded ] )
 
+    // Attachments stay on the message, so an edit may leave the text empty
     const handle_edit_submit = () => {
-        if( on_edit && edit_text.trim() ) {
+        if( on_edit && ( edit_text.trim() || images.length || documents.length ) ) {
             on_edit( index, edit_text.trim() )
             set_is_editing( false )
         }
     }
 
     const handle_edit_cancel = () => {
-        set_edit_text( message.content )
+        set_edit_text( is_user ? user_text : message.content )
         set_is_editing( false )
     }
 
@@ -328,7 +388,7 @@ const MessageBubble = memo( ( {
     return <BubbleContainer $is_user={ is_user }>
 
         <MessageActions
-            content={ message.content }
+            content={ is_user ? user_text : message.content }
             can_regenerate={ !is_user && is_last_assistant && !is_streaming }
             can_edit={ is_user && !is_busy }
             on_regenerate={ on_regenerate }
@@ -361,6 +421,18 @@ const MessageBubble = memo( ( {
             </EditContainer>
             :
             <Bubble data-testid={ testid } $is_user={ is_user }>
+
+                { /* What the user attached: images first, then document chips */ }
+                { ( images.length > 0 || documents.length > 0 ) && <AttachmentRow data-testid="message-attachments">
+                    { images.map( ( image, image_index ) => <MessageImage key={ `image-${ image_index }` } image={ image } /> ) }
+                    { documents.map( ( { name, pages, truncated }, document_index ) => <DocumentChip key={ `document-${ document_index }` } data-testid="message-document">
+                        <FileText size={ 14 } aria-hidden="true" />
+                        <span>{ name }</span>
+                        { ( pages || truncated ) && <small>
+                            { [ pages ? t( `document_pages`, { count: pages } ) : null, truncated ? t( `document_shortened` ) : null ].filter( Boolean ).join( ` · ` ) }
+                        </small> }
+                    </DocumentChip> ) }
+                </AttachmentRow> }
 
                 { /* Thinking block — truncated window while streaming, collapsed when done */ }
                 { thinking && is_thinking && <>

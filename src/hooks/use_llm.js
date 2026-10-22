@@ -16,6 +16,7 @@ export default function use_llm() {
     const loaded_model_id = use_llm_store( ( s ) => s.loaded_model_id )
     const stats = use_llm_store( ( s ) => s.stats )
     const error = use_llm_store( ( s ) => s.error )
+    const capabilities = use_llm_store( ( s ) => s.capabilities )
 
     // Actions — stable references from the store
     const store_load = use_llm_store( ( s ) => s.load_model )
@@ -43,6 +44,7 @@ export default function use_llm() {
         loaded_model_id,
         stats,
         error,
+        capabilities,
     }
 
 }

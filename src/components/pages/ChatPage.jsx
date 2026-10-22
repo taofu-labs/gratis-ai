@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import styled, { keyframes } from 'styled-components'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import { log } from 'mentie'
 import toast from 'react-hot-toast'
@@ -17,7 +17,10 @@ import use_settings from '../../hooks/use_settings'
 import use_voice_input from '../../hooks/use_voice_input'
 import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
-import { get_model_by_id, format_file_size } from '../../utils/model_catalog'
+import { get_model_by_id, format_file_size, has_image_input, model_download_bytes, select_best_vision } from '../../utils/model_catalog'
+import { estimate_history_tokens, split_documents } from '../../utils/attachments'
+import { projector_source } from '../../utils/model_download'
+import { detect_capabilities, estimate_max_model_bytes } from '../../utils/device_detection'
 import { useTranslation } from 'react-i18next'
 import Button from '../atoms/Button'
 import ModelLoadStage from '../atoms/ModelLoadStage'
@@ -149,6 +152,7 @@ export default function ChatPage() {
 
     const { id: conversation_id } = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const [ search_params, set_search_params ] = useSearchParams()
     const { t } = useTranslation( 'chat' )
 
@@ -186,7 +190,7 @@ export default function ChatPage() {
     const messages_ref = useRef( messages )
     messages_ref.current = messages
 
-    const { load_model, chat_stream, abort, is_generating, is_endpoint_warming, is_loading: is_model_loading, loaded_model_id } = use_llm()
+    const { load_model, chat_stream, abort, is_generating, is_endpoint_warming, is_loading: is_model_loading, loaded_model_id, capabilities } = use_llm()
     const {
         conversations,
         create_conversation,
@@ -332,6 +336,7 @@ export default function ChatPage() {
                     id: m.id,
                     role: m.role,
                     content: m.content,
+                    attachments: m.attachments,
                     stats: m.stats,
                     error: m.error,
                     // Keep the original order when edits and regenerates rewrite history
@@ -428,11 +433,14 @@ export default function ChatPage() {
         // Strict templates (Gemma, Mistral) demand alternating roles, so turns
         // left adjacent by a dropped empty reply are merged
         const history = history_msgs
-            .filter( ( { content } ) => content )
-            .reduce( ( turns, { role, content } ) => {
+            .filter( ( { content, attachments } ) => content || attachments?.length )
+            .reduce( ( turns, { role, content, attachments } ) => {
+                const images = attachments?.filter( ( { kind } ) => kind === `image` ) || []
                 const previous = turns.at( -1 )
-                if( previous?.role === role ) previous.content += `\n\n${ content }`
-                else turns.push( { role, content } )
+                if( previous?.role === role ) {
+                    previous.content = [ previous.content, content ].filter( Boolean ).join( `\n\n` )
+                    previous.attachments = [ ...previous.attachments || [], ...images ]
+                } else turns.push( { role, content, ... images.length ? { attachments: images } : {} } )
                 return turns
             }, [] )
         if( system_prompt ) history.unshift( { role: `system`, content: system_prompt } )
@@ -586,10 +594,12 @@ export default function ChatPage() {
 
     /**
      * Send a user message and stream the reply.
-     * @param {string} text
-     * @param {Array} [base_messages] - History it follows; defaults to the current chat
+     * @param {string} text - Content, documents already inlined
+     * @param {Object} [options]
+     * @param {Array} [options.attachments] - Images plus document chip metadata
+     * @param {Array} [options.base_messages] - History it follows; defaults to the current chat
      */
-    const send_message = useCallback( async ( text, base_messages = messages_ref.current ) => {
+    const send_message = useCallback( async ( text, { attachments, base_messages = messages_ref.current } = {} ) => {
 
         // Intercept /status command — respond locally without calling the model
         if( text.trim().toLowerCase() === `/status` ) {
@@ -602,14 +612,15 @@ export default function ChatPage() {
         }
 
         const is_current = capture_epoch()
-        const user_msg = { id: uuid(), role: `user`, content: text, created_at: Date.now() }
+        const user_msg = { id: uuid(), role: `user`, content: text, ... attachments ? { attachments } : {}, created_at: Date.now() }
         set_messages( prev => [ ...prev, user_msg ] )
 
         // Create conversation if this is the first message. If the user left
         // meanwhile, it is still saved, but must not pull them back into it.
         let conv_id = current_conversation_id
         if( !conv_id ) {
-            conv_id = await create_conversation( text )
+            const { text: typed, names } = split_documents( text )
+            conv_id = await create_conversation( typed || names[ 0 ] || attachments?.[ 0 ]?.name || t( `image_conversation_title` ) )
             if( is_current() ) {
                 pending_conversation_id_ref.current = conv_id
                 set_current_conversation_id( conv_id )
@@ -624,12 +635,12 @@ export default function ChatPage() {
         if( !is_current() ) return
         await stream_reply( conv_id, [ ...base_messages, user_msg ] )
 
-    }, [ stream_reply, current_conversation_id, create_conversation, save_message, navigate, build_status_response ] )
+    }, [ stream_reply, current_conversation_id, create_conversation, save_message, navigate, build_status_response, t ] )
 
     // User sends wait out a pending history rewrite; internal resends bypass this
-    const handle_send = useCallback( text => {
+    const handle_send = useCallback( ( text, attachments ) => {
         if( rewriting_ref.current ) return
-        return send_message( text )
+        return send_message( text, { attachments } )
     }, [ send_message ] )
 
     // Process query parameters (?q= and ?model=)
@@ -748,11 +759,14 @@ export default function ChatPage() {
         // the first would later re-save into the truncated history
         if( !has_model || is_generating_ref.current || rewriting_ref.current ) return
 
-        // Truncate at the edited message, in storage too, then re-send
+        // Truncate at the edited message, in storage too, then re-send with
+        // its documents and images: the edit only changes the typed text
         const is_current = capture_epoch()
+        const { attachments, content } = messages_ref.current[ index ]
+        const { blocks } = split_documents( content )
         const truncated = messages_ref.current.slice( 0, index )
         set_messages( truncated )
-        await rewrite_history( is_current, truncated, () => send_message( new_text, truncated ) )
+        await rewrite_history( is_current, truncated, () => send_message( `${ blocks }${ new_text }`.trim(), { attachments, base_messages: truncated } ) )
 
     }, [ send_message, rewrite_history, has_model ] )
 
@@ -891,6 +905,62 @@ export default function ChatPage() {
         set_voice_download_error( false )
     }, [] )
 
+    // ── Image input: what to offer when the model cannot read images ──
+
+    // The best vision model this device fits, for the inline offer
+    const [ vision_candidate, set_vision_candidate ] = useState( null )
+    useEffect( () => {
+
+        if( capabilities.image_input ) return
+        let cancelled = false
+        detect_capabilities()
+            .then( device => select_best_vision( estimate_max_model_bytes( device ) ) )
+            .then( best => !cancelled && set_vision_candidate( has_image_input( best ) ? best : null ) )
+            .catch( error => log.debug( `[ChatPage] No vision suggestion:`, error?.message ) )
+        return () => {
+            cancelled = true
+        }
+
+    }, [ capabilities.image_input ] )
+
+    const vision_offer = ( () => {
+
+        if( capabilities.image_input ) return null
+        const loaded_model = get_model_by_id( loaded_model_id ) || cached_models.find( ( { id } ) => id === loaded_model_id )
+        const choose_model = { testid: `choose-vision-model`, label: t( `choose_vision_model` ), on_click: () => navigate( `/select-model?need=vision` ) }
+
+        // The model reads images once its projector is downloaded
+        if( capabilities.image_blocked === `projector_missing` && loaded_model ) {
+            const projector = projector_source( loaded_model )
+            return {
+                message: t( `image_needs_projector`, { name: loaded_model.name } ),
+                actions: [ {
+                    testid: `add-image-support`,
+                    label: t( `add_image_support`, { size: format_file_size( projector.file_size_bytes ) } ),
+                    on_click: () => navigate( `/download`, { state: { model: loaded_model, return_to: location.pathname } } ),
+                } ],
+            }
+        }
+
+        // An installed vision model is a switch, not a download
+        const installed = cached_models.find( model => model.id !== loaded_model_id && has_image_input( get_model_by_id( model.id ) || model ) )
+        const offer = installed
+            ? { testid: `switch-vision-model`, label: t( `switch_to_model`, { name: installed.name } ), on_click: () => handle_model_switch( installed.id ) }
+            : vision_candidate && {
+                testid: `get-vision-model`,
+                label: t( `get_vision_model`, { name: vision_candidate.name, size: format_file_size( model_download_bytes( vision_candidate ) ) } ),
+                on_click: () => navigate( `/download`, { state: { model: vision_candidate, return_to: location.pathname } } ),
+            }
+
+        return {
+            message: t( capabilities.image_blocked === `memory` ? `image_blocked_memory` : `image_needs_vision` ),
+            actions: [ offer, choose_model ].filter( Boolean ),
+        }
+
+    } )()
+
+    const history_tokens = estimate_history_tokens( messages )
+
     const has_messages = messages.length > 0 || !!pending_query
 
     // Render the main content area based on state
@@ -988,6 +1058,10 @@ export default function ChatPage() {
                     is_generating={ is_generating }
                     disabled={ !has_model || is_rewriting }
                     auto_focus
+                    allow_images
+                    vision_offer={ vision_offer }
+                    history_tokens={ history_tokens }
+                    max_tokens={ settings.max_tokens }
                     on_mic_click={ handle_mic_click }
                     on_mic_stop={ handle_mic_stop }
                     is_recording={ is_recording }

@@ -169,6 +169,18 @@ const resolve_file_size = async ( repo, file_name, target_file, model_data, fetc
 }
 
 /**
+ * Choose the projector to download: Q8_0, then F16, then BF16 (F32 doubles the
+ * download for no visible gain), else the first one listed.
+ * @param {Array<{ rfilename: string }>} projectors
+ * @returns {{ rfilename: string }|null}
+ */
+const PROJECTOR_PREFERENCE = [ /q8_0/i, /(^|[^b])f16/i, /bf16/i ]
+
+export const pick_projector = projectors => PROJECTOR_PREFERENCE
+    .map( precision => projectors.find( ( { rfilename } ) => precision.test( rfilename ) ) )
+    .find( Boolean ) || projectors[ 0 ] || null
+
+/**
  * Resolve a parsed HF URL to a full model definition by querying the HF API.
  * Fetches repo file listing, finds the matching GGUF file, and returns a complete
  * model definition ready for download.
@@ -190,8 +202,10 @@ export const resolve_hf_model = async ( parsed, {
     const data = await fetch_model_data( repo, fetch_impl, headers )
     const siblings = data.siblings || []
 
-    // Filter to GGUF files only
-    const gguf_files = siblings.filter( ( f ) => f.rfilename?.endsWith( `.gguf` ) )
+    // Language GGUFs; vision projectors (mmproj) ride along separately
+    const is_projector = ( { rfilename } ) => /mmproj/i.test( rfilename )
+    const all_gguf_files = siblings.filter( ( f ) => f.rfilename?.endsWith( `.gguf` ) )
+    const gguf_files = all_gguf_files.filter( f => !is_projector( f ) )
     if( !gguf_files.length ) throw new Error( `No GGUF files found in ${ repo }` )
 
     // Find the target file — match by quantization hint, or pick a sensible default
@@ -210,7 +224,13 @@ export const resolve_hf_model = async ( parsed, {
     }
 
     const size = await resolve_file_size( repo, target_file.rfilename, target_file, data, fetch_impl, headers )
+    const model = build_model_def( repo, target_file.rfilename, size, data )
 
-    return build_model_def( repo, target_file.rfilename, size, data )
+    // A repo with a projector is multimodal: prefer the smallest sane precision
+    const projector = pick_projector( all_gguf_files.filter( is_projector ) )
+    if( !projector ) return model
+
+    const projector_size = await resolve_file_size( repo, projector.rfilename, projector, {}, fetch_impl, headers )
+    return { ...model, vision: true, mmproj: { file_name: projector.rfilename, file_size_bytes: projector_size } }
 
 }

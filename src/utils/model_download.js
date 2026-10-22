@@ -10,7 +10,7 @@ import {
     sweep_partial_downloads,
 } from './hf_sdk_download'
 import { build_download_url } from './hf_url_parser'
-import { get_model_by_id } from './model_catalog'
+import { get_model_by_id, model_download_bytes } from './model_catalog'
 import { create_download_speed_tracker } from './network_speed'
 import { ReliableOPFSBackend } from './reliable_opfs_backend'
 
@@ -65,18 +65,52 @@ export const get_browser_cached_model = async ( download_url, expected_size ) =>
 
 }
 
+/**
+ * Where a model's vision projector comes from, or null for text-only models.
+ * The repo defaults to the language model's own repo.
+ * @param {import('./model_catalog').ModelDefinition} model
+ * @returns {{ hugging_face_repo: string, file_name: string, file_size_bytes: number, url: string }|null}
+ */
+export const projector_source = model => {
+
+    if( !model?.mmproj?.file_name ) return null
+
+    const hugging_face_repo = model.mmproj.hugging_face_repo || model.hugging_face_repo
+    const { file_name, file_size_bytes } = model.mmproj
+    return { hugging_face_repo, file_name, file_size_bytes, url: build_download_url( hugging_face_repo, file_name ) }
+
+}
+
+/**
+ * Validated OPFS projector for a model, or null when it is not installed.
+ * @param {import('./model_catalog').ModelDefinition} model
+ * @returns {Promise<import('wllama64').Model|null>}
+ */
+export const get_browser_cached_projector = async model => {
+    const projector = projector_source( model )
+    if( !projector ) return null
+    return get_browser_cached_model( projector.url, projector.file_size_bytes )
+}
+
+/** Remove one OPFS entry by URL; failures only cost quota. */
+const remove_opfs_url = async url => {
+    try {
+        const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
+        const stored_model = models.find( model => model.url === url )
+        if( stored_model ) await stored_model.remove()
+    } catch ( error ) {
+        // Metadata must still be cleared when OPFS itself is unavailable.
+        log.warn( `[download] Could not remove OPFS cache entry:`, error )
+    }
+}
+
 const remove_browser_cache_entry = async ( cached ) => {
 
-    if( cached?.download_url && !cached?.file_handle ) {
-        try {
-            const models = await get_browser_model_manager().getModels( { includeInvalid: true } )
-            const stored_model = models.find( model => model.url === cached.download_url )
-            if( stored_model ) await stored_model.remove()
-        } catch ( error ) {
-            // Metadata must still be cleared when OPFS itself is unavailable.
-            log.warn( `[download] Could not remove OPFS cache entry:`, error )
-        }
-    }
+    if( cached?.download_url && !cached?.file_handle ) await remove_opfs_url( cached.download_url )
+
+    // The projector always lives in OPFS, even beside an external model file
+    const projector = projector_source( get_model_by_id( cached?.id ) || cached )
+    if( projector ) await remove_opfs_url( projector.url )
 
     const db = await get_db()
     if( cached?.id ) await db.delete( `models`, cached.id )
@@ -103,6 +137,8 @@ const cache_metadata = ( model, overrides = {} ) => ( {
     reasoning: model.reasoning,
     reasoning_enabled: model.reasoning_enabled,
     license: model.license,
+    vision: model.vision,
+    mmproj: model.mmproj,
     is_custom: model.is_custom,
     is_tpn_winner: model.is_tpn_winner,
     tpn_competition: model.tpn_competition,
@@ -256,43 +292,136 @@ export const clear_browser_model_cache = async () => {
     await sweep_partial_downloads( { storage_backend: browser_storage_backend } )
 }
 
+
+/**
+ * Whether a model's vision projector is installed. True for text-only models,
+ * so "complete install" reads as `is_model_cached && is_projector_cached`.
+ * @param {import('./model_catalog').ModelDefinition} model
+ * @returns {Promise<boolean>}
+ */
+export const is_projector_cached = async ( model ) => {
+
+    if( !projector_source( model ) ) return true
+
+    // Electron's manifest records the projector beside the model
+    if( window.electronAPI?.list_models ) {
+        const models = await window.electronAPI.list_models()
+        return !!models.find( ( { id } ) => id === model.id )?.mmproj_file_name
+    }
+
+    const stored = await get_browser_cached_projector( model ).catch( () => null )
+    return !!stored
+
+}
+
 /**
  * Discard a model's interrupted OPFS download so an explicit cancel never
  * resumes later. No-op in Electron and when no partial download exists.
+ * An install only counts once its metadata exists, so finished parts of an
+ * unregistered install (model done, projector not) are removed as well.
  * @param {Object} model - Model definition
  * @returns {Promise<void>}
  */
 export const discard_browser_partial_download = async ( model ) => {
+
     if( window.electronAPI ) return
-    await discard_partial_download( {
-        url: build_download_url( model.hugging_face_repo, model.file_name ),
-        cache_manager: get_browser_model_manager().cacheManager,
-        storage_backend: browser_storage_backend,
-    } )
+
+    const { cacheManager: cache_manager } = get_browser_model_manager()
+    const urls = [
+        build_download_url( model.hugging_face_repo, model.file_name ),
+        projector_source( model )?.url,
+    ].filter( Boolean )
+
+    await Promise.all( urls.map( url => discard_partial_download( { url, cache_manager, storage_backend: browser_storage_backend } ) ) )
+
+    // Never touch files an installed model (this or another) still uses
+    const db = await get_db()
+    if( await db.get( `models`, model.id ) ) return
+    const in_use = new Set( ( await db.getAll( `models` ) ).map( ( { download_url } ) => download_url ) )
+    await Promise.all( urls.filter( url => !in_use.has( url ) ).map( remove_opfs_url ) )
+
+}
+
+const GGUF_MAGIC = [ 0x47, 0x47, 0x55, 0x46 ]
+
+/**
+ * Check a downloaded GGUF's size and magic bytes. Throws a user-facing error.
+ * @param {Blob[]} files - Shards as returned by `Model.open()`
+ * @param {number} expected_size
+ * @returns {Promise<number>} Stored size
+ */
+const validate_gguf_files = async ( files, expected_size ) => {
+
+    const [ first_file ] = files
+    const size = files.reduce( ( total, file ) => total + file.size, 0 )
+
+    if( !first_file || expected_size > 0 && size !== expected_size ) {
+        log.warn( `[download] Size validation failed — expected ${ expected_size }, received ${ size }` )
+        throw new Error( `The model download was incomplete. Please retry the download.` )
+    }
+
+    const header = new Uint8Array( await first_file.slice( 0, 4 ).arrayBuffer() )
+    if( !GGUF_MAGIC.every( ( byte, index ) => header[ index ] === byte ) ) {
+        log.warn( `[download] GGUF validation failed — file may be corrupt` )
+        throw new Error( `Downloaded file is not a valid GGUF model. The file may be corrupted or the URL may have redirected to an error page.` )
+    }
+
+    return size
+
 }
 
 /**
- * Downloads a GGUF model from Hugging Face with progress tracking.
+ * Put one GGUF into OPFS unless a validated copy is already there.
+ * @param {Object} options
+ * @param {{ hugging_face_repo: string, file_name: string, file_size_bytes: number, url: string }} options.part
+ * @param {AbortSignal} [options.signal]
+ * @param {Function} options.on_progress - ({ loaded, resumed_from })
+ * @returns {Promise<{ stored: import('wllama64').Model, fresh: boolean }>}
+ */
+const download_part_to_opfs = async ( { part, signal, on_progress } ) => {
+
+    // Retrying an install fetches only the part that is still missing
+    const existing = await get_browser_cached_model( part.url, part.file_size_bytes )
+    if( existing ) {
+        on_progress( { loaded: part.file_size_bytes } )
+        return { stored: existing, fresh: false }
+    }
+
+    const result = await download_hf_model_file_to_cache( {
+        model: part,
+        url: part.url,
+        cache_manager: get_browser_model_manager().cacheManager,
+        storage_backend: browser_storage_backend,
+        signal,
+        on_progress,
+    } )
+
+    log.debug( `[download] ${ part.file_name } used the ${ result.mode } path into OPFS (resumed from ${ result.resumed_from } bytes)` )
+    const stored = await get_browser_cached_model( part.url, result.size || part.file_size_bytes )
+    if( !stored ) throw new Error( `The downloaded model could not be validated. Please retry the download.` )
+    return { stored, fresh: true }
+
+}
+
+/**
+ * Downloads a GGUF model, plus its vision projector when the catalog lists
+ * one, from Hugging Face with one progress bar over both files.
  * Electron streams to the filesystem; browsers stream to OPFS and keep only
- * lightweight source metadata in IndexedDB.
+ * lightweight source metadata in IndexedDB. The metadata is written once
+ * every part is validated, so a half-finished install never counts.
  *
- * @param {Object} model - Model definition
- * @param {string} model.id - Unique model ID
- * @param {string} model.hugging_face_repo - HF repo path
- * @param {string} model.file_name - GGUF filename
- * @param {string} model.name - Human-readable name
- * @param {string} model.category - Model tier
- * @param {number} model.file_size_bytes - Expected file size
- * @param {string} model.parameters_label - Parameter count label
- * @param {string} model.quantization - Quantization label
- * @param {number} model.context_length - Context window
+ * @param {Object} model - Model definition (see ModelDefinition)
  * @param {Function} on_progress - Progress callback ({ progress, bytes_loaded, bytes_total, status })
  * @param {AbortSignal} [signal] - Abort signal for cancellation
+ * @param {Object} [options]
+ * @param {'opfs'|'external-file'} [options.storage_mode]
  * @returns {Promise<void>}
  */
 export const download_model = async ( model, on_progress, signal, { storage_mode } = {} ) => {
 
     const url = build_download_url( model.hugging_face_repo, model.file_name )
+    const projector = projector_source( model )
+    const bytes_total = model_download_bytes( model )
     const headers = get_hf_headers()
     const speed_tracker = create_download_speed_tracker( url )
     const report_progress = progress => {
@@ -300,10 +429,9 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
         on_progress( progress )
     }
 
-    const size_mb = ( model.file_size_bytes / 1e6 ).toFixed( 0 )
-    log.info( `[download] Starting: ${ model.name } (${ size_mb } MB)` )
+    log.info( `[download] Starting: ${ model.name } (${ ( bytes_total / 1e6 ).toFixed( 0 ) } MB${ projector ? `, with vision projector` : `` })` )
 
-    report_progress( { progress: 0, bytes_loaded: 0, bytes_total: model.file_size_bytes, status: `Starting download...` } )
+    report_progress( { progress: 0, bytes_loaded: 0, bytes_total, status: `Starting download...` } )
 
     // In Electron, delegate to the main process which streams directly to disk.
     // This avoids buffering multi-GB files in the renderer's V8 heap.
@@ -348,128 +476,122 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
 
     }
 
-    // Browser path: Hugging Face SDK resolves the best download path first,
-    // including Xet parallel reads when available, then streams into OPFS.
-    let downloaded
-    let external_file_handle = null
+    // Browser path: one bar over model then projector. Each part reports its
+    // own bytes; `offset` places them on the shared total.
+    const progress_from = offset => ( { loaded, total, resumed_from } ) => {
+        const bytes_loaded = offset + loaded
+        const shared_total = Math.max( bytes_total, offset + ( total || 0 ) )
+        report_progress( {
+            progress: shared_total > 0 ? Math.min( bytes_loaded / shared_total, 1 ) : 0,
+            bytes_loaded,
+            bytes_total: shared_total,
+            ... resumed_from > 0 ? { resumed_from: offset + resumed_from } : {},
+            status: `Downloading...`,
+        } )
+    }
+
+    const db = await get_db()
+    const existing_entry = await db.get( `models`, model.id )
+
+    // URLs this call wrote into OPFS; a cancel removes exactly these
+    const fresh_urls = []
+    const throw_if_aborted = async () => {
+        if( !signal?.aborted ) return
+        await Promise.all( fresh_urls.map( remove_opfs_url ) )
+        throw abort_error()
+    }
+
+    // ── Language model ───────────────────────────────────────────────
+
+    let model_files
+    let entry_storage
     try {
         if( storage_mode === `external-file` ) {
-            const file_handle = take_pending_external_model_file( model.id )
+
+            // Adding a projector to an installed model reuses the user's file
+            const reusable = existing_entry?.file_handle
+                && await get_external_model_file( existing_entry.file_handle, model.file_size_bytes ).catch( () => null )
+            const file_handle = reusable ? existing_entry.file_handle : take_pending_external_model_file( model.id )
             if( !file_handle ) throw new Error( `Choose where to save this GGUF file before downloading.` )
-            external_file_handle = file_handle
 
-            const result = await download_hf_model_file_to_external_file( {
-                model,
-                file_handle,
-                signal,
-                on_progress: ( { loaded, total } ) => {
-                    const bytes_total = total || model.file_size_bytes
-                    report_progress( {
-                        progress: bytes_total > 0 ? Math.min( loaded / bytes_total, 1 ) : 0,
-                        bytes_loaded: loaded,
-                        bytes_total,
-                        status: `Downloading...`,
-                    } )
-                },
-            } )
-
-            log.debug( `[download] Hugging Face SDK browser download used ${ result.mode } path into external file` )
-
-            const file = await get_external_model_file( file_handle, result.size || model.file_size_bytes )
-            downloaded = {
-                open: async () => [ file ],
-                remove: async () => {},
+            if( reusable ) progress_from( 0 )( { loaded: model.file_size_bytes } )
+            else {
+                const result = await download_hf_model_file_to_external_file( {
+                    model,
+                    file_handle,
+                    signal,
+                    on_progress: progress_from( 0 ),
+                } )
+                log.debug( `[download] Hugging Face SDK browser download used ${ result.mode } path into external file` )
             }
-        }
 
-        const manager = get_browser_model_manager()
-        if( !downloaded ) {
-            const result = await download_hf_model_file_to_cache( {
-                model,
-                url,
-                cache_manager: manager.cacheManager,
-                storage_backend: browser_storage_backend,
+            model_files = [ reusable || await get_external_model_file( file_handle, model.file_size_bytes ) ]
+            entry_storage = { storage: `file-system-access`, file_handle, download_url: url }
+
+        } else {
+
+            const { stored, fresh } = await download_part_to_opfs( {
+                part: { ...model, url },
                 signal,
-                on_progress: ( { loaded, total, resumed_from } ) => {
-                    const bytes_total = total || model.file_size_bytes
-                    report_progress( {
-                        progress: bytes_total > 0 ? Math.min( loaded / bytes_total, 1 ) : 0,
-                        bytes_loaded: loaded,
-                        bytes_total,
-                        ... resumed_from > 0 ? { resumed_from } : {},
-                        status: `Downloading...`,
-                    } )
-                },
+                on_progress: progress_from( 0 ),
             } )
+            if( fresh ) fresh_urls.push( url )
+            model_files = await stored.open()
+            entry_storage = { storage: `wllama64-opfs`, download_url: url }
 
-            log.debug( `[download] Hugging Face SDK browser download used ${ result.mode } path into OPFS (resumed from ${ result.resumed_from } bytes)` )
-            downloaded = await get_browser_cached_model( url, result.size || model.file_size_bytes )
-            if( !downloaded ) throw new Error( `The downloaded model could not be validated. Please retry the download.` )
         }
     } catch ( err ) {
-        if( err?.name === `AbortError` || signal?.aborted ) throw abort_error()
+        if( err?.name === `AbortError` || signal?.aborted ) await throw_if_aborted()
         throw normalize_hf_error( err )
     }
 
-    // A cancel that lands after the last byte must still leave nothing behind
-    const discard_if_aborted = async () => {
-        if( !signal?.aborted ) return
-        if( storage_mode !== `external-file` ) await downloaded.remove().catch( () => {} )
-        throw abort_error()
-    }
-    await discard_if_aborted()
+    await throw_if_aborted()
+    report_progress( { progress: bytes_total > 0 ? model.file_size_bytes / bytes_total : 1, bytes_loaded: model.file_size_bytes, bytes_total, status: `Validating model...` } )
 
-    const downloaded_files = await downloaded.open()
-    const [ first_file ] = downloaded_files
-    const downloaded_size = downloaded_files.reduce( ( total, file ) => total + file.size, 0 )
-    const expected_size = model.file_size_bytes
-
-    report_progress( {
-        progress: 1,
-        bytes_loaded: downloaded_size,
-        bytes_total: expected_size || downloaded_size,
-        status: `Validating model...`,
-    } )
-
-    if( !first_file ||  expected_size > 0 && downloaded_size !== expected_size  ) {
-        log.warn( `[download] Size validation failed — expected ${ expected_size }, received ${ downloaded_size }` )
-        await downloaded.remove()
-        throw new Error( `The model download was incomplete. Please retry the download.` )
+    let downloaded_size
+    try {
+        downloaded_size = await validate_gguf_files( model_files, model.file_size_bytes )
+    } catch ( error ) {
+        if( storage_mode !== `external-file` ) await remove_opfs_url( url )
+        throw error
     }
 
-    const header = new Uint8Array( await first_file.slice( 0, 4 ).arrayBuffer() )
-    const is_valid_gguf = header[ 0 ] === 0x47 && header[ 1 ] === 0x47 && header[ 2 ] === 0x55 && header[ 3 ] === 0x46
-    if( !is_valid_gguf ) {
-        log.warn( `[download] GGUF validation failed — file may be corrupt` )
-        await downloaded.remove()
-        throw new Error( `Downloaded file is not a valid GGUF model. The file may be corrupted or the URL may have redirected to an error page.` )
+    // ── Vision projector (always OPFS) ───────────────────────────────
+
+    if( projector ) {
+
+        let projector_files
+        try {
+            const { stored, fresh } = await download_part_to_opfs( {
+                part: projector,
+                signal,
+                on_progress: progress_from( model.file_size_bytes ),
+            } )
+            if( fresh ) fresh_urls.push( projector.url )
+            projector_files = await stored.open()
+        } catch ( err ) {
+            if( err?.name === `AbortError` || signal?.aborted ) await throw_if_aborted()
+            throw normalize_hf_error( err )
+        }
+
+        await throw_if_aborted()
+
+        try {
+            downloaded_size += await validate_gguf_files( projector_files, projector.file_size_bytes )
+        } catch ( error ) {
+            await remove_opfs_url( projector.url )
+            throw error
+        }
+
     }
 
-    await discard_if_aborted()
-
-    if( storage_mode === `external-file` ) {
-        const now = Date.now()
-        const db = await get_db()
-        await db.put( `models`, cache_metadata( model, {
-            storage: `file-system-access`,
-            file_handle: external_file_handle,
-            download_url: url,
-            cached_at: now,
-            file_size_bytes: expected_size || downloaded_size,
-            last_used_at: now,
-        } ) )
-        log.info( `[download] Complete: ${ model.name } (${ ( downloaded_size / 1e6 ).toFixed( 0 ) } MB)` )
-        report_progress( { progress: 1, bytes_loaded: downloaded_size, bytes_total: downloaded_size, status: `Complete` } )
-        return
-    }
+    await throw_if_aborted()
 
     const now = Date.now()
-    const db = await get_db()
     await db.put( `models`, cache_metadata( model, {
-        storage: `wllama64-opfs`,
-        download_url: url,
-        cached_at: now,
-        file_size_bytes: expected_size || downloaded_size,
+        ...entry_storage,
+        cached_at: existing_entry?.cached_at || now,
+        file_size_bytes: model.file_size_bytes || model_files[ 0 ].size,
         last_used_at: now,
     } ) )
 

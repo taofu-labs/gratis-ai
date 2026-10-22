@@ -47,6 +47,8 @@
     "download_resuming": "Resuming where you left off ({{size}} already saved)",
     "preparing_your_model": "Getting your model ready",
     "preparing_your_model_detail": "{{name}} is downloaded. Loading it into memory — this can take up to a minute.",
+    "adding_image_support": "Adding image support",
+    "adding_image_support_detail": "{{name}} is already here. Downloading the part that lets it read images.",
     "download_speed": "Speed: {{speed}}/s",
     "download_speed_limited": "Download slowed down. Hugging Face may be limiting traffic.",
     "download_eta_stabilizing": "Estimating time left...",

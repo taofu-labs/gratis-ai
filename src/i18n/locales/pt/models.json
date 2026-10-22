@@ -47,6 +47,8 @@
     "download_resuming": "Retomando de onde você parou ({{size}} já salvos)",
     "preparing_your_model": "Preparando seu modelo",
     "preparing_your_model_detail": "{{name}} foi baixado. Carregando na memória — isso pode levar até um minuto.",
+    "adding_image_support": "Adicionando suporte a imagens",
+    "adding_image_support_detail": "{{name}} já está aqui. Baixando a parte que permite ler imagens.",
     "measuring_download_speed": "Medindo a velocidade de download…",
     "download_range_under_minute": "menos de um minuto",
     "download_range_1_3_minutes": "1–3 minutos",

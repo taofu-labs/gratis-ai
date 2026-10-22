@@ -33,8 +33,27 @@
     "offline_cloud_message": "Je bent offline — cloudmodellen vereisen een internetverbinding",
     "offline_switch_model": "Model wisselen",
 
-    "image_requires_vision": "Afbeeldingsinvoer vereist ondersteuning voor een visiemodel (binnenkort beschikbaar)",
     "unsupported_file_type": "Dit bestandstype wordt niet ondersteund",
-    "file_too_large": "Bestand is te groot (max 100 KB)",
+    "file_too_large": "‘{{name}}’ is te groot om te lezen",
+
+    "image_needs_vision": "Dit model kan geen afbeeldingen lezen. Je bericht en afbeelding blijven hier staan.",
+    "image_needs_projector": "{{name}} kan afbeeldingen lezen zodra de beeldondersteuning is gedownload.",
+    "image_blocked_memory": "Afbeeldingen lezen vraagt meer geheugen dan deze browser voor dit model kan vrijmaken.",
+    "add_image_support": "Beeldondersteuning toevoegen · {{size}}",
+    "switch_to_model": "Overschakelen naar {{name}}",
+    "get_vision_model": "{{name}} ophalen · {{size}}",
+    "choose_vision_model": "Kies een model dat afbeeldingen leest",
+    "images_in_chat_only": "Open een chat om afbeeldingen toe te voegen",
+    "image_unreadable": "Kon de afbeelding ‘{{name}}’ niet lezen",
+    "pasted_image": "geplakte afbeelding",
+    "image_conversation_title": "Afbeelding",
+    "reading_document": "Lezen…",
+    "document_pages": "Pagina’s: {{count}}",
+    "document_shortened": "ingekort om te passen",
+    "document_empty_pages": "geen tekst op p. {{pages}}",
+    "document_no_room": "geen ruimte meer in deze chat — begin een nieuwe chat",
+    "document_image_only": "‘{{name}}’ heeft geen tekstlaag (een scan of pdf met alleen afbeeldingen), dus er valt niets te lezen.",
+    "document_unreadable": "Kon ‘{{name}}’ niet lezen",
+
     "reply_error": "Fout: {{message}}"
 }
