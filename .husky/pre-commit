@@ -1,3 +1,9 @@
+# Never commit secrets: block staged .env.local / *.local env files
+if git diff --cached --name-only | grep -qE '(^|/)\.env(\..+)?\.local$'; then
+    echo "🚨 [ precommit hook ] refusing to commit a .env*.local secrets file, unstage it first\n"
+    exit 1
+fi
+
 echo "\n🤖 [ precommit hook ] linting before committing..."
 
 # If errors, make it clear they cannot commit
