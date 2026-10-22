@@ -47,6 +47,8 @@
     "download_resuming": "Download wird fortgesetzt ({{size}} bereits gespeichert)",
     "preparing_your_model": "Dein Modell wird vorbereitet",
     "preparing_your_model_detail": "{{name}} ist heruntergeladen und wird jetzt in den Arbeitsspeicher geladen — das kann bis zu einer Minute dauern.",
+    "adding_image_support": "Bildunterstützung wird hinzugefügt",
+    "adding_image_support_detail": "{{name}} ist schon da. Jetzt kommt der Teil, mit dem es Bilder lesen kann.",
     "measuring_download_speed": "Downloadgeschwindigkeit wird gemessen…",
     "download_range_under_minute": "weniger als eine Minute",
     "download_range_1_3_minutes": "1–3 Minuten",

@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { X, CheckCircle, LoaderCircle } from 'lucide-react'
 import { log } from 'mentie'
-import { discard_browser_partial_download, download_model, is_model_cached } from '../../utils/model_download'
+import { discard_browser_partial_download, download_model, is_model_cached, is_projector_cached } from '../../utils/model_download'
 import { format_file_size } from '../../utils/model_catalog'
 import { storage_key } from '../../utils/branding'
 import { create_download_eta_estimator, format_download_duration } from '../../utils/network_speed'
@@ -173,7 +173,7 @@ export default function DownloadPage() {
     const navigate = useNavigate()
     const location = useLocation()
     const { t } = useTranslation( 'models' )
-    const { load_model } = use_llm()
+    const { load_model, unload_model } = use_llm()
     const model = location.state?.model
     const storage_mode = location.state?.storage_mode || `opfs`
     const return_to = location.state?.return_to || `/chat`
@@ -182,6 +182,9 @@ export default function DownloadPage() {
     const [ error, set_error ] = useState( null )
     const [ phase, set_phase ] = useState( `downloading` )
     const [ resumed_from, set_resumed_from ] = useState( 0 )
+    // The model is already here; only its vision projector is missing
+    const [ adding_projector, set_adding_projector ] = useState( false )
+    const adding_projector_ref = useRef( false )
     const abort_ref = useRef( null )
 
     // Set on cancel or unmount: nothing may navigate or persist afterwards
@@ -210,6 +213,8 @@ export default function DownloadPage() {
         set_phase( `loading` )
         log.info( `[download] Complete, loading ${ model.id }` )
         try {
+            // A loaded copy without its new projector must load again to see images
+            if( adding_projector_ref.current ) await unload_model()
             await load_model( model.id )
         } catch ( load_error ) {
             log.warn( `[download] Model load after download failed:`, load_error?.message )
@@ -223,7 +228,7 @@ export default function DownloadPage() {
             if( !cancelled_ref.current ) navigate( return_to, { replace: true } )
         }, 800 )
 
-    }, [ model, navigate, return_to, load_model ] )
+    }, [ model, navigate, return_to, load_model, unload_model ] )
 
     // Unmount = cancel: abort the pipeline and forbid any later navigation.
     // Reset on (re)mount so StrictMode's simulated unmount does not stick.
@@ -249,9 +254,18 @@ export default function DownloadPage() {
         download_started_ref.current = true
 
         // Check if already cached (also validates the source repo/file match)
-        is_model_cached( model.id, model.hugging_face_repo, model.file_name ).then( cached => {
+        // Complete = language model plus vision projector when the catalog lists one
+        const check_install = async () => {
+            const model_cached = await is_model_cached( model.id, model.hugging_face_repo, model.file_name )
+            const projector_cached = model_cached && await is_projector_cached( model )
+            return { model_cached, cached: model_cached && projector_cached }
+        }
+
+        check_install().then( ( { model_cached, cached } ) => {
 
             if( cancelled_ref.current ) return
+            adding_projector_ref.current = model_cached && !cached
+            set_adding_projector( adding_projector_ref.current )
 
             if( cached ) {
                 log.info( `[download] Model already cached, skipping` )
@@ -384,9 +398,9 @@ export default function DownloadPage() {
             <StepDot $active />
         </StepIndicator>
 
-        <Title>{ t( 'downloading_your_model' ) }</Title>
+        <Title>{ t( adding_projector ? 'adding_image_support' : 'downloading_your_model' ) }</Title>
         <StatusMessage>
-            { t( 'one_time_download', { name: model.name } ) }
+            { t( adding_projector ? 'adding_image_support_detail' : 'one_time_download', { name: model.name } ) }
         </StatusMessage>
 
         { error && <ErrorText>{ error }</ErrorText> }

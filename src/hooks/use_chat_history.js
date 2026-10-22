@@ -3,8 +3,34 @@ import { log } from 'mentie'
 import { v4 as uuid } from 'uuid'
 import { get_db } from '../stores/db'
 import { storage_key } from '../utils/branding'
+import { deserialize_attachments, serialize_attachments } from '../utils/attachments'
 
 const active_model_key = storage_key( `active_model_id` )
+
+/**
+ * The one message → IndexedDB record serializer for every write path.
+ * Async because image Blobs are read into bytes; finish it before opening a
+ * transaction, which would otherwise auto-commit while the read is pending.
+ * @param {string} conversation_id
+ * @param {Object} message
+ * @returns {Promise<Object>}
+ */
+const to_record = async ( conversation_id, message ) => ( {
+    id: message.id || uuid(),
+    conversation_id,
+    role: message.role,
+    content: message.content,
+    attachments: await serialize_attachments( message.attachments ),
+    created_at: message.created_at || Date.now(),
+    stats: message.stats || null,
+    error: message.error || null,
+} )
+
+/** IndexedDB record → message, with attachment Blobs restored. */
+const from_record = ( { attachments, ...record } ) => ( {
+    ...record,
+    attachments: deserialize_attachments( attachments ),
+} )
 
 /**
  * Hook for managing chat history in IndexedDB
@@ -76,15 +102,7 @@ export default function use_chat_history() {
      */
     const save_message = useCallback( async ( conversation_id, message ) => {
 
-        const msg = {
-            id: message.id || uuid(),
-            conversation_id,
-            role: message.role,
-            content: message.content,
-            created_at: message.created_at || Date.now(),
-            stats: message.stats || null,
-            error: message.error || null,
-        }
+        const msg = await to_record( conversation_id, message )
 
         const db = await get_db()
         await db.put( `messages`, msg )
@@ -110,12 +128,13 @@ export default function use_chat_history() {
 
         const db = await get_db()
         const all = await db.getAllFromIndex( `messages`, `conversation_id`, conversation_id )
-        return all.sort( ( a, b ) => a.created_at - b.created_at )
+        return all.sort( ( a, b ) => a.created_at - b.created_at ).map( from_record )
 
     }, [] )
 
     /**
-     * Delete a conversation and all its messages
+     * Delete a conversation and all its messages, images included: they
+     * live inside the message records
      * @param {string} conversation_id
      * @returns {Promise<void>}
      */
@@ -187,6 +206,8 @@ export default function use_chat_history() {
      */
     const replace_messages = useCallback( async ( conversation_id, messages ) => {
 
+        const records = await Promise.all( messages.map( msg => to_record( conversation_id, msg ) ) )
+
         const db = await get_db()
         const tx = db.transaction( `messages`, `readwrite` )
         const store = tx.objectStore( `messages` )
@@ -198,16 +219,8 @@ export default function use_chat_history() {
         }
 
         // Save new messages
-        for( const msg of messages ) {
-            await store.put( {
-                id: msg.id || uuid(),
-                conversation_id,
-                role: msg.role,
-                content: msg.content,
-                created_at: msg.created_at || Date.now(),
-                stats: msg.stats || null,
-                error: msg.error || null,
-            } )
+        for( const record of records ) {
+            await store.put( record )
         }
 
         await tx.done

@@ -18,6 +18,19 @@ const stage_from_status = ( status = `` ) => LOAD_STAGE_PATTERNS.find( ( [ patte
 
 const HIDDEN_TAB_FLUSH_MS = 250
 
+// Before a provider reports, assume a text-only model with a small context
+const DEFAULT_CAPABILITIES = Object.freeze( { image_input: false, image_blocked: null, context_size: 4096 } )
+
+/**
+ * Provider capabilities, tolerating providers that report less. Image input
+ * is gated on `has_image_input()`, which both runtimes implement.
+ */
+const read_capabilities = provider => ( {
+    ...DEFAULT_CAPABILITIES,
+    ...provider?.get_capabilities?.(),
+    image_input: !!provider?.has_image_input?.(),
+} )
+
 /**
  * Coalesce streamed text updates to one per animation frame. Re-rendering and
  * markdown parsing then scale with frames instead of tokens, which leaves the
@@ -90,6 +103,9 @@ const use_llm_store = create( ( set, get ) => ( {
 
     // { total, cache, processed, time_ms } while llama.cpp reads the prompt
     prompt_progress: null,
+
+    // What the loaded model reads: { image_input, image_blocked, context_size }
+    capabilities: DEFAULT_CAPABILITIES,
 
     // ── Internal (not consumed by UI) ────────────────────────────────
 
@@ -196,7 +212,7 @@ const use_llm_store = create( ( set, get ) => ( {
 
                 // Use provider's canonical ID — reflects a potentially recreated endpoint
                 const final_model_id = provider.get_loaded_model() || model_id
-                set( { loaded_model_id: final_model_id } )
+                set( { loaded_model_id: final_model_id, capabilities: read_capabilities( provider ) } )
                 log.info( `[use_llm] Model loaded successfully: ${ final_model_id }` )
             } catch ( err ) {
 
@@ -374,6 +390,7 @@ const use_llm_store = create( ( set, get ) => ( {
         set( {
             is_loading: false,
             loaded_model_id: null,
+            capabilities: DEFAULT_CAPABILITIES,
             error: null,
             _load_promise: null,
             _loading_model_id: null,

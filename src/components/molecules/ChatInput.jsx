@@ -1,25 +1,21 @@
-import { useState, useRef, useEffect, useImperativeHandle } from 'react'
+import { useState, useRef, useEffect, useImperativeHandle, useMemo } from 'react'
 import styled, { keyframes, css } from 'styled-components'
-import { SendHorizonal, Square, Mic, LoaderCircle, Paperclip, X } from 'lucide-react'
+import { SendHorizonal, Square, Mic, LoaderCircle, Paperclip, X, FileText, ImageOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import { log } from 'mentie'
 import VoiceStatusBar from '../atoms/VoiceStatusBar'
+import Button from '../atoms/Button'
+import use_llm_store from '../../stores/llm_store'
+import use_object_url from '../../hooks/use_object_url'
+import { compose_user_message, document_token_budget, is_image_file, prepare_image } from '../../utils/attachments'
+import { TEXT_EXTENSIONS, read_document } from '../../utils/document_text'
 
-// ── File attachment constants ────────────────────────────────────────
+// What the picker offers; paste and drop accept the same set
+const DOCUMENT_ACCEPT = [ `.pdf`, `application/pdf`, ...[ ...TEXT_EXTENSIONS ].map( extension => `.${ extension }` ) ].join( `,` )
 
-const TEXT_EXTENSIONS = new Set( [
-    `txt`, `md`, `json`, `csv`, `xml`, `html`, `js`, `ts`, `jsx`, `tsx`,
-    `py`, `java`, `c`, `cpp`, `h`, `rs`, `go`, `rb`, `sh`, `yaml`, `yml`,
-    `toml`, `ini`, `cfg`, `log`, `sql`, `css`, `scss`, `less`, `vue`,
-    `svelte`, `php`, `swift`, `kt`, `scala`, `lua`, `r`, `hs`, `ex`,
-    `dockerfile`, `makefile`, `bat`, `ps1`,
-] )
-
-const IMAGE_EXTENSIONS = new Set( [
-    `png`, `jpg`, `jpeg`, `gif`, `webp`, `svg`, `bmp`, `ico`, `tiff`,
-] )
-
-const MAX_FILE_SIZE = 100_000  // 100 KB text limit
+// Below this many tokens a document would be cut to near nothing
+const MIN_DOCUMENT_TOKENS = 200
 
 
 // ── Pill container — owns all visual appearance ─────────────────────
@@ -189,14 +185,61 @@ const SpinnerIcon = styled( LoaderCircle )`
     }
 `
 
-// ── File attachment UI ───────────────────────────────────────────────
+
+// Accent dashes while files hover over the pill
+const DropPill = styled( InputPill )`
+    ${ ( { $dragging, theme } ) => $dragging && css`
+        border-style: dashed;
+        border-color: ${ theme.colors.accent };
+    ` }
+`
+
+// ── Attachments: image thumbnails and document chips ────────────────
 
 const AttachmentArea = styled.div`
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
     padding: ${ ( { theme } ) => `0 ${ theme.spacing.xs } ${ theme.spacing.xs } 0` };
     border-bottom: 1px solid ${ ( { theme } ) => theme.colors.border_subtle };
     margin-bottom: ${ ( { theme } ) => theme.spacing.xs };
+`
+
+const Thumb = styled.div`
+    position: relative;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    overflow: hidden;
+    background: ${ ( { theme } ) => theme.colors.surface_hover };
+    flex-shrink: 0;
+
+    img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+`
+
+// 24px face on the thumbnail corner, 44px hit area on touch via padding
+const ThumbRemove = styled.button`
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    background: ${ ( { theme } ) => theme.colors.background };
+    color: ${ ( { theme } ) => theme.colors.text };
+    opacity: 0.85;
+
+    &:hover { opacity: 1; }
 `
 
 const AttachmentChip = styled.div`
@@ -218,6 +261,11 @@ const AttachmentName = styled.span`
     max-width: 200px;
 `
 
+const AttachmentMeta = styled.span`
+    color: ${ ( { theme, $warn } ) => $warn ? theme.colors.warning : theme.colors.text_muted };
+    white-space: nowrap;
+`
+
 const RemoveAttachment = styled.button`
     display: flex;
     align-items: center;
@@ -230,6 +278,23 @@ const RemoveAttachment = styled.button`
     transition: color 0.15s;
 
     &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
+`
+
+// Inline answer to "this model cannot read images": the draft stays put
+const VisionNotice = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.sm };
+    padding: ${ ( { theme } ) => `${ theme.spacing.xs } 0 ${ theme.spacing.sm }` };
+    font-size: 0.85rem;
+    color: ${ ( { theme } ) => theme.colors.text_secondary };
+
+    > svg { flex-shrink: 0; color: ${ ( { theme } ) => theme.colors.warning }; }
+`
+
+const VisionNoticeText = styled.span`
+    flex: 1 1 12rem;
 `
 
 const AttachButton = RoundButton
@@ -246,12 +311,36 @@ const InputRow = styled.div`
 `
 
 
+
+/** One draft image with its own object URL. */
+const DraftImage = ( { image, on_remove, label } ) => {
+
+    const url = use_object_url( image.data )
+
+    return <Thumb data-testid="draft-image">
+        { url && <img src={ url } alt={ image.name } /> }
+        <ThumbRemove type="button" onClick={ on_remove } aria-label={ label }>
+            <X size={ 12 } />
+        </ThumbRemove>
+    </Thumb>
+
+}
+
+// The ChatPage draft survives a detour (e.g. downloading image support) in
+// memory; a reload intentionally starts clean
+let remembered_draft = null
+
+let next_draft_id = 0
+const draft_id = () => `draft-${ ++next_draft_id }`
+
+
 /**
  * Unified pill-shaped chat input with mic, send, and stop buttons inside.
  * Used on both HomePage (as_form) and ChatPage (default).
+ * Images and documents arrive by paste, drop, or the attach button.
  *
  * @param {Object} props
- * @param {Function} props.on_send - Handler for sending a message
+ * @param {Function} props.on_send - Called as on_send( content, attachments )
  * @param {Function} [props.on_stop] - Handler for stopping generation
  * @param {boolean} [props.is_generating] - Whether currently generating
  * @param {boolean} [props.disabled] - Disable input
@@ -259,6 +348,10 @@ const InputRow = styled.div`
  * @param {string} [props.max_width] - Override pill max-width (default '65ch')
  * @param {string} [props.placeholder] - Textarea placeholder text
  * @param {boolean} [props.auto_focus] - Auto-focus textarea on mount
+ * @param {boolean} [props.allow_images] - Accept images (the parent can send attachments)
+ * @param {{ message: string, actions: Array<{ label: string, on_click: Function, testid: string }> }} [props.vision_offer] - Shown when images are attached but the model cannot read them
+ * @param {number} [props.history_tokens] - Tokens the conversation already uses
+ * @param {number} [props.max_tokens] - Reply length setting, reserved from the budget
  * @param {Function} [props.on_mic_click] - Handler when mic button is clicked (not recording)
  * @param {Function} [props.on_mic_stop] - Handler when mic button is clicked to stop recording
  * @param {boolean} [props.is_recording] - Whether mic is actively recording
@@ -279,6 +372,10 @@ export default function ChatInput( {
     max_width,
     placeholder: placeholder_prop,
     auto_focus = false,
+    allow_images = false,
+    vision_offer,
+    history_tokens = 0,
+    max_tokens,
     on_mic_click,
     on_mic_stop,
     is_recording = false,
@@ -291,11 +388,30 @@ export default function ChatInput( {
 
     const { t } = useTranslation( `chat` )
     const placeholder = placeholder_prop || t( `placeholder` )
+    const { image_input, context_size } = use_llm_store( ( s ) => s.capabilities )
 
-    const [ text, set_text ] = useState( `` )
-    const [ attached_file, set_attached_file ] = useState( null )  // { name, content }
+    // Only the ChatPage input (allow_images) remembers its draft
+    const initial_draft = allow_images ? remembered_draft : null
+    const [ text, set_text ] = useState( initial_draft?.text || `` )
+    const [ images, set_images ] = useState( initial_draft?.images || [] )
+    // { id, name, status: 'reading'|'ready', text, pages, empty_pages }
+    const [ documents, set_documents ] = useState( initial_draft?.documents || [] )
+    const [ is_dragging, set_is_dragging ] = useState( false )
     const textarea_ref = useRef( null )
     const file_input_ref = useRef( null )
+
+    // Keep the latest draft for a remount after a detour
+    const draft_ref = useRef( null )
+    draft_ref.current = { text, images, documents: documents.filter( ( { status } ) => status === `ready` ) }
+    useEffect( () => {
+        if( !allow_images ) return
+        remembered_draft = null
+        return () => {
+            const { text: draft_text, images: draft_images, documents: draft_documents } = draft_ref.current
+            const has_draft = draft_text.trim() || draft_images.length || draft_documents.length
+            remembered_draft = has_draft ? draft_ref.current : null
+        }
+    }, [ allow_images ] )
 
     // Expose focus() to parent via ref
     useImperativeHandle( ref, () => ( {
@@ -331,22 +447,38 @@ export default function ChatInput( {
         if( auto_focus ) textarea_ref.current?.focus()
     }, [] )
 
+    // ── Budget: documents share what the context has left ────────────
+
+    const ready_documents = documents.filter( ( { status } ) => status === `ready` )
+    const budget_tokens = document_token_budget( { context_size, history_tokens, max_tokens, image_count: images.length } )
+
+    // Truncation flags per document, as the composed message will have them
+    const document_fit = useMemo( () => {
+        const { attachments = [] } = compose_user_message( { text: ``, documents: ready_documents, budget_tokens } )
+        return new Map( attachments.map( ( { truncated }, index ) => [ ready_documents[ index ].id, truncated ] ) )
+    }, [ documents, budget_tokens ] )
+
+    const no_room = ready_documents.length > 0 && budget_tokens < MIN_DOCUMENT_TOKENS
+    const images_blocked = images.length > 0 && !image_input
+    const is_reading = documents.some( ( { status } ) => status === `reading` )
+    const has_content = text.trim().length > 0 || images.length > 0 || ready_documents.length > 0
+    const can_send = has_content && !is_reading && !images_blocked && !no_room
+
     const handle_send = () => {
 
-        const has_text = text.trim().length > 0
-        const has_file = !!attached_file
-        if(  !has_text && !has_file  || disabled || is_generating ) return
+        if( !can_send || disabled || is_generating ) return
 
-        // Compose message — prepend file content block if attached
-        let message = text.trim()
-        if( has_file ) {
-            const file_block = `[Attached file: ${ attached_file.name }]\n\`\`\`\n${ attached_file.content }\n\`\`\`\n\n`
-            message = message ? `${ file_block }${ message }` : file_block.trim()
-        }
+        const { content, attachments } = compose_user_message( {
+            text,
+            images: images.map( ( { id, ...image } ) => image ),
+            documents: ready_documents,
+            budget_tokens,
+        } )
 
-        on_send( message )
+        on_send( content, attachments )
         set_text( `` )
-        set_attached_file( null )
+        set_images( [] )
+        set_documents( [] )
         textarea_ref.current?.focus()
 
     }
@@ -371,71 +503,153 @@ export default function ChatInput( {
         }
     }
 
-    // ── File attachment handlers ─────────────────────────────────────
+    // ── Adding files: picker, paste, and drop share one path ─────────
+
+    const add_image = async file => {
+
+        if( !allow_images ) return toast( t( `images_in_chat_only` ), { id: `images-in-chat-only` } )
+
+        try {
+            const image = await prepare_image( file )
+            set_images( prev => [ ...prev, { id: draft_id(), ...image } ] )
+        } catch ( error ) {
+            log.warn( `[ChatInput] Could not read image ${ file.name }:`, error )
+            toast.error( t( `image_unreadable`, { name: file.name || t( `pasted_image` ) } ) )
+        }
+
+    }
+
+    const add_document = async file => {
+
+        const id = draft_id()
+        set_documents( prev => [ ...prev, { id, name: file.name, status: `reading` } ] )
+
+        try {
+            const document = await read_document( file )
+            set_documents( prev => prev.map( entry => entry.id === id ? { ...entry, ...document, status: `ready` } : entry ) )
+        } catch ( error ) {
+            set_documents( prev => prev.filter( entry => entry.id !== id ) )
+            const message_key = {
+                too_large: `file_too_large`,
+                unsupported: `unsupported_file_type`,
+                image_only: `document_image_only`,
+            }[ error.code ] || `document_unreadable`
+            if( message_key === `document_unreadable` ) log.warn( `[ChatInput] Could not read ${ file.name }:`, error )
+            toast.error( t( message_key, { name: file.name } ), { duration: 6_000 } )
+        }
+
+    }
+
+    const add_files = files => files.forEach( file => is_image_file( file ) ? add_image( file ) : add_document( file ) )
 
     const handle_attach_click = () => file_input_ref.current?.click()
 
     const handle_file_select = ( e ) => {
-
-        const file = e.target.files?.[ 0 ]
-        if( !file ) return
-
+        const files = [ ...e.target.files || [] ]
         // Reset the input so re-selecting the same file triggers onChange
         e.target.value = ``
-
-        const extension = file.name.split( `.` ).pop()?.toLowerCase() || ``
-
-        // Image files — not supported yet
-        if( IMAGE_EXTENSIONS.has( extension ) ) {
-            toast( t( `image_requires_vision` ) )
-            return
-        }
-
-        // Unknown file types
-        if( !TEXT_EXTENSIONS.has( extension ) ) {
-            toast( t( `unsupported_file_type` ) )
-            return
-        }
-
-        // Size check
-        if( file.size > MAX_FILE_SIZE ) {
-            toast( t( `file_too_large` ) )
-            return
-        }
-
-        // Read text content
-        const reader = new FileReader()
-        reader.onload = () => set_attached_file( { name: file.name, content: reader.result } )
-        reader.readAsText( file )
-
+        add_files( files )
     }
 
-    const handle_remove_attachment = () => set_attached_file( null )
+    // Screenshots paste as files; plain text pastes stay native
+    const handle_paste = e => {
+        const files = [ ...e.clipboardData?.files || [] ]
+        if( !files.length ) return
+        e.preventDefault()
+        add_files( files )
+    }
+
+    const accepts_drag = e => [ ...e.dataTransfer?.types || [] ].includes( `Files` )
+
+    const drop_handlers = {
+        onDragOver: e => {
+            if( !accepts_drag( e ) || disabled ) return
+            e.preventDefault()
+            set_is_dragging( true )
+        },
+        onDragLeave: e => {
+            if( !e.currentTarget.contains( e.relatedTarget ) ) set_is_dragging( false )
+        },
+        onDrop: e => {
+            set_is_dragging( false )
+            if( !accepts_drag( e ) || disabled ) return
+            e.preventDefault()
+            add_files( [ ...e.dataTransfer.files ] )
+        },
+    }
+
+    const remove_image = id => set_images( prev => prev.filter( image => image.id !== id ) )
+    const remove_document = id => set_documents( prev => prev.filter( document => document.id !== id ) )
+
+    /** Chip detail: pages, what was shortened, which pages had no text. */
+    const document_meta = document => {
+        if( document.status === `reading` ) return { label: t( `reading_document` ), warn: false }
+        if( no_room ) return { label: t( `document_no_room` ), warn: true }
+        const parts = [
+            document.pages ? t( `document_pages`, { count: document.pages } ) : null,
+            document_fit.get( document.id ) ? t( `document_shortened` ) : null,
+            document.empty_pages?.length ? t( `document_empty_pages`, { pages: document.empty_pages.join( `, ` ) } ) : null,
+        ].filter( Boolean )
+        return { label: parts.join( ` · ` ), warn: document_fit.get( document.id ) || !!document.empty_pages?.length }
+    }
 
     // Form mode renders the pill as a <form> element
     const pill_props = {
         $max_width: max_width,
+        $dragging: is_dragging,
+        ...drop_handlers,
         ... as_form && { as: `form`, onSubmit: handle_submit } ,
     }
 
+    const has_attachments = images.length > 0 || documents.length > 0
+    const accept = allow_images ? `image/*,${ DOCUMENT_ACCEPT }` : DOCUMENT_ACCEPT
+
     return <>
 
-        <InputPill { ...pill_props }>
+        <DropPill { ...pill_props } data-testid="chat-input-pill">
 
-            { /* Attached file chip */ }
-            { attached_file && <AttachmentArea>
-                <AttachmentChip>
-                    <Paperclip size={ 12 } />
-                    <AttachmentName>{ attached_file.name }</AttachmentName>
-                    <RemoveAttachment
-                        type="button"
-                        onClick={ handle_remove_attachment }
-                        aria-label={ t( `common:aria_remove_attachment` ) }
-                    >
-                        <X size={ 12 } />
-                    </RemoveAttachment>
-                </AttachmentChip>
+            { /* Draft images and documents */ }
+            { has_attachments && <AttachmentArea data-testid="draft-attachments">
+
+                { images.map( image => <DraftImage
+                    key={ image.id }
+                    image={ image }
+                    label={ t( `common:aria_remove_attachment` ) }
+                    on_remove={ () => remove_image( image.id ) }
+                /> ) }
+
+                { documents.map( document => {
+                    const { label, warn } = document_meta( document )
+                    return <AttachmentChip key={ document.id } data-testid="draft-document">
+                        { document.status === `reading` ? <SpinnerIcon size={ 12 } /> : <FileText size={ 12 } /> }
+                        <AttachmentName>{ document.name }</AttachmentName>
+                        { label && <AttachmentMeta $warn={ warn }>{ label }</AttachmentMeta> }
+                        <RemoveAttachment
+                            type="button"
+                            onClick={ () => remove_document( document.id ) }
+                            aria-label={ t( `common:aria_remove_attachment` ) }
+                        >
+                            <X size={ 12 } />
+                        </RemoveAttachment>
+                    </AttachmentChip>
+                } ) }
+
             </AttachmentArea> }
+
+            { /* The model cannot read the attached images: keep the draft, offer a way */ }
+            { images_blocked && <VisionNotice data-testid="vision-notice" role="status">
+                <ImageOff size={ 16 } aria-hidden="true" />
+                <VisionNoticeText>{ vision_offer?.message || t( `image_needs_vision` ) }</VisionNoticeText>
+                { vision_offer?.actions?.map( ( { label, on_click, testid }, index ) => <Button
+                    key={ testid }
+                    type="button"
+                    data-testid={ testid }
+                    $variant={ index === 0 ? undefined : `secondary` }
+                    onClick={ on_click }
+                >
+                    { label }
+                </Button> ) }
+            </VisionNotice> }
 
             <InputRow>
 
@@ -455,6 +669,7 @@ export default function ChatInput( {
                         value={ text }
                         onChange={ ( e ) => set_text( e.target.value ) }
                         onKeyDown={ handle_keydown }
+                        onPaste={ handle_paste }
                         placeholder={ placeholder }
                         disabled={ disabled }
                         rows={ 1 }
@@ -462,7 +677,7 @@ export default function ChatInput( {
 
                 <ButtonRow>
 
-                    { /* Attach file button */ }
+                    { /* Attach images or documents */ }
                     <AttachButton
                         data-testid="attach-btn"
                         type="button"
@@ -505,7 +720,7 @@ export default function ChatInput( {
                             data-testid="send-btn"
                             type={ as_form ? `submit` : `button` }
                             onClick={ as_form ? undefined : handle_send }
-                            disabled={ !text.trim() && !attached_file }
+                            disabled={ !can_send }
                             aria-label={ t( `common:aria_send_message` ) }
                         >
                             <SendHorizonal size={ 16 } />
@@ -515,11 +730,13 @@ export default function ChatInput( {
 
             </InputRow>
 
-        </InputPill>
+        </DropPill>
 
         <HiddenFileInput
             ref={ file_input_ref }
             type="file"
+            multiple
+            accept={ accept }
             onChange={ handle_file_select }
             data-testid="file-input"
         />

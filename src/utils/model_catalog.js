@@ -1026,8 +1026,8 @@ export const MODEL_CATALOG = [
 
 
     // ── Vision models ─────────────────────────────────────────────────
-    // Multimodal models with image/vision input support via mmproj.
-    // Engine support is pending — these are catalog-ready for when it lands.
+    // Multimodal models: the language GGUF plus an mmproj vision projector,
+    // downloaded together. Q8_0 projectors where the publisher ships one.
 
     {
         id: `smolvlm2-2.2b-q4km`,
@@ -1050,6 +1050,7 @@ export const MODEL_CATALOG = [
         license: `Apache-2.0`,
         vision: true,
         hidden: true,
+        mmproj: { file_name: `mmproj-SmolVLM2-2.2B-Instruct-Q8_0.gguf`, file_size_bytes: 592_523_200 },
     },
 
     {
@@ -1073,6 +1074,7 @@ export const MODEL_CATALOG = [
         license: `Gemma`,
         vision: true,
         hidden: true,
+        mmproj: { file_name: `mmproj-model-f16.gguf`, file_size_bytes: 851_251_104 },
     },
 
     {
@@ -1096,6 +1098,7 @@ export const MODEL_CATALOG = [
         license: `Apache-2.0`,
         vision: true,
         hidden: true,
+        mmproj: { file_name: `mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf`, file_size_bytes: 844_757_728 },
     },
 
     {
@@ -1119,6 +1122,7 @@ export const MODEL_CATALOG = [
         license: `Apache-2.0`,
         vision: true,
         hidden: true,
+        mmproj: { file_name: `mmproj-Qwen2.5-VL-7B-Instruct-Q8_0.gguf`, file_size_bytes: 853_119_712 },
     },
 
     {

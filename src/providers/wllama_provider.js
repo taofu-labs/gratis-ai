@@ -17,7 +17,8 @@ import {
 } from '../utils/model_catalog'
 import { get_external_model_file } from '../utils/external_model_files'
 import { resolve_hf_model } from '../utils/hf_url_parser'
-import { get_browser_cached_model } from '../utils/model_download'
+import { get_browser_cached_model, get_browser_cached_projector, projector_source } from '../utils/model_download'
+import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, to_wllama_messages } from '../utils/attachments'
 
 // Memory64 is the primary runtime. The matching wasm32 build remains local so
 // Safari and older browsers never need to fetch executable code from a CDN.
@@ -47,14 +48,25 @@ const CPU_FAST_OPTIONS = {
     cache_type_v: `q8_0`,
 }
 
+// Vision: an image becomes IMAGE_MIN_TOKENS–IMAGE_MAX_TOKENS tokens. Models with
+// non-causal image attention (Gemma 3) need the whole image in one
+// micro-batch, so vision loads raise n_batch/n_ubatch to match.
+const VISION_MIN_CONTEXT = 4096
+
+/** Room the projector's compute buffers need beyond its weights. */
+const PROJECTOR_OVERHEAD = 1.25
+
 /** CPU-only runtime options; GPU offload keeps its larger batch and f16 KV. */
-const cpu_load_options = load_options => ( {
-    ...load_options,
-    ...CPU_FAST_OPTIONS,
-    n_gpu_layers: 0,
-    n_batch: Math.min( load_options.n_batch, CPU_PROMPT_BATCH ),
-    n_ubatch: Math.min( load_options.n_batch, CPU_PROMPT_BATCH ),
-} )
+const cpu_load_options = load_options => {
+    const prompt_batch = Math.max( Math.min( load_options.n_batch, CPU_PROMPT_BATCH ), load_options.image_max_tokens || 0 )
+    return {
+        ...load_options,
+        ...CPU_FAST_OPTIONS,
+        n_gpu_layers: 0,
+        n_batch: prompt_batch,
+        n_ubatch: prompt_batch,
+    }
+}
 
 /** Promise with external resolve. */
 const deferred = () => {
@@ -158,6 +170,9 @@ export default class WllamaProvider {
         this._gpu_layers = 0
         this._reload_context = null
 
+        // What the loaded model can read beyond text; see get_capabilities()
+        this._capabilities = { image_input: false, image_blocked: null, context_size: 0 }
+
         // Resolves once a stopped request has really left the worker
         this._settling = Promise.resolve()
 
@@ -252,14 +267,31 @@ export default class WllamaProvider {
 
         if( on_progress ) on_progress( { progress: 0, status: `Checking available memory...` } )
 
+        // A vision model without its projector still chats; images wait for it
+        const projector = projector_source( model ) ? await get_browser_cached_projector( model ).catch( error => {
+            log.warn( `[wllama] Could not read the vision projector:`, error )
+            return null
+        } ) : null
+        let image_blocked = projector_source( model ) && !projector ? `projector_missing` : null
+
         const capabilities = await detect_capabilities()
         this._assert_load_current( generation )
         const memory_budget = estimate_max_model_bytes( capabilities )
-        const fit_model = {
+        const text_model = {
             ...model,
             file_size_bytes: model.file_size_bytes || cached.file_size_bytes || cached.blob?.size || 0,
         }
-        const required_memory = estimate_model_memory( fit_model )
+        const projector_bytes = projector ? Math.ceil( model.mmproj.file_size_bytes * PROJECTOR_OVERHEAD ) : 0
+        const vision_model = { ...text_model, file_size_bytes: text_model.file_size_bytes + projector_bytes }
+        const required_memory = estimate_model_memory( text_model )
+
+        // Too tight for both (wasm32's 4 GiB, small phones): keep text chat
+        const use_projector = projector && estimate_model_memory( vision_model, VISION_MIN_CONTEXT ) <= memory_budget
+        if( projector && !use_projector ) {
+            log.warn( `[wllama] Not enough memory for image input; loading ${ model_id } text-only` )
+            image_blocked = `memory`
+        }
+        const fit_model = use_projector ? vision_model : text_model
 
         if( required_memory > memory_budget ) {
             throw new ModelFitError(
@@ -278,7 +310,9 @@ export default class WllamaProvider {
         // throughput. A 512-token batch can add a large transient allocation
         // on top of 8–12 GB of weights.
         const n_batch = select_browser_batch( model_size, n_threads )
-        const n_ctx = select_browser_context( fit_model, memory_budget )
+        const n_ctx = use_projector
+            ? Math.max( VISION_MIN_CONTEXT, select_browser_context( fit_model, memory_budget ) )
+            : select_browser_context( fit_model, memory_budget )
         const reasoning_enabled = cached.reasoning_enabled ?? model?.reasoning_enabled
         const file_size_mb = ( model_size / 1_000_000 ).toFixed( 0 )
 
@@ -303,11 +337,21 @@ export default class WllamaProvider {
             ... reasoning_enabled !== undefined ? {
                 default_template_kwargs: { enable_thinking: reasoning_enabled },
             } : {},
+
+            // A whole image must fit one prompt batch (see IMAGE_MAX_TOKENS)
+            ... use_projector ? {
+                image_min_tokens: IMAGE_MIN_TOKENS,
+                image_max_tokens: IMAGE_MAX_TOKENS,
+                n_batch: Math.max( n_batch, IMAGE_MAX_TOKENS ),
+                n_ubatch: Math.max( n_batch, IMAGE_MAX_TOKENS ),
+            } : {},
         }
 
-        const source = cached.blob ? [ cached.blob ]
+        // wllama tells the projector apart by its GGUF architecture ("clip")
+        const model_blobs = cached.blob ? [ cached.blob ]
             : cached.file_handle ? [ stored_model ]
-                : stored_model
+                : await stored_model.open()
+        const source = use_projector ? [ ...model_blobs, ...await projector.open() ] : model_blobs
         let probed_capabilities = capabilities
 
         if( !this._gpu_disabled && capabilities.gpu?.webgpu ) {
@@ -392,6 +436,9 @@ export default class WllamaProvider {
         }
 
         this._loaded_model_id = model_id
+        const image_input = !!use_projector && this._wllama.supportInputModality( `image` )
+        if( use_projector && !image_input ) log.warn( `[wllama] Projector loaded but ${ model_id } reports no image input` )
+        this._capabilities = { image_input, image_blocked: image_input ? null : image_blocked, context_size: n_ctx }
         this._reload_context = {
             model_id,
             source,
@@ -400,7 +447,7 @@ export default class WllamaProvider {
         }
 
         const [ model_name, model_arch ] = this._model_identity()
-        log.info( `[wllama] Ready: ${ model_name } (${ model_arch }, ${ runtime_name })` )
+        log.info( `[wllama] Ready: ${ model_name } (${ model_arch }, ${ runtime_name }${ image_input ? `, image input` : `` })` )
 
         // Timestamp writes are non-critical; a full storage quota must not make
         // an otherwise healthy model fail after loading.
@@ -426,18 +473,19 @@ export default class WllamaProvider {
         this._assert_ready()
 
         const started_at = performance.now()
+        const wllama_messages = await this._prepare_messages( messages )
         let response
 
         try {
             response = await this._create_chat_completion( {
-                messages,
+                messages: wllama_messages,
                 ...this._build_completion_options( opts ),
             } )
         } catch ( error ) {
             if( this._gpu_layers <= 0 || !this._should_reload_on_cpu( error ) ) throw error
             await this._reload_on_cpu( error )
             response = await this._create_chat_completion( {
-                messages,
+                messages: wllama_messages,
                 ...this._build_completion_options( opts ),
             } )
         }
@@ -484,9 +532,10 @@ export default class WllamaProvider {
             // A stopped predecessor may still occupy the worker's only slot
             await until_aborted( previous_request, signal )
             this._assert_ready()
+            const wllama_messages = await until_aborted( this._prepare_messages( messages ), signal )
 
             pending_stream = this._create_chat_completion( {
-                messages,
+                messages: wllama_messages,
                 ...this._build_completion_options( opts ),
                 stream: true,
                 return_progress: true,
@@ -621,6 +670,7 @@ export default class WllamaProvider {
         if( this._wllama ) log.info( `[wllama] Unloading model ${ this._loaded_model_id }` )
         await this._dispose_runtime()
         this._loaded_model_id = null
+        this._capabilities = { image_input: false, image_blocked: null, context_size: 0 }
         this._gpu_layers = 0
         this._reload_context = null
     }
@@ -639,6 +689,32 @@ export default class WllamaProvider {
      */
     is_ready() {
         return !!this._wllama?.isModelLoaded()
+    }
+
+    /**
+     * What the loaded model can read. `image_blocked` says why a vision model
+     * has no image input: `projector_missing` (download it) or `memory`.
+     * @returns {import('./types').ModelCapabilities}
+     */
+    get_capabilities() {
+        return { ...this._capabilities }
+    }
+
+    /** Whether the loaded model reads images (same API as the Electron provider). */
+    has_image_input() {
+        return this._capabilities.image_input
+    }
+
+    /** Turn app messages into wllama's shape, refusing images it cannot read. */
+    async _prepare_messages( messages ) {
+
+        const has_images = messages.some( ( { attachments } ) => attachments?.some( ( { kind } ) => kind === `image` ) )
+        if( has_images && !this._capabilities.image_input ) {
+            throw new Error( `This model cannot read images. Choose a model with image support.` )
+        }
+
+        return to_wllama_messages( messages )
+
     }
 
     /** Assert that inference can start. */

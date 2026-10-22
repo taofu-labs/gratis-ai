@@ -33,8 +33,27 @@
     "offline_cloud_message": "Jesteś offline — modele w chmurze wymagają połączenia z internetem",
     "offline_switch_model": "Zmień model",
 
-    "image_requires_vision": "Wprowadzanie obrazów wymaga obsługi modelu wizyjnego (wkrótce)",
     "unsupported_file_type": "Ten typ pliku nie jest obsługiwany",
-    "file_too_large": "Plik jest za duży (maks. 100 KB)",
+    "file_too_large": "„{{name}}” jest za duży, by go odczytać",
+
+    "image_needs_vision": "Ten model nie odczytuje obrazów. Wiadomość i obraz zostają tutaj.",
+    "image_needs_projector": "{{name}} odczyta obrazy po pobraniu obsługi obrazów.",
+    "image_blocked_memory": "Odczyt obrazów wymaga więcej pamięci, niż ta przeglądarka może przydzielić temu modelowi.",
+    "add_image_support": "Dodaj obsługę obrazów · {{size}}",
+    "switch_to_model": "Przełącz na {{name}}",
+    "get_vision_model": "Pobierz {{name}} · {{size}}",
+    "choose_vision_model": "Wybierz model, który odczytuje obrazy",
+    "images_in_chat_only": "Otwórz czat, aby dodać obrazy",
+    "image_unreadable": "Nie udało się odczytać obrazu „{{name}}”",
+    "pasted_image": "wklejony obraz",
+    "image_conversation_title": "Obraz",
+    "reading_document": "Odczytywanie…",
+    "document_pages": "Strony: {{count}}",
+    "document_shortened": "skrócono, aby się zmieścił",
+    "document_empty_pages": "brak tekstu na s. {{pages}}",
+    "document_no_room": "brak miejsca w tym czacie — rozpocznij nowy czat",
+    "document_image_only": "„{{name}}” nie ma warstwy tekstowej (skan lub PDF z samych obrazów), więc nie ma czego odczytać.",
+    "document_unreadable": "Nie udało się odczytać „{{name}}”",
+
     "reply_error": "Błąd: {{message}}"
 }

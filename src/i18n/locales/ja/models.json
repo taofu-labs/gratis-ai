@@ -47,6 +47,8 @@
     "download_resuming": "中断した位置から再開しています（{{size}} 保存済み）",
     "preparing_your_model": "モデルを準備中",
     "preparing_your_model_detail": "{{name}} のダウンロードが完了しました。メモリに読み込んでいます。最大1分ほどかかることがあります。",
+    "adding_image_support": "画像サポートを追加中",
+    "adding_image_support_detail": "{{name}} はすでにあります。画像を読むための部分をダウンロードしています。",
     "measuring_download_speed": "ダウンロード速度を測定中…",
     "download_range_under_minute": "1分未満",
     "download_range_1_3_minutes": "1～3分",

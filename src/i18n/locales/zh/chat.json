@@ -33,8 +33,27 @@
     "offline_cloud_message": "你已离线 — 云端模型需要网络连接",
     "offline_switch_model": "切换模型",
 
-    "image_requires_vision": "图片输入需要视觉模型支持（即将推出）",
     "unsupported_file_type": "不支持此文件类型",
-    "file_too_large": "文件过大（最大 100 KB）",
+    "file_too_large": "“{{name}}”太大，无法读取",
+
+    "image_needs_vision": "此模型无法读取图片。你的消息和图片会保留在这里。",
+    "image_needs_projector": "下载图片支持后，{{name}} 即可读取图片。",
+    "image_blocked_memory": "读取图片所需的内存超出了此浏览器能为该模型提供的范围。",
+    "add_image_support": "添加图片支持 · {{size}}",
+    "switch_to_model": "切换到 {{name}}",
+    "get_vision_model": "获取 {{name}} · {{size}}",
+    "choose_vision_model": "选择能读取图片的模型",
+    "images_in_chat_only": "打开对话后即可添加图片",
+    "image_unreadable": "无法读取图片“{{name}}”",
+    "pasted_image": "粘贴的图片",
+    "image_conversation_title": "图片",
+    "reading_document": "正在读取…",
+    "document_pages": "页数：{{count}}",
+    "document_shortened": "已截短以适应",
+    "document_empty_pages": "第 {{pages}} 页无文本",
+    "document_no_room": "此对话已没有空间 — 请开始新对话",
+    "document_image_only": "“{{name}}”没有文本层（扫描件或纯图片 PDF），没有可读取的内容。",
+    "document_unreadable": "无法读取“{{name}}”",
+
     "reply_error": "错误：{{message}}"
 }

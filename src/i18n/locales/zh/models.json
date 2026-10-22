@@ -47,6 +47,8 @@
     "download_resuming": "正在从上次中断处继续（已保存 {{size}}）",
     "preparing_your_model": "正在准备你的模型",
     "preparing_your_model_detail": "{{name}} 已下载完成，正在加载到内存，最多可能需要一分钟。",
+    "adding_image_support": "正在添加图片支持",
+    "adding_image_support_detail": "{{name}} 已经在本机。正在下载让它读取图片的部分。",
     "measuring_download_speed": "正在测量下载速度…",
     "download_range_under_minute": "不到一分钟",
     "download_range_1_3_minutes": "1–3 分钟",

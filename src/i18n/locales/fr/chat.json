@@ -33,8 +33,27 @@
     "offline_cloud_message": "Vous êtes hors ligne — les modèles cloud nécessitent une connexion internet",
     "offline_switch_model": "Changer de modèle",
 
-    "image_requires_vision": "L'entrée d'images nécessite un modèle de vision (bientôt disponible)",
     "unsupported_file_type": "Ce type de fichier n'est pas pris en charge",
-    "file_too_large": "Le fichier est trop volumineux (max 100 Ko)",
+    "file_too_large": "« {{name}} » est trop volumineux pour être lu",
+
+    "image_needs_vision": "Ce modèle ne sait pas lire les images. Votre message et l’image restent ici.",
+    "image_needs_projector": "{{name}} peut lire les images une fois sa prise en charge des images téléchargée.",
+    "image_blocked_memory": "Lire des images demande plus de mémoire que ce navigateur ne peut en accorder à ce modèle.",
+    "add_image_support": "Ajouter la prise en charge des images · {{size}}",
+    "switch_to_model": "Passer à {{name}}",
+    "get_vision_model": "Obtenir {{name}} · {{size}}",
+    "choose_vision_model": "Choisir un modèle qui lit les images",
+    "images_in_chat_only": "Ouvrez une conversation pour ajouter des images",
+    "image_unreadable": "Impossible de lire l’image « {{name}} »",
+    "pasted_image": "image collée",
+    "image_conversation_title": "Image",
+    "reading_document": "Lecture…",
+    "document_pages": "Pages : {{count}}",
+    "document_shortened": "raccourci pour tenir",
+    "document_empty_pages": "pas de texte p. {{pages}}",
+    "document_no_room": "plus de place dans cette conversation — commencez-en une nouvelle",
+    "document_image_only": "« {{name}} » n’a pas de couche texte (scan ou PDF composé d’images) : il n’y a rien à lire.",
+    "document_unreadable": "Impossible de lire « {{name}} »",
+
     "reply_error": "Erreur : {{message}}"
 }

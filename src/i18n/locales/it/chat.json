@@ -33,8 +33,27 @@
     "offline_cloud_message": "Sei offline — i modelli cloud richiedono una connessione internet",
     "offline_switch_model": "Cambia modello",
 
-    "image_requires_vision": "L'input di immagini richiede il supporto del modello visivo (in arrivo)",
     "unsupported_file_type": "Questo tipo di file non è supportato",
-    "file_too_large": "Il file è troppo grande (max 100 KB)",
+    "file_too_large": "«{{name}}» è troppo grande da leggere",
+
+    "image_needs_vision": "Questo modello non sa leggere le immagini. Il messaggio e l’immagine restano qui.",
+    "image_needs_projector": "{{name}} può leggere le immagini dopo aver scaricato il supporto immagini.",
+    "image_blocked_memory": "Leggere immagini richiede più memoria di quanta questo browser possa dedicare a questo modello.",
+    "add_image_support": "Aggiungi supporto immagini · {{size}}",
+    "switch_to_model": "Passa a {{name}}",
+    "get_vision_model": "Scarica {{name}} · {{size}}",
+    "choose_vision_model": "Scegli un modello che legge le immagini",
+    "images_in_chat_only": "Apri una chat per aggiungere immagini",
+    "image_unreadable": "Impossibile leggere l’immagine «{{name}}»",
+    "pasted_image": "immagine incollata",
+    "image_conversation_title": "Immagine",
+    "reading_document": "Lettura…",
+    "document_pages": "Pagine: {{count}}",
+    "document_shortened": "accorciato per entrare",
+    "document_empty_pages": "nessun testo a p. {{pages}}",
+    "document_no_room": "spazio esaurito in questa chat — iniziane una nuova",
+    "document_image_only": "«{{name}}» non ha un livello di testo (scansione o PDF di sole immagini), quindi non c’è nulla da leggere.",
+    "document_unreadable": "Impossibile leggere «{{name}}»",
+
     "reply_error": "Errore: {{message}}"
 }

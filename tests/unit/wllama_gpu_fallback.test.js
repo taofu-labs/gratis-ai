@@ -11,6 +11,7 @@ const mocks = vi.hoisted( () => ( {
     memory_budget: 4_000_000_000,
     put: vi.fn(),
     cached_model: null,
+    projector: null,
 } ) )
 
 vi.mock( `mentie`, () => ( {
@@ -66,6 +67,9 @@ vi.mock( `wllama64`, () => {
         isModelLoaded() {
             return this.loaded
         }
+        supportInputModality( modality ) {
+            return modality === `image` && !!this.source?.some?.( blob => blob?.is_projector )
+        }
         getChatTemplate() {
             return `{{ messages }}`
         }
@@ -105,6 +109,8 @@ vi.mock( `../../src/stores/db.js`, () => ( {
 
 vi.mock( `../../src/utils/model_download.js`, () => ( {
     get_browser_cached_model: vi.fn(),
+    projector_source: model => model?.mmproj ? { ...model.mmproj, url: `https://hf.test/${ model.mmproj.file_name }` } : null,
+    get_browser_cached_projector: vi.fn( async () => mocks.projector ),
 } ) )
 
 vi.mock( `../../src/utils/device_detection.js`, () => ( {
@@ -140,6 +146,7 @@ describe( `Wllama WebGPU fallback`, () => {
         mocks.memory64 = true
         mocks.memory_budget = 4_000_000_000
         mocks.cached_model = null
+        mocks.projector = null
         mocks.put.mockClear()
         vi.unstubAllGlobals()
     } )
@@ -420,6 +427,63 @@ describe( `Wllama WebGPU fallback`, () => {
             .rejects.toThrow( `could not be loaded by the browser runtime` )
         expect( provider.is_ready() ).toBe( false )
         expect( provider.get_loaded_model() ).toBeNull()
+    } )
+
+
+    describe( `vision projector`, () => {
+
+        const model_blob = { size: 500_000_000 }
+        const projector_blob = { size: 200_000_000, is_projector: true }
+        const vision_model = () => ( {
+            id: `custom-vision`,
+            blob: model_blob,
+            file_size_bytes: 500_000_000,
+            vision: true,
+            mmproj: { file_name: `mmproj-F16.gguf`, file_size_bytes: 200_000_000 },
+        } )
+
+        test( `loads model and projector together with image-sized batches`, async () => {
+            mocks.cached_model = vision_model()
+            mocks.projector = { open: async () => [ projector_blob ] }
+
+            const provider = new WllamaProvider()
+            await provider.load_model( `custom-vision` )
+
+            const [ runtime ] = mocks.instances.slice( -1 )
+            expect( runtime.source ).toEqual( [ model_blob, projector_blob ] )
+            expect( runtime.load_options.image_max_tokens ).toBeGreaterThan( 0 )
+            expect( runtime.load_options.n_ubatch ).toBeGreaterThanOrEqual( runtime.load_options.image_max_tokens )
+            expect( runtime.load_options.n_batch ).toBeGreaterThanOrEqual( runtime.load_options.image_max_tokens )
+            expect( runtime.load_options.n_ctx ).toBeGreaterThanOrEqual( 4096 )
+            expect( provider.get_capabilities() ).toMatchObject( { image_input: true, image_blocked: null } )
+        } )
+
+        test( `a missing projector keeps text chat and says what is missing`, async () => {
+            mocks.cached_model = vision_model()
+
+            const provider = new WllamaProvider()
+            await provider.load_model( `custom-vision` )
+
+            expect( mocks.instances.at( -1 ).source ).toEqual( [ model_blob ] )
+            expect( provider.get_capabilities() ).toMatchObject( { image_input: false, image_blocked: `projector_missing` } )
+            await expect( provider.chat( [ { role: `user`, content: `hi`, attachments: [ { kind: `image`, data: new Blob( [ `x` ] ) } ] } ] ) )
+                .rejects.toThrow( /cannot read images/ )
+            await expect( provider.chat( [ { role: `user`, content: `hi` } ] ) ).resolves.toBe( `cpu answer` )
+        } )
+
+        test( `drops the projector when memory only fits the text model`, async () => {
+            mocks.cached_model = vision_model()
+            mocks.projector = { open: async () => [ projector_blob ] }
+            mocks.memory_budget = 1_100_000_000
+
+            const provider = new WllamaProvider()
+            await provider.load_model( `custom-vision` )
+
+            expect( mocks.instances.at( -1 ).source ).toEqual( [ model_blob ] )
+            expect( mocks.instances.at( -1 ).load_options.image_max_tokens ).toBeUndefined()
+            expect( provider.get_capabilities() ).toMatchObject( { image_input: false, image_blocked: `memory` } )
+        } )
+
     } )
 
 } )
