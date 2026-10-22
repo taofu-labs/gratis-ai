@@ -252,6 +252,8 @@ const AttachmentRow = styled.div`
 
 const ImageFrame = styled.img`
     display: block;
+    width: auto;
+    height: auto;
     max-width: min( 15rem, 100% );
     max-height: 15rem;
     border-radius: ${ ( { theme } ) => theme.border_radius.lg };

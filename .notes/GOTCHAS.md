@@ -377,3 +377,18 @@ Catalog or weight changes that move a pick must update that matrix deliberately.
 MMLU-Pro); `reasoning_enabled: true` divides reply speed by 3. `runtime_memory()` = estimate + projector bytes —
 if `estimate_model_memory` ever includes the mmproj itself, drop the addition. Retire models with `hidden: true`,
 never deletion: installed users still load them by ID.
+
+## Browser vision + attachments (2026-10-22)
+
+- Projector (mmproj) is just another Blob: `loadModel( [ ...model_blobs, ...projector_blobs ] )`; wllama sniffs
+  `general.architecture == clip`. Projector always lives in OPFS (even beside an external model file).
+- Install counts only when IDB metadata exists, written after BOTH files validate. Retry skips the validated part.
+  `discard_browser_partial_download` also removes finished-but-unregistered parts.
+- Adding a projector to an already-loaded model needs unload + load (store/provider short-circuit "already loaded").
+- `image_max_tokens` must be ≤ n_batch AND n_ubatch (non-causal image attention). CPU clamp to 128 is lifted for
+  vision loads. Clip warmup at load encodes an 864×864 dummy image: vision loads are noticeably slower.
+- Never await `blob.arrayBuffer()` inside an open IDB transaction (auto-commits). `use_chat_history.to_record`
+  serializes first. Images stored as ArrayBuffer + mime (older Safari rejected Blobs in IDB).
+- Documents are inlined into `content` as `<document name>` blocks; bubbles strip them (`split_documents`), edits
+  re-prepend them. Token estimate: ASCII/4 + 1 per non-ASCII char (wllama V3 has no tokenize()).
+- HomePage → `/chat?q=` cannot carry images: ChatInput only accepts images with `allow_images` (ChatPage).

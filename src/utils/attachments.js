@@ -12,9 +12,12 @@
 
 import { estimate_tokens } from './document_text'
 
-// Tokens one image costs the model. The browser runtime caps images at this
-// (wllama `image_max_tokens`), so budgets can count it as a constant.
-export const IMAGE_MAX_TOKENS = 768
+// Image token range for the browser runtime (wllama `image_min_tokens` /
+// `image_max_tokens`); budgets count the maximum. Measured with Qwen 3.5 0.8B:
+// at the default ~200 tokens a 640×320 "BLUE 42" read as "212"; with a
+// 512 floor it read the text exactly, at ~2.5× the encode time.
+export const IMAGE_MIN_TOKENS = 512
+export const IMAGE_MAX_TOKENS = 1024
 
 // Images above this long side are downscaled before they are stored or sent
 export const MAX_IMAGE_SIDE = 2048

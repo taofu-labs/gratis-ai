@@ -18,7 +18,7 @@ import {
 import { get_external_model_file } from '../utils/external_model_files'
 import { resolve_hf_model } from '../utils/hf_url_parser'
 import { get_browser_cached_model, get_browser_cached_projector, projector_source } from '../utils/model_download'
-import { IMAGE_MAX_TOKENS, to_wllama_messages } from '../utils/attachments'
+import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, to_wllama_messages } from '../utils/attachments'
 
 // Memory64 is the primary runtime. The matching wasm32 build remains local so
 // Safari and older browsers never need to fetch executable code from a CDN.
@@ -48,7 +48,7 @@ const CPU_FAST_OPTIONS = {
     cache_type_v: `q8_0`,
 }
 
-// Vision: an image becomes at most IMAGE_MAX_TOKENS tokens. Models with
+// Vision: an image becomes IMAGE_MIN_TOKENS–IMAGE_MAX_TOKENS tokens. Models with
 // non-causal image attention (Gemma 3) need the whole image in one
 // micro-batch, so vision loads raise n_batch/n_ubatch to match.
 const VISION_MIN_CONTEXT = 4096
@@ -340,6 +340,7 @@ export default class WllamaProvider {
 
             // A whole image must fit one prompt batch (see IMAGE_MAX_TOKENS)
             ... use_projector ? {
+                image_min_tokens: IMAGE_MIN_TOKENS,
                 image_max_tokens: IMAGE_MAX_TOKENS,
                 n_batch: Math.max( n_batch, IMAGE_MAX_TOKENS ),
                 n_ubatch: Math.max( n_batch, IMAGE_MAX_TOKENS ),
