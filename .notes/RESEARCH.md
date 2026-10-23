@@ -325,3 +325,8 @@ Qwen3.5-0.8B hybrid, 2 threads, ~220-token prompt, 64 gen, 3 independent passes 
 - IQ penalty measured ≈ 1.2-1.6× (estimate above said 1.5-3×). IQ4_XS fine for native (TPN often recommends it: best KLD/byte).
 - 4B cells exceed the 15 min page timeout on a loaded 4-core box; rerun on idle hardware if needed.
 - **TPN tuned `Q5_0+` (Q5_0 body + Q6_K output) is 2-3× slower than Q4_K_M in wllama** (MiniCPM5 1B: tg 0.9-2.0 vs 3.3-4.2, pp 1.7-2.4 vs 4.0-6.1, 2 runs). Legacy `_0`/`_1` dots are weak in the WASM build despite SIMD128 on paper (cf. Qwen3.5 0.8B Q4_0 < Q4_K_M). => Browser default stays Q4_K_M/Q5_K_M; tuned legacy formats are native/desktop or opt-in "better answers".
+
+## Browser decode speed model (2026-10-23)
+- In-browser bandwidth probe is NOT predictive: WASM SIMD stream reads 29–37 GB/s (i3-1115G4, 4 thr) but decode achieves 1–2.6 GB/s effective (3–10%). Q8_0 ≥ Q4_K_M speed => compute/overhead bound, not bandwidth bound.
+- Two-term fit (CI runner): 29 ms fixed + 173 ms/GB per token (~5.8 GB/s). Implemented as BROWSER_PER_TOKEN_BYTES 170 MB + bandwidth 5.8.
+- Passive calibration (speed_calibration.js): implied GB/s from each reply ≥32 tokens (tab visible), running avg per runtime, clamped 1/3–3× the guess. Prototype probe kept in scratchpad/bwtest (session-only).

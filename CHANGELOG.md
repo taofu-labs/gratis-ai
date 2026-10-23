@@ -12,6 +12,7 @@
 - Every offered model is now a TPN-optimised build from tpnlabs on Hugging Face (Qwen 3.5 0.8B / 2B / 4B / 9B, Gemma 4 26B for desktop, MiniCPM5 1B, uncensored Qwen3 1.7B and Qwen 3.5 4B / 9B), each measured against its original; earlier downloads keep working under "Show older models"
 - The picker weighs each build's measured closeness to the original, and knows tuned Q5_0 formats are slow in the browser
 - Deleting the active model unloads it first instead of refusing
+- Reply-speed estimates learn from this device: each real reply calibrates the picker's speed guess, and small models are no longer overestimated (fixed per-token cost now counted)
 - Browsers that report more than 8 GB of RAM get their full model budget: a 32 GB Mac no longer sees 7–9 GB models as a "tight fit". A quick check of how much memory the browser actually grants caps it, and the budget notice now shows both the comfortable and the maximum size when they differ
 - Large browser downloads stay in browser storage: the "choose save location" dialog now appears only when the browser is out of space, and Gratis asks the browser to keep downloaded models
 

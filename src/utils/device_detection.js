@@ -38,6 +38,7 @@ import {
     select_webgpu_probe_target,
 } from './webgpu_memory'
 import { EVENTS, storage_key } from './branding'
+import { calibrated_bandwidth_gbs } from './speed_calibration'
 
 /**
  * Detect the exact shared Memory64 primitive used by wllama64.
@@ -611,11 +612,16 @@ export const detect_device_kind = (
 // run real SIMD/GPU kernels.
 const BANDWIDTH_GBS = {
     browser_mobile: 3,
-    browser_desktop: 5,
+    // Two-term fit on the CI runner (see BROWSER_PER_TOKEN_BYTES)
+    browser_desktop: 5.8,
     native_cpu: 15,
     native_gpu: 40,
     native_unified: 60,
 }
+
+// Real replies replace the guess, within reason: one odd sample can't swing it 10×
+const learned_bandwidth = ( runtime, guess ) =>
+    Math.min( Math.max( calibrated_bandwidth_gbs( runtime ) ?? guess, guess / 3 ), guess * 3 )
 
 // Phones get killed by the OS long before a desktop tab would: cap automatic
 // picks at half the reported RAM, or a safe guess when the browser hides it.
@@ -651,7 +657,7 @@ export const build_device_profile = ( capabilities, max_bytes ) => {
             ceiling_bytes: Infinity,
             budget_bytes: max_bytes,
             automatic_bytes: max_bytes,
-            bandwidth_gbs,
+            bandwidth_gbs: learned_bandwidth( `electron`, bandwidth_gbs ),
         }
 
     }
@@ -683,7 +689,7 @@ export const build_device_profile = ( capabilities, max_bytes ) => {
         budget_bytes: max_bytes,
         automatic_bytes,
         receipt_bytes: BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
-        bandwidth_gbs: mobile ? BANDWIDTH_GBS.browser_mobile : BANDWIDTH_GBS.browser_desktop,
+        bandwidth_gbs: learned_bandwidth( `browser`, mobile ? BANDWIDTH_GBS.browser_mobile : BANDWIDTH_GBS.browser_desktop ),
     }
 
 }

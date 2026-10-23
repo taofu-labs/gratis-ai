@@ -2514,11 +2514,38 @@ const MOE_EFFICIENCY = 0.75
 // before the visible answer starts, so replies feel ~3× slower
 const THINKING_OVERHEAD = 3
 
+// Per-token work that doesn't scale with the weights (graph setup, thread
+// barriers, the vocabulary projection, sampling), as bytes at the device's own
+// speed. CI fit: 29 ms + 173 ms per GB per token, so it dominates small models.
+// Native llama.cpp hasn't been fitted and keeps the pure bandwidth model.
+const BROWSER_PER_TOKEN_BYTES = 170_000_000
+
 /**
- * Estimated reply speed in visible tokens/second. Decode is memory-bandwidth
- * bound: tg ≈ bandwidth ÷ ( active weight bytes + KV bytes at the default
- * context ). Calibrated on the 2-thread CI runner (≈5 GB/s); a rough
- * heuristic for bands, never a promise.
+ * What one generated token costs, as bytes moved at the device's bandwidth:
+ * active weights and KV at the default context, inflated where kernels use
+ * bandwidth poorly, plus the fixed per-token work.
+ * @param {ModelDefinition} model
+ * @param {'browser'|'electron'} runtime
+ * @returns {number} bytes
+ */
+const decode_cost = ( model, runtime ) => {
+
+    const kv = model.layers && model.kv_heads && model.head_dim
+        ? estimate_model_memory( model ) - model.file_size_bytes - RUNTIME_OVERHEAD
+        : 0
+
+    const browser = runtime === `browser`
+    const moe_factor = model.moe ? MOE_EFFICIENCY : 1
+    const quant_factor = browser && SCALAR_WASM_QUANT.test( model.quantization || `` ) ? 1 / SCALAR_WASM_PENALTY : 1
+
+    return ( decode_bytes( model ) + kv ) / ( moe_factor * quant_factor ) + ( browser ? BROWSER_PER_TOKEN_BYTES : 0 )
+
+}
+
+/**
+ * Estimated reply speed in visible tokens/second: device bandwidth ÷ cost per
+ * token. The bandwidth starts as a per-device guess and is replaced by what real
+ * replies measured (speed_calibration.js). A heuristic for bands, never a promise.
  *
  * @param {ModelDefinition} model
  * @param {DeviceProfile} device
@@ -2526,21 +2553,21 @@ const THINKING_OVERHEAD = 3
  */
 export const estimate_reply_speed = ( model, device ) => {
 
-    const kv = model.layers && model.kv_heads && model.head_dim
-        ? estimate_model_memory( model ) - model.file_size_bytes - RUNTIME_OVERHEAD
-        : 0
-
-    const moe_factor = model.moe ? MOE_EFFICIENCY : 1
-    const quant_factor = device.runtime === `browser` && SCALAR_WASM_QUANT.test( model.quantization || `` )
-        ? 1 / SCALAR_WASM_PENALTY
-        : 1
-
     const thinking_factor = model.reasoning_enabled ? 1 / THINKING_OVERHEAD : 1
-
-    const bytes_per_token = decode_bytes( model ) + kv
-    return device.bandwidth_gbs * 1_000_000_000 * moe_factor * quant_factor * thinking_factor / bytes_per_token
+    return device.bandwidth_gbs * 1_000_000_000 * thinking_factor / decode_cost( model, device.runtime )
 
 }
+
+/**
+ * The bandwidth a measured reply implies: the inverse of `estimate_reply_speed`.
+ * Raw decode speed already includes any hidden thinking tokens.
+ * @param {ModelDefinition} model
+ * @param {'browser'|'electron'} runtime
+ * @param {number} tokens_per_second - Measured decode speed
+ * @returns {number} GB/s
+ */
+export const implied_bandwidth_gbs = ( model, runtime, tokens_per_second ) =>
+    tokens_per_second * decode_cost( model, runtime ) / 1_000_000_000
 
 /**
  * Speed as a calm band instead of a precise number.

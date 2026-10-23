@@ -5,10 +5,12 @@ import {
     check_fit,
     estimate_reply_speed,
     has_image_input,
+    implied_bandwidth_gbs,
     runtime_memory,
     select_for_preferences,
     speed_band,
 } from '../../src/utils/model_catalog'
+import { record_bandwidth_sample } from '../../src/utils/speed_calibration'
 
 const ANDROID_UA = `Mozilla/5.0 (Linux; Android 14; SM-A145F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36`
 const IPHONE_UA = `Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1`
@@ -144,8 +146,30 @@ describe( `picker personas`, () => {
         expect( speed_band( estimate_reply_speed( tiny, laptop ) ) ).toBe( `quick` )
         expect( speed_band( estimate_reply_speed( scalar, laptop ) ) ).toBe( `slow` )
 
-        // Scalar WASM kernels cost browsers dearly; native builds are unaffected
-        expect( estimate_reply_speed( scalar, mac ) / estimate_reply_speed( scalar, laptop ) ).toBeCloseTo( 12 * 2.5 )
+        // Scalar WASM kernels cost browsers dearly (on top of the 60 vs 5.8 GB/s gap); native builds are unaffected
+        expect( estimate_reply_speed( scalar, mac ) / estimate_reply_speed( scalar, laptop ) ).toBeGreaterThan( 60 / 5.8 * 2.5 )
+    } )
+
+    test( `real replies calibrate the device's bandwidth, within reason`, () => {
+        const store = {}
+        vi.stubGlobal( `localStorage`, { getItem: key => store[ key ] ?? null, setItem: ( key, value ) => store[ key ] = value } )
+        const tiny = MODEL_CATALOG.find( m => m.id === `qwen35-0.8b-tpn-q5km` )
+        const before = profile_for( `windows_laptop` )
+
+        // The inverse of the estimate: a reply at the estimated speed implies the guessed bandwidth
+        expect( implied_bandwidth_gbs( tiny, `browser`, estimate_reply_speed( tiny, before ) ) ).toBeCloseTo( before.bandwidth_gbs )
+
+        // Short replies teach nothing
+        record_bandwidth_sample( `browser`, 2, 10 )
+        expect( profile_for( `windows_laptop` ).bandwidth_gbs ).toBe( before.bandwidth_gbs )
+
+        // A slower machine than guessed pulls the estimate down
+        record_bandwidth_sample( `browser`, 2.9, 64 )
+        expect( profile_for( `windows_laptop` ).bandwidth_gbs ).toBeCloseTo( 2.9 )
+
+        // One wild sample can't swing it past 3× the guess
+        for( let i = 0; i < 20; i++ ) record_bandwidth_sample( `browser`, 1_000, 64 )
+        expect( profile_for( `windows_laptop` ).bandwidth_gbs ).toBeCloseTo( before.bandwidth_gbs * 3 )
     } )
 
     // The current catalog's answers, pinned so scoring changes are deliberate

@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { log } from 'mentie'
 import { create_provider } from '../providers/factory'
 import { storage_key } from '../utils/branding'
+import { get_model_by_id, implied_bandwidth_gbs } from '../utils/model_catalog'
+import { record_bandwidth_sample } from '../utils/speed_calibration'
 
 // Provider status strings → i18n stage keys (pages namespace). Unknown
 // statuses keep the previous stage so the UI never shows raw English.
@@ -338,6 +340,15 @@ const use_llm_store = create( ( set, get ) => ( {
                 full_text = `*The model returned an empty response. This can happen when the chat template is incompatible. Try a different model or check the browser console for details.*`
                 if( on_token ) on_token( full_text )
             }
+
+            // Every real reply teaches the picker this device's actual speed
+            const model = get_model_by_id( get().loaded_model_id )
+            const runtime = globalThis.window?.electronAPI?.native_inference ? `electron` : `browser`
+            if( model ) record_bandwidth_sample(
+                runtime,
+                implied_bandwidth_gbs( model, runtime, generation_stats.tokens_per_second ),
+                generation_stats.tokens_generated,
+            )
 
             set( { stats: generation_stats } )
             return { text: full_text, stats: generation_stats }
