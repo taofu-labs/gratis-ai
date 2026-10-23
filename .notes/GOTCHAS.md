@@ -416,3 +416,9 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - `verifying` field in download progress means hashing: keep it out of speed/ETA trackers.
 - SmolLM2 360M at temp 0.7 sometimes answers "2" to 2+2: inference.spec is sampling-flaky, not broken.
 - iOS 16 Safari (<16.4) has no byte streams: `@huggingface/hub` XetBlob does `new ReadableStream({type:'bytes'})` and throws "ReadableByteStreamController is not implemented" -> every download dies at 0%. `get_hf_model_blob` passes `xet: false` (plain WebBlob range fetch) when `supports_byte_streams()` is false.
+
+## Mobile WebGPU = garbage (2026-10-23)
+- OnePlus 13 (Adreno 830, has `shader-f16` + `subgroups`): Qwen3 1.7B at full speed produced multilingual soup + "— — —". Same GGUF coherent on CPU and on Adreno 619 GPU (no f16/subgroups → different shader variants). Likely Qualcomm f16 subgroup-shuffle bug (cf. onnxruntime PR #33449). Adreno 619 GPU was no faster than CPU.
+- `webgpu_offload_trusted()` (webgpu_memory.js) keeps mobile vendors / Android+iOS UAs on CPU. Revisit only with real-device evidence.
+- wllama64: `n_gpu_layers` omitted => defaults to 99999 (full GPU). Only an explicit `0` sets `noWebGPU`. Every loadModel caller must pass it.
+- Test phones: drive Android Chrome via CDP (`adb forward tcp:9222 localabstract:chrome_devtools_remote` + puppeteer.connect); test unpushed builds with `adb reverse tcp:5180 tcp:5180` + local vite (localhost is a secure context). iPhone X = iOS 16 Safari (wasm32, no WebGPU, no byte streams).

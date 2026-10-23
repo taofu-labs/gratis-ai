@@ -120,7 +120,7 @@ vi.mock( `../../src/utils/device_detection.js`, () => ( {
         runtime: `browser`,
         wasm: { memory64: mocks.memory64 },
         memory: { device_memory: 8 },
-        gpu: { webgpu: true },
+        gpu: { webgpu: true, adapter_info: mocks.adapter_info || {} },
     } ),
     estimate_max_model_bytes: () => mocks.memory_budget,
     probe_capabilities_gpu_memory: async capabilities => ( {
@@ -149,6 +149,7 @@ describe( `Wllama WebGPU fallback`, () => {
         mocks.memory_budget = 4_000_000_000
         mocks.cached_model = null
         mocks.projector = null
+        mocks.adapter_info = null
         mocks.put.mockClear()
         vi.unstubAllGlobals()
     } )
@@ -160,6 +161,16 @@ describe( `Wllama WebGPU fallback`, () => {
         expect( mocks.instances ).toHaveLength( 1 )
         expect( mocks.instances[ 0 ].load_options.n_gpu_layers ).toBeGreaterThan( 0 )
         expect( provider.is_ready() ).toBe( true )
+    } )
+
+    test( `loads on CPU on mobile GPUs whose WebGPU kernels produce garbage`, async () => {
+        mocks.adapter_info = { vendor: `qualcomm`, architecture: `adreno-8xx` }
+
+        const provider = new WllamaProvider()
+        await provider.load_model( `smollm2-360m-q4km` )
+
+        expect( mocks.instances ).toHaveLength( 1 )
+        expect( mocks.instances[ 0 ].load_options.n_gpu_layers ).toBe( 0 )
     } )
 
     test( `loads a browser model from a saved file handle`, async () => {

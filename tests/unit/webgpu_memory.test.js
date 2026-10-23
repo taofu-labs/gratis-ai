@@ -6,6 +6,7 @@ import {
     reset_webgpu_memory_probe,
     select_webgpu_probe_target,
     wait_for_existing_webgpu_memory_probe,
+    webgpu_offload_trusted,
 } from '../../src/utils/webgpu_memory'
 
 const MIB = 1024 ** 2
@@ -195,6 +196,28 @@ describe( `WebGPU memory probing`, () => {
             device_memory_gb: 8,
             adapter_info: { vendor: `nvidia` },
         } ) ).toBe( Math.floor( 8 * GIB * 1.3 ) )
+    } )
+
+    test( `never trusts mobile GPUs with WebGPU offload`, () => {
+
+        const desktop = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/155.0 Safari/537.36`
+        const android = `Mozilla/5.0 (Linux; Android 15; CPH2465) AppleWebKit/537.36 Chrome/155.0 Mobile Safari/537.36`
+
+        // Adreno 830 (OnePlus 13) produced garbage; Adreno X1 laptops share the kernels
+        expect( webgpu_offload_trusted( { vendor: `qualcomm`, architecture: `adreno-8xx` }, desktop ) ).toBe( false )
+        expect( webgpu_offload_trusted( { vendor: `arm`, architecture: `valhall` }, desktop ) ).toBe( false )
+        expect( webgpu_offload_trusted( { vendor: `img-tec` }, desktop ) ).toBe( false )
+
+        // Any phone or tablet, whatever the adapter claims
+        expect( webgpu_offload_trusted( { vendor: `nvidia` }, android ) ).toBe( false )
+        expect( webgpu_offload_trusted( { vendor: `apple` }, `Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X)` ) ).toBe( false )
+
+        // Desktop GPUs keep offload, including masked adapters
+        expect( webgpu_offload_trusted( { vendor: `nvidia` }, desktop ) ).toBe( true )
+        expect( webgpu_offload_trusted( { vendor: `apple`, architecture: `metal-3` }, desktop ) ).toBe( true )
+        expect( webgpu_offload_trusted( { vendor: `intel`, architecture: `gen-12lp` }, desktop ) ).toBe( true )
+        expect( webgpu_offload_trusted( {}, desktop ) ).toBe( true )
+
     } )
 
 } )

@@ -62,6 +62,32 @@ export const classify_webgpu_adapter = ( info = {} ) => {
 }
 
 /**
+ * Whether llama.cpp's WebGPU kernels can be trusted with this adapter.
+ * Adreno 830 (shader-f16 + subgroups) produced multilingual garbage at full
+ * speed on a OnePlus 13 while the same GGUF was coherent on CPU; Qualcomm's
+ * f16 subgroup shuffles are a known source of wrong results. Adreno 619 was
+ * correct but no faster than CPU. Mobile GPUs share RAM with the WASM copy of
+ * the weights anyway, so they load on CPU until verified on real hardware.
+ *
+ * @param {GPUAdapterInfo|Object} [info]
+ * @param {string} [user_agent]
+ * @returns {boolean}
+ */
+export const webgpu_offload_trusted = ( info = {}, user_agent = globalThis.navigator?.userAgent || `` ) => {
+
+    const identity = [ info.vendor, info.architecture, info.device, info.description ]
+        .filter( Boolean )
+        .join( ` ` )
+        .toLowerCase()
+
+    if( /qualcomm|adreno|\barm\b|mali|img-tec|imagination|powervr|samsung|xclipse/.test( identity ) ) return false
+    if( /android|iphone|ipad|ipod/i.test( user_agent ) ) return false
+
+    return true
+
+}
+
+/**
  * Bound probing to memory that browser inference could use. Unknown/shared
  * adapters get an additional physical-memory guard because their buffers live
  * in the same pool as the full WASM model.

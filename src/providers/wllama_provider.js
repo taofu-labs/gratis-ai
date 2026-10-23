@@ -8,7 +8,7 @@ import {
 } from '../utils/device_detection'
 import { select_gpu_offload_layers } from '../utils/gpu_offload'
 import { ModelFitError } from '../utils/model_fit_error'
-import { classify_webgpu_adapter, wait_for_existing_webgpu_memory_probe } from '../utils/webgpu_memory'
+import { classify_webgpu_adapter, wait_for_existing_webgpu_memory_probe, webgpu_offload_trusted } from '../utils/webgpu_memory'
 import {
     estimate_model_memory,
     projector_memory,
@@ -351,7 +351,11 @@ export default class WllamaProvider {
         const source = use_projector ? [ ...model_blobs, ...await projector.open() ] : model_blobs
         let probed_capabilities = capabilities
 
-        if( !this._gpu_disabled && capabilities.gpu?.webgpu ) {
+        // Mobile GPUs can compute wrong results in llama.cpp's WebGPU kernels
+        const gpu_trusted = webgpu_offload_trusted( capabilities.gpu?.adapter_info )
+        if( capabilities.gpu?.webgpu && !gpu_trusted ) log.info( `[wllama] WebGPU offload not trusted on this GPU; loading on CPU` )
+
+        if( !this._gpu_disabled && gpu_trusted && capabilities.gpu?.webgpu ) {
             if( fit_model.block_count ) {
                 if( on_progress ) on_progress( { progress: 0, status: `Measuring GPU memory...` } )
                 probed_capabilities = await probe_capabilities_gpu_memory( capabilities )
@@ -364,7 +368,7 @@ export default class WllamaProvider {
         }
 
         this._assert_load_current( generation )
-        let gpu_layers = this._gpu_disabled ? 0 : select_gpu_offload_layers( {
+        let gpu_layers = this._gpu_disabled || !gpu_trusted ? 0 : select_gpu_offload_layers( {
             model: fit_model,
             adapter_class: classify_webgpu_adapter( probed_capabilities.gpu?.adapter_info ),
             gpu_probe: probed_capabilities.gpu?.memory_source === `measured` ? {
