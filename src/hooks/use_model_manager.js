@@ -92,7 +92,9 @@ export default function use_model_manager() {
 
             if( was_active ) {
                 await use_llm.getState().unload_model()
-                localStorage.removeItem( active_model_key )
+
+                // Another model may have been picked while unloading: keep that choice
+                if( localStorage.getItem( active_model_key ) === model_id ) localStorage.removeItem( active_model_key )
             }
 
             if( is_electron ) {
@@ -108,12 +110,6 @@ export default function use_model_manager() {
             log.info( `[models] Deleted model ${ model_id }` )
             await refresh_models()
             window.dispatchEvent( new Event( EVENTS.models_changed ) )
-
-        } catch ( err ) {
-
-            // Files are still there: keep it as the active model
-            if( was_active ) localStorage.setItem( active_model_key, model_id )
-            throw err
 
         } finally {
             set_is_loading( false )

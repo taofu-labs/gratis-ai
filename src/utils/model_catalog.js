@@ -2152,6 +2152,9 @@ const TPN_BUILDS = [
 
 ]
 
+// Stand-in for a build whose TPN measurement is void: a typical ~4-bit loss
+const UNMEASURED_KLD = 0.05
+
 /**
  * Expand a TPN build into a full catalog entry
  * @param {Object} build - `TPN_BUILDS` row
@@ -2352,8 +2355,12 @@ export const benchmark_coverage = model => BENCHMARK_FIELDS
 export const quality_score = ( model ) => {
 
     // Curated index wins: vendor benchmark sets no longer overlap across families.
-    // TPN builds lose the share of the original their quantisation gave up
-    if( model.quality != null ) return model.quality * ( 1 - ( model.tpn?.kld || 0 ) )
+    // TPN builds are discounted by their measured KLD, a ranking heuristic that keeps
+    // a closer build of the same model ahead; an unmeasured build is never assumed lossless
+    if( model.quality != null ) {
+        const kld = model.tpn ? model.tpn.kld ?? UNMEASURED_KLD : 0
+        return model.quality * ( 1 - kld )
+    }
     if( !model.benchmarks ) return 0
 
     const published_scores = BENCHMARK_FIELDS
