@@ -7,11 +7,12 @@ const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
 const SHA256_PATTERN = /^[0-9a-f]{64}$/
 
 /**
- * A corrupt model file. Size and GGUF magic can both look right while the
+ * A model file whose bytes differ from the published file: corrupted, or an
+ * older upload that has since been replaced. Size and GGUF magic can both look right while the
  * weights are wrong, which loads fine and then generates garbage.
  */
 export class ChecksumError extends Error {
-    constructor( message = `The model file is corrupted (checksum mismatch). Please download it again.` ) {
+    constructor( message = `The model file is corrupted or outdated (checksum mismatch). Please download it again.` ) {
         super( message )
         this.name = `ChecksumError`
     }

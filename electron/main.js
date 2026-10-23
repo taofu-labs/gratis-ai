@@ -388,7 +388,7 @@ const download_gguf = async ( { url, dest, request_options, on_total, on_bytes }
         }
         const sha256 = hash.digest( `hex` )
         if( expected_sha256 && sha256 !== expected_sha256 ) {
-            throw new Error( `The model file is corrupted (checksum mismatch). Please download it again.` )
+            throw new Error( `The model file is corrupted or outdated (checksum mismatch). Please download it again.` )
         }
         if( !expected_sha256 ) console.warn( `[download] No SHA-256 known for ${ path.basename( dest ) }, skipped checksum` )
 
