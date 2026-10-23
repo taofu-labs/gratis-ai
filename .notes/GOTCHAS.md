@@ -407,3 +407,4 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - This box is noisy (load 5–17): never read absolute tok/s from one run; bench pairs each model with neighbouring probe runs (`scripts/bench/speed_table.mjs`). Same arch+quant siblings were averaged by hand.
 - Changing the probe (model, layers, tokens, load options) or the table => bump `SPEED_REFERENCE_ID` and rebench everything.
 - e2e localStorage prefix is `gratis:` (VITE_APP_NAME=Gratis), not `gratisai:`.
+- Qwen3 1.7B decensored (TPN Q4_K_M): file verified sane 2026-10-23 natively (llama.cpp b11818), in wllama CPU, and via node-llama-cpp. Q4 ≈ Q8 ≈ stock Qwen3 1.7B in quality; all make confident factual slips (1.7B limit). Vocab has a stray `</s>` (id 128247) — load warning only. SwiftShader WebGPU does NOT give wllama a GPU device here (tensors stay on CPU), so the WebGPU path can't be tested on this box.
