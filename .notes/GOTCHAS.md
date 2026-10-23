@@ -415,3 +415,4 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - Never trust old wllama OPFS metadata etags as SHA-256: pre-SDK downloads may hold a CDN etag. Legacy verification asks HF only; offline → skip, retry next load (`sha256_verified` in IDB).
 - `verifying` field in download progress means hashing: keep it out of speed/ETA trackers.
 - SmolLM2 360M at temp 0.7 sometimes answers "2" to 2+2: inference.spec is sampling-flaky, not broken.
+- iOS 16 Safari (<16.4) has no byte streams: `@huggingface/hub` XetBlob does `new ReadableStream({type:'bytes'})` and throws "ReadableByteStreamController is not implemented" -> every download dies at 0%. `get_hf_model_blob` passes `xet: false` (plain WebBlob range fetch) when `supports_byte_streams()` is false.

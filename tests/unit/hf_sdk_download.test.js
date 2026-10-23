@@ -161,6 +161,43 @@ describe( `Hugging Face SDK download`, () => {
         } )
     } )
 
+    test( `falls back to plain HTTP when byte streams are missing (iOS 16 Safari)`, async () => {
+        const info = {
+            size: 6,
+            etag: `"abc-123"`,
+            url: download_url,
+            xet: { hash: `hash`, refreshUrl: new URL( `https://huggingface.co/x` ), reconstructionUrl: new URL( `https://huggingface.co/y` ) },
+        }
+        const sdk = create_sdk( info )
+
+        // Safari < 16.4 throws "ReadableByteStreamController is not implemented"
+        const NativeReadableStream = globalThis.ReadableStream
+        vi.stubGlobal( `ReadableStream`, class extends NativeReadableStream {
+            constructor( source, strategy ) {
+                if( source?.type === `bytes` ) throw new TypeError( `ReadableByteStreamController is not implemented` )
+                super( source, strategy )
+            }
+        } )
+
+        try {
+            const result = await download_hf_model_file_to_cache( {
+                model,
+                url: download_url,
+                cache_manager: create_cache_manager(),
+                storage_backend: create_backend(),
+                storage: new MemoryStorage(),
+                access_token: ``,
+                fetch_impl: vi.fn(),
+                sdk,
+            } )
+
+            expect( sdk.downloadFile.mock.calls[ 0 ][ 0 ].xet ).toBe( false )
+            expect( result.mode ).toBe( `web` )
+        } finally {
+            vi.unstubAllGlobals()
+        }
+    } )
+
     test( `forwards an optional token when one is configured`, async () => {
         const info = {
             size: 6,

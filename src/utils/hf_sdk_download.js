@@ -16,6 +16,21 @@ const abort_error = () => {
     }
 }
 
+/**
+ * Whether this browser can construct byte streams. The SDK's Xet reader needs
+ * them; Safari before 16.4 (all of iOS 16) throws "ReadableByteStreamController
+ * is not implemented", so those browsers fetch the plain HTTP file instead.
+ * @returns {boolean}
+ */
+export const supports_byte_streams = () => {
+    try {
+        new ReadableStream( { type: `bytes` } )
+        return true
+    } catch {
+        return false
+    }
+}
+
 const with_abort_signal = ( fetch_impl, signal ) => ( input, init = {} ) =>
     fetch_impl( input, {
         ...init,
@@ -122,14 +137,16 @@ const get_hf_model_blob = async ( {
     const info = await sdk.fileDownloadInfo( params )
     if( !info ) throw new Error( `Hugging Face could not find that model or GGUF file.` )
 
+    const use_xet = !!info.xet && supports_byte_streams()
     const blob = await sdk.downloadFile( {
         ...params,
         downloadInfo: info,
         parallelDownloads: true,
+        ... use_xet ? {} : { xet: false },
     } )
     if( !blob?.stream ) throw new Error( `Hugging Face did not return a downloadable model file.` )
 
-    return { blob, info }
+    return { blob, info, mode: use_xet ? `xet` : `web` }
 
 }
 
@@ -300,7 +317,7 @@ export const download_hf_model_file_to_cache = async ( {
 
         try {
 
-            const { blob, info } = await get_hf_model_blob( { model, signal, access_token, fetch_impl, sdk } )
+            const { blob, info, mode } = await get_hf_model_blob( { model, signal, access_token, fetch_impl, sdk } )
 
             const total = info.size || model.file_size_bytes || 0
             const etag = clean_etag( info.etag )
@@ -363,7 +380,7 @@ export const download_hf_model_file_to_cache = async ( {
                 cache_key,
                 size: stored_bytes || total,
                 etag,
-                mode: info.xet ? `xet` : `web`,
+                mode,
                 resumed_from: offset,
             }
 
@@ -432,7 +449,7 @@ export const download_hf_model_file_to_external_file = async ( {
     sdk = { fileDownloadInfo, downloadFile },
 } ) => {
 
-    const { blob, info } = await get_hf_model_blob( { model, signal, access_token, fetch_impl, sdk } )
+    const { blob, info, mode } = await get_hf_model_blob( { model, signal, access_token, fetch_impl, sdk } )
     const total = info.size || model.file_size_bytes || 0
     const etag = clean_etag( info.etag )
 
@@ -447,7 +464,7 @@ export const download_hf_model_file_to_external_file = async ( {
     return {
         size: size || total,
         etag,
-        mode: info.xet ? `xet` : `web`,
+        mode,
     }
 
 }

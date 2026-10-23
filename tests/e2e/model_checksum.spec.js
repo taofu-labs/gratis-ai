@@ -64,4 +64,31 @@ test.describe( `Model checksums`, () => {
 
     } )
 
+    test( `browsers without byte streams (iOS 16 Safari) download over plain HTTP`, async ( { page } ) => {
+
+        const logs = []
+        const requests = []
+        page.on( `console`, message => logs.push( message.text() ) )
+        page.on( `request`, request => requests.push( request.url() ) )
+
+        // Safari < 16.4 cannot construct byte streams, which the Xet reader needs
+        await page.addInitScript( () => {
+            const NativeReadableStream = globalThis.ReadableStream
+            globalThis.ReadableStream = class extends NativeReadableStream {
+                constructor( source, strategy ) {
+                    if( source?.type === `bytes` ) throw new TypeError( `ReadableByteStreamController is not implemented` )
+                    super( source, strategy )
+                }
+            }
+        } )
+
+        await download_model_via_ui( page, MODELS.smollm2 )
+
+        // Plain resolve URL, never the Xet reconstruction service
+        expect( requests.some( url => url.includes( `/resolve/main/${ MODELS.smollm2.file_name }` ) ) ).toBe( true )
+        expect( requests.some( url => /xethub|reconstruction/.test( url ) ) ).toBe( false )
+        expect( logs.some( line => /\[checksum\] SHA-256 verified/.test( line ) ) ).toBe( true )
+
+    } )
+
 } )

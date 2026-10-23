@@ -11,6 +11,7 @@
 - Downloads are SHA-256 checked against Hugging Face before a model counts as installed (browser and desktop); a corrupt file is removed with "please download it again" instead of loading and replying with garbage. Models downloaded before this are checked once on their next load
 
 ### Fixed
+- Model downloads work on iOS 16 Safari again: browsers without byte-stream support fetch the plain file instead of failing at 0% with "ReadableByteStreamController is not implemented"
 - Opening the site over plain http now switches to https; http silently lost threads and model storage (seen on iPhone Safari, which fills in http:// for a bare domain)
 
 ### Changed
