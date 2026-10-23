@@ -12,6 +12,7 @@
 - Every offered model is now a TPN-optimised build from tpnlabs on Hugging Face (Qwen 3.5 0.8B / 2B / 4B / 9B, Gemma 4 26B for desktop, MiniCPM5 1B, uncensored Qwen3 1.7B and Qwen 3.5 4B / 9B), each measured against its original; earlier downloads keep working under "Show older models"
 - The picker weighs each build's measured closeness to the original, and knows tuned Q5_0 formats are slow in the browser
 - Deleting the active model unloads it first instead of refusing
+- Large browser downloads stay in browser storage: the "choose save location" dialog now appears only when the browser is out of space, and Gratis asks the browser to keep downloaded models
 
 ## [0.47.0] - 2026-10-21
 

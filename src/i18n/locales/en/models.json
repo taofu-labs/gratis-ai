@@ -21,7 +21,7 @@
     "invalid_hf_url": "Invalid URL. Use a HuggingFace link like hf.co/org/repo:Q4_K_M",
     "may_be_too_large_browser": "May be too large for this browser",
     "large_model_warning": "Large models may fail to load in the browser. Consider a smaller quantization or the desktop app.",
-    "large_model_external_storage": "Large browser downloads are saved as a local GGUF file.",
+    "large_model_external_storage": "Not enough browser storage for this download, so you'll pick a folder to save it in.",
     "download_storage_failed": "Could not prepare local model storage.",
     "low_memory_warning": "Only {{free}} of memory free — this model needs about {{needed}}. Try closing other apps or picking a smaller model to avoid slowdowns and potential crashes.",
 

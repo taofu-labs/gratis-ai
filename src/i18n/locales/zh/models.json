@@ -78,7 +78,7 @@
     "custom_model_offline": "你已离线。请连接互联网以查找此模型。",
     "custom_model_network_error": "无法连接 Hugging Face。请检查网络连接后重试。",
     "choose_save_location": "选择保存位置",
-    "large_model_external_storage": "浏览器中的大文件下载会保存为本地 GGUF 文件。",
+    "large_model_external_storage": "浏览器存储空间不足以完成此下载，因此需要选择一个文件夹来保存。",
     "download_storage_failed": "无法准备本地模型存储。",
     "ram_override_budget_active": "浏览器模型上限：{{budget}}。",
     "ram_override_label": "我的设备有更多内存…",

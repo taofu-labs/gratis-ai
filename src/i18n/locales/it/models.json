@@ -78,7 +78,7 @@
     "custom_model_offline": "Sei offline. Connettiti a internet per cercare questo modello.",
     "custom_model_network_error": "Impossibile raggiungere Hugging Face. Controlla la connessione e riprova.",
     "choose_save_location": "Scegli dove salvare",
-    "large_model_external_storage": "I download di grandi dimensioni nel browser vengono salvati come file GGUF locale.",
+    "large_model_external_storage": "Spazio del browser insufficiente per questo download, quindi sceglierai una cartella in cui salvarlo.",
     "download_storage_failed": "Impossibile preparare l'archiviazione locale del modello.",
     "ram_override_budget_active": "Budget modelli del browser: {{budget}}.",
     "ram_override_label": "Il mio dispositivo ha più RAM…",

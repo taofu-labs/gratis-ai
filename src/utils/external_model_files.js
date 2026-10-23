@@ -1,4 +1,5 @@
-export const EXTERNAL_MODEL_FILE_THRESHOLD_BYTES = 2_000_000_000
+// Keep a margin under the origin quota: OPFS writes fail outright once it is hit
+const QUOTA_HEADROOM = 1.1
 
 const pending_file_handles = new Map()
 
@@ -15,9 +16,40 @@ export const supports_external_model_files = () =>
     && !window.electronAPI?.download_model
     && typeof window.showSaveFilePicker === `function`
 
-export const should_use_external_model_file = model =>
+/**
+ * Free space this origin may still use in browser storage (OPFS)
+ * @returns {Promise<number>} Bytes, or Infinity when the browser won't say
+ */
+export const browser_storage_free_bytes = async () => {
+    try {
+        const { quota, usage = 0 } = await navigator.storage.estimate()
+        return quota ? quota - usage : Infinity
+    } catch {
+        return Infinity
+    }
+}
+
+/**
+ * Ask the browser not to evict downloaded models under storage pressure.
+ * Best effort: Chromium decides silently, Firefox may ask once.
+ */
+export const request_persistent_storage = async () => {
+    try {
+        if( !await navigator.storage.persisted() ) await navigator.storage.persist()
+    } catch { /* unsupported: storage stays best-effort */ }
+}
+
+/**
+ * Browser storage is the default; a user-picked file is the fallback only when
+ * the download won't fit in this origin's remaining quota
+ * @param {Object} model - Catalog entry
+ * @param {number} download_bytes - Model plus projector
+ * @param {number} free_bytes - From `browser_storage_free_bytes`
+ * @returns {boolean}
+ */
+export const should_use_external_model_file = ( model, download_bytes, free_bytes ) =>
     supports_external_model_files()
-    && Number( model?.file_size_bytes ) > EXTERNAL_MODEL_FILE_THRESHOLD_BYTES
+    && download_bytes * QUOTA_HEADROOM > free_bytes
 
 export const choose_external_model_file = async model => {
     const handle = await window.showSaveFilePicker( {

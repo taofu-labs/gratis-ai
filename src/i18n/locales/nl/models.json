@@ -83,7 +83,7 @@
     "custom_model_offline": "Je bent offline. Maak verbinding met internet om dit model op te zoeken.",
     "custom_model_network_error": "Hugging Face is niet bereikbaar. Controleer je verbinding en probeer het opnieuw.",
     "choose_save_location": "Opslaglocatie kiezen",
-    "large_model_external_storage": "Grote browserdownloads worden opgeslagen als lokaal GGUF-bestand.",
+    "large_model_external_storage": "Niet genoeg browseropslag voor deze download, dus je kiest een map om hem in op te slaan.",
     "download_storage_failed": "Lokale modelopslag kon niet worden voorbereid.",
 
     "recommended_start": "Aanbevolen startmodel",

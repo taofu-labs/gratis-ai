@@ -24,6 +24,7 @@ Granite 4.0 H Tiny (4.2 GB, ~2.6x faster decode than Qwen3 4B). Any browser pick
 File System Access save dialog (commit 9e9c2e7, no recorded rationale), so a brand-new user's first CTA is
 "Choose save location". Decide whether to raise that threshold (OPFS loaded 4.2 GB fine in the benchmark)
 or prefer a sub-2 GB first-run default.
+**Resolved 2026-10-23 (user accepted):** 2 GB cutoff removed; OPFS unless `navigator.storage.estimate()` free quota < download × 1.1; `storage.persist()` requested on OPFS downloads.
 
 ## Review: WebGPU FA / quantized KV unverified (2026-10-20)
 

@@ -39,7 +39,9 @@ import {
 import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
 import { resolve_tpn_winner_models } from '../../utils/tpn_winner_models'
 import {
+    browser_storage_free_bytes,
     choose_external_model_file,
+    request_persistent_storage,
     should_use_external_model_file,
 } from '../../utils/external_model_files'
 import { EVENTS, storage_key } from '../../utils/branding'
@@ -413,6 +415,12 @@ export default function ModelSelectPage() {
     const [ browse_open, set_browse_open ] = useState( false )
     const [ settings_open, set_settings_open ] = useState( false )
 
+    // Unknown until measured: assume it fits, as nearly every download does
+    const [ storage_free_bytes, set_storage_free_bytes ] = useState( Infinity )
+    useEffect( () => {
+        browser_storage_free_bytes().then( set_storage_free_bytes )
+    }, [] )
+
     useEffect( () => {
 
         const handle_open_settings = () => set_settings_open( true )
@@ -494,7 +502,8 @@ export default function ModelSelectPage() {
 
     const active_fit = active_model ? check_fit( active_model, device ) : null
     const active_is_cached = !!active_model && is_cached( active_model.id )
-    const active_uses_external_file = !!active_model && should_use_external_model_file( active_model )
+    const active_uses_external_file = !!active_model && !active_is_cached
+        && should_use_external_model_file( active_model, model_download_bytes( active_model ), storage_free_bytes )
 
     // Adjusting tailors the recommendation, so it replaces any explicit pick
     const update_preferences = patch => {
@@ -646,6 +655,7 @@ export default function ModelSelectPage() {
         try {
             const storage_mode = active_uses_external_file ? `external-file` : `opfs`
             if( storage_mode === `external-file` ) await choose_external_model_file( active_model )
+            else request_persistent_storage()
             navigate( `/download`, { state: { model: active_model, storage_mode, return_to } } )
         } catch ( error ) {
             if( error?.name !== `AbortError` ) set_action_error( error.message || t( 'download_storage_failed' ) )
@@ -812,7 +822,7 @@ export default function ModelSelectPage() {
                 >
                     { empty_state }
                     { active_model && !active_fit.fits && ram_budget }
-                    { active_uses_external_file && !active_is_cached && <OptionMeta>
+                    { active_uses_external_file && <OptionMeta>
                         { t( 'large_model_external_storage' ) }
                     </OptionMeta> }
                     { action_error && <CustomModelStatus $error data-testid="model-action-error">

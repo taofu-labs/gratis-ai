@@ -78,7 +78,7 @@
     "custom_model_offline": "オフラインです。このモデルを検索するにはインターネットに接続してください。",
     "custom_model_network_error": "Hugging Face に接続できませんでした。接続を確認して、もう一度お試しください。",
     "choose_save_location": "保存場所を選択",
-    "large_model_external_storage": "ブラウザでの大きなダウンロードはローカルの GGUF ファイルとして保存されます。",
+    "large_model_external_storage": "このダウンロードにはブラウザの保存容量が足りないため、保存先のフォルダを選びます。",
     "download_storage_failed": "ローカルのモデル保存領域を準備できませんでした。",
     "ram_override_budget_active": "ブラウザのモデル上限: {{budget}}。",
     "ram_override_label": "このデバイスにはもっとRAMがあります…",

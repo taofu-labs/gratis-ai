@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
+    browser_storage_free_bytes,
     choose_external_model_file,
     should_use_external_model_file,
     take_pending_external_model_file,
@@ -19,7 +20,24 @@ describe( `external browser model files`, () => {
         vi.unstubAllGlobals()
     } )
 
-    test( `uses a picked file for browser models over 2GB`, async () => {
+    test( `keeps downloads in browser storage while they fit the quota`, () => {
+        vi.stubGlobal( `window`, { showSaveFilePicker: vi.fn() } )
+        const model = { id: `large-model`, file_size_bytes: 5_800_000_000 }
+
+        expect( should_use_external_model_file( model, 5_800_000_000, 10_700_000_000 ) ).toBe( false )
+        expect( should_use_external_model_file( model, 5_800_000_000, Infinity ) ).toBe( false )
+        expect( should_use_external_model_file( model, 5_800_000_000, 6_000_000_000 ) ).toBe( true )
+    } )
+
+    test( `measures free quota, and assumes room when the browser won't say`, async () => {
+        vi.stubGlobal( `navigator`, { storage: { estimate: async () => ( { quota: 10_000, usage: 2_500 } ) } } )
+        expect( await browser_storage_free_bytes() ).toBe( 7_500 )
+
+        vi.stubGlobal( `navigator`, {} )
+        expect( await browser_storage_free_bytes() ).toBe( Infinity )
+    } )
+
+    test( `saves to a picked file when browser storage is short`, async () => {
         const handle = { createWritable: vi.fn() }
         vi.stubGlobal( `window`, {
             showSaveFilePicker: vi.fn( async () => handle ),
@@ -31,7 +49,7 @@ describe( `external browser model files`, () => {
             file_size_bytes: 2_500_000_000,
         }
 
-        expect( should_use_external_model_file( model ) ).toBe( true )
+        expect( should_use_external_model_file( model, model.file_size_bytes, 1_000_000_000 ) ).toBe( true )
         await choose_external_model_file( model )
         expect( window.showSaveFilePicker ).toHaveBeenCalledWith( expect.objectContaining( {
             suggestedName: `large-model.gguf`,
