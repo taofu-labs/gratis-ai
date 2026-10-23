@@ -9,7 +9,7 @@
 - Downloaded models can be deleted straight from the "On this device" list (tap the trash icon twice)
 
 ### Changed
-- Every offered model is now a TPN-optimised build from tpnlabs on Hugging Face (Qwen 3.5 0.8B / 2B / 9B, MiniCPM5 1B, uncensored Qwen 3.5 4B and 9B), each measured against its original; earlier downloads keep working under "Show older models"
+- Every offered model is now a TPN-optimised build from tpnlabs on Hugging Face (Qwen 3.5 0.8B / 2B / 4B / 9B, MiniCPM5 1B, uncensored Qwen 3.5 4B and 9B), each measured against its original; earlier downloads keep working under "Show older models"
 - The picker weighs each build's measured closeness to the original, and knows tuned Q5_0 formats are slow in the browser
 - Deleting the active model unloads it first instead of refusing
 

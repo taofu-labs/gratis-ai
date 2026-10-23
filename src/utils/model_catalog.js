@@ -2049,6 +2049,19 @@ const TPN_BUILDS = [
     },
 
     {
+        from: `qwen35-4b-q4km`,
+        id: `qwen35-4b-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/Qwen3.5-4B-TPN-GGUF`,
+        file_name: `Qwen3.5-4B-Q4_K_M.gguf`,
+        file_size_bytes: 2_783_446_592,
+        quantization: `Q4_K_M`,
+        kld: 0.0301,
+        report: `https://bench.trueperformancenetwork.com/r/h8-mEn1kq2Lg8vhY9hxZDg`,
+        mmproj: { file_name: `mmproj-Qwen3.5-4B-F16.gguf`, file_size_bytes: 672_422_944 },
+        browser_verified: true,
+    },
+
+    {
         from: `qwen35-4b-heresy-q4km`,
         id: `qwen35-4b-heresy-tpn-q4km`,
         hugging_face_repo: `tpnlabs/Qwen3.5-4B-SOMPOA-heresy-v2-TPN-GGUF`,

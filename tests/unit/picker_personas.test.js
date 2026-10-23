@@ -141,8 +141,8 @@ describe( `picker personas`, () => {
         expect( matrix ).toEqual( {
             cheap_android: [ `qwen35-0.8b-tpn-q5km`, `minicpm5-1b-tpn-q4km`, `minicpm5-1b-tpn-q50t`, `qwen35-0.8b-tpn-q5km` ],
             iphone: [ `qwen35-0.8b-tpn-q5km`, `minicpm5-1b-tpn-q4km`, `minicpm5-1b-tpn-q50t`, `qwen35-0.8b-tpn-q5km` ],
-            windows_laptop: [ `qwen35-0.8b-tpn-q5km`, `qwen35-2b-tpn-q4km`, `qwen35-2b-tpn-q4km`, `qwen35-2b-tpn-q4km` ],
-            macbook_desktop: [ `qwen35-2b-tpn-q4km`, `qwen35-9b-tpn-iq4xs`, `qwen35-9b-tpn-iq4xs`, `qwen35-9b-tpn-iq4xs` ],
+            windows_laptop: [ `qwen35-0.8b-tpn-q5km`, `qwen35-2b-tpn-q4km`, `qwen35-4b-tpn-q4km`, `qwen35-2b-tpn-q4km` ],
+            macbook_desktop: [ `qwen35-4b-tpn-q4km`, `qwen35-9b-tpn-iq4xs`, `qwen35-9b-tpn-iq4xs`, `qwen35-9b-tpn-iq4xs` ],
         } )
     } )
 

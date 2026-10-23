@@ -54,6 +54,7 @@ const ALL_BROWSER_VERIFIED_IDS = [
     `qwen35-2b-q4km`,
     `qwen35-4b-heresy-tpn-q4km`,
     `qwen35-4b-q4km`,
+    `qwen35-4b-tpn-q4km`,
     `qwen35-9b-heretic-tpn-q4km`,
     `qwen35-9b-tpn-q4km`,
     `qwen35-9b-vision-q4km`,

@@ -55,5 +55,5 @@ Branch chore/desktop-release-parity (not pushed, not merged). After secrets: ver
 ## TPN-only catalog (2026-10-22)
 
 - Gratis now offers only tpnlabs builds. TPN's top-fidelity pick is not always the browser pick: tuned `Q5_0+` (MiniCPM5 1B) and IQ4_XS (9B) are 2-3× / ~1.4× slower in wllama, so both formats are listed and the picker chooses per runtime (browser K-quant, desktop TPN pick). "Better answers" on phones picks MiniCPM Q5_0+ (slow band) — deliberate trade, review if it feels too slow on a real phone.
-- Gaps until open orders land: 32 GB Mac desktop gets Qwen3.5 9B (was Gemma 4 26B community) → g26; iPhone "fewer refusals" finds nothing → d17b; Windows "better answers" = 2B → q4b (Qwen3.5 4B base).
+- Gaps until open orders land: 32 GB Mac desktop gets Qwen3.5 9B (was Gemma 4 26B community) → g26; iPhone "fewer refusals" finds nothing → d17b. (Windows "better answers" gap closed 2026-10-23: TPN Qwen3.5 4B.)
 - Model cards are written by us (card.py) from TPN data + report PNGs; TPN's API gives no card markdown. Each card links a public, noindexed TPN share report.

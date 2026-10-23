@@ -1,7 +1,7 @@
 # TPN ledger (budget $500, track worst-case holds until settled)
 | name | repo | order | exp $ | max $ | settled $ |
 |---|---|---|---|---|---|
-| q4b | Qwen/Qwen3.5-4B | 9fc0a46a-723b-4b12-bc04-2f118806846f | 15.61 | 70.03 | |
+| q4b | Qwen/Qwen3.5-4B | 9fc0a46a-723b-4b12-bc04-2f118806846f | 15.61 | 70.03 | 43.52 |
 | q9b | Qwen/Qwen3.5-9B | 379b41c8-3c85-4aee-b57c-d0122a7a0a75 | 20.99 | 53.35 | 28.21 |
 | h9b | trohrbaugh/Qwen3.5-9B-heretic-v2 | 1002499e-3264-42a2-889b-dc4658d66679 | 20.80 | 70.20 | 13.20 |
 | q2b | Qwen/Qwen3.5-2B | 3aeb979b-fcb2-444c-9fe0-5c4032446799 | 12.75 | 50.40 | 25.42 |
@@ -11,7 +11,7 @@
 | g26 | google/gemma-4-26B-A4B-it (goal 14.5 GB) | b71d9a63-81fe-4ead-a4e7-ef865a8d4b21 | 45.75 | 139.84 | |
 | d17b | MagicalAlchemist/Qwen3-1.7B-Magic_decensored (goal 1.2 GB) | 5ce4c1a1-ef07-443e-b280-85fd01e5afc0 | 16.80 | 60.78 | |
 
-Worst case committed (settled + open maxes): $398.17 (2026-10-22 21:50).
+Worst case committed (settled + open maxes): $371.66; settled $171.04 (2026-10-23 01:30).
 
 ## Findings (h9b, first completion)
 - Optimize API gives NO model-card markdown; public share report (`POST /orders/:id/share`, report-only) has 3 chart PNG exports (closeness, ppl change, top-1) => card built by us from `order.result` + those PNGs. TPN-authored card likely only via TPN's own HF push, which needs an HF token stored in the TPN web account (keys can't add one).
@@ -27,6 +27,7 @@ Worst case committed (settled + open maxes): $398.17 (2026-10-22 21:50).
 | q2b | tpnlabs/Qwen3.5-2B-TPN-GGUF | Q4_K_M (TPN pick = browser pick), Q8_0, mmproj | pending web check |
 | q9b | tpnlabs/Qwen3.5-9B-TPN-GGUF | IQ4_XS (TPN pick), Q4_K_M, Q8_0, mmproj | native text OK |
 | q08b | tpnlabs/Qwen3.5-0.8B-TPN-GGUF | Q5_K_M (TPN pick; gsm8k -3.7, ifeval flat), Q8_0, mmproj | native image (shapes ok, word misread); web app chat OK via custom URL (798 MB incl. mmproj) |
+| q4b | tpnlabs/Qwen3.5-4B-TPN-GGUF | Q4_K_M (TPN pick = browser pick, KLD 0.030, gsm8k +1.8), IQ4_XS (worse KLD here, not in catalog), Q8_0, mmproj | native text OK, wllama load+gen OK |
 | h4b | tpnlabs/Qwen3.5-4B-SOMPOA-heresy-v2-TPN-GGUF | Q4_K_M (TPN pick = browser pick), Q8_0, mmproj F16, README + PNGs | image OK |
 
 Card prose (incl. Gratis link → gratis.trueperformancenetwork.com, decensored note) is written by card.py, not TPN.
@@ -34,3 +35,4 @@ Pipeline (scratchpad/tpn): `fetch.sh <name> <variants>` (sha256-checked) → rep
 - h4b: tune ran (Q4_0M+ tuned from Q4_K_M) but scored worse (KLD 0.044 vs 0.031) => not published.
 - q08b: small models DO get gsm8k/ifeval (0.8B); card.py adds a task-benchmark table when present.
 - h4b/h9b (heretic/heresy): TPN GGUFs declare a missing MTP layer → wllama can't load. Re-published with fixed metadata (card discloses; sha differs from TPN report). Report to TPN as converter bug.
+- q4b: tuned Q4_0M+ again worse than Q4_K_M (0.042 vs 0.030); IQ4_XS > Q4_K_M KLD at 4B => browser and native pick both Q4_K_M.
