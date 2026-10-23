@@ -50,6 +50,7 @@ const ALL_BROWSER_VERIFIED_IDS = [
     `granite4-h-tiny-q4km`,
     `ministral3-14b-q4km`,
     `ministral3-3b-q4km`,
+    `qwen3-1.7b-decensored-tpn-q4km`,
     `qwen35-0.8b-tpn-q5km`,
     `qwen35-2b-q4km`,
     `qwen35-4b-heresy-tpn-q4km`,

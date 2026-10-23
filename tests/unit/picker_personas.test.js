@@ -104,6 +104,9 @@ describe( `picker personas`, () => {
             if( !pick ) expect( relaxed.map( r => r.drop ), name ).toEqual( [ `fewer_refusals` ] )
             else expect( pick.uncensored && pick.ugi.score > 0, name ).toBe( true )
         }
+
+        // The tiny decensored build gives phones an answer too
+        expect( select_for_preferences( MODEL_CATALOG, profile_for( `iphone` ), { fewer_refusals: true } ).pick?.id ).toBe( `qwen3-1.7b-decensored-tpn-q4km` )
     } )
 
     test( `an impossible combination is honest and offers the nearest alternatives`, () => {

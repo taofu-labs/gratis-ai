@@ -2062,6 +2062,18 @@ const TPN_BUILDS = [
     },
 
     {
+        from: `qwen3-1.7b-decensored-q4km`,
+        id: `qwen3-1.7b-decensored-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/Qwen3-1.7B-Magic_decensored-TPN-GGUF`,
+        file_name: `Qwen3-1.7B-Magic_decensored-Q4_K_M.gguf`,
+        file_size_bytes: 1_107_408_896,
+        quantization: `Q4_K_M`,
+        kld: 0.0586,
+        report: `https://bench.trueperformancenetwork.com/r/hCN5YMVh_9qQWSgezAelvQ`,
+        browser_verified: true,
+    },
+
+    {
         from: `qwen35-4b-heresy-q4km`,
         id: `qwen35-4b-heresy-tpn-q4km`,
         hugging_face_repo: `tpnlabs/Qwen3.5-4B-SOMPOA-heresy-v2-TPN-GGUF`,

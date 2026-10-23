@@ -572,3 +572,4 @@
 - 2026-10-22 21:55 — Catalog switched to TPN-only: `TPN_BUILDS` (9 entries, 6 tpnlabs repos) derive from the community entries they replace; every community local entry `hidden` (installed copies still load). Quality × (1 − TPN KLD); legacy Q5_0/Q5_1 get the browser speed penalty (measured). Browser receipts don't carry over: only TPN 0.8B verified so far. Mac desktop pick is the 9B until TPN Gemma 4 26B (g26) lands; iPhone "fewer refusals" has no fit until TPN Qwen3 1.7B decensored (d17b) lands.
 - 2026-10-23 01:30 q4b landed: tpnlabs/Qwen3.5-4B-TPN-GGUF published; catalog row qwen35-4b-tpn-q4km (laptop Better, Mac Faster).
 - 2026-10-23 03:30 g26 landed: TPN Gemma 4 26B published with scores withheld (TPN reference broken); Mac desktop picks it again, Mac large-model test re-enabled.
+- 2026-10-23 05:00 d17b landed: TPN Qwen3 1.7B decensored published; iPhone fewer refusals picks it. All TPN orders settled ($211.18).
