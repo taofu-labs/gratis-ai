@@ -131,6 +131,7 @@
     "relaxed_without_photos": "写真対応なし：{{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "通常の拒否設定：{{name}} · {{size}}",
     "ram_budget_hint": "このブラウザではモデルに約 {{budget}} を使えます。",
+    "ram_budget_split_hint": "約{{comfortable}}までのモデルは快適に動作し、他のアプリを閉じれば{{budget}}まで使えます。RAM容量を入力すると上限を引き上げられます。",
     "browse_all": "すべてのモデルを見る",
     "filter_label": "モデルを絞り込む",
     "filter_photos": "写真",

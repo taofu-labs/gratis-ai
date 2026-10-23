@@ -131,6 +131,7 @@
     "relaxed_without_photos": "Без поддержки фото: {{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "Со стандартными отказами: {{name}} · {{size}}",
     "ram_budget_hint": "Этот браузер может отвести под модели около {{budget}}.",
+    "ram_budget_split_hint": "Модели до {{comfortable}} работают здесь свободно, а до {{budget}} — если закрыть другие приложения. Укажите объём RAM, чтобы повысить лимит.",
     "browse_all": "Посмотреть все модели",
     "filter_label": "Фильтр моделей",
     "filter_photos": "Фото",

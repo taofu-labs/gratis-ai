@@ -131,6 +131,7 @@
     "relaxed_without_photos": "Without photo support: {{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "With standard refusals: {{name}} · {{size}}",
     "ram_budget_hint": "This browser can use about {{budget}} for models.",
+    "ram_budget_split_hint": "Models up to about {{comfortable}} run comfortably here, and up to {{budget}} if you close other apps. Tell us your RAM to raise this.",
     "browse_all": "Browse all models",
     "filter_label": "Filter models",
     "filter_photos": "Photos",

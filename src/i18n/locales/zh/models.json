@@ -131,6 +131,7 @@
     "relaxed_without_photos": "不支持照片：{{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "标准拒答设置：{{name}} · {{size}}",
     "ram_budget_hint": "此浏览器大约可为模型使用 {{budget}}。",
+    "ram_budget_split_hint": "约 {{comfortable}} 以内的模型可在此流畅运行，关闭其他应用后最多可用 {{budget}}。告诉我们你的内存大小以提高上限。",
     "browse_all": "浏览全部模型",
     "filter_label": "筛选模型",
     "filter_photos": "照片",

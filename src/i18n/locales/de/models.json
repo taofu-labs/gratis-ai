@@ -131,6 +131,7 @@
     "relaxed_without_photos": "Ohne Fotounterstützung: {{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "Mit üblichen Ablehnungen: {{name}} · {{size}}",
     "ram_budget_hint": "Dieser Browser kann etwa {{budget}} für Modelle nutzen.",
+    "ram_budget_split_hint": "Modelle bis etwa {{comfortable}} laufen hier bequem, bis {{budget}}, wenn du andere Apps schließt. Gib deinen Arbeitsspeicher an, um das zu erhöhen.",
     "browse_all": "Alle Modelle ansehen",
     "filter_label": "Modelle filtern",
     "filter_photos": "Fotos",

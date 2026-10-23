@@ -131,6 +131,7 @@
     "relaxed_without_photos": "Senza supporto per le foto: {{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "Con i rifiuti standard: {{name}} · {{size}}",
     "ram_budget_hint": "Questo browser può usare circa {{budget}} per i modelli.",
+    "ram_budget_split_hint": "I modelli fino a circa {{comfortable}} funzionano bene qui, e fino a {{budget}} se chiudi altre app. Indica la tua RAM per aumentare il limite.",
     "browse_all": "Sfoglia tutti i modelli",
     "filter_label": "Filtra i modelli",
     "filter_photos": "Foto",

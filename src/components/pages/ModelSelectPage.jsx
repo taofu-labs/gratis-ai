@@ -723,7 +723,9 @@ export default function ModelSelectPage() {
     const ram_budget = can_override_ram && <Notice data-testid="browser-ram-budget">
         { has_ram_override
             ? t( 'ram_override_budget_active', { budget: format_file_size( device.budget_bytes ) } )
-            : t( 'ram_budget_hint', { budget: format_file_size( device.budget_bytes ) } ) }
+            : device.automatic_bytes < device.budget_bytes
+                ? t( 'ram_budget_split_hint', { comfortable: format_file_size( device.automatic_bytes ), budget: format_file_size( device.budget_bytes ) } )
+                : t( 'ram_budget_hint', { budget: format_file_size( device.budget_bytes ) } ) }
         <BrowserRamOverride data-testid="model-select-ram-override" />
     </Notice>
 

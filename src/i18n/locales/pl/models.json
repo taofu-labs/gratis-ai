@@ -131,6 +131,7 @@
     "relaxed_without_photos": "Bez obsługi zdjęć: {{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "Ze standardowymi odmowami: {{name}} · {{size}}",
     "ram_budget_hint": "Ta przeglądarka może przeznaczyć na modele około {{budget}}.",
+    "ram_budget_split_hint": "Modele do około {{comfortable}} działają tu swobodnie, a do {{budget}} po zamknięciu innych aplikacji. Podaj ilość RAM, aby to zwiększyć.",
     "browse_all": "Przeglądaj wszystkie modele",
     "filter_label": "Filtruj modele",
     "filter_photos": "Zdjęcia",

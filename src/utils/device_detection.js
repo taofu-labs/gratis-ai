@@ -188,6 +188,39 @@ const estimate_vram_from_name = ( renderer ) => {
  * In browser, uses navigator APIs and WebGPU/WebGL probing.
  * @returns {Promise<DeviceCapabilities>}
  */
+// Model-size ceilings: Memory64's 16 GiB space and wasm32's ~4 GiB, less runtime headroom
+export const MEMORY64_MODEL_CEILING_BYTES = 15_000_000_000
+export const WASM32_MODEL_CEILING_BYTES = 3_400_000_000
+export const BROWSER_AUTOMATIC_MODEL_CEILING_BYTES = 5_600_000_000
+
+/**
+ * How much linear memory the browser actually grants a Memory64 runtime: grow a
+ * throwaway memory 1 GB at a time up to the model ceiling. Pages are never
+ * touched, so no RAM is used, but engine, address-space and OS commit limits
+ * all surface as a failed grow. ~65 ms in Chrome; measured once per tab.
+ * @returns {number|null} Granted bytes, or null without Memory64
+ */
+let cached_wasm_grant
+
+export const probe_wasm_memory_grant = () => {
+
+    if( cached_wasm_grant !== undefined ) return cached_wasm_grant
+    if( !detect_wasm_capabilities().memory64 ) return cached_wasm_grant = null
+
+    let granted = 0
+    try {
+        const memory = new WebAssembly.Memory( { address: `i64`, initial: 1n, maximum: 262_144n } )
+        const step = BigInt( Math.floor( 1_000_000_000 / 65_536 ) )
+        while( granted < MEMORY64_MODEL_CEILING_BYTES ) {
+            memory.grow( step )
+            granted = Number( memory.buffer.byteLength )
+        }
+    } catch { /* the first refused grow is the practical limit */ }
+
+    return cached_wasm_grant = granted
+
+}
+
 const detect_capabilities_uncached = async () => {
 
     // Detect runtime
@@ -261,6 +294,7 @@ const detect_capabilities_uncached = async () => {
     // Memory detection
     const device_memory = navigator.deviceMemory || null
     const js_heap_limit = performance?.memory?.jsHeapSizeLimit || null
+    const wasm_grant_bytes = probe_wasm_memory_grant()
 
     // CPU info
     const cores = navigator.hardwareConcurrency || 4
@@ -284,6 +318,7 @@ const detect_capabilities_uncached = async () => {
         memory: {
             device_memory,
             js_heap_limit,
+            wasm_grant_bytes,
         },
         cpu: {
             cores,
@@ -351,6 +386,7 @@ export const get_initial_browser_capabilities = () => {
         memory: {
             device_memory: navigator.deviceMemory || null,
             js_heap_limit: performance?.memory?.jsHeapSizeLimit || null,
+            wasm_grant_bytes: probe_wasm_memory_grant(),
         },
         cpu: { cores: navigator.hardwareConcurrency || 4 },
         wasm: detect_wasm_capabilities(),
@@ -358,40 +394,6 @@ export const get_initial_browser_capabilities = () => {
     }
 
 }
-
-/**
- * Estimate the largest GGUF model (in bytes) the runtime can load.
- *
- * ## Electron (native node-llama-cpp)
- *
- * No WASM ceiling — the memory budget depends on GPU acceleration:
- *
- * - **Apple Silicon (Metal + unified memory)**: GPU and CPU share the same RAM
- *   pool. We budget 65% of total RAM so macOS, Electron, and other apps retain
- *   headroom.
- *   → 8 GB Mac ≈ 5.2 GB budget  → Mistral 7B (5.1 GB) is tight
- *   → 16 GB Mac ≈ 10.4 GB budget → Mistral 7B easily, larger models too
- *   → 32 GB Mac ≈ 20.8 GB budget → Qwen3 32B Q4 (19.8 GB) is tight
- *
- * - **Discrete GPU (CUDA / Vulkan)**: VRAM is the primary constraint for
- *   GPU-offloaded layers, but node-llama-cpp can spill to system RAM for
- *   partial offloading. We use max(VRAM, 60% of system RAM) to allow both
- *   pure-GPU and hybrid configurations.
- *
- * - **CPU-only (no GPU)**: System RAM is the sole constraint. Budget 60% for
- *   the model and leave the rest for the OS, Electron, and other apps.
- *
- * ## Browser (WASM)
- *
- * Memory64 browsers have a 16 GiB virtual ceiling; compatibility browsers
- * retain the ~4 GiB wasm32 ceiling. Device memory remains a conservative cap.
- *
- * @param {DeviceCapabilities} capabilities
- * @returns {number} Max model file size in bytes
- */
-export const MEMORY64_MODEL_CEILING_BYTES = 15_000_000_000
-export const WASM32_MODEL_CEILING_BYTES = 3_400_000_000
-export const BROWSER_AUTOMATIC_MODEL_CEILING_BYTES = 5_600_000_000
 
 // Browser RAM signals are capped or privacy-clamped. Memory64 users can supply
 // the installed RAM so model fit checks use the real machine class.
@@ -433,6 +435,36 @@ export const supports_browser_ram_override = () =>
     && !window.electronAPI?.native_inference
     && detect_wasm_capabilities().memory64
 
+/**
+ * Estimate the largest GGUF model (in bytes) the runtime can load.
+ *
+ * ## Electron (native node-llama-cpp)
+ *
+ * No WASM ceiling — the memory budget depends on GPU acceleration:
+ *
+ * - **Apple Silicon (Metal + unified memory)**: GPU and CPU share the same RAM
+ *   pool. We budget 65% of total RAM so macOS, Electron, and other apps retain
+ *   headroom.
+ *   → 8 GB Mac ≈ 5.2 GB budget  → Mistral 7B (5.1 GB) is tight
+ *   → 16 GB Mac ≈ 10.4 GB budget → Mistral 7B easily, larger models too
+ *   → 32 GB Mac ≈ 20.8 GB budget → Qwen3 32B Q4 (19.8 GB) is tight
+ *
+ * - **Discrete GPU (CUDA / Vulkan)**: VRAM is the primary constraint for
+ *   GPU-offloaded layers, but node-llama-cpp can spill to system RAM for
+ *   partial offloading. We use max(VRAM, 60% of system RAM) to allow both
+ *   pure-GPU and hybrid configurations.
+ *
+ * - **CPU-only (no GPU)**: System RAM is the sole constraint. Budget 60% for
+ *   the model and leave the rest for the OS, Electron, and other apps.
+ *
+ * ## Browser (WASM)
+ *
+ * Memory64 browsers have a 16 GiB virtual ceiling; compatibility browsers
+ * retain the ~4 GiB wasm32 ceiling. Device memory remains a conservative cap.
+ *
+ * @param {DeviceCapabilities} capabilities
+ * @returns {number} Max model file size in bytes
+ */
 export const estimate_max_model_bytes = ( capabilities ) => {
 
     if( capabilities?.runtime === `electron` && capabilities?.memory?.total_bytes ) {
@@ -487,7 +519,11 @@ export const estimate_max_model_bytes = ( capabilities ) => {
     const heap_limit = capabilities?.memory?.js_heap_limit
     const heap_cap = !has_memory64 && heap_limit ? heap_limit * 0.7 : Infinity
 
-    return Math.floor( Math.min( wasm_ceiling, device_cap, heap_cap ) )
+    // Reported RAM is theory; what the runtime was actually granted is practice
+    const grant = capabilities?.memory?.wasm_grant_bytes
+    const grant_cap = has_memory64 && grant > 0 ? grant : Infinity
+
+    return Math.floor( Math.min( wasm_ceiling, device_cap, heap_cap, grant_cap ) )
 
 }
 
@@ -624,14 +660,17 @@ export const build_device_profile = ( capabilities, max_bytes ) => {
     const ram_override = memory64 ? read_browser_ram_override() : null
     const reported_ram = capabilities?.memory?.device_memory || null
 
-    // Chromium clamps deviceMemory at 8, so "8" only means "8 or more"
-    const ram_gb = ram_override || ( reported_ram && reported_ram < 8 ? reported_ram : null )
+    // Memory64 browsers can address the RAM they report above 8 GB, and the
+    // budget is already capped by the measured grant; exactly 8 may still be a
+    // privacy clamp, so it only means "8 or more"
+    const trusted_ram = memory64 && reported_ram > 8 ? reported_ram : null
+    const ram_gb = ram_override || trusted_ram || ( reported_ram && reported_ram < 8 ? reported_ram : null )
 
-    // Declared RAM is trusted for automatic picks; reported RAM stays conservative
+    // Declared or trusted RAM drives automatic picks; a clamped report stays conservative
     const mobile_cap = reported_ram ? reported_ram * 1_000_000_000 * MOBILE_RAM_SHARE : MOBILE_UNKNOWN_RAM_BYTES
     const automatic_bytes = Math.min(
         max_bytes,
-        ram_override ? max_bytes : BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
+        ram_override || trusted_ram ? max_bytes : BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
         mobile && !ram_override ? mobile_cap : Infinity,
     )
 

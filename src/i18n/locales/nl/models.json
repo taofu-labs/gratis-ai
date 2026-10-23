@@ -131,6 +131,7 @@
     "relaxed_without_photos": "Zonder fotoondersteuning: {{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "Met gebruikelijke weigeringen: {{name}} · {{size}}",
     "ram_budget_hint": "Deze browser kan ongeveer {{budget}} voor modellen gebruiken.",
+    "ram_budget_split_hint": "Modellen tot ongeveer {{comfortable}} draaien hier soepel, en tot {{budget}} als je andere apps sluit. Geef je RAM op om dit te verhogen.",
     "browse_all": "Alle modellen bekijken",
     "filter_label": "Modellen filteren",
     "filter_photos": "Foto's",

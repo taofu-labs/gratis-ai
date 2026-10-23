@@ -131,6 +131,7 @@
     "relaxed_without_photos": "Sem suporte a fotos: {{name}} · {{size}}",
     "relaxed_without_fewer_refusals": "Com recusas padrão: {{name}} · {{size}}",
     "ram_budget_hint": "Este navegador pode usar cerca de {{budget}} para modelos.",
+    "ram_budget_split_hint": "Modelos de até cerca de {{comfortable}} rodam com folga aqui, e até {{budget}} se você fechar outros apps. Informe sua RAM para aumentar isso.",
     "browse_all": "Ver todos os modelos",
     "filter_label": "Filtrar modelos",
     "filter_photos": "Fotos",

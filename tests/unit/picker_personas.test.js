@@ -54,6 +54,23 @@ describe( `picker personas`, () => {
         }
     } )
 
+    test( `a Memory64 browser reporting 32 GB gets the full budget, capped by the measured grant`, () => {
+        vi.stubGlobal( `navigator`, { userAgent: WINDOWS_UA, maxTouchPoints: 0 } )
+        const profile = memory => {
+            const capabilities = { runtime: `browser`, wasm: { memory64: true }, memory }
+            return build_device_profile( capabilities, estimate_max_model_bytes( capabilities ) )
+        }
+
+        // Reported RAM above the clamp is real: comfortable and hard budget agree
+        expect( profile( { device_memory: 32 } ) ).toMatchObject( { ram_gb: 32, budget_bytes: 15_000_000_000, automatic_bytes: 15_000_000_000 } )
+
+        // Exactly 8 may be a clamp: stay conservative
+        expect( profile( { device_memory: 8 } ) ).toMatchObject( { ram_gb: null, automatic_bytes: 5_600_000_000 } )
+
+        // The runtime granted less than the RAM suggests: practice wins
+        expect( profile( { device_memory: 32, wasm_grant_bytes: 9_000_000_000 } ) ).toMatchObject( { budget_bytes: 9_000_000_000, automatic_bytes: 9_000_000_000 } )
+    } )
+
     test( `phones stay small and browsers stay under their runtime ceiling`, () => {
         const android = profile_for( `cheap_android` )
         const iphone = profile_for( `iphone` )
