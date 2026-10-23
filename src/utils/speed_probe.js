@@ -55,16 +55,24 @@ const stage_on_disk = async parts => {
 
     const root = await navigator.storage.getDirectory()
     const writable = await ( await root.getFileHandle( PROBE_FILE, { create: true } ) ).createWritable()
-    for( const part of parts ) await writable.write( part )
-    await writable.close()
+    try {
+        for( const part of parts ) await writable.write( part )
+        await writable.close()
+    } catch ( error ) {
+        // Out of quota: release the half-written file before the in-memory fallback
+        await writable.abort().catch( () => {} )
+        throw error
+    }
     return ( await root.getFileHandle( PROBE_FILE ) ).getFile()
 
 }
 
 /** Delete the staged skeleton, if any. */
-const discard_probe_file = () => navigator.storage?.getDirectory()
-    .then( root => root.removeEntry( PROBE_FILE ) )
-    .catch( () => {} )
+const discard_probe_file = async () => {
+    try {
+        await ( await navigator.storage.getDirectory() ).removeEntry( PROBE_FILE )
+    } catch { /* never staged */ }
+}
 
 /**
  * Download only the probe model's header and build its skeleton: on disk when
@@ -134,17 +142,29 @@ export const time_decode = async ( wllama, tokens ) => {
 /**
  * Time the probe on a fresh runtime, then dispose it.
  * @param {import('wllama64').Wllama} wllama - Not yet loaded
+ * @param {() => boolean} [should_stop] - Checked between stages: a real model started loading
  * @returns {Promise<number>} tokens per second
  */
-export const measure_probe_tps = async wllama => {
+export const measure_probe_tps = async ( wllama, should_stop = () => false ) => {
+
+    const checkpoint = () => {
+        if( should_stop() ) throw new Error( `Speed probe stopped: the device got busy` )
+    }
 
     try {
         const skeleton = await fetch_probe_skeleton()
+        checkpoint()
         await wllama.loadModel( [ skeleton ], probe_load_options( probe_threads() ) )
+        checkpoint()
 
         // First tokens pay for thread spin-up and page faults
         await time_decode( wllama, WARMUP_TOKENS )
-        return await time_decode( wllama, PROBE_TOKENS )
+        checkpoint()
+        const tps = await time_decode( wllama, PROBE_TOKENS )
+
+        // Timed while competing with a real model: says nothing about the device
+        checkpoint()
+        return tps
     } finally {
         await wllama.exit().catch( () => {} )
         await discard_probe_file()
