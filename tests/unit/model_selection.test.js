@@ -99,7 +99,8 @@ describe( `model selection`, () => {
 
             // Product policy: only TPN-optimised builds are offered
             expect( model.hugging_face_repo, model.id ).toMatch( /^tpnlabs\// )
-            expect( model.tpn.kld, model.id ).toBeGreaterThan( 0 )
+            // null only where TPN's own reference run was broken (Gemma 4)
+            if( model.tpn.kld !== null ) expect( model.tpn.kld, model.id ).toBeGreaterThan( 0 )
             expect( model.tpn.report, model.id ).toMatch( /^https:\/\/bench\.trueperformancenetwork\.com\/r\// )
 
             expect( model.quality, model.id ).toBeGreaterThan( 0 )

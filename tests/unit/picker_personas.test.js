@@ -67,9 +67,7 @@ describe( `picker personas`, () => {
         }
     } )
 
-    // Re-enable when the TPN Gemma 4 26B build lands (TPN order g26): until then
-    // the largest TPN build is the 9B, which a browser can also run
-    test.skip( `the 32 GB MacBook desktop app gets a large model that a browser cannot run`, () => {
+    test( `the 32 GB MacBook desktop app gets a large model that a browser cannot run`, () => {
         const mac = profile_for( `macbook_desktop` )
         const laptop = profile_for( `windows_laptop` )
         const { pick } = select_for_preferences( MODEL_CATALOG, mac )
@@ -142,7 +140,7 @@ describe( `picker personas`, () => {
             cheap_android: [ `qwen35-0.8b-tpn-q5km`, `minicpm5-1b-tpn-q4km`, `minicpm5-1b-tpn-q50t`, `qwen35-0.8b-tpn-q5km` ],
             iphone: [ `qwen35-0.8b-tpn-q5km`, `minicpm5-1b-tpn-q4km`, `minicpm5-1b-tpn-q50t`, `qwen35-0.8b-tpn-q5km` ],
             windows_laptop: [ `qwen35-0.8b-tpn-q5km`, `qwen35-2b-tpn-q4km`, `qwen35-4b-tpn-q4km`, `qwen35-2b-tpn-q4km` ],
-            macbook_desktop: [ `qwen35-4b-tpn-q4km`, `qwen35-9b-tpn-iq4xs`, `qwen35-9b-tpn-iq4xs`, `qwen35-9b-tpn-iq4xs` ],
+            macbook_desktop: [ `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs` ],
         } )
     } )
 

@@ -64,7 +64,7 @@
  * @property {string} [specialist] - Niche focus (e.g. 'coding'): listed for experts, never auto-picked
  * @property {string} [license_flag] - Short flag for non-Apache/MIT terms (e.g. 'Gemma terms')
  * @property {{ score: number, willingness: number, date: string }} [ugi] - UGI leaderboard evidence for `uncensored`
- * @property {{ kld: number, report: string }} [tpn] - TPN Workbench build: mean KLD vs BF16 and its public report URL
+ * @property {{ kld: number|null, report: string }} [tpn] - TPN Workbench build: mean KLD vs BF16 (null when TPN's measurement is void) and its public report URL
  */
 
 /**
@@ -2122,6 +2122,20 @@ const TPN_BUILDS = [
         kld: 0.0253,
         report: `https://bench.trueperformancenetwork.com/r/akW7L6fSnz3Sg4lJlBSCNw`,
         mmproj: { file_name: `mmproj-Qwen3.5-9B-heretic-v2-F16.gguf`, file_size_bytes: 918_165_440 },
+    },
+
+    {
+        from: `gemma4-26b-a4b-iq4xs`,
+        id: `gemma4-26b-a4b-tpn-iq4xs`,
+        hugging_face_repo: `tpnlabs/gemma-4-26B-A4B-it-TPN-GGUF`,
+        file_name: `gemma-4-26B-A4B-it-IQ4_XS.gguf`,
+        file_size_bytes: 13_917_727_520,
+        quantization: `IQ4_XS`,
+        // TPN's BF16 reference run is broken for Gemma 4 (wiki perplexity 7552), so
+        // its scores are void; the files themselves answer correctly natively
+        kld: null,
+        report: `https://bench.trueperformancenetwork.com/r/2Ul4jX0DoRqqxHJxuyULkQ`,
+        mmproj: { file_name: `mmproj-gemma-4-26B-A4B-it-F16.gguf`, file_size_bytes: 1_193_058_208 },
     },
 
 ]
