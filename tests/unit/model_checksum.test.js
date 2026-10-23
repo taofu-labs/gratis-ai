@@ -1,7 +1,10 @@
 import { createHash } from 'crypto'
 import { describe, expect, test, vi } from 'vitest'
 import { lookup_sha256 as lookup_sha256_native } from '../../electron/model_files.js'
-import { ChecksumError, as_sha256, sha256_of_files, verify_sha256 } from '../../src/utils/model_checksum.js'
+import { ChecksumError, as_sha256, lookup_sha256, sha256_of_files, verify_sha256 } from '../../src/utils/model_checksum.js'
+
+const hub = vi.hoisted( () => ( { fileDownloadInfo: vi.fn() } ) )
+vi.mock( `@huggingface/hub`, () => hub )
 
 const sha256 = bytes => createHash( `sha256` ).update( bytes ).digest( `hex` )
 
@@ -73,6 +76,34 @@ describe( `model checksums`, () => {
 
             fetch_mock.mockRejectedValueOnce( new Error( `offline` ) )
             expect( await lookup_sha256_native( `https://huggingface.co/a/b/resolve/main/m.gguf` ) ).toBeNull()
+        } finally {
+            vi.unstubAllGlobals()
+        }
+
+    } )
+
+    test( `never vouches for a file that changed upstream since we downloaded it`, async () => {
+
+        const digest = sha256( bytes )
+        const source = { hugging_face_repo: `org/repo`, file_name: `m.gguf` }
+        hub.fileDownloadInfo.mockResolvedValue( { etag: `"${ digest }"`, size: bytes.byteLength } )
+
+        expect( await lookup_sha256( source, { expected_size: bytes.byteLength } ) ).toBe( digest )
+
+        // A re-upload has a different digest; an intact older copy must not be condemned
+        expect( await lookup_sha256( source, { expected_size: bytes.byteLength - 1 } ) ).toBeNull()
+
+    } )
+
+    test( `a stalled lookup gives up instead of blocking the load`, async () => {
+
+        hub.fileDownloadInfo.mockImplementation( ( { fetch } ) => fetch( `https://huggingface.co/x` ) )
+        vi.stubGlobal( `fetch`, ( _, { signal } ) => new Promise( ( _resolve, reject ) => {
+            signal.addEventListener( `abort`, () => reject( Object.assign( new Error( `aborted` ), { name: `AbortError` } ) ) )
+        } ) )
+
+        try {
+            expect( await lookup_sha256( { hugging_face_repo: `org/repo`, file_name: `m.gguf` }, { timeout_ms: 20 } ) ).toBeNull()
         } finally {
             vi.unstubAllGlobals()
         }

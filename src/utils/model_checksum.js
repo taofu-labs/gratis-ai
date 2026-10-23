@@ -29,14 +29,22 @@ export const as_sha256 = value => {
 }
 
 /**
- * Ask Hugging Face for a file's SHA-256. Null when offline or unknown, so
- * callers can skip verification rather than block the user.
+ * Ask Hugging Face for a file's SHA-256. Null when offline, slow, unknown, or
+ * when the remote file is no longer the one we hold: a re-uploaded GGUF has a
+ * new digest, and comparing an intact older copy against it would wrongly
+ * condemn it. The size check is the guard; a mismatch means "can't tell".
  * @param {{ hugging_face_repo: string, file_name: string }} source
+ * @param {Object} [options]
+ * @param {number} [options.expected_size] - Bytes we hold; skip when the remote differs
+ * @param {number} [options.timeout_ms] - A stalled lookup must never block a load
  * @returns {Promise<string|null>}
  */
-export const lookup_sha256 = async ( { hugging_face_repo, file_name } ) => {
+export const lookup_sha256 = async ( { hugging_face_repo, file_name }, { expected_size, timeout_ms = 15_000 } = {} ) => {
 
     if( !hugging_face_repo || !file_name ) return null
+
+    const controller = new AbortController()
+    const timer = setTimeout( () => controller.abort(), timeout_ms )
 
     try {
         const access_token = get_hf_token() || undefined
@@ -45,12 +53,19 @@ export const lookup_sha256 = async ( { hugging_face_repo, file_name } ) => {
             path: file_name,
             revision: `main`,
             hubUrl: HF_BASE_URL,
+            fetch: ( input, init = {} ) => fetch( input, { ...init, signal: controller.signal } ),
             ... access_token ? { accessToken: access_token } : {},
         } )
+        if( expected_size > 0 && info?.size !== expected_size ) {
+            log.info( `[checksum] ${ file_name } changed upstream (${ info?.size } vs ${ expected_size } bytes); not verifiable` )
+            return null
+        }
         return as_sha256( info?.etag )
     } catch ( error ) {
         log.warn( `[checksum] Could not look up SHA-256 for ${ file_name }:`, error?.message )
         return null
+    } finally {
+        clearTimeout( timer )
     }
 
 }

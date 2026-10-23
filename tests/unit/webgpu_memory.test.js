@@ -212,6 +212,9 @@ describe( `WebGPU memory probing`, () => {
         expect( webgpu_offload_trusted( { vendor: `nvidia` }, android ) ).toBe( false )
         expect( webgpu_offload_trusted( { vendor: `apple` }, `Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X)` ) ).toBe( false )
 
+        // iPadOS requests desktop sites with a Macintosh UA; only touch support gives it away
+        expect( webgpu_offload_trusted( { vendor: `apple` }, desktop, 5 ) ).toBe( false )
+
         // Desktop GPUs keep offload, including masked adapters
         expect( webgpu_offload_trusted( { vendor: `nvidia` }, desktop ) ).toBe( true )
         expect( webgpu_offload_trusted( { vendor: `apple`, architecture: `metal-3` }, desktop ) ).toBe( true )

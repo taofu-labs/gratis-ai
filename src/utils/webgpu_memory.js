@@ -71,9 +71,14 @@ export const classify_webgpu_adapter = ( info = {} ) => {
  *
  * @param {GPUAdapterInfo|Object} [info]
  * @param {string} [user_agent]
+ * @param {number} [max_touch_points]
  * @returns {boolean}
  */
-export const webgpu_offload_trusted = ( info = {}, user_agent = globalThis.navigator?.userAgent || `` ) => {
+export const webgpu_offload_trusted = (
+    info = {},
+    user_agent = globalThis.navigator?.userAgent || ``,
+    max_touch_points = globalThis.navigator?.maxTouchPoints || 0,
+) => {
 
     const identity = [ info.vendor, info.architecture, info.device, info.description ]
         .filter( Boolean )
@@ -82,6 +87,9 @@ export const webgpu_offload_trusted = ( info = {}, user_agent = globalThis.navig
 
     if( /qualcomm|adreno|\barm\b|mali|img-tec|imagination|powervr|samsung|xclipse/.test( identity ) ) return false
     if( /android|iphone|ipad|ipod/i.test( user_agent ) ) return false
+
+    // iPadOS Safari asks for desktop sites with a Macintosh UA; Macs have no touch screen
+    if( /macintosh/i.test( user_agent ) && max_touch_points > 1 ) return false
 
     return true
 

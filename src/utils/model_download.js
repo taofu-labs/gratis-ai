@@ -11,7 +11,7 @@ import {
 } from './hf_sdk_download'
 import { build_download_url } from './hf_url_parser'
 import { get_model_by_id, model_download_bytes } from './model_catalog'
-import { ChecksumError, lookup_sha256, verify_sha256 } from './model_checksum'
+import { ChecksumError, as_sha256, lookup_sha256, verify_sha256 } from './model_checksum'
 import { create_download_speed_tracker } from './network_speed'
 import { ReliableOPFSBackend } from './reliable_opfs_backend'
 
@@ -395,7 +395,8 @@ export const verify_installed_model = async ( { cached, files, on_progress } ) =
     if( cached.sha256_verified || cached.blob ) return
 
     // Only Hugging Face is trusted here: older wllama metadata may hold a CDN etag
-    const sha256 = await lookup_sha256( { ...cached, ...get_model_by_id( cached.id ) } )
+    const stored_size = files.reduce( ( total, file ) => total + file.size, 0 )
+    const sha256 = await lookup_sha256( { ...cached, ...get_model_by_id( cached.id ) }, { expected_size: stored_size } )
     if( !sha256 ) return
 
     try {
@@ -429,7 +430,8 @@ const download_part_to_opfs = async ( { part, signal, on_progress } ) => {
     const existing = await get_browser_cached_model( part.url, part.file_size_bytes )
     if( existing ) {
         on_progress( { loaded: part.file_size_bytes } )
-        return { stored: existing, fresh: false }
+        const sha256 = await lookup_sha256( part, { expected_size: part.file_size_bytes } )
+        return { stored: existing, fresh: false, sha256 }
     }
 
     const result = await download_hf_model_file_to_cache( {
@@ -444,7 +446,8 @@ const download_part_to_opfs = async ( { part, signal, on_progress } ) => {
     log.debug( `[download] ${ part.file_name } used the ${ result.mode } path into OPFS (resumed from ${ result.resumed_from } bytes)` )
     const stored = await get_browser_cached_model( part.url, result.size || part.file_size_bytes )
     if( !stored ) throw new Error( `The downloaded model could not be validated. Please retry the download.` )
-    return { stored, fresh: true }
+    // The digest from the very response we downloaded: a later lookup could see a newer upload
+    return { stored, fresh: true, sha256: as_sha256( result.etag ) }
 
 }
 
@@ -551,6 +554,7 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
 
     let model_files
     let entry_storage
+    let model_sha256 = null
     try {
         if( storage_mode === `external-file` ) {
 
@@ -560,14 +564,17 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
             const file_handle = reusable ? existing_entry.file_handle : take_pending_external_model_file( model.id )
             if( !file_handle ) throw new Error( `Choose where to save this GGUF file before downloading.` )
 
-            if( reusable ) progress_from( 0 )( { loaded: model.file_size_bytes } )
-            else {
+            if( reusable ) {
+                progress_from( 0 )( { loaded: model.file_size_bytes } )
+                model_sha256 = await lookup_sha256( model, { expected_size: model.file_size_bytes } )
+            } else {
                 const result = await download_hf_model_file_to_external_file( {
                     model,
                     file_handle,
                     signal,
                     on_progress: progress_from( 0 ),
                 } )
+                model_sha256 = as_sha256( result.etag )
                 log.debug( `[download] Hugging Face SDK browser download used ${ result.mode } path into external file` )
             }
 
@@ -576,12 +583,13 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
 
         } else {
 
-            const { stored, fresh } = await download_part_to_opfs( {
+            const { stored, fresh, sha256 } = await download_part_to_opfs( {
                 part: { ...model, url },
                 signal,
                 on_progress: progress_from( 0 ),
             } )
             if( fresh ) fresh_urls.push( url )
+            model_sha256 = sha256
             model_files = await stored.open()
             entry_storage = { storage: `wllama64-opfs`, download_url: url }
 
@@ -607,7 +615,7 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
     let validation
     try {
         validation = await validate_gguf_files( model_files, model.file_size_bytes, {
-            sha256: model_verified ? null : await lookup_sha256( model ),
+            sha256: model_verified ? null : model_sha256,
             on_progress: verifying_progress( 0 ),
             signal,
         } )
@@ -624,13 +632,15 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
     if( projector ) {
 
         let projector_files
+        let projector_sha256 = null
         try {
-            const { stored, fresh } = await download_part_to_opfs( {
+            const { stored, fresh, sha256 } = await download_part_to_opfs( {
                 part: projector,
                 signal,
                 on_progress: progress_from( model.file_size_bytes ),
             } )
             if( fresh ) fresh_urls.push( projector.url )
+            projector_sha256 = sha256
             projector_files = await stored.open()
         } catch ( err ) {
             if( err?.name === `AbortError` || signal?.aborted ) await throw_if_aborted()
@@ -641,7 +651,7 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
 
         try {
             const result = await validate_gguf_files( projector_files, projector.file_size_bytes, {
-                sha256: await lookup_sha256( projector ),
+                sha256: projector_sha256,
                 on_progress: verifying_progress( model.file_size_bytes ),
                 signal,
             } )

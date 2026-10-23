@@ -103,6 +103,8 @@ describe( `deployment headers`, () => {
         expect( redirect_for( `http://localhost:5173/` ) ).toBeNull()
         expect( redirect_for( `http://127.0.0.1:5173/` ) ).toBeNull()
         expect( redirect_for( `http://192.168.2.10:5173/` ) ).toBeNull()
+        expect( redirect_for( `http://localhost.example.com/` ) ).toBe( `https://localhost.example.com/` )
+        expect( redirect_for( `http://127.0.0.1.nip.io/` ) ).toBe( `https://127.0.0.1.nip.io/` )
         expect( readFileSync( `public/_headers`, `utf-8` ) ).toContain( `Strict-Transport-Security` )
 
     } )
