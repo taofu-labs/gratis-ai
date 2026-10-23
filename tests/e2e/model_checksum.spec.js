@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { MODELS } from '../fixtures/test_models'
-import { download_model_via_ui } from '../helpers/download_model'
+import { download_model_via_ui, select_model_on_page } from '../helpers/download_model'
 
 const DB_NAME = `gratis-db`
 
@@ -87,6 +87,38 @@ test.describe( `Model checksums`, () => {
         // Plain resolve URL, never the Xet reconstruction service
         expect( requests.some( url => url.includes( `/resolve/main/${ MODELS.smollm2.file_name }` ) ) ).toBe( true )
         expect( requests.some( url => /xethub|reconstruction/.test( url ) ) ).toBe( false )
+        expect( logs.some( line => /\[checksum\] SHA-256 verified/.test( line ) ) ).toBe( true )
+
+    } )
+
+    test( `an interrupted plain HTTP download resumes to the exact file`, async ( { page } ) => {
+
+        const logs = []
+        page.on( `console`, message => logs.push( message.text() ) )
+
+        // Force the plain HTTP path (no byte streams, as on iOS 16 Safari)
+        await page.addInitScript( () => {
+            const NativeReadableStream = globalThis.ReadableStream
+            globalThis.ReadableStream = class extends NativeReadableStream {
+                constructor( source, strategy ) {
+                    if( source?.type === `bytes` ) throw new TypeError( `ReadableByteStreamController is not implemented` )
+                    super( source, strategy )
+                }
+            }
+        } )
+
+        // Start the download, then kill the page mid-transfer to leave a resumable prefix
+        await page.goto( `/` )
+        await page.getByTestId( `get-started-btn` ).click()
+        await select_model_on_page( page, MODELS.smollm2 )
+        await page.getByTestId( `model-select-confirm-btn` ).click()
+        await expect.poll( async () => ( await page.getByTestId( `download-progress-bar` ).locator( `..` ).textContent() ) || ``, { timeout: 120_000 } )
+            .toMatch( /[1-9]\d+(\.\d+)? MB \// )
+        await page.reload()
+
+        await download_model_via_ui( page, MODELS.smollm2 )
+
+        expect( logs.some( line => /\[download\] Resuming/.test( line ) ) ).toBe( true )
         expect( logs.some( line => /\[checksum\] SHA-256 verified/.test( line ) ) ).toBe( true )
 
     } )

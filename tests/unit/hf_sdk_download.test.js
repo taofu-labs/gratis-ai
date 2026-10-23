@@ -220,7 +220,7 @@ describe( `Hugging Face SDK download`, () => {
         expect( sdk.downloadFile.mock.calls[ 0 ][ 0 ].accessToken ).toBe( `hf_test` )
     } )
 
-    test( `resumes a matching OPFS prefix with a ranged slice`, async () => {
+    test( `resumes a matching Xet prefix with a ranged slice`, async () => {
         const storage = new MemoryStorage()
         storage.setItem( resume_key, JSON.stringify( { etag: `etag`, total: 6, url: download_url } ) )
         const storage_backend = create_backend( 4 )
@@ -236,7 +236,7 @@ describe( `Hugging Face SDK download`, () => {
             storage,
             access_token: ``,
             sdk: {
-                fileDownloadInfo: vi.fn( async () => ( { size: 6, etag: `etag`, url: download_url } ) ),
+                fileDownloadInfo: vi.fn( async () => ( { size: 6, etag: `etag`, url: download_url, xet: { hash: `h` } } ) ),
                 downloadFile: vi.fn( async () => blob ),
             },
             on_progress: update => progress.push( update ),
@@ -249,6 +249,58 @@ describe( `Hugging Face SDK download`, () => {
         expect( progress.at( -1 ) ).toEqual( { loaded: 6, total: 6 } )
         expect( result.resumed_from ).toBe( 4 )
         expect( storage.getItem( resume_key ) ).toBeNull()
+    } )
+
+    // Plain HTTP resume: Range may not survive Hugging Face's CDN redirect
+    const resume_web = async fetch_impl => {
+        const storage = new MemoryStorage()
+        storage.setItem( resume_key, JSON.stringify( { etag: `etag`, total: 6, url: download_url } ) )
+        const storage_backend = create_backend( 4 )
+        const result = await download_hf_model_file_to_cache( {
+            model,
+            url: download_url,
+            cache_manager: create_cache_manager(),
+            storage_backend,
+            storage,
+            access_token: ``,
+            fetch_impl,
+            sdk: {
+                fileDownloadInfo: vi.fn( async () => ( { size: 6, etag: `etag`, url: download_url } ) ),
+                downloadFile: vi.fn( async () => new Blob( [ new Uint8Array( 6 ) ] ) ),
+            },
+        } )
+        return { result, storage_backend }
+    }
+
+    test( `plain HTTP resume appends the ranged tail`, async () => {
+        const fetch_impl = vi.fn( async () => new Response( new Uint8Array( [ 5, 6 ] ), { status: 206 } ) )
+        const { storage_backend } = await resume_web( fetch_impl )
+
+        expect( fetch_impl.mock.calls[ 0 ][ 1 ].headers.Range ).toBe( `bytes=4-` )
+        expect( storage_backend.appends ).toEqual( [ { key: `cache-key`, offset: 4 } ] )
+        expect( storage_backend.size ).toBe( 6 )
+    } )
+
+    test( `plain HTTP resume restarts when the server ignores Range`, async () => {
+        const fetch_impl = vi.fn( async () => new Response( new Uint8Array( 6 ), { status: 200 } ) )
+        const { storage_backend } = await resume_web( fetch_impl )
+
+        // Never the whole file appended after the prefix (iOS 16 ended at 704 of 688 MB)
+        expect( storage_backend.appends ).toEqual( [ { key: `cache-key`, offset: 0 } ] )
+        expect( storage_backend.size ).toBe( 6 )
+    } )
+
+    test( `plain HTTP resume retries the CDN URL when the redirect dropped Range`, async () => {
+        const redirected = new Response( new Uint8Array( 6 ), { status: 200 } )
+        Object.defineProperties( redirected, { redirected: { value: true }, url: { value: `https://cdn.test/file` } } )
+        const fetch_impl = vi.fn()
+            .mockResolvedValueOnce( redirected )
+            .mockResolvedValueOnce( new Response( new Uint8Array( [ 5, 6 ] ), { status: 206 } ) )
+        const { storage_backend } = await resume_web( fetch_impl )
+
+        expect( fetch_impl.mock.calls[ 1 ][ 0 ] ).toBe( `https://cdn.test/file` )
+        expect( fetch_impl.mock.calls[ 1 ][ 1 ].headers.Range ).toBe( `bytes=4-` )
+        expect( storage_backend.appends ).toEqual( [ { key: `cache-key`, offset: 4 } ] )
     } )
 
     test( `starting a download sweeps other interrupted prefixes`, async () => {

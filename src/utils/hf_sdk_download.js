@@ -150,6 +150,34 @@ const get_hf_model_blob = async ( {
 
 }
 
+/**
+ * Body of `url` from byte `offset`. Browsers do not carry Range across Hugging
+ * Face's redirect to its CDN, so a 200 after a redirect is retried against the
+ * final URL. Anything other than 206 means the full file: start reports 0.
+ * @param {Object} options
+ * @param {string} options.url
+ * @param {number} options.offset
+ * @param {string} [options.access_token]
+ * @param {typeof fetch} options.fetch_impl
+ * @returns {Promise<{ body: ReadableStream, start: number }>}
+ */
+export const ranged_web_body = async ( { url, offset, access_token, fetch_impl } ) => {
+
+    const range = { Range: `bytes=${ offset }-` }
+    let response = await fetch_impl( url, {
+        headers: { ...range, ... access_token ? { Authorization: `Bearer ${ access_token }` } : {} },
+    } )
+
+    if( response.status === 200 && response.redirected && response.url ) {
+        await response.body?.cancel().catch( () => {} )
+        response = await fetch_impl( response.url, { headers: range } )
+    }
+
+    if( !response.ok ) throw new Error( `Download failed: ${ response.status } ${ response.statusText }` )
+    return { body: response.body, start: response.status === 206 ? offset : 0 }
+
+}
+
 const resume_record_key = cache_key => `${ RESUME_KEY_PREFIX }${ cache_key }`
 
 const read_resume_record = ( storage, cache_key ) => {
@@ -351,14 +379,21 @@ export const download_hf_model_file_to_cache = async ( {
             write_resume_record( storage, cache_key, { etag, total, url } )
             on_progress?.( { loaded: offset, total, resumed_from: offset } )
 
-            const progress = create_progress_stream( total, on_progress, offset )
             let stored_bytes = offset
 
             // A prefix that already holds every byte only lacks its metadata
             if( !( total > 0 ) || offset < total ) {
-                const source = offset > 0 ? blob.slice( offset ) : blob
-                const stream = abortable_stream( source.stream(), signal ).pipeThrough( progress.stream )
-                stored_bytes = await storage_backend.append( cache_key, stream, { offset } )
+
+                // Plain HTTP resumes go through our own ranged request: a server or
+                // redirect that drops Range must restart the file, not append it whole
+                const { body, start } = offset > 0 && mode === `web`
+                    ? await ranged_web_body( { url: info.url, offset, access_token, fetch_impl: with_abort_signal( fetch_impl, signal ) } )
+                    : { body: ( offset > 0 ? blob.slice( offset ) : blob ).stream(), start: offset }
+
+                if( start !== offset ) log.warn( `[download] Server ignored the resume range; restarting ${ model.file_name }` )
+                const progress = create_progress_stream( total, on_progress, start )
+                const stream = abortable_stream( body, signal ).pipeThrough( progress.stream )
+                stored_bytes = await storage_backend.append( cache_key, stream, { offset: start } )
             }
 
             if( signal?.aborted ) throw abort_error()

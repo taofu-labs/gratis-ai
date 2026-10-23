@@ -5,6 +5,7 @@ import { get_hf_token } from './hf_auth'
 
 const HF_BASE_URL = import.meta.env.VITE_HF_BASE_URL || `https://huggingface.co`
 const SHA256_PATTERN = /^[0-9a-f]{64}$/
+const HASH_CHUNK_BYTES = 8 * 1024 * 1024
 
 /**
  * A model file whose bytes differ from the published file: corrupted, or an
@@ -88,31 +89,24 @@ export const sha256_of_files = async ( files, { on_progress, signal } = {} ) => 
     let hashed = 0
     let last_reported_at = 0
 
+    // Sliced reads, not file.stream(): WebKit's stream reader fails with "The I/O
+    // read operation failed" on large files, while slices of the same file work
     for( const file of files ) {
+        for( let position = 0; position < file.size; position += HASH_CHUNK_BYTES ) {
 
-        const reader = file.stream().getReader()
+            if( signal?.aborted ) throw Object.assign( new Error( `Verification aborted` ), { name: `AbortError` } )
 
-        try {
-            while( true ) {
-                if( signal?.aborted ) throw Object.assign( new Error( `Verification aborted` ), { name: `AbortError` } )
+            const chunk = file.slice( position, Math.min( position + HASH_CHUNK_BYTES, file.size ) )
+            hasher.update( new Uint8Array( await chunk.arrayBuffer() ) )
+            hashed += chunk.size
 
-                const { done, value } = await reader.read()
-                if( done ) break
-
-                hasher.update( value )
-                hashed += value.byteLength
-
-                // Throttled: a multi-GB file yields tens of thousands of chunks
-                const now = performance.now()
-                if( now - last_reported_at > 100 ) {
-                    last_reported_at = now
-                    on_progress?.( { hashed, total } )
-                }
+            const now = performance.now()
+            if( now - last_reported_at > 100 ) {
+                last_reported_at = now
+                on_progress?.( { hashed, total } )
             }
-        } finally {
-            reader.releaseLock()
-        }
 
+        }
     }
 
     on_progress?.( { hashed, total } )
