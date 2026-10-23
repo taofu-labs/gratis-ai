@@ -2,13 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { X, CheckCircle, LoaderCircle } from 'lucide-react'
+import { X, CheckCircle, LoaderCircle, RotateCcw } from 'lucide-react'
 import { log } from 'mentie'
 import { discard_browser_partial_download, download_model, is_model_cached, is_projector_cached } from '../../utils/model_download'
 import { format_file_size } from '../../utils/model_catalog'
 import { storage_key } from '../../utils/branding'
 import { create_download_eta_estimator, format_download_duration } from '../../utils/network_speed'
 import use_llm from '../../hooks/use_llm'
+import Button from '../atoms/Button'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 
 const Container = styled.div`
@@ -182,6 +183,8 @@ export default function DownloadPage() {
     const [ error, set_error ] = useState( null )
     const [ phase, set_phase ] = useState( `downloading` )
     const [ resumed_from, set_resumed_from ] = useState( 0 )
+    // Bumped by Retry; a failed transfer keeps its prefix, so the next attempt resumes
+    const [ attempt, set_attempt ] = useState( 0 )
     // The model is already here; only its vision projector is missing
     const [ adding_projector, set_adding_projector ] = useState( false )
     const adding_projector_ref = useRef( false )
@@ -193,8 +196,8 @@ export default function DownloadPage() {
     // Observed-throughput ETA, kept in a ref so progress does not re-render per chunk
     const eta_ref = useRef( create_download_eta_estimator() )
 
-    // Guard against StrictMode double-mount starting two downloads
-    const download_started_ref = useRef( false )
+    // Guard against StrictMode double-mount starting the same attempt twice
+    const download_started_ref = useRef( -1 )
 
     // Throttle progress updates to ~4fps to prevent jitter from rapid re-renders
     const last_update_ref = useRef( 0 )
@@ -250,8 +253,8 @@ export default function DownloadPage() {
         }
 
         // Prevent StrictMode double-mount from starting two concurrent downloads
-        if( download_started_ref.current ) return
-        download_started_ref.current = true
+        if( download_started_ref.current === attempt ) return
+        download_started_ref.current = attempt
 
         // Check if already cached (also validates the source repo/file match)
         // Complete = language model plus vision projector when the catalog lists one
@@ -320,7 +323,13 @@ export default function DownloadPage() {
             if( !cancelled_ref.current ) set_error( err.message )
         } )
 
-    }, [ model, navigate, on_complete, storage_mode ] )
+    }, [ model, navigate, on_complete, storage_mode, attempt ] )
+
+    const handle_retry = () => {
+        log.info( `[download] Retrying after:`, error )
+        set_error( null )
+        set_attempt( current => current + 1 )
+    }
 
     const handle_cancel = () => {
         log.info( `[download] Aborted by user` )
@@ -407,6 +416,10 @@ export default function DownloadPage() {
         </StatusMessage>
 
         { error && <ErrorText>{ error }</ErrorText> }
+        { error && <Button onClick={ handle_retry } data-testid="retry-download-btn">
+            <RotateCcw size={ 16 } />
+            { t( 'common:retry' ) }
+        </Button> }
 
         <PercentText>{ percent }%</PercentText>
 

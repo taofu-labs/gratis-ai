@@ -12,6 +12,7 @@
 
 ### Fixed
 - Phones no longer reply with garbled multilingual text: mobile GPUs (Qualcomm Adreno, ARM Mali, PowerVR, Samsung Xclipse, any Android/iOS browser) now run models on the CPU instead of WebGPU, whose kernels computed wrong results on Adreno 830 (OnePlus 13) and gave no speedup on Adreno 619
+- A failed download is no longer a dead end: a Retry button resumes from what was already saved
 - Resuming an interrupted download can no longer append the whole file after the saved part (browsers drop the Range header across Hugging Face's CDN redirect); such resumes restart cleanly
 - Download verification reads files in chunks, avoiding Safari's "The I/O read operation failed" on large files
 - Model downloads work on iOS 16 Safari again: browsers without byte-stream support fetch the plain file instead of failing at 0% with "ReadableByteStreamController is not implemented"
