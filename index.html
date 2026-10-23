@@ -6,6 +6,10 @@
     <meta name="theme-color" content="#1a1a2e" />
     <!-- Never leak page URLs to model hosts; Hugging Face also rejects some referrers (e.g. *.workers.dev) -->
     <meta name="referrer" content="no-referrer" />
+    <!-- Plain http has no cross-origin isolation: no threads, no OPFS. Hosts reached by name always move to https -->
+    <script>
+        if( location.protocol === 'http:' && !/^(localhost|127\.|\[::1\]|[\d.]+$)/.test( location.hostname ) ) location.replace( 'https://' + location.host + location.pathname + location.search + location.hash )
+    </script>
     <title>%VITE_APP_NAME%</title>
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />

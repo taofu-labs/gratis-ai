@@ -86,4 +86,25 @@ describe( `deployment headers`, () => {
 
     } )
 
+    test( `moves named http hosts to https, keeps local dev on http`, () => {
+
+        // Plain http is never cross-origin isolated: no threads, no OPFS model storage
+        const index_html = readFileSync( `index.html`, `utf-8` )
+        const [ , script ] = index_html.match( /<script>([\s\S]*?)<\/script>/ )
+        const redirect_for = url => {
+            const { protocol, host, hostname, pathname, search, hash } = new URL( url )
+            let target = null
+            new Function( `location`, script )( { protocol, host, hostname, pathname, search, hash, replace: to => target = to } )
+            return target
+        }
+
+        expect( redirect_for( `http://gratis.trueperformancenetwork.com/chat/1?q=hi#x` ) ).toBe( `https://gratis.trueperformancenetwork.com/chat/1?q=hi#x` )
+        expect( redirect_for( `https://gratis.trueperformancenetwork.com/` ) ).toBeNull()
+        expect( redirect_for( `http://localhost:5173/` ) ).toBeNull()
+        expect( redirect_for( `http://127.0.0.1:5173/` ) ).toBeNull()
+        expect( redirect_for( `http://192.168.2.10:5173/` ) ).toBeNull()
+        expect( readFileSync( `public/_headers`, `utf-8` ) ).toContain( `Strict-Transport-Security` )
+
+    } )
+
 } )
