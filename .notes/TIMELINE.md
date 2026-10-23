@@ -574,3 +574,4 @@
 - 2026-10-23 03:30 g26 landed: TPN Gemma 4 26B published with scores withheld (TPN reference broken); Mac desktop picks it again, Mac large-model test re-enabled.
 - 2026-10-23 05:00 d17b landed: TPN Qwen3 1.7B decensored published; iPhone fewer refusals picks it. All TPN orders settled ($211.18).
 - 2026-10-23 deployed 250b018 (delete button, TPN-only catalog incl. 4B / Gemma 26B / decensored 1.7B, review fixes); live bundle index--YwKeas_.js, picker recommends TPN 2B.
+- 2026-10-23 deployed dd57739: picker Photos/Uncensored switches in view; large browser downloads stay in OPFS (save dialog only when quota short).
