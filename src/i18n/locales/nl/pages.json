@@ -13,6 +13,7 @@
     "loading_model_generic": "Je model laden…",
     "model_ready_generic": "Je model — Gereed",
     "load_stage_starting": "Lokale AI-engine starten",
+    "load_stage_verifying": "Modelbestand controleren (eenmalig)",
     "load_stage_checking_memory": "Beschikbaar geheugen controleren",
     "load_stage_measuring_gpu": "Grafisch geheugen meten",
     "load_stage_loading_gpu": "Model laden met grafische versnelling",

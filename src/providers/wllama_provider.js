@@ -18,7 +18,7 @@ import {
 } from '../utils/model_catalog'
 import { get_external_model_file } from '../utils/external_model_files'
 import { resolve_hf_model } from '../utils/hf_url_parser'
-import { get_browser_cached_model, get_browser_cached_projector, projector_source } from '../utils/model_download'
+import { get_browser_cached_model, get_browser_cached_projector, projector_source, verify_installed_model } from '../utils/model_download'
 import { COMPAT_PATHS, CONFIG_PATHS } from '../utils/wllama_paths'
 import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, MAX_HISTORY_IMAGES, to_wllama_messages } from '../utils/attachments'
 
@@ -257,6 +257,14 @@ export default class WllamaProvider {
             throw new Error( `Model files are missing from browser storage. Download the model again.` )
         }
 
+        const model_blobs = cached.blob ? [ cached.blob ]
+            : cached.file_handle ? [ stored_model ]
+                : await stored_model.open()
+
+        // Installs from before download checksums are hashed once; corrupt weights load fine, then babble
+        await verify_installed_model( { cached, files: model_blobs, on_progress } )
+        this._assert_load_current( generation )
+
         if( on_progress ) on_progress( { progress: 0, status: `Checking available memory...` } )
 
         // A vision model without its projector still chats; images wait for it
@@ -340,9 +348,6 @@ export default class WllamaProvider {
         }
 
         // wllama tells the projector apart by its GGUF architecture ("clip")
-        const model_blobs = cached.blob ? [ cached.blob ]
-            : cached.file_handle ? [ stored_model ]
-                : await stored_model.open()
         const source = use_projector ? [ ...model_blobs, ...await projector.open() ] : model_blobs
         let probed_capabilities = capabilities
 

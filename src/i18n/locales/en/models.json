@@ -45,6 +45,7 @@
     "cancel_download": "Cancel download",
     "preparing": "Preparing...",
     "download_resuming": "Resuming where you left off ({{size}} already saved)",
+    "download_verifying": "Verifying download… {{percent}}%",
     "preparing_your_model": "Getting your model ready",
     "preparing_your_model_detail": "{{name}} is downloaded. Loading it into memory — this can take up to a minute.",
     "adding_image_support": "Adding image support",

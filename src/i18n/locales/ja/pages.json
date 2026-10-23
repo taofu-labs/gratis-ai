@@ -13,6 +13,7 @@
     "loading_model_generic": "モデルを読み込み中...",
     "model_ready_generic": "モデル — 準備完了",
     "load_stage_starting": "ローカルAIエンジンを起動中",
+    "load_stage_verifying": "モデルファイルを検証中（初回のみ）",
     "load_stage_checking_memory": "使用可能なメモリを確認中",
     "load_stage_measuring_gpu": "グラフィックメモリを測定中",
     "load_stage_loading_gpu": "グラフィック高速化でモデルを読み込み中",

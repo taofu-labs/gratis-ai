@@ -45,6 +45,7 @@
     "download_speed_limited": "Pobieranie zwolniło. Hugging Face może ograniczać ruch.",
     "download_eta_stabilizing": "Obliczanie pozostałego czasu…",
     "download_resuming": "Wznawianie od miejsca przerwania ({{size}} już zapisano)",
+    "download_verifying": "Weryfikowanie pobranego pliku… {{percent}}%",
     "preparing_your_model": "Przygotowywanie Twojego modelu",
     "preparing_your_model_detail": "{{name}} został pobrany. Trwa ładowanie do pamięci — może to potrwać do minuty.",
     "adding_image_support": "Dodawanie obsługi obrazów",

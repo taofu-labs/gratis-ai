@@ -45,6 +45,7 @@
     "download_speed_limited": "ダウンロードが遅くなっています。Hugging Face が通信を制限している可能性があります。",
     "download_eta_stabilizing": "残り時間を計算中...",
     "download_resuming": "中断した位置から再開しています（{{size}} 保存済み）",
+    "download_verifying": "ダウンロードを検証中… {{percent}}%",
     "preparing_your_model": "モデルを準備中",
     "preparing_your_model_detail": "{{name}} のダウンロードが完了しました。メモリに読み込んでいます。最大1分ほどかかることがあります。",
     "adding_image_support": "画像サポートを追加中",

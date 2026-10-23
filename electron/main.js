@@ -4,7 +4,8 @@ const path = require( `path` )
 const fs = require( `fs` )
 const os = require( `os` )
 const { LlamaServer, resolve_server_binary } = require( `./llama_server.js` )
-const { mmproj_local_name, has_gguf_magic } = require( `./model_files.js` )
+const { mmproj_local_name, has_gguf_magic, lookup_sha256 } = require( `./model_files.js` )
+const { createHash } = require( `crypto` )
 
 // ---------------------------------------------------
 // Console forwarding — pipes Node.js console output
@@ -347,6 +348,10 @@ const download_gguf = async ( { url, dest, request_options, on_total, on_bytes }
 
     try {
 
+        // Size and magic cannot catch corrupt weights, which load fine and then babble
+        const expected_sha256 = await lookup_sha256( url, request_options )
+        const hash = createHash( `sha256` )
+
         const response = await fetch( url, request_options )
         if( !response.ok ) throw download_error( response )
 
@@ -363,6 +368,7 @@ const download_gguf = async ( { url, dest, request_options, on_total, on_bytes }
                 const { done, value } = await reader.read()
                 if( done ) break
                 fs.writeSync( fd, value )
+                hash.update( value )
                 on_bytes( value.byteLength )
             }
 
@@ -380,6 +386,11 @@ const download_gguf = async ( { url, dest, request_options, on_total, on_bytes }
         if( !has_gguf_magic( part_path ) ) {
             throw new Error( `Downloaded file is not a GGUF model: ${ path.basename( dest ) }` )
         }
+        const sha256 = hash.digest( `hex` )
+        if( expected_sha256 && sha256 !== expected_sha256 ) {
+            throw new Error( `The model file is corrupted (checksum mismatch). Please download it again.` )
+        }
+        if( !expected_sha256 ) console.warn( `[download] No SHA-256 known for ${ path.basename( dest ) }, skipped checksum` )
 
         fs.renameSync( part_path, dest )
         return written_size

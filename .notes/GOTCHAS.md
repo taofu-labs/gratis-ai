@@ -408,3 +408,10 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - Changing the probe (model, layers, tokens, load options) or the table => bump `SPEED_REFERENCE_ID` and rebench everything.
 - e2e localStorage prefix is `gratis:` (VITE_APP_NAME=Gratis), not `gratisai:`.
 - Qwen3 1.7B decensored (TPN Q4_K_M): file verified sane 2026-10-23 natively (llama.cpp b11818), in wllama CPU, and via node-llama-cpp. Q4 ≈ Q8 ≈ stock Qwen3 1.7B in quality; all make confident factual slips (1.7B limit). Vocab has a stray `</s>` (id 128247) — load warning only. SwiftShader WebGPU does NOT give wllama a GPU device here (tensors stay on CPU), so the WebGPU path can't be tested on this box.
+
+## Model download checksums (2026-10-23)
+- HF etag (`fileDownloadInfo().etag`, or `x-linked-etag` on the resolve 302) = file SHA-256 for LFS/Xet files; `lfs.oid` in the tree API. `xetHash` is a different (merkle) hash. Small git files carry a SHA-1 etag → no verification.
+- Browser hashes what OPFS *stored* (hash-wasm, after download) — catches write/resume bugs, not just network. Electron hashes the stream while writing.
+- Never trust old wllama OPFS metadata etags as SHA-256: pre-SDK downloads may hold a CDN etag. Legacy verification asks HF only; offline → skip, retry next load (`sha256_verified` in IDB).
+- `verifying` field in download progress means hashing: keep it out of speed/ETA trackers.
+- SmolLM2 360M at temp 0.7 sometimes answers "2" to 2+2: inference.spec is sampling-flaky, not broken.

@@ -45,6 +45,7 @@
     "download_speed_limited": "De download is vertraagd. Hugging Face beperkt mogelijk het verkeer.",
     "download_eta_stabilizing": "Resterende tijd berekenen…",
     "download_resuming": "Verder waar je gebleven was ({{size}} al opgeslagen)",
+    "download_verifying": "Download controleren… {{percent}}%",
     "preparing_your_model": "Je model wordt klaargemaakt",
     "preparing_your_model_detail": "{{name}} is gedownload en wordt nu in het geheugen geladen — dit kan tot een minuut duren.",
     "adding_image_support": "Beeldondersteuning toevoegen",

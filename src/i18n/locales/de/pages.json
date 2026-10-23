@@ -13,6 +13,7 @@
     "loading_model_generic": "Dein Modell wird geladen…",
     "model_ready_generic": "Dein Modell — Bereit",
     "load_stage_starting": "Lokale KI-Engine wird gestartet",
+    "load_stage_verifying": "Modelldatei wird einmalig geprüft",
     "load_stage_checking_memory": "Verfügbarer Arbeitsspeicher wird geprüft",
     "load_stage_measuring_gpu": "Grafikspeicher wird gemessen",
     "load_stage_loading_gpu": "Modell wird mit Grafikbeschleunigung geladen",

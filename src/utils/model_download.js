@@ -11,6 +11,7 @@ import {
 } from './hf_sdk_download'
 import { build_download_url } from './hf_url_parser'
 import { get_model_by_id, model_download_bytes } from './model_catalog'
+import { ChecksumError, lookup_sha256, verify_sha256 } from './model_checksum'
 import { create_download_speed_tracker } from './network_speed'
 import { ReliableOPFSBackend } from './reliable_opfs_backend'
 
@@ -345,12 +346,17 @@ export const discard_browser_partial_download = async ( model ) => {
 const GGUF_MAGIC = [ 0x47, 0x47, 0x55, 0x46 ]
 
 /**
- * Check a downloaded GGUF's size and magic bytes. Throws a user-facing error.
+ * Check a downloaded GGUF's size, magic bytes and, when known, SHA-256.
+ * Throws a user-facing error.
  * @param {Blob[]} files - Shards as returned by `Model.open()`
  * @param {number} expected_size
- * @returns {Promise<number>} Stored size
+ * @param {Object} [options]
+ * @param {string|null} [options.sha256] - Expected digest; skipped when unknown
+ * @param {Function} [options.on_progress] - ({ hashed, total }) while hashing
+ * @param {AbortSignal} [options.signal]
+ * @returns {Promise<{ size: number, verified: boolean }>}
  */
-const validate_gguf_files = async ( files, expected_size ) => {
+const validate_gguf_files = async ( files, expected_size, { sha256, on_progress, signal } = {} ) => {
 
     const [ first_file ] = files
     const size = files.reduce( ( total, file ) => total + file.size, 0 )
@@ -366,7 +372,46 @@ const validate_gguf_files = async ( files, expected_size ) => {
         throw new Error( `Downloaded file is not a valid GGUF model. The file may be corrupted or the URL may have redirected to an error page.` )
     }
 
-    return size
+    // Right size and header can still hide corrupt weights: those load, then babble
+    const verified = await verify_sha256( files, sha256, { on_progress, signal } )
+
+    return { size, verified }
+
+}
+
+/**
+ * One-time integrity check for installs that predate download checksums.
+ * Marks the IndexedDB entry verified on success; a corrupt install is removed
+ * so the next attempt downloads it fresh. Unknown digests (offline) are retried
+ * on a later load rather than blocking this one.
+ * @param {Object} options
+ * @param {Object} options.cached - IndexedDB model entry
+ * @param {Blob[]} options.files - The language model's stored blobs
+ * @param {Function} [options.on_progress] - Load progress ({ progress, status })
+ * @returns {Promise<void>}
+ */
+export const verify_installed_model = async ( { cached, files, on_progress } ) => {
+
+    if( cached.sha256_verified || cached.blob ) return
+
+    // Only Hugging Face is trusted here: older wllama metadata may hold a CDN etag
+    const sha256 = await lookup_sha256( { ...cached, ...get_model_by_id( cached.id ) } )
+    if( !sha256 ) return
+
+    try {
+        await verify_sha256( files, sha256, {
+            on_progress: ( { hashed, total } ) => on_progress?.( {
+                progress: total > 0 ? hashed / total : 0,
+                status: `Verifying model file...`,
+            } ),
+        } )
+    } catch ( error ) {
+        if( error instanceof ChecksumError ) await remove_browser_cache_entry( cached )
+        throw error
+    }
+
+    const db = await get_db()
+    await db.put( `models`, { ...cached, sha256, sha256_verified: true } )
 
 }
 
@@ -425,7 +470,8 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
     const headers = get_hf_headers()
     const speed_tracker = create_download_speed_tracker( url )
     const report_progress = progress => {
-        speed_tracker.update( progress )
+        // Hashing is not network throughput
+        if( progress.verifying === undefined ) speed_tracker.update( progress )
         on_progress( progress )
     }
 
@@ -546,15 +592,32 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
     }
 
     await throw_if_aborted()
-    report_progress( { progress: bytes_total > 0 ? model.file_size_bytes / bytes_total : 1, bytes_loaded: model.file_size_bytes, bytes_total, status: `Validating model...` } )
 
-    let downloaded_size
+    // Hashing re-reads the stored bytes, so it catches storage faults as well as network ones
+    const verifying_progress = offset => ( { hashed, total } ) => report_progress( {
+        progress: bytes_total > 0 ? Math.min( ( offset + total ) / bytes_total, 1 ) : 1,
+        bytes_loaded: offset + total,
+        bytes_total,
+        status: `Verifying download...`,
+        verifying: total > 0 ? hashed / total : 0,
+    } )
+
+    // Adding a projector to a verified install must not re-hash gigabytes
+    const model_verified = !!existing_entry?.sha256_verified
+    let validation
     try {
-        downloaded_size = await validate_gguf_files( model_files, model.file_size_bytes )
+        validation = await validate_gguf_files( model_files, model.file_size_bytes, {
+            sha256: model_verified ? null : await lookup_sha256( model ),
+            on_progress: verifying_progress( 0 ),
+            signal,
+        } )
     } catch ( error ) {
+        if( error?.name === `AbortError` ) await throw_if_aborted()
         if( storage_mode !== `external-file` ) await remove_opfs_url( url )
         throw error
     }
+    let downloaded_size = validation.size
+    const verified = model_verified || validation.verified
 
     // ── Vision projector (always OPFS) ───────────────────────────────
 
@@ -577,8 +640,14 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
         await throw_if_aborted()
 
         try {
-            downloaded_size += await validate_gguf_files( projector_files, projector.file_size_bytes )
+            const result = await validate_gguf_files( projector_files, projector.file_size_bytes, {
+                sha256: await lookup_sha256( projector ),
+                on_progress: verifying_progress( model.file_size_bytes ),
+                signal,
+            } )
+            downloaded_size += result.size
         } catch ( error ) {
+            if( error?.name === `AbortError` ) await throw_if_aborted()
             await remove_opfs_url( projector.url )
             throw error
         }
@@ -593,6 +662,9 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
         cached_at: existing_entry?.cached_at || now,
         file_size_bytes: model.file_size_bytes || model_files[ 0 ].size,
         last_used_at: now,
+
+        // Unverified installs (digest unknown while downloading) get checked on load
+        sha256_verified: verified,
     } ) )
 
     log.info( `[download] Complete: ${ model.name } (${ ( downloaded_size / 1e6 ).toFixed( 0 ) } MB)` )

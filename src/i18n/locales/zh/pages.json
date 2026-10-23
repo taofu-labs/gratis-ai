@@ -13,6 +13,7 @@
     "loading_model_generic": "正在加载你的模型...",
     "model_ready_generic": "你的模型 — 就绪",
     "load_stage_starting": "正在启动本地 AI 引擎",
+    "load_stage_verifying": "正在校验模型文件（仅一次）",
     "load_stage_checking_memory": "正在检查可用内存",
     "load_stage_measuring_gpu": "正在测量显存",
     "load_stage_loading_gpu": "正在使用图形加速加载模型",

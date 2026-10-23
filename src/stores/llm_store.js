@@ -8,6 +8,7 @@ import { record_bandwidth_sample, record_speed_ratio } from '../utils/speed_cali
 // Provider status strings → i18n stage keys (pages namespace). Unknown
 // statuses keep the previous stage so the UI never shows raw English.
 const LOAD_STAGE_PATTERNS = [
+    [ /verifying/i, `load_stage_verifying` ],
     [ /checking/i, `load_stage_checking_memory` ],
     [ /measuring gpu/i, `load_stage_measuring_gpu` ],
     [ /retrying safely on cpu/i, `load_stage_cpu_retry` ],

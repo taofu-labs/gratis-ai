@@ -112,6 +112,7 @@ vi.mock( `../../src/utils/model_download.js`, () => ( {
     get_browser_cached_model: vi.fn(),
     projector_source: model => model?.mmproj ? { ...model.mmproj, url: `https://hf.test/${ model.mmproj.file_name }` } : null,
     get_browser_cached_projector: vi.fn( async () => mocks.projector ),
+    verify_installed_model: vi.fn( async () => {} ),
 } ) )
 
 vi.mock( `../../src/utils/device_detection.js`, () => ( {

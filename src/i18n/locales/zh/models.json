@@ -45,6 +45,7 @@
     "download_speed_limited": "下载速度变慢了。Hugging Face 可能正在限制流量。",
     "download_eta_stabilizing": "正在计算剩余时间...",
     "download_resuming": "正在从上次中断处继续（已保存 {{size}}）",
+    "download_verifying": "正在校验下载… {{percent}}%",
     "preparing_your_model": "正在准备你的模型",
     "preparing_your_model_detail": "{{name}} 已下载完成，正在加载到内存，最多可能需要一分钟。",
     "adding_image_support": "正在添加图片支持",

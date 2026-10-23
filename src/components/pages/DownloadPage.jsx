@@ -286,8 +286,8 @@ export default function DownloadPage() {
                 // The download layer says explicitly when OPFS held a resumable prefix
                 if( prog.resumed_from > 0 ) set_resumed_from( prog.resumed_from )
 
-                // Always track throughput in the ref (no re-render)
-                eta_ref.current.update( prog )
+                // Always track throughput in the ref (no re-render); hashing is not throughput
+                if( prog.verifying === undefined ) eta_ref.current.update( prog )
 
                 // Stash latest progress, only flush to state at throttled intervals
                 pending_progress_ref.current = prog
@@ -338,10 +338,12 @@ export default function DownloadPage() {
     if( !model ) return null
 
     const eta_state = eta_ref.current.snapshot()
+    const verifying = progress.verifying !== undefined
 
     // Remaining time from observed throughput, shown once beside the bar
     const get_eta = () => {
         const { eta_seconds } = eta_state
+        if( verifying ) return ``
         if( !Number.isFinite( eta_seconds ) || eta_seconds <= 0 || progress.bytes_total <= 0 ) return ``
 
         return t( `common:eta_remaining`, {
@@ -351,6 +353,7 @@ export default function DownloadPage() {
 
     const get_speed_feedback = () => {
         const { bps, is_slowed } = eta_state
+        if( verifying ) return t( `download_verifying`, { percent: Math.round( progress.verifying * 100 ) } )
         if( is_slowed ) return t( `download_speed_limited` )
         if( bps ) return t( `download_speed`, { speed: format_file_size( bps ) } )
         if( resumed_from > 0 ) return t( `download_resuming`, { size: format_file_size( resumed_from ) } )
@@ -360,7 +363,7 @@ export default function DownloadPage() {
     const percent = Math.round( progress.progress * 100 )
     const eta = get_eta()
     const speed_feedback = get_speed_feedback()
-    const show_stabilizing = !eta && progress.bytes_loaded > 0 && progress.progress < 1
+    const show_stabilizing = !eta && !verifying && progress.bytes_loaded > 0 && progress.progress < 1
 
     // Show success state briefly
     if( phase === `complete` ) {

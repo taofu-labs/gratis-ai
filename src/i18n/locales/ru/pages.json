@@ -13,6 +13,7 @@
     "loading_model_generic": "Загрузка вашей модели...",
     "model_ready_generic": "Ваша модель — Готова",
     "load_stage_starting": "Запуск локального ИИ-движка",
+    "load_stage_verifying": "Проверка файла модели (однократно)",
     "load_stage_checking_memory": "Проверка доступной памяти",
     "load_stage_measuring_gpu": "Измерение графической памяти",
     "load_stage_loading_gpu": "Загрузка модели с графическим ускорением",

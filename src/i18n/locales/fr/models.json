@@ -45,6 +45,7 @@
     "download_speed_limited": "Le téléchargement a ralenti. Hugging Face limite peut-être le trafic.",
     "download_eta_stabilizing": "Calcul du temps restant...",
     "download_resuming": "Reprise là où vous vous étiez arrêté ({{size}} déjà enregistrés)",
+    "download_verifying": "Vérification du téléchargement… {{percent}} %",
     "preparing_your_model": "Préparation de votre modèle",
     "preparing_your_model_detail": "{{name}} est téléchargé. Chargement en mémoire — cela peut prendre jusqu’à une minute.",
     "adding_image_support": "Ajout de la prise en charge des images",

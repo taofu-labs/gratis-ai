@@ -45,6 +45,7 @@
     "download_speed_limited": "Der Download ist langsamer geworden. Hugging Face begrenzt möglicherweise den Datenverkehr.",
     "download_eta_stabilizing": "Restzeit wird berechnet…",
     "download_resuming": "Download wird fortgesetzt ({{size}} bereits gespeichert)",
+    "download_verifying": "Download wird geprüft… {{percent}} %",
     "preparing_your_model": "Dein Modell wird vorbereitet",
     "preparing_your_model_detail": "{{name}} ist heruntergeladen und wird jetzt in den Arbeitsspeicher geladen — das kann bis zu einer Minute dauern.",
     "adding_image_support": "Bildunterstützung wird hinzugefügt",

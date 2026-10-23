@@ -45,6 +45,7 @@
     "download_speed_limited": "Загрузка замедлилась. Возможно, Hugging Face ограничивает трафик.",
     "download_eta_stabilizing": "Расчёт оставшегося времени...",
     "download_resuming": "Продолжаем с места остановки (уже сохранено {{size}})",
+    "download_verifying": "Проверка загрузки… {{percent}}%",
     "preparing_your_model": "Подготовка вашей модели",
     "preparing_your_model_detail": "{{name}} загружена. Загружаем её в память — это может занять до минуты.",
     "adding_image_support": "Добавляем поддержку изображений",

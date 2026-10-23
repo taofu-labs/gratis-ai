@@ -578,3 +578,4 @@
 - 2026-10-23 deployed 547006d (trusted RAM >8 GB + WASM grant probe) and c788c75 (calibrated two-term reply-speed estimator).
 - 2026-10-23 tok/s estimator D landed: catalog `browser_tps` (i3-1115G4, 2 threads, paired-probe bench) × device ratio from an 8-layer zero-weight skeleton probe of Qwen3.5 0.8B (REFERENCE_PROBE_TPS 5.95), refined by real replies; before any measurement the bandwidth model stands in. Gemma 26B `browser_tps` derived, not benched.
 - 2026-10-23 deployed edf3ce1 + afa6af2 (pre-download tok/s estimates: reference table × skeleton probe); live bundle index-Do2kg3qI.js.
+- 2026-10-23 21:00 — Garbage-answer investigation: SHA-256 verification for downloads (browser + Electron) + one-time check of old installs; real-device QA agents on OnePlus Nord CE3 Lite (Android 15, Chrome 155, Adreno 619) and iPhone (WDA).

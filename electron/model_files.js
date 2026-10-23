@@ -37,3 +37,23 @@ export const has_gguf_magic = ( file_path ) => {
     }
 
 }
+
+/**
+ * Ask Hugging Face for a file's SHA-256 without downloading it. The resolve
+ * URL answers with a redirect whose `x-linked-etag` is the LFS/Xet digest.
+ * @param {string} url - Hugging Face resolve URL
+ * @param {Object} [request_options] - fetch options (headers, signal)
+ * @returns {Promise<string|null>} Hex digest, or null when unknown
+ */
+export const lookup_sha256 = async ( url, request_options = {} ) => {
+
+    try {
+        const response = await fetch( url, { ...request_options, method: `HEAD`, redirect: `manual` } )
+        const etag = response.headers.get( `x-linked-etag` ) || response.headers.get( `etag` ) || ``
+        const hex = etag.replace( /^W\//, `` ).replace( /[^0-9a-f]/gi, `` ).toLowerCase()
+        return /^[0-9a-f]{64}$/.test( hex ) ? hex : null
+    } catch {
+        return null
+    }
+
+}

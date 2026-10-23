@@ -13,6 +13,7 @@
     "loading_model_generic": "Chargement de votre modèle...",
     "model_ready_generic": "Votre modèle — Prêt",
     "load_stage_starting": "Démarrage du moteur d’IA local",
+    "load_stage_verifying": "Vérification du fichier du modèle (une seule fois)",
     "load_stage_checking_memory": "Vérification de la mémoire disponible",
     "load_stage_measuring_gpu": "Mesure de la mémoire graphique",
     "load_stage_loading_gpu": "Chargement du modèle avec accélération graphique",
