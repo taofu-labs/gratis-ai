@@ -47,6 +47,7 @@
  * @property {boolean} [uncensored] - Whether this model has had refusal behavior removed
  * @property {boolean} [vision] - Whether this model supports image/vision input (requires mmproj)
  * @property {boolean} [browser_verified] - Exact GGUF passed the wllama64 Memory64 inference gate
+ * @property {number} [browser_tps] - Decode tokens/second in the browser on the reference machine (scripts/bench/speed_table.mjs)
  * @property {string} [hf_model_repo] - Base HF repo for cloud/vLLM inference (e.g. 'Qwen/Qwen3-8B') — distinct from hugging_face_repo which points to GGUF distribution
  * @property {string} [openrouter_id] - OpenRouter model ID for cloud inference (e.g. 'qwen/qwen3-8b')
  * @property {string} [venice_id] - Venice model ID for cloud inference (e.g. 'dolphin-2.9.2-qwen2.5-72b')
@@ -2008,6 +2009,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3.5-0.8B-Q5_K_M.gguf`,
         file_size_bytes: 592_636_608,
         quantization: `Q5_K_M`,
+        browser_tps: 5.5,
         kld: 0.0151,
         report: `https://bench.trueperformancenetwork.com/r/XZsIPWHtZ1ojKTdLYqFYOA`,
         mmproj: { file_name: `mmproj-Qwen3.5-0.8B-F16.gguf`, file_size_bytes: 204_986_560 },
@@ -2021,6 +2023,7 @@ const TPN_BUILDS = [
         file_name: `MiniCPM5-1B-Q4_K_M.gguf`,
         file_size_bytes: 688_066_176,
         quantization: `Q4_K_M`,
+        browser_tps: 3.9,
         kld: 0.0865,
         report: `https://bench.trueperformancenetwork.com/r/AK3RgkmOPXqaNB4xGCJ_XQ`,
     },
@@ -2032,6 +2035,7 @@ const TPN_BUILDS = [
         file_name: `MiniCPM5-1B-Q5_0-tuned.gguf`,
         file_size_bytes: 774_954_368,
         quantization: `Q5_0+`,
+        browser_tps: 2.3,
         kld: 0.0166,
         report: `https://bench.trueperformancenetwork.com/r/AK3RgkmOPXqaNB4xGCJ_XQ`,
     },
@@ -2043,6 +2047,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3.5-2B-Q4_K_M.gguf`,
         file_size_bytes: 1_312_164_544,
         quantization: `Q4_K_M`,
+        browser_tps: 1.6,
         kld: 0.0308,
         report: `https://bench.trueperformancenetwork.com/r/3D_JqOSgex3t5CxN0yayQg`,
         mmproj: { file_name: `mmproj-Qwen3.5-2B-F16.gguf`, file_size_bytes: 668_226_592 },
@@ -2055,6 +2060,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3.5-4B-Q4_K_M.gguf`,
         file_size_bytes: 2_783_446_592,
         quantization: `Q4_K_M`,
+        browser_tps: 1.0,
         kld: 0.0301,
         report: `https://bench.trueperformancenetwork.com/r/h8-mEn1kq2Lg8vhY9hxZDg`,
         mmproj: { file_name: `mmproj-Qwen3.5-4B-F16.gguf`, file_size_bytes: 672_422_944 },
@@ -2068,6 +2074,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3-1.7B-Magic_decensored-Q4_K_M.gguf`,
         file_size_bytes: 1_107_408_896,
         quantization: `Q4_K_M`,
+        browser_tps: 2.1,
         kld: 0.0586,
         report: `https://bench.trueperformancenetwork.com/r/hCN5YMVh_9qQWSgezAelvQ`,
         browser_verified: true,
@@ -2080,6 +2087,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3.5-4B-SOMPOA-heresy-v2-Q4_K_M.gguf`,
         file_size_bytes: 2_708_804_288,
         quantization: `Q4_K_M`,
+        browser_tps: 1.0,
         kld: 0.0314,
         report: `https://bench.trueperformancenetwork.com/r/WhE5KikJiH_-xN0MfsRtgQ`,
         mmproj: { file_name: `mmproj-Qwen3.5-4B-SOMPOA-heresy-v2-F16.gguf`, file_size_bytes: 672_422_944 },
@@ -2093,6 +2101,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3.5-9B-Q4_K_M.gguf`,
         file_size_bytes: 5_780_090_496,
         quantization: `Q4_K_M`,
+        browser_tps: 0.46,
         kld: 0.0266,
         report: `https://bench.trueperformancenetwork.com/r/bOLZSRrgN-DUOOYoedOK8w`,
         mmproj: { file_name: `mmproj-Qwen3.5-9B-F16.gguf`, file_size_bytes: 918_165_440 },
@@ -2106,6 +2115,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3.5-9B-IQ4_XS.gguf`,
         file_size_bytes: 5_326_417_536,
         quantization: `IQ4_XS`,
+        browser_tps: 0.2,
         kld: 0.0213,
         report: `https://bench.trueperformancenetwork.com/r/bOLZSRrgN-DUOOYoedOK8w`,
         mmproj: { file_name: `mmproj-Qwen3.5-9B-F16.gguf`, file_size_bytes: 918_165_440 },
@@ -2118,6 +2128,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3.5-9B-heretic-v2-Q4_K_M.gguf`,
         file_size_bytes: 5_629_108_960,
         quantization: `Q4_K_M`,
+        browser_tps: 0.46,
         kld: 0.0305,
         report: `https://bench.trueperformancenetwork.com/r/akW7L6fSnz3Sg4lJlBSCNw`,
         mmproj: { file_name: `mmproj-Qwen3.5-9B-heretic-v2-F16.gguf`, file_size_bytes: 918_165_440 },
@@ -2131,6 +2142,7 @@ const TPN_BUILDS = [
         file_name: `Qwen3.5-9B-heretic-v2-IQ4_XS.gguf`,
         file_size_bytes: 5_196_440_288,
         quantization: `IQ4_XS`,
+        browser_tps: 0.2,
         kld: 0.0253,
         report: `https://bench.trueperformancenetwork.com/r/akW7L6fSnz3Sg4lJlBSCNw`,
         mmproj: { file_name: `mmproj-Qwen3.5-9B-heretic-v2-F16.gguf`, file_size_bytes: 918_165_440 },
@@ -2143,6 +2155,9 @@ const TPN_BUILDS = [
         file_name: `gemma-4-26B-A4B-it-IQ4_XS.gguf`,
         file_size_bytes: 13_917_727_520,
         quantization: `IQ4_XS`,
+        // Not benched (14 GB, more than the reference box's free RAM): 4B active
+        // params at Q4_K_M speed × the IQ4_XS slowdown seen on Qwen3.5-9B
+        browser_tps: 0.4,
         // TPN's BF16 reference run is broken for Gemma 4 (wiki perplexity 7552), so
         // its scores are void; the files themselves answer correctly natively
         kld: null,
@@ -2463,6 +2478,7 @@ export const find_by_hf_repo = ( hf_repo ) => {
  * @property {number} automatic_bytes - Comfortable memory for automatic picks
  * @property {number} [receipt_bytes] - Above this, browsers need a `browser_verified` receipt
  * @property {number} bandwidth_gbs   - Effective decode bandwidth in GB/s
+ * @property {number} [speed_ratio]   - Browser speed vs the reference machine behind `browser_tps`
  */
 
 /**
@@ -2543,9 +2559,22 @@ const decode_cost = ( model, runtime ) => {
 }
 
 /**
- * Estimated reply speed in visible tokens/second: device bandwidth ÷ cost per
- * token. The bandwidth starts as a per-device guess and is replaced by what real
- * replies measured (speed_calibration.js). A heuristic for bands, never a promise.
+ * Estimated raw decode speed in tokens/second. In the browser, catalog builds
+ * carry a speed measured on a reference machine (`browser_tps`), scaled by how
+ * fast this device is relative to it (speed probe, then real replies). Anything
+ * else falls back to device bandwidth ÷ cost per token. An estimate, never a promise.
+ *
+ * @param {ModelDefinition} model
+ * @param {DeviceProfile} device
+ * @returns {number} tokens per second
+ */
+export const estimate_decode_speed = ( model, device ) => device.runtime === `browser` && model.browser_tps && device.speed_ratio
+    ? model.browser_tps * device.speed_ratio
+    : device.bandwidth_gbs * 1_000_000_000 / decode_cost( model, device.runtime )
+
+/**
+ * Estimated reply speed in visible tokens/second: decode speed, minus the
+ * hidden draft thinking models write first. Feeds the speed bands.
  *
  * @param {ModelDefinition} model
  * @param {DeviceProfile} device
@@ -2554,7 +2583,7 @@ const decode_cost = ( model, runtime ) => {
 export const estimate_reply_speed = ( model, device ) => {
 
     const thinking_factor = model.reasoning_enabled ? 1 / THINKING_OVERHEAD : 1
-    return device.bandwidth_gbs * 1_000_000_000 * thinking_factor / decode_cost( model, device.runtime )
+    return estimate_decode_speed( model, device ) * thinking_factor
 
 }
 
@@ -2716,6 +2745,7 @@ export const describe_models = ( models, device ) => models
             model,
             fit: check_fit( model, device ),
             speed,
+            tokens_per_second: estimate_decode_speed( model, device ),
             band: speed_band( speed ),
             score: preference_score( model, device, `balanced` ),
         }
@@ -2776,3 +2806,11 @@ export const format_file_size = ( bytes ) => {
     if( bytes >= 1_000_000 ) return `${ ( bytes / 1_000_000 ).toFixed( 0 ) } MB`
     return `${ ( bytes / 1_000 ).toFixed( 0 ) } KB`
 }
+
+/**
+ * Estimated decode speed for display: one decimal below 10, whole numbers above.
+ * @param {number} tokens_per_second
+ * @returns {string} e.g. "~3.4 tok/s"
+ */
+export const format_tokens_per_second = tokens_per_second =>
+    `~${ tokens_per_second >= 10 ? Math.round( tokens_per_second ) : tokens_per_second.toFixed( 1 ) } tok/s`

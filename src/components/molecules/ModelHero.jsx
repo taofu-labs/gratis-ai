@@ -2,7 +2,7 @@ import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Check, Download, Gauge, Image, ImageOff, ShieldCheck, Sparkles } from 'lucide-react'
 import Button from '../atoms/Button'
-import { format_file_size, model_download_bytes } from '../../utils/model_catalog'
+import { format_file_size, format_tokens_per_second, model_download_bytes } from '../../utils/model_catalog'
 
 const Card = styled.section`
     display: flex;
@@ -116,6 +116,7 @@ const SPEED_KEYS = { quick: `speed_quick`, steady: `speed_steady`, slow: `speed_
  * @param {'recommended'|'choice'|'winner'|'custom'} props.kind
  * @param {string} props.reason - Fit sentence ("Fits your 8 GB computer…")
  * @param {'quick'|'steady'|'slow'} props.band
+ * @param {number} [props.tokens_per_second] - Estimated decode speed on this device
  * @param {boolean} props.photos - Model understands images
  * @param {string} props.download_text - "2.9 GB download · about 4 min"
  * @param {boolean} props.cached
@@ -130,7 +131,7 @@ const SPEED_KEYS = { quick: `speed_quick`, steady: `speed_steady`, slow: `speed_
  * @param {React.ReactNode} [props.children] - Notices, or the empty state when nothing fits
  */
 export default function ModelHero( {
-    model, kind, reason, band, photos, download_text, cached, action_label, disabled, on_confirm,
+    model, kind, reason, band, tokens_per_second, photos, download_text, cached, action_label, disabled, on_confirm,
     change, fallback, on_fallback, on_reset, loading, children,
 } ) {
 
@@ -161,7 +162,13 @@ export default function ModelHero( {
                 { cached ? <Check size={ 16 } /> : <Download size={ 16 } /> }
                 { cached ? t( `already_downloaded` ) : download_text }
             </Fact>
-            <Fact data-testid="model-hero-speed"><Gauge size={ 16 } />{ t( SPEED_KEYS[ band ] ) }</Fact>
+            <Fact data-testid="model-hero-speed">
+                <Gauge size={ 16 } />
+                <span>
+                    { t( SPEED_KEYS[ band ] ) }
+                    { tokens_per_second > 0 && <span data-testid="model-hero-tps"> · { format_tokens_per_second( tokens_per_second ) }</span> }
+                </span>
+            </Fact>
             <Fact data-testid="model-hero-photos">
                 { photos ? <Image size={ 16 } /> : <ImageOff size={ 16 } /> }
                 { photos ? t( `fact_photos_yes` ) : t( `fact_photos_no` ) }

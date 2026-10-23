@@ -38,7 +38,7 @@ import {
     select_webgpu_probe_target,
 } from './webgpu_memory'
 import { EVENTS, storage_key } from './branding'
-import { calibrated_bandwidth_gbs } from './speed_calibration'
+import { calibrated_bandwidth_gbs, calibrated_speed_ratio } from './speed_calibration'
 
 /**
  * Detect the exact shared Memory64 primitive used by wllama64.
@@ -690,6 +690,9 @@ export const build_device_profile = ( capabilities, max_bytes ) => {
         automatic_bytes,
         receipt_bytes: BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
         bandwidth_gbs: learned_bandwidth( `browser`, mobile ? BANDWIDTH_GBS.browser_mobile : BANDWIDTH_GBS.browser_desktop ),
+        // Speed vs the reference machine behind `browser_tps`; null until the
+        // probe or a real reply measured it, and the bandwidth model stands in
+        speed_ratio: calibrated_speed_ratio(),
     }
 
 }

@@ -19,15 +19,9 @@ import {
 import { get_external_model_file } from '../utils/external_model_files'
 import { resolve_hf_model } from '../utils/hf_url_parser'
 import { get_browser_cached_model, get_browser_cached_projector, projector_source } from '../utils/model_download'
+import { COMPAT_PATHS, CONFIG_PATHS } from '../utils/wllama_paths'
 import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, MAX_HISTORY_IMAGES, to_wllama_messages } from '../utils/attachments'
 
-// Memory64 is the primary runtime. The matching wasm32 build remains local so
-// Safari and older browsers never need to fetch executable code from a CDN.
-const CONFIG_PATHS = { default: `/wasm/wllama.wasm` }
-const COMPAT_PATHS = {
-    worker: `/wasm/compat/wllama.js`,
-    wasm: `/wasm/compat/wllama.wasm`,
-}
 const INFERENCE_DIAGNOSTICS = import.meta.env.VITE_INFERENCE_DIAGNOSTICS === `1`
 const GPU_LOAD_MIN_TIMEOUT_MS = 120_000
 const GPU_LOAD_BYTES_PER_SECOND = 8 * 1024 ** 2

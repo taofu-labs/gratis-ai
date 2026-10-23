@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 import {
     format_file_size,
+    format_tokens_per_second,
     has_fewer_refusals,
     has_image_input,
     model_download_bytes,
@@ -211,7 +212,7 @@ export default function ModelBrowser( { rows, retired_rows, winner_rows, recomme
     const visible_rows = order( matching_rows.filter( row => row.fit.fits ) )
     const unfit_rows = order( matching_rows.filter( row => !row.fit.fits ) )
 
-    const render_row = ( { model, fit, band }, label = model.name ) => {
+    const render_row = ( { model, fit, band, tokens_per_second }, label = model.name ) => {
 
         const is_selected = model.id === selected_id
         const reason = fit_reason( fit )
@@ -220,6 +221,7 @@ export default function ModelBrowser( { rows, retired_rows, winner_rows, recomme
             t( `download_size`, { size: format_file_size( model_download_bytes( model ) ) } ),
             t( `row_memory`, { size: format_file_size( fit.memory ) } ),
             t( SPEED_KEYS[ band ] ),
+            tokens_per_second > 0 && format_tokens_per_second( tokens_per_second ),
         ].filter( Boolean ).join( ` · ` )
 
         return <Row

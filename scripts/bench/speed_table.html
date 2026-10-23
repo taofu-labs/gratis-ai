@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>wllama64 speed table cell</title>
+<pre id="out">running</pre>
+<script type="module">
+
+    // One cell: the device probe (?probe=1) or a full model (?model=file.gguf),
+    // through the exact code and load options the app uses (src/utils/speed_probe.js)
+    import { Wllama } from '/wllama/index.js'
+    import { measure_probe_tps, probe_load_options, probe_threads, time_decode } from '/utils/speed_probe.js'
+
+    const query = Object.fromEntries( new URLSearchParams( location.search ) )
+    const wllama = () => new Wllama( { default: `/wasm/wllama.wasm` }, { allowOffline: true, suppressNativeLog: true } )
+
+    const measure_model = async () => {
+
+        // Stage on OPFS: in-memory blobs fail past ~2 GB
+        const runtime = wllama()
+        const root = await navigator.storage.getDirectory()
+        const handle = await root.getFileHandle( query.model, { create: true } )
+        const response = await fetch( `/models/${ query.model }` )
+        await response.body.pipeTo( await handle.createWritable() )
+
+        try {
+            await runtime.loadModel( [ await handle.getFile() ], probe_load_options( probe_threads() ) )
+            await time_decode( runtime, 4 )
+            return await time_decode( runtime, Number( query.tokens || 32 ) )
+        } finally {
+            await runtime.exit().catch( () => {} )
+            await root.removeEntry( query.model )
+        }
+
+    }
+
+    ( query.probe ? measure_probe_tps( wllama() ) : measure_model() )
+        .then( tps => window.__result = { tps, threads: probe_threads() } )
+        .catch( error => window.__result = { error: String( error?.stack || error ) } )
+        .finally( () => document.getElementById( `out` ).textContent = JSON.stringify( window.__result ) )
+
+</script>

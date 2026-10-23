@@ -6,8 +6,10 @@ import { log } from 'mentie'
 import toast from 'react-hot-toast'
 import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, SlidersHorizontal, List, Trash2 } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
+import use_device_speed_probe from '../../hooks/use_device_speed_probe'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
+import use_llm_store from '../../stores/llm_store'
 import BrowserRamOverride from '../atoms/BrowserRamOverride'
 import Button from '../atoms/Button'
 import LanguageSelector from '../molecules/LanguageSelector'
@@ -25,6 +27,7 @@ import {
     MODEL_CATALOG,
     check_fit,
     describe_models,
+    estimate_decode_speed,
     estimate_reply_speed,
     fit_level,
     format_file_size,
@@ -466,7 +469,12 @@ export default function ModelSelectPage() {
 
     // ── What this device can run, and what we recommend ──
 
-    const device = useMemo( () => build_device_profile( capabilities, max_model_bytes ), [ capabilities, max_model_bytes ] )
+    // Time this browser once while it's idle; the result rescales every speed estimate
+    const runtime_busy = use_llm_store( s => !!( s.loaded_model_id || s.is_loading ) )
+    const speed_ratio = use_device_speed_probe( !is_detecting && capabilities?.runtime !== `electron` && !runtime_busy )
+
+    // speed_ratio is read inside build_device_profile; listing it recomputes the profile
+    const device = useMemo( () => build_device_profile( capabilities, max_model_bytes ), [ capabilities, max_model_bytes, speed_ratio ] )
     const picks = useMemo(
         () => select_picker_models( { winners: tpn_models, device, preferences } ),
         [ tpn_models, device, preferences ],
@@ -811,6 +819,7 @@ export default function ModelSelectPage() {
                     kind={ hero_kind }
                     reason={ active_fit && fit_sentence( active_fit ) }
                     band={ active_model && band_of( active_model ) }
+                    tokens_per_second={ active_model && estimate_decode_speed( active_model, device ) }
                     photos={ has_image_input( active_model ) }
                     download_text={ active_model && download_text( active_model ) }
                     cached={ active_is_cached }

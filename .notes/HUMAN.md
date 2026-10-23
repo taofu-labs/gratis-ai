@@ -60,3 +60,4 @@ Branch chore/desktop-release-parity (not pushed, not merged). After secrets: ver
 - Model cards are written by us (card.py) from TPN data + report PNGs; TPN's API gives no card markdown. Each card links a public, noindexed TPN share report.
 
 - TPN Gemma 4 26B (g26): report scores are void (TPN's BF16 reference run broken, wiki PPL 7552). Published anyway after native text+image checks; card says no valid scores. Ask TPN to fix Gemma 4 in their harness and re-measure (along with the MTP converter bug).
+- tok/s reference table measured on a loaded 2-thread i3 (noisy, ±30%); rebench on a quiet machine with `xvfb-run -a node scripts/bench/speed_table.mjs <dir> 3` and bump SPEED_REFERENCE_ID. Probe is CPU-only: WebGPU-offloaded speeds get corrected only by real replies. Gemma 26B `browser_tps` 0.4 is derived (14 GB didn't fit the box's free RAM).

@@ -7,6 +7,7 @@
 - Image input: paste, drag or attach photos and screenshots for vision models, in the browser and the desktop app (llama.cpp llama-server sidecar)
 - Document upload: PDF and text files are read into the conversation
 - Downloaded models can be deleted straight from the "On this device" list (tap the trash icon twice)
+- Speed estimates in tokens/second before you download: the picker times a tiny weightless copy of the smallest model in your browser (~10 s, ~11 MB, once) and scales speeds measured for every model on a reference machine to your device; real replies refine it
 
 ### Changed
 - Every offered model is now a TPN-optimised build from tpnlabs on Hugging Face (Qwen 3.5 0.8B / 2B / 4B / 9B, Gemma 4 26B for desktop, MiniCPM5 1B, uncensored Qwen3 1.7B and Qwen 3.5 4B / 9B), each measured against its original; earlier downloads keep working under "Show older models"

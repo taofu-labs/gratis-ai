@@ -153,7 +153,8 @@ describe( `picker personas`, () => {
     test( `real replies calibrate the device's bandwidth, within reason`, () => {
         const store = {}
         vi.stubGlobal( `localStorage`, { getItem: key => store[ key ] ?? null, setItem: ( key, value ) => store[ key ] = value } )
-        const tiny = MODEL_CATALOG.find( m => m.id === `qwen35-0.8b-tpn-q5km` )
+        // A build without a reference speed: only those use the bandwidth model in browsers
+        const tiny = MODEL_CATALOG.find( m => m.id === `qwen35-0.8b-q4km` )
         const before = profile_for( `windows_laptop` )
 
         // The inverse of the estimate: a reply at the estimated speed implies the guessed bandwidth

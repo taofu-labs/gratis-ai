@@ -576,3 +576,4 @@
 - 2026-10-23 deployed 250b018 (delete button, TPN-only catalog incl. 4B / Gemma 26B / decensored 1.7B, review fixes); live bundle index--YwKeas_.js, picker recommends TPN 2B.
 - 2026-10-23 deployed dd57739: picker Photos/Uncensored switches in view; large browser downloads stay in OPFS (save dialog only when quota short).
 - 2026-10-23 deployed 547006d (trusted RAM >8 GB + WASM grant probe) and c788c75 (calibrated two-term reply-speed estimator).
+- 2026-10-23 tok/s estimator D landed: catalog `browser_tps` (i3-1115G4, 2 threads, paired-probe bench) × device ratio from an 8-layer zero-weight skeleton probe of Qwen3.5 0.8B (REFERENCE_PROBE_TPS 5.95), refined by real replies; before any measurement the bandwidth model stands in. Gemma 26B `browser_tps` derived, not benched.

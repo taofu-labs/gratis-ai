@@ -330,3 +330,10 @@ Qwen3.5-0.8B hybrid, 2 threads, ~220-token prompt, 64 gen, 3 independent passes 
 - In-browser bandwidth probe is NOT predictive: WASM SIMD stream reads 29–37 GB/s (i3-1115G4, 4 thr) but decode achieves 1–2.6 GB/s effective (3–10%). Q8_0 ≥ Q4_K_M speed => compute/overhead bound, not bandwidth bound.
 - Two-term fit (CI runner): 29 ms fixed + 173 ms/GB per token (~5.8 GB/s). Implemented as BROWSER_PER_TOKEN_BYTES 170 MB + bandwidth 5.8.
 - Passive calibration (speed_calibration.js): implied GB/s from each reply ≥32 tokens (tab visible), running avg per runtime, clamped 1/3–3× the guess. Prototype probe kept in scratchpad/bwtest (session-only).
+
+## Pre-use tok/s estimator bake-off (2026-10-23)
+Harness: scratchpad/est (session-only): gguf_skeleton.mjs (header-only, zero weights, trimmed layers), cell.html, run.mjs, analyze.mjs. 9 targets (Qwen3 0.6B / 3.5 0.8B / 3.5 4B × Q4_K_M/Q8_0/IQ4_XS/Q4_0), 2 thr = "CI", 1 thr = "user device". Median/max abs err:
+- Static formula: 73%/358% (2t), 190%/540% (1t). Misses Q4_0/IQ slowness + device.
+- SmolLM2-135M calib: 16%/209%, 28%/181%. Same-quant SmolLM worse (576-dim => K/IQ quants silently fall back).
+- Skeleton 2-point (L4,L8 extrapolate): 13%/42%, 10%/297% (slope noise). Catches quant/arch effects. 4B skeleton 0.8 GB (vocab tables), bench 25-75 s.
+- CI table × device ratio (one probe): 2%/25% (skeleton probe), 10%/11% (SmolLM probe). Same-CPU thread change flatters it; cross-arch likely 15-30%.
