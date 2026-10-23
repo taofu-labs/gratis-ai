@@ -13,7 +13,7 @@ import Button from '../atoms/Button'
 import LanguageSelector from '../molecules/LanguageSelector'
 import SettingsModal from '../molecules/SettingsModal'
 import ModelHero from '../molecules/ModelHero'
-import ModelPreferences from '../molecules/ModelPreferences'
+import ModelPreferences, { ModelToggles } from '../molecules/ModelPreferences'
 import ModelBrowser from '../molecules/ModelBrowser'
 import {
     build_device_profile,
@@ -409,7 +409,7 @@ export default function ModelSelectPage() {
     // `?need=vision` arrives from "this model can't read images" prompts
     const needs_vision = search_params.get( `need` ) === `vision`
     const [ preferences, set_preferences ] = useState( () => ( { ...DEFAULT_PREFERENCES, vision: needs_vision } ) )
-    const [ adjust_open, set_adjust_open ] = useState( needs_vision )
+    const [ adjust_open, set_adjust_open ] = useState( false )
     const [ browse_open, set_browse_open ] = useState( false )
     const [ settings_open, set_settings_open ] = useState( false )
 
@@ -819,6 +819,11 @@ export default function ModelSelectPage() {
                         <AlertTriangle size={ 12 } /> { action_error }
                     </CustomModelStatus> }
                 </ModelHero>
+            </Section>
+
+            { /* ── Photos and uncensored: always in view, they change what fits ── */ }
+            <Section>
+                <ModelToggles preferences={ preferences } on_change={ update_preferences } />
             </Section>
 
             { /* ── Optional tailoring ── */ }

@@ -1,7 +1,6 @@
-import { useId, useState } from 'react'
+import { useId } from 'react'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronUp } from 'lucide-react'
 
 const Panel = styled.div`
     display: flex;
@@ -88,15 +87,10 @@ const Note = styled.p`
     color: ${ ( { theme } ) => theme.colors.text_muted };
 `
 
-const Disclosure = styled.button`
+const Toggles = styled.div`
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: ${ ( { theme } ) => theme.spacing.xs };
-    min-height: 2.75rem;
-    font-size: 0.85rem;
-    color: ${ ( { theme } ) => theme.colors.text_secondary };
-
-    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
 const PRIORITIES = [
@@ -113,8 +107,40 @@ function Switch( { on, label, on_toggle, ...props } ) {
 }
 
 /**
- * Optional tailoring: reply speed vs quality, photo understanding, and an
- * advanced "fewer refusals" switch with an honest note. Changes apply live.
+ * The two choices that change which model fits: photo understanding and an
+ * uncensored model, whose honest note shows while it is on. Changes apply live.
+ *
+ * @param {Object} props
+ * @param {import('../../utils/model_catalog').PickerPreferences} props.preferences
+ * @param {Function} props.on_change - Receives a partial preferences patch
+ */
+export function ModelToggles( { preferences, on_change } ) {
+
+    const { t } = useTranslation( `models` )
+
+    return <Toggles data-testid="model-toggles">
+
+        <Switch
+            data-testid="need-photos-switch"
+            on={ preferences.vision }
+            label={ t( `need_photos` ) }
+            on_toggle={ () => on_change( { vision: !preferences.vision } ) }
+        />
+
+        <Switch
+            data-testid="fewer-refusals-switch"
+            on={ preferences.fewer_refusals }
+            label={ t( `fewer_refusals` ) }
+            on_toggle={ () => on_change( { fewer_refusals: !preferences.fewer_refusals } ) }
+        />
+        { preferences.fewer_refusals && <Note>{ t( `fewer_refusals_note` ) }</Note> }
+
+    </Toggles>
+
+}
+
+/**
+ * Optional tailoring: reply speed vs quality. Changes apply live.
  *
  * @param {Object} props
  * @param {import('../../utils/model_catalog').PickerPreferences} props.preferences
@@ -123,7 +149,6 @@ function Switch( { on, label, on_toggle, ...props } ) {
 export default function ModelPreferences( { preferences, on_change } ) {
 
     const { t } = useTranslation( `models` )
-    const [ advanced_open, set_advanced_open ] = useState( preferences.fewer_refusals )
     const replies_label_id = useId()
 
     return <Panel data-testid="model-preferences">
@@ -143,35 +168,6 @@ export default function ModelPreferences( { preferences, on_change } ) {
                     { t( label ) }
                 </Segment> ) }
             </Segments>
-        </div>
-
-        <Switch
-            data-testid="need-photos-switch"
-            on={ preferences.vision }
-            label={ t( `need_photos` ) }
-            on_toggle={ () => on_change( { vision: !preferences.vision } ) }
-        />
-
-        <div>
-            <Disclosure
-                type="button"
-                aria-expanded={ advanced_open }
-                data-testid="advanced-preferences-toggle"
-                onClick={ () => set_advanced_open( !advanced_open ) }
-            >
-                { t( `advanced` ) }
-                { advanced_open ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
-            </Disclosure>
-
-            { advanced_open && <>
-                <Switch
-                    data-testid="fewer-refusals-switch"
-                    on={ preferences.fewer_refusals }
-                    label={ t( `fewer_refusals` ) }
-                    on_toggle={ () => on_change( { fewer_refusals: !preferences.fewer_refusals } ) }
-                />
-                <Note>{ t( `fewer_refusals_note` ) }</Note>
-            </> }
         </div>
 
     </Panel>

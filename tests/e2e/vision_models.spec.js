@@ -31,13 +31,28 @@ test.describe( `Vision Models — Model Select Page`, () => {
         await page.goto( `/select-model` )
         await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible( { timeout: 15_000 } )
 
-        await page.getByTestId( `adjust-toggle` ).click()
         const photos = page.getByTestId( `need-photos-switch` )
         await photos.click()
 
         await expect( photos ).toHaveAttribute( `aria-checked`, `true` )
         await expect( page.getByTestId( `model-hero-photos` ) ).toContainText( `Understands photos` )
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
+    } )
+
+    test( `the uncensored switch is in view and changes the recommendation`, async ( { page } ) => {
+
+        await inject_high_memory( page )
+        await page.goto( `/select-model` )
+        const name = page.getByTestId( `model-hero-name` )
+        await expect( name ).toBeVisible( { timeout: 15_000 } )
+        const standard = await name.textContent()
+
+        const uncensored = page.getByTestId( `fewer-refusals-switch` )
+        await uncensored.click()
+
+        await expect( uncensored ).toHaveAttribute( `aria-checked`, `true` )
+        await expect( page.getByText( `modified to refuse less` ) ).toBeVisible()
+        await expect( name ).not.toHaveText( standard )
     } )
 
     test( `?need=vision opens the picker with photos required`, async ( { page } ) => {
