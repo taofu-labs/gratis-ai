@@ -1,0 +1,17 @@
+{
+    "appId": "com.trueperformancenetwork.gratis",
+    "appName": "Gratis",
+    "webDir": "dist",
+    "android": {
+        "path": "mobile/android"
+    },
+    "ios": {
+        "path": "mobile/ios"
+    },
+    "backgroundColor": "#0F1011",
+    "plugins": {
+        "SystemBars": {
+            "style": "DARK"
+        }
+    }
+}

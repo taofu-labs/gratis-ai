@@ -21,6 +21,10 @@ export default defineConfig( ( { mode } ) => {
     const env = loadEnv( mode, process.cwd(), `` )
     const app_name = env.VITE_APP_NAME || `gratisAI`
 
+    // `vite build --mode native` feeds the Android/iOS shells (Capacitor): the app
+    // store ships updates, so no service worker caches or reloads the bundle
+    const native = mode === `native`
+
     return {
         define: {
             __APP_VERSION__: JSON.stringify( pkg.version ),
@@ -28,7 +32,7 @@ export default defineConfig( ( { mode } ) => {
         },
         plugins: [
             react(),
-            VitePWA( {
+            ! native && VitePWA( {
                 registerType: `autoUpdate`,
                 includeAssets: [ `icons/*.png` ],
                 manifest: {

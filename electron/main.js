@@ -6,6 +6,7 @@ const os = require( `os` )
 const { LlamaServer, resolve_server_binary } = require( `./llama_server.js` )
 const { mmproj_local_name, has_gguf_magic, lookup_sha256 } = require( `./model_files.js` )
 const { createHash } = require( `crypto` )
+const { estimate_context_size } = require( `../src/utils/llama_server_protocol.js` )
 
 // ---------------------------------------------------
 // Console forwarding — pipes Node.js console output
@@ -264,38 +265,14 @@ const write_manifest = ( manifest ) => {
  * to the model's advertised context_length so we never exceed what the
  * architecture supports.
  *
- * If architecture data is missing (custom imports), falls back to 2048.
- * The worker's VRAM retry loop catches any overestimation — this just
+ * If architecture data is missing (custom imports), the model's own context is requested.
+ * Shared with the mobile apps (src/utils/llama_server_protocol.js). The worker's VRAM retry loop catches any overestimation — this just
  * gives it a smarter starting point than a hard-coded cap.
  *
  * @param {Object} model - Model manifest entry
  * @returns {number} Context size to request
  */
-const estimate_context_for_system = ( model ) => {
-
-    const FALLBACK = 2048
-    const RUNTIME_OVERHEAD = 500_000_000
-    const MEMORY_FRACTION = 0.7
-    const max_ctx = model.context_length || FALLBACK
-
-    if( !model.layers || !model.kv_heads || !model.head_dim ) return max_ctx
-
-    // KV cache = 2 (key + value) × layers × kv_heads × head_dim × 2 bytes (FP16) per token
-    const kv_per_token = 2 * model.layers * model.kv_heads * model.head_dim * 2
-
-    // The vision projector lives in the same memory as the weights
-    const weights_bytes = ( model.file_size_bytes || 0 ) + ( model.mmproj_size_bytes || 0 )
-    const budget = os.totalmem() * MEMORY_FRACTION
-    const available = budget - weights_bytes - RUNTIME_OVERHEAD
-
-    if( available <= 0 ) return FALLBACK
-
-    // Round down to nearest 256 for clean alignment
-    const estimated = Math.floor( available / kv_per_token / 256 ) * 256
-
-    return Math.max( FALLBACK, Math.min( max_ctx, estimated ) )
-
-}
+const estimate_context_for_system = ( model ) => estimate_context_size( model, os.totalmem() * 0.7 )
 
 /**
  * Absolute path of a model's vision projector, or null when it has none

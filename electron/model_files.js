@@ -4,18 +4,8 @@
 
 import fs from 'fs'
 
-/**
- * On-disk name for a vision projector. Hugging Face repos all call theirs
- * `mmproj-F16.gguf`, so prefix the model's own file stem to keep them apart.
- * @param {string} model_file_name - e.g. `Qwen3.5-2B-Q4_K_M.gguf`
- * @param {string} mmproj_file_name - e.g. `mmproj-F16.gguf`
- * @returns {string} e.g. `Qwen3.5-2B-Q4_K_M.mmproj-F16.gguf`
- */
-export const mmproj_local_name = ( model_file_name, mmproj_file_name ) => {
-    const stem = model_file_name.replace( /\.gguf$/i, `` )
-    const base = mmproj_file_name.split( `/` ).pop()
-    return `${ stem }.${ base }`
-}
+// Shared with the mobile apps, which store projectors the same way
+export { mmproj_local_name } from '../src/utils/llama_server_protocol.js'
 
 /**
  * Check the 4-byte GGUF magic — catches HTML error pages and truncated junk

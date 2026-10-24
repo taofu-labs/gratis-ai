@@ -1,3 +1,5 @@
+// Must stay first: the mobile apps install their native bridge before anything reads it
+import './native/install'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource-variable/montserrat'

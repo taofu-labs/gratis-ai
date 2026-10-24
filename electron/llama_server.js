@@ -17,13 +17,18 @@ import { spawn } from 'child_process'
 import { randomBytes } from 'crypto'
 import net from 'net'
 import path from 'path'
+import { build_server_args, build_request_body, create_sse_parser } from '../src/utils/llama_server_protocol.js'
 
-// Dynamic-resolution encoders (Qwen) can turn one large screenshot into
-// thousands of tokens; cap it so a single image cannot eat the context.
-export const IMAGE_MAX_TOKENS = 1024
-
-// Non-causal vision encoders (Gemma) need a whole image in one micro-batch
-export const UBATCH_SIZE = 1024
+// Protocol helpers are shared with the mobile apps, which run the same server
+export {
+    IMAGE_MAX_TOKENS,
+    UBATCH_SIZE,
+    build_server_args,
+    to_data_uri,
+    to_openai_messages,
+    build_request_body,
+    create_sse_parser,
+} from '../src/utils/llama_server_protocol.js'
 
 const HEALTH_POLL_MS = 250
 const HEALTH_TIMEOUT_MS = 5 * 60_000
@@ -58,141 +63,6 @@ export const resolve_server_binary = ( { is_packaged, resources_path, app_root, 
         : path.join( app_root, `vendor`, `llama-server`, `${ VENDOR_OS[ platform ] }-${ arch }` )
 
     return path.join( dir, exe )
-
-}
-
-/**
- * Build the llama-server command line.
- * GPU layers are left at llama.cpp's default (`auto` + `--fit on`), which
- * offloads as much as fits on Metal/Vulkan and silently runs on CPU otherwise.
- * @param {Object} params
- * @param {string} params.model_path
- * @param {string} params.mmproj_path
- * @param {number} params.n_ctx
- * @param {number} params.port
- * @param {string} params.api_key
- * @param {boolean} [params.cpu_only] - Skip every GPU backend (crash fallback)
- * @returns {string[]}
- */
-export const build_server_args = ( { model_path, mmproj_path, n_ctx, port, api_key, cpu_only = false } ) => [
-
-    `--model`, model_path,
-    `--mmproj`, mmproj_path,
-    `--ctx-size`, String( n_ctx ),
-
-    // Private loopback server: random port + per-launch key, no web UI
-    `--host`, `127.0.0.1`,
-    `--port`, String( port ),
-    `--api-key`, api_key,
-    `--no-webui`,
-
-    // One chat at a time gets the whole context
-    `--parallel`, `1`,
-
-    // GGUF's own Jinja template; keep <think> markup in content (the UI parses it)
-    `--jinja`,
-    `--reasoning-format`, `none`,
-
-    `--image-max-tokens`, String( IMAGE_MAX_TOKENS ),
-    `--ubatch-size`, String( UBATCH_SIZE ),
-
-    ... cpu_only ? [ `--device`, `none`, `--no-mmproj-offload` ] : [],
-
-]
-
-/**
- * Turn raw image bytes into a base64 data URI
- * @param {ArrayBuffer|Uint8Array|string} data - Bytes, or an existing data URI
- * @param {string} mime
- * @returns {string}
- */
-export const to_data_uri = ( data, mime = `image/png` ) => {
-
-    if( typeof data === `string` ) return data.startsWith( `data:` ) ? data : `data:${ mime };base64,${ data }`
-
-    const bytes = data instanceof ArrayBuffer ? new Uint8Array( data ) : data
-    return `data:${ mime };base64,${ Buffer.from( bytes ).toString( `base64` ) }`
-
-}
-
-/**
- * Convert renderer chat messages to OpenAI chat format.
- * User messages with image attachments become content parts (images first,
- * then text); document chips and anything without bytes are dropped.
- * @param {Array<{ role: string, content: string, attachments?: Array }>} messages
- * @returns {Array<{ role: string, content: string|Array }>}
- */
-export const to_openai_messages = ( messages ) => messages.map( ( { role, content = ``, attachments = [] } ) => {
-
-    const images = role === `user` ? attachments.filter( ( { kind, data } ) => kind === `image` && data ) : []
-    if( !images.length ) return { role, content }
-
-    return {
-        role,
-        content: [
-            ...images.map( ( { data, mime } ) => ( { type: `image_url`, image_url: { url: to_data_uri( data, mime ) } } ) ),
-            ... content ? [ { type: `text`, text: content } ] : [],
-        ],
-    }
-
-} )
-
-/**
- * Build the /v1/chat/completions request body from app generation options
- * (same defaults as the wllama provider).
- * @param {Array} messages - Renderer messages
- * @param {Object} [opts] - GenerateOptions
- * @param {Object} [model] - { reasoning_enabled }
- * @returns {Object}
- */
-export const build_request_body = ( messages, opts = {}, { reasoning_enabled } = {} ) => ( {
-
-    messages: to_openai_messages( messages ),
-    stream: true,
-    return_progress: true,
-    cache_prompt: true,
-
-    max_tokens: opts.max_tokens ?? 2048,
-    temperature: opts.temperature ?? 0.7,
-    top_p: opts.top_p ?? 0.95,
-    top_k: opts.top_k ?? 40,
-    min_p: opts.min_p ?? 0.05,
-    repeat_penalty: opts.repeat_penalty ?? 1.1,
-    repeat_last_n: opts.repeat_last_n ?? 64,
-    frequency_penalty: opts.frequency_penalty ?? 0,
-    presence_penalty: opts.presence_penalty ?? 0,
-    ... opts.seed !== undefined && opts.seed !== -1 ? { seed: opts.seed } : {},
-    ... opts.stop_sequences?.length ? { stop: opts.stop_sequences } : {},
-
-    // Only override the template when the model declares a deliberate default
-    ... reasoning_enabled !== undefined ? { chat_template_kwargs: { enable_thinking: reasoning_enabled } } : {},
-
-} )
-
-/**
- * Incremental Server-Sent Events parser. Feed it decoded text; it calls
- * `on_data` with each parsed JSON payload and ignores `[DONE]` / comments.
- * @param {( payload: Object ) => void} on_data
- * @returns {( text: string ) => void}
- */
-export const create_sse_parser = ( on_data ) => {
-
-    let buffer = ``
-
-    return ( text ) => {
-
-        buffer += text
-        const lines = buffer.split( /\r?\n/ )
-        buffer = lines.pop()
-
-        for( const line of lines ) {
-            if( !line.startsWith( `data:` ) ) continue
-            const data = line.slice( 5 ).trim()
-            if( !data || data === `[DONE]` ) continue
-            on_data( JSON.parse( data ) )
-        }
-
-    }
 
 }
 

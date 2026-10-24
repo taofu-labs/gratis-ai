@@ -492,6 +492,9 @@ export const estimate_max_model_bytes = ( capabilities ) => {
             return Math.floor( Math.max( gpu.vram_total, total * 0.6 ) )
         }
 
+        // Phones (Android/iOS apps): the OS kills apps long before RAM runs out
+        if( [ `android`, `ios` ].includes( capabilities.platform ) ) return Math.floor( total * NATIVE_MOBILE_RAM_SHARE )
+
         // CPU-only: 60% of system RAM — leaves headroom for the OS,
         // Electron overhead, and other apps running on a typical laptop
         return Math.floor( total * 0.6 )
@@ -600,7 +603,9 @@ export const detect_device_kind = (
     touch_points = globalThis.navigator?.maxTouchPoints || 0,
 ) => {
 
-    if( capabilities?.runtime === `electron` ) return capabilities.platform === `darwin` ? `mac` : `computer`
+    // Native: desktop app, or the Android/iOS apps (same runtime, phone hardware)
+    const native_mobile = capabilities?.runtime === `electron` && [ `android`, `ios` ].includes( capabilities.platform )
+    if( capabilities?.runtime === `electron` && !native_mobile ) return capabilities.platform === `darwin` ? `mac` : `computer`
     if( /iPhone|iPod/.test( user_agent ) ) return `iphone`
 
     // iPadOS reports a Mac user agent; touch support gives it away
@@ -619,6 +624,7 @@ const BANDWIDTH_GBS = {
     // Two-term fit on the CI runner (see BROWSER_PER_TOKEN_BYTES)
     browser_desktop: 5.8,
     native_cpu: 15,
+    native_mobile: 8,
     native_gpu: 40,
     native_unified: 60,
 }
@@ -630,6 +636,10 @@ const learned_bandwidth = ( runtime, guess ) =>
 // Phones get killed by the OS long before a desktop tab would: cap automatic
 // picks at half the reported RAM, or a safe guess when the browser hides it.
 const MOBILE_RAM_SHARE = 0.5
+
+// The mobile apps run native kernels but share the phone's RAM with the OS
+const NATIVE_MOBILE_RAM_SHARE = 0.45
+const NATIVE_MOBILE_FREE_SHARE = 0.7
 const MOBILE_UNKNOWN_RAM_BYTES = 2_400_000_000
 
 /**
@@ -648,19 +658,25 @@ export const build_device_profile = ( capabilities, max_bytes ) => {
     if( capabilities?.runtime === `electron` ) {
 
         const gpu = capabilities.gpu || {}
-        const bandwidth_gbs = gpu.unified_memory > 0 || gpu.metal ? BANDWIDTH_GBS.native_unified
-            : gpu.cuda || gpu.vulkan ? BANDWIDTH_GBS.native_gpu
-                : BANDWIDTH_GBS.native_cpu
+        const bandwidth_gbs = mobile ? BANDWIDTH_GBS.native_mobile
+            : gpu.unified_memory > 0 || gpu.metal ? BANDWIDTH_GBS.native_unified
+                : gpu.cuda || gpu.vulkan ? BANDWIDTH_GBS.native_gpu
+                    : BANDWIDTH_GBS.native_cpu
         const total_bytes = capabilities.memory?.total_bytes
+
+        // Phones: the automatic pick must fit what is free now, or the low-memory
+        // warning contradicts the recommendation; bigger models stay one tap away
+        const free_bytes = capabilities.memory?.free_bytes
+        const automatic_bytes = mobile && free_bytes ? Math.min( max_bytes, free_bytes * NATIVE_MOBILE_FREE_SHARE ) : max_bytes
 
         return {
             runtime: `electron`,
             kind,
-            mobile: false,
+            mobile,
             ram_gb: total_bytes ? Math.round( total_bytes / 1024 ** 3 ) : null,
             ceiling_bytes: Infinity,
             budget_bytes: max_bytes,
-            automatic_bytes: max_bytes,
+            automatic_bytes,
             bandwidth_gbs: learned_bandwidth( `electron`, bandwidth_gbs ),
         }
 

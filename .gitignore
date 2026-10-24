@@ -172,3 +172,6 @@ playwright-report/
 
 # llama-server sidecar binaries (scripts/fetch_llama_server.js)
 vendor/
+
+# Mobile app icons and splash screens are real assets
+!mobile/**/*.png

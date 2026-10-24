@@ -218,7 +218,8 @@ const SpinnerIcon = styled( LoaderCircle )`
     animation: ${ spin } 1s linear infinite;
 `
 
-const is_electron = () => !!window.electronAPI?.native_inference
+// Desktop app only: the mobile apps get updates from their app store
+const has_updater = () => !!window.electronAPI?.updater
 
 /**
  * Sidebar with chat history, new chat button, and mobile backdrop.
@@ -263,7 +264,7 @@ export default function Sidebar( {
     // Subscribe to updater IPC events for feedback
     useEffect( () => {
 
-        if( !is_electron() ) return
+        if( !has_updater() ) return
 
         const unsub_not_available = window.electronAPI.updater.on_update_not_available( () => {
             if( status_ref.current === `checking` ) {
@@ -442,7 +443,7 @@ export default function Sidebar( {
 
             { /* Electron: check for updates (the web promo is InstallAppPill;
                  route /get-app lists the downloads) */ }
-            { is_electron() && <SidebarFooter>
+            { has_updater() && <SidebarFooter>
                 <CheckUpdateButton
                     data-testid="check-for-updates-btn"
                     onClick={ handle_check_for_updates }
