@@ -77,5 +77,6 @@
     "confirm_delete_all": "Hiermit werden alle Unterhaltungen, zwischengespeicherten Modelle und Einstellungen gelöscht. Dies kann nicht rückgängig gemacht werden.",
 
     "update_app": "App aktualisieren",
-    "update_app_description": "Neueste Version aus dem Netz laden. Modelle und Chats bleiben."
+    "update_app_description": "Neueste Version aus dem Netz laden. Modelle und Chats bleiben.",
+    "update_app_offline": "Du bist offline. Verbinde dich mit dem Internet, um zu aktualisieren."
 }

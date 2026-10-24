@@ -85,5 +85,6 @@
     "confirm_delete_all": "This will delete all conversations, cached models, and settings. This cannot be undone.",
 
     "update_app": "Update app",
-    "update_app_description": "Reload the latest version from the network. Models and chats stay."
+    "update_app_description": "Reload the latest version from the network. Models and chats stay.",
+    "update_app_offline": "You're offline. Connect to the internet to update."
 }

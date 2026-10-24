@@ -2,6 +2,7 @@ import { useId } from 'react'
 import styled from 'styled-components'
 import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
 import Button from '../atoms/Button'
 import { reinstall_app, reload_for_update, use_app_update_store } from '../../utils/app_update'
 import { APP_VERSION, COMMIT_HASH } from '../../utils/branding'
@@ -89,6 +90,9 @@ export default function BasicSettings( {
     const { t } = useTranslation( `settings` )
     const id = useId()
     const update_ready = use_app_update_store( state => state.update_ready )
+    const update_app = async () => {
+        if( !await reinstall_app() ) toast.error( t( `update_app_offline` ) )
+    }
 
     return <>
 
@@ -139,7 +143,7 @@ export default function BasicSettings( {
                 $variant={ update_ready ? `primary` : `secondary` }
                 data-testid="update-app-btn"
                 title={ t( `update_app_description` ) }
-                onClick={ update_ready ? reload_for_update : reinstall_app }
+                onClick={ update_ready ? reload_for_update : update_app }
             >
                 <RefreshCw size={ 16 } /> { t( update_ready ? `common:update_ready` : `update_app` ) }
             </Button> }

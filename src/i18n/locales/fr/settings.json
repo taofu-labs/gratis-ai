@@ -77,5 +77,6 @@
     "confirm_delete_all": "Toutes les conversations, modèles en cache et paramètres seront supprimés. Cette action est irréversible.",
 
     "update_app": "Mettre à jour l’app",
-    "update_app_description": "Recharge la dernière version depuis le réseau. Modèles et discussions restent."
+    "update_app_description": "Recharge la dernière version depuis le réseau. Modèles et discussions restent.",
+    "update_app_offline": "Vous êtes hors ligne. Connectez-vous à Internet pour mettre à jour."
 }

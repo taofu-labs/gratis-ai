@@ -77,5 +77,6 @@
     "confirm_delete_all": "To usunie wszystkie rozmowy, zapisane modele i ustawienia. Tej operacji nie można cofnąć.",
 
     "update_app": "Zaktualizuj aplikację",
-    "update_app_description": "Wczytaj najnowszą wersję z sieci. Modele i czaty zostają."
+    "update_app_description": "Wczytaj najnowszą wersję z sieci. Modele i czaty zostają.",
+    "update_app_offline": "Jesteś offline. Połącz się z internetem, aby zaktualizować."
 }

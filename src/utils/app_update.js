@@ -77,8 +77,20 @@ export const reload_for_update = () => {
 /**
  * The manual escape hatch: drop every service worker so the next load comes
  * straight from the network, then reload. Models live in OPFS and stay.
+ * Offline it does nothing: without the worker the app could not start again.
+ * @returns {Promise<boolean>} False when the network is unreachable
  */
 export const reinstall_app = async () => {
+
+    try {
+        await fetch( `/`, { method: `HEAD`, cache: `no-store` } ).then( response => {
+            if( !response.ok ) throw new Error( `HTTP ${ response.status }` )
+        } )
+    } catch ( error ) {
+        log.warn( `[pwa] Not reinstalling while offline:`, error?.message )
+        return false
+    }
+
     try {
         const registrations = await navigator.serviceWorker?.getRegistrations() || []
         await Promise.all( registrations.map( registration => registration.unregister() ) )
@@ -86,6 +98,8 @@ export const reinstall_app = async () => {
         log.warn( `[pwa] Could not unregister service workers:`, error?.message )
     }
     reload_for_update()
+    return true
+
 }
 
 // ── Background checks ────────────────────────────────────────────

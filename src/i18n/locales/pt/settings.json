@@ -77,5 +77,6 @@
     "confirm_delete_all": "Isso excluirá todas as conversas, modelos em cache e configurações. Essa ação não pode ser desfeita.",
 
     "update_app": "Atualizar app",
-    "update_app_description": "Recarrega a versão mais recente da rede. Modelos e conversas ficam."
+    "update_app_description": "Recarrega a versão mais recente da rede. Modelos e conversas ficam.",
+    "update_app_offline": "Você está offline. Conecte-se à internet para atualizar."
 }

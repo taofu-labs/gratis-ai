@@ -38,6 +38,22 @@ test.describe( `PWA shell`, () => {
 
     } )
 
+    test( `"Update app" offline keeps the cached app instead of stranding it`, async ( { page, context } ) => {
+
+        await page.goto( `/` )
+        await page.evaluate( () => navigator.serviceWorker.ready )
+        await page.waitForFunction( () => !!navigator.serviceWorker.controller )
+
+        await context.setOffline( true )
+        await open_settings( page )
+        await page.getByTestId( `update-app-btn` ).click()
+
+        await expect( page.getByText( /You.re offline/ ) ).toBeVisible()
+        expect( await page.evaluate( async () => ( await navigator.serviceWorker.getRegistrations() ).length ) ).toBe( 1 )
+        await context.setOffline( false )
+
+    } )
+
     test( `an update reload keeps the typed draft; a manual reload does not`, async ( { page } ) => {
 
         await page.goto( `/` )

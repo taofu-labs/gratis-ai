@@ -332,6 +332,11 @@ const DraftImage = ( { image, on_remove, label } ) => {
 // memory; a manual reload intentionally starts clean, an update reload keeps the text
 let remembered_draft = null
 
+// An update can land while the chat page (and its listener) is unmounted
+if( typeof window !== `undefined` ) window.addEventListener( EVENTS.before_update_reload, () => {
+    if( remembered_draft?.text ) stash_update_draft( `chat`, remembered_draft.text )
+} )
+
 let next_draft_id = 0
 const draft_id = () => `draft-${ ++next_draft_id }`
 

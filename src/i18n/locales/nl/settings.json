@@ -77,5 +77,6 @@
     "confirm_delete_all": "Dit verwijdert alle gesprekken, opgeslagen modellen en instellingen. Dit kan niet ongedaan worden gemaakt.",
 
     "update_app": "App bijwerken",
-    "update_app_description": "Laad de nieuwste versie van het netwerk. Modellen en chats blijven."
+    "update_app_description": "Laad de nieuwste versie van het netwerk. Modellen en chats blijven.",
+    "update_app_offline": "Je bent offline. Maak verbinding met internet om bij te werken."
 }

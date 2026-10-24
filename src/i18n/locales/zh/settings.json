@@ -77,5 +77,6 @@
     "confirm_delete_all": "这将删除所有对话、缓存的模型和设置。此操作无法撤销。",
 
     "update_app": "更新应用",
-    "update_app_description": "从网络重新加载最新版本。模型和聊天记录会保留。"
+    "update_app_description": "从网络重新加载最新版本。模型和聊天记录会保留。",
+    "update_app_offline": "当前处于离线状态。请连接互联网后再更新。"
 }

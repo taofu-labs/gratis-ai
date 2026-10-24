@@ -77,5 +77,6 @@
     "confirm_delete_all": "Se eliminarán todas las conversaciones, modelos en caché y ajustes. Esta acción no se puede deshacer.",
 
     "update_app": "Actualizar app",
-    "update_app_description": "Recarga la última versión desde la red. Modelos y chats se conservan."
+    "update_app_description": "Recarga la última versión desde la red. Modelos y chats se conservan.",
+    "update_app_offline": "Estás sin conexión. Conéctate a internet para actualizar."
 }
