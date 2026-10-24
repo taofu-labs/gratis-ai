@@ -1,6 +1,7 @@
 import Foundation
 import Capacitor
 import Metal
+import os
 import LlamaServer
 
 /**
@@ -32,6 +33,9 @@ public class GratisNativePlugin: CAPPlugin, CAPBridgedPlugin {
 
     private let downloads = ModelDownloader()
     private let server = InProcessServer()
+
+    // Server start/stop block (model load, shutdown); one at a time, off the JS thread
+    private let server_queue = DispatchQueue( label: "gratis.llama-server", qos: .userInitiated )
 
     public override func load() {
         downloads.on_progress = { [ weak self ] event in self?.notifyListeners( "downloadProgress", data: event ) }
@@ -203,14 +207,14 @@ public class GratisNativePlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func startServer( _ call: CAPPluginCall ) {
         let args = call.getArray( "args", String.self ) ?? []
-        DispatchQueue.global( qos: .userInitiated ).async { [ server ] in
+        server_queue.async { [ server ] in
             server.start( args: args )
             call.resolve()
         }
     }
 
     @objc func stopServer( _ call: CAPPluginCall ) {
-        DispatchQueue.global( qos: .userInitiated ).async { [ server ] in
+        server_queue.async { [ server ] in
             server.stop()
             call.resolve()
         }

@@ -5,11 +5,11 @@ import LlamaServer
  * llama-server on a background thread of the app itself. One at a time:
  * start() replaces a running server. Its stderr goes through a pipe so the
  * last lines can explain a failed load (and still reach the Xcode console).
+ * Not thread-safe: the plugin calls start/stop from one serial queue.
  */
 final class InProcessServer {
 
     private static let log_tail_lines = 60
-    private static let stop_timeout: TimeInterval = 120
 
     var on_exit: ( ( Int32, String ) -> Void )?
     private( set ) var running = false
@@ -39,7 +39,10 @@ final class InProcessServer {
             let code = pointers.withUnsafeMutableBufferPointer { gratis_llama_server_run( Int32( args.count + 1 ), $0.baseAddress ) }
             argv.forEach { free( $0 ) }
 
-            guard let self else { return done.signal() }
+            guard let self else {
+                done.signal()
+                return
+            }
             self.running = false
             let expected = self.stopping
             done.signal()
@@ -54,16 +57,16 @@ final class InProcessServer {
     }
 
     /**
-     * Ask the server to stop and wait for it. Before a model has loaded the
-     * stop hook is not installed yet, so keep asking until the run returns.
+     * Ask the server to stop and wait until its thread has returned: two runs
+     * would share llama.cpp's process-wide state. While a model is still
+     * loading the stop hook is not installed yet, so keep asking.
      */
     func stop() {
         guard running else { return }
         stopping = true
-        let deadline = Date().addingTimeInterval( Self.stop_timeout )
         repeat {
             gratis_llama_server_stop()
-        } while finished.wait( timeout: .now() + 0.25 ) == .timedOut && Date() < deadline
+        } while finished.wait( timeout: .now() + 0.25 ) == .timedOut
     }
 
     func log_tail() -> String {
@@ -80,12 +83,12 @@ final class InProcessServer {
 
         var fds: [ Int32 ] = [ 0, 0 ]
         guard pipe( &fds ) == 0 else { return }
-        let original = dup( STDERR_FILENO )
+        let ( read_end, original ) = ( fds[ 0 ], dup( STDERR_FILENO ) )
         dup2( fds[ 1 ], STDERR_FILENO )
         setvbuf( stderr, nil, _IOLBF, 0 )
 
         let reader = Thread { [ weak self ] in
-            let input = FileHandle( fileDescriptor: fds[ 0 ] )
+            let input = FileHandle( fileDescriptor: read_end )
             let mirror = FileHandle( fileDescriptor: original )
             var pending = ""
             while true {

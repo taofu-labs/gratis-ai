@@ -96,6 +96,16 @@ export const create_mobile_bridge = ( native, platform ) => {
     let config = null          // { model_id, args_base, reasoning_enabled, n_ctx }
     let launching = null
     let abort_controller = null
+
+    // Load, unload and relaunch run one at a time; each load or unload bumps
+    // the generation, and a launch from an older generation bails out
+    let lifecycle = Promise.resolve()
+    let generation = 0
+    const serialized = operation => {
+        const run = lifecycle.then( operation, operation )
+        lifecycle = run.catch( () => {} )
+        return run
+    }
     let system_info = null
 
     native.addListener( `serverExit`, ( { code, log_tail } ) => {
@@ -207,20 +217,6 @@ export const create_mobile_bridge = ( native, platform ) => {
 
     const list_models = read_manifest
 
-    const delete_model = async model_id => {
-
-        const manifest = await read_manifest()
-        const model = manifest.find( entry => entry.id === model_id )
-        if( !model ) return { success: false }
-
-        if( config?.model_id === model_id ) await unload_model()
-        await write_manifest( manifest.filter( entry => entry.id !== model_id ) )
-        for( const path of [ model.file_name, projector_name( model ) ] ) if( path ) await native.deleteFile( { path } )
-
-        return { success: true }
-
-    }
-
     // ── Server lifecycle ─────────────────────────────────────────
 
     const request = ( pathname, init = {} ) => fetch( `${ server.base_url }${ pathname }`, {
@@ -228,8 +224,14 @@ export const create_mobile_bridge = ( native, platform ) => {
         headers: { Authorization: `Bearer ${ server.api_key }`, ...init.headers },
     } )
 
+    /** Stop the server and forget it (lifecycle-internal) */
+    const stop_server = async () => {
+        server = null
+        await native.stopServer()
+    }
+
     /** Start llama-server for `config` and wait until it answers */
-    const launch = async () => {
+    const launch = async ( launch_generation ) => {
 
         const { port } = await native.freePort()
         const api_key = random_key()
@@ -240,7 +242,17 @@ export const create_mobile_bridge = ( native, platform ) => {
         server = { base_url: `http://127.0.0.1:${ port }`, api_key }
 
         const deadline = Date.now() + HEALTH_TIMEOUT_MS
-        while( Date.now() < deadline ) {
+        for( ;; ) {
+
+            if( launch_generation !== generation ) {
+                await stop_server()
+                throw new Error( `Model load cancelled` )
+            }
+            if( Date.now() > deadline ) {
+                await stop_server()
+                throw new Error( `The model took too long to start` )
+            }
+
             const { running, log_tail } = await native.serverStatus()
             if( !running ) {
                 server = null
@@ -254,7 +266,12 @@ export const create_mobile_bridge = ( native, platform ) => {
             await sleep( HEALTH_POLL_MS )
         }
 
-        const props = await request( `/props` ).then( response => response.json() )
+        const response = await request( `/props` )
+        if( !response.ok ) {
+            await stop_server()
+            throw new Error( `The model could not start (HTTP ${ response.status })` )
+        }
+        const props = await response.json()
         return {
             context_size: props?.default_generation_settings?.n_ctx || config.n_ctx,
             has_image_input: !!props?.modalities?.vision,
@@ -266,18 +283,39 @@ export const create_mobile_bridge = ( native, platform ) => {
     const ensure_running = async () => {
         if( !config ) throw new Error( `No model loaded` )
         if( server ) return
-        launching ||= launch().finally( () => launching = null )
+        const launch_generation = generation
+        launching ||= serialized( () => launch( launch_generation ) ).finally( () => launching = null )
         await launching
     }
 
-    const load_model = async model_id => {
+    /** Cancel the reply in flight, if any */
+    const abort = () => {
+        abort_controller?.abort()
+        abort_controller = null
+    }
+
+    const unload_model = () => {
+        generation++
+        abort()
+        config = null
+        return serialized( async () => {
+            await stop_server()
+            return { success: true }
+        } )
+    }
+
+    const load = async ( model_id, load_generation ) => {
+
+        if( load_generation !== generation ) throw new Error( `Model load cancelled` )
 
         const manifest = await read_manifest()
         const model = manifest.find( entry => entry.id === model_id )
         if( !model ) throw new Error( `Model not found: ${ model_id }` )
 
         // Free the previous model before measuring what this one can use
-        await unload_model()
+        abort()
+        config = null
+        await stop_server()
 
         const files = await native.modelFiles( { paths: [ model.file_name, projector_name( model ) ].filter( Boolean ) } )
         if( !files[ model.file_name ]?.exists ) throw new Error( `Model file missing: ${ model.file_name }` )
@@ -305,8 +343,7 @@ export const create_mobile_bridge = ( native, platform ) => {
         }
 
         try {
-            launching = launch().finally( () => launching = null )
-            const info = await launching
+            const info = await launch( load_generation )
             await write_manifest( manifest.map( entry => entry.id === model_id ? { ...entry, last_used_at: Date.now() } : entry ) )
             return {
                 success: true,
@@ -316,18 +353,29 @@ export const create_mobile_bridge = ( native, platform ) => {
                 has_projector,
             }
         } catch ( error ) {
-            config = null
+            if( load_generation === generation ) config = null
             throw error
         }
 
     }
 
-    const unload_model = async () => {
-        abort()
-        config = null
-        server = null
-        await native.stopServer()
+    const load_model = model_id => {
+        const load_generation = ++generation
+        return serialized( () => load( model_id, load_generation ) )
+    }
+
+    const delete_model = async model_id => {
+
+        const manifest = await read_manifest()
+        const model = manifest.find( entry => entry.id === model_id )
+        if( !model ) return { success: false }
+
+        if( config?.model_id === model_id ) await unload_model()
+        await write_manifest( manifest.filter( entry => entry.id !== model_id ) )
+        for( const path of [ model.file_name, projector_name( model ) ] ) if( path ) await native.deleteFile( { path } )
+
         return { success: true }
+
     }
 
     const get_loaded_model = () => ( { loaded: !!config, model_id: config?.model_id || null, has_image_input: !!config?.args_base.mmproj_path } )
@@ -406,11 +454,6 @@ export const create_mobile_bridge = ( native, platform ) => {
         } finally {
             stream_done.emit()
         }
-    }
-
-    const abort = () => {
-        abort_controller?.abort()
-        abort_controller = null
     }
 
     return {

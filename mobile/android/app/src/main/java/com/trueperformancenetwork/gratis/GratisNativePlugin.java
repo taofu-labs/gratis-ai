@@ -266,6 +266,9 @@ public class GratisNativePlugin extends Plugin {
         String expected_sha = lookup_sha256( url, headers );
         if( expected_sha == null ) Log.w( TAG, "No SHA-256 known for " + path + ", skipping checksum" );
 
+        // A part bigger than the file is stale (the repo changed): start over
+        if( expected_size > 0 && part.length() > expected_size ) part.delete();
+
         // Resume: hash what is already on disk, then ask for the rest
         MessageDigest digest = MessageDigest.getInstance( "SHA-256" );
         long offset = part.exists() ? part.length() : 0;
@@ -274,9 +277,13 @@ public class GratisNativePlugin extends Plugin {
         HttpURLConnection connection = open_following_redirects( url, headers, offset );
         int status = connection.getResponseCode();
 
-        // The whole file is already there
+        // The whole file is already there (416 alone only says "nothing past offset")
         if( status == 416 && offset > 0 ) {
             connection.disconnect();
+            if( expected_size > 0 && offset != expected_size ) {
+                part.delete();
+                throw new IOException( "The partial download did not match the model. Please download it again." );
+            }
         } else {
 
             if( status == 401 || status == 403 ) throw new IOException( "Hugging Face rejected the token or this account does not have access to the model. Check the read token in Settings > Models." );
@@ -296,6 +303,11 @@ public class GratisNativePlugin extends Plugin {
 
             if( length > 0 && part.length() != offset + length ) throw new IOException( "Size mismatch: expected " + ( offset + length ) + ", wrote " + part.length() );
 
+        }
+
+        if( expected_size > 0 && part.length() != expected_size ) {
+            part.delete();
+            throw new IOException( "Size mismatch: expected " + expected_size + ", got " + part.length() + ". Please download it again." );
         }
 
         if( !has_gguf_magic( part ) ) {

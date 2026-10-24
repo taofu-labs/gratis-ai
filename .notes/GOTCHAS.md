@@ -444,3 +444,6 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - llama.cpp `--cpu-strict 1` with more threads than mask cores collapses to ~0.1 tok/s. `tuning_args` keeps threads ≤ big cores.
 - Phone CPU: Q5_0/IQ* get no ARM repack kernels (3× slower prefill). Prefer K-quants on phones.
 - WebView debugging: `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>` + Playwright `connectOverCDP`. Seed big models as `<file>.part` via `run-as` to skip slow phone Wi-Fi (~0.7 MB/s); the app still SHA-verifies them.
+- Mobile bridge lifecycle is serialized (promise queue + generation): never call native start/stop outside `serialized()`, or a stale launch can resurrect/kill the wrong server.
+- iOS Swift was never built on a Mac yet; run `scripts/swift_typecheck.sh` after edits (Swift 6.2 Linux toolchain in vendor/swift; Debian 13 needs the libncurses.so.6 → libncursesw symlink in vendor/swift/compat).
+- Codex CLI here: its bubblewrap sandbox fails (no user namespaces) → run reviews with `--dangerously-bypass-approvals-and-sandbox` and a "do not change files" prompt.

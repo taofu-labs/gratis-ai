@@ -66,6 +66,8 @@ Capacitor 8 wraps the same React build (`vite build --mode native`, no service w
 | Build | `scripts/android_toolchain.sh` (once) → `scripts/build_android_llama_server.sh` → `scripts/android_dev.sh [adb-serial]` | macOS: `scripts/build_ios_llama_server.sh` → `npm run build:native` → Xcode. CI: `.github/workflows/mobile-apps.yml` (unsigned `.ipa`) |
 
 - Icons/splash: `python3 scripts/mobile_icons.py` (from `build/icon.png`).
+- No Mac: `scripts/swift_typecheck.sh` typechecks the plugin's Swift on Linux against stubs (needs a swift.org toolchain in `vendor/swift`).
+- In-process server: the build patches upstream `server.cpp` so its `shutdown_handler` is mutex-guarded and cleared before the run's stack unwinds; Swift waits for the run to return before starting another.
 - Phones: picker budgets 45% of RAM (automatic pick ≤ 70% of free), context ≤ 8192, and ranks Q5_0/IQ quants below K-quants (no ARM repack kernels).
 - Debug the WebView: `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>` → Playwright `connectOverCDP`.
 - Signing: not set up yet (Android debug key; iOS unsigned).

@@ -18,7 +18,9 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
 
     private lazy var session = URLSession( configuration: .default, delegate: self, delegateQueue: nil )
 
-    // State of the one active transfer
+    // State of the one active transfer. Delegate callbacks (URLSession's queue)
+    // and run() (a Swift task) both touch it, so it lives behind `lock`
+    private let lock = NSLock()
     private var task: URLSessionDataTask?
     private var output: FileHandle?
     private var hasher = SHA256()
@@ -30,12 +32,13 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
     private var response_continuation: CheckedContinuation<HTTPURLResponse, Error>?
     private var disposition: ( ( URLSession.ResponseDisposition ) -> Void )?
     private var finish_continuation: CheckedContinuation<Void, Error>?
+    private var outcome: Result<Void, Error>?   // the task ended before run() waited for it
     private var write_error: Error?
 
     func abort() {
-        aborted = true
+        lock.withLock { aborted = true }
         respond( .cancel )
-        task?.cancel()
+        lock.withLock { task }?.cancel()
     }
 
     func run( url: URL, file: URL, path: String, headers: [ String: String ], expected_size: Int64 ) async throws -> ( Int64, String? ) {
@@ -47,11 +50,16 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
         // Already installed at the right size (e.g. adding a projector later)
         if expected_size > 0, file_size( file ) == expected_size, has_gguf_magic( file ) { return ( expected_size, nil ) }
 
-        // iOS suspends backgrounded apps within seconds; ask for the grace period
-        let background = await UIApplication.shared.beginBackgroundTask( withName: "model-download" )
+        // iOS suspends backgrounded apps within seconds; ask for the grace
+        // period, and when it runs out stop cleanly (the .part resumes later)
+        // rather than be killed for overrunning it
+        let background = await UIApplication.shared.beginBackgroundTask( withName: "model-download" ) { [ weak self ] in self?.abort() }
         defer { Task { @MainActor in UIApplication.shared.endBackgroundTask( background ) } }
 
         let expected_sha = await lookup_sha256( url: url, headers: headers )
+
+        // A part bigger than the file is stale (the repo changed): start over
+        if expected_size > 0 && file_size( part ) > expected_size { try? FileManager.default.removeItem( at: part ) }
 
         // Resume: hash what is already on disk, then ask for the rest
         hasher = SHA256()
@@ -67,8 +75,14 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
         let status = response.statusCode
 
         if status == 416 && offset > 0 {
-            // The whole file is already there
+
+            // The whole file is already there (416 alone only says "nothing past offset")
             respond( .cancel )
+            if expected_size > 0 && offset != expected_size {
+                try? FileManager.default.removeItem( at: part )
+                throw PluginError.message( "The partial download did not match the model. Please download it again." )
+            }
+
         } else {
 
             guard status == 200 || status == 206 else {
@@ -83,32 +97,35 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
             if !append {
                 offset = 0
                 hasher = SHA256()
-                FileManager.default.createFile( atPath: part.path, contents: nil )
             }
-            if !FileManager.default.fileExists( atPath: part.path ) { FileManager.default.createFile( atPath: part.path, contents: nil ) }
+            if !append || !FileManager.default.fileExists( atPath: part.path ) { _ = FileManager.default.createFile( atPath: part.path, contents: nil ) }
 
             let length = response.expectedContentLength
-            written = offset
-            total = length > 0 ? offset + length : expected_size
-            output = try FileHandle( forWritingTo: part )
-            try output?.seekToEnd()
-
-            // Let the body flow through the delegate and wait for it to finish
-            try await withCheckedThrowingContinuation { continuation in
-                finish_continuation = continuation
-                respond( .allow )
+            let handle = try FileHandle( forWritingTo: part )
+            defer { try? handle.close() }
+            try handle.seekToEnd()
+            lock.withLock {
+                written = offset
+                total = length > 0 ? offset + length : expected_size
+                output = handle
             }
 
+            // Let the body flow through the delegate and wait for it to finish
+            try await finish()
+
             // Flush before llama-server mmap()s the file
-            try output?.synchronize()
-            try output?.close()
-            output = nil
-            report( written, total, verifying: false )
+            try handle.synchronize()
+            report( lock.withLock { written }, total, verifying: false )
 
             if length > 0 && file_size( part ) != offset + length {
                 throw PluginError.message( "Size mismatch: expected \( offset + length ), wrote \( file_size( part ) )" )
             }
 
+        }
+
+        if expected_size > 0 && file_size( part ) != expected_size {
+            try? FileManager.default.removeItem( at: part )
+            throw PluginError.message( "Size mismatch: expected \( expected_size ), got \( file_size( part ) ). Please download it again." )
         }
 
         guard has_gguf_magic( part ) else {
@@ -130,30 +147,58 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
 
     // ── Transfer ─────────────────────────────────────────────────
 
+    /** Send the request; resumes with the response head, body held back */
     private func start( _ request: URLRequest ) async throws -> HTTPURLResponse {
         try await withCheckedThrowingContinuation { continuation in
-            response_continuation = continuation
-            write_error = nil
-            task = session.dataTask( with: request )
-            task?.resume()
+            let next = session.dataTask( with: request )
+            lock.withLock {
+                response_continuation = continuation
+                finish_continuation = nil
+                outcome = nil
+                output = nil
+                write_error = nil
+                task = next
+            }
+            next.resume()
+        }
+    }
+
+    /** Release the body and wait for the task to end (or take its stored end) */
+    private func finish() async throws {
+        try await withCheckedThrowingContinuation { ( continuation: CheckedContinuation<Void, Error> ) in
+            let ended: Result<Void, Error>? = lock.withLock {
+                if outcome == nil { finish_continuation = continuation }
+                return outcome
+            }
+            if let ended { continuation.resume( with: ended ) } else { respond( .allow ) }
         }
     }
 
     /** Hold the body until run() has looked at the status and opened the file */
     func urlSession( _ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping ( URLSession.ResponseDisposition ) -> Void ) {
-        disposition = completionHandler
-        response_continuation?.resume( returning: response as! HTTPURLResponse )
-        response_continuation = nil
+        let continuation: CheckedContinuation<HTTPURLResponse, Error>? = lock.withLock {
+            guard dataTask === task else { return nil }
+            disposition = completionHandler
+            defer { response_continuation = nil }
+            return response_continuation
+        }
+        guard let continuation, let http = response as? HTTPURLResponse else { return completionHandler( .cancel ) }
+        continuation.resume( returning: http )
     }
 
     private func respond( _ answer: URLSession.ResponseDisposition ) {
-        disposition?( answer )
-        disposition = nil
+        let handler: ( ( URLSession.ResponseDisposition ) -> Void )? = lock.withLock {
+            defer { disposition = nil }
+            return disposition
+        }
+        handler?( answer )
     }
 
     func urlSession( _ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data ) {
 
-        guard let output, !aborted else { return }
+        lock.lock()
+        defer { lock.unlock() }
+        guard dataTask === task, let output, !aborted else { return }
 
         do {
             try output.write( contentsOf: data )
@@ -170,16 +215,30 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
 
     }
 
-    func urlSession( _ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error? ) {
-        let failure = aborted ? PluginError.message( "Download aborted" ) : write_error ?? error
-        if let continuation = response_continuation {
-            response_continuation = nil
-            continuation.resume( throwing: failure ?? PluginError.message( "No response" ) )
+    func urlSession( _ session: URLSession, task ended: URLSessionTask, didCompleteWithError error: Error? ) {
+
+        let ( head, body, result ): ( CheckedContinuation<HTTPURLResponse, Error>?, CheckedContinuation<Void, Error>?, Result<Void, Error> ) = lock.withLock {
+            let failure = aborted ? PluginError.message( "Download aborted" ) : write_error ?? error
+            let result: Result<Void, Error> = failure.map { .failure( $0 ) } ?? .success( () )
+            guard ended === task else { return ( nil, nil, result ) }
+            defer {
+                response_continuation = nil
+                finish_continuation = nil
+                disposition = nil
+                outcome = result
+            }
+            return ( response_continuation, finish_continuation, result )
         }
-        if let continuation = finish_continuation {
-            finish_continuation = nil
-            if let failure { continuation.resume( throwing: failure ) } else { continuation.resume() }
+
+        // Ended before a response head (network error, abort): fail start()
+        if let head {
+            switch result {
+            case .failure( let failure ): head.resume( throwing: failure )
+            case .success: head.resume( throwing: PluginError.message( "No response" ) )
+            }
         }
+        body?.resume( with: result )
+
     }
 
     /** Follow redirects with Range intact; credentials stay with the original host */

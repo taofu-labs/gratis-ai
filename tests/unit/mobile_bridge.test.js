@@ -218,6 +218,61 @@ describe( `mobile bridge`, () => {
 
     } )
 
+    test( `unloading mid-load cancels the load and leaves nothing running`, async () => {
+
+        const native = fake_native()
+        let healthy = false
+        const server = fake_server()
+        vi.stubGlobal( `fetch`, vi.fn( ( url, init ) => url.endsWith( `/health` ) && !healthy ? Promise.reject( new TypeError( `refused` ) ) : server( url, init ) ) )
+        const bridge = create_mobile_bridge( native, `android` )
+        await bridge.download_model( MODEL )
+
+        const loading = bridge.load_model( `m` )
+        await vi.waitFor( () => expect( native.started ).toHaveLength( 1 ) )
+        await bridge.unload_model()
+        healthy = true
+
+        await expect( loading ).rejects.toThrow( /cancelled/ )
+        expect( native.running ).toBe( false )
+        expect( bridge.get_loaded_model().loaded ).toBe( false )
+
+    } )
+
+    test( `a superseded load cannot clear the newer model`, async () => {
+
+        const native = fake_native()
+        vi.stubGlobal( `fetch`, fake_server() )
+        const bridge = create_mobile_bridge( native, `android` )
+        await bridge.download_model( MODEL )
+        await bridge.download_model( { ...MODEL, id: `n`, file_name: `n.gguf` } )
+
+        const first = bridge.load_model( `m` )
+        const second = bridge.load_model( `n` )
+
+        await expect( first ).rejects.toThrow( /cancelled/ )
+        await expect( second ).resolves.toMatchObject( { success: true } )
+        expect( bridge.get_loaded_model() ).toMatchObject( { loaded: true, model_id: `n` } )
+
+    } )
+
+    test( `a server that never gets healthy fails the load`, async () => {
+
+        const native = fake_native()
+        vi.stubGlobal( `fetch`, vi.fn( async () => new Response( `{}`, { status: 503 } ) ) )
+        const bridge = create_mobile_bridge( native, `android` )
+        await bridge.download_model( MODEL )
+
+        vi.useFakeTimers( { toFake: [ `Date` ] } )
+        const loading = bridge.load_model( `m` )
+        await vi.waitFor( () => expect( native.started ).toHaveLength( 1 ) )
+        vi.setSystemTime( Date.now() + 10 * 60_000 )
+
+        await expect( loading ).rejects.toThrow( /too long/ )
+        expect( native.running ).toBe( false )
+        vi.useRealTimers()
+
+    } )
+
     test( `a server that dies while loading reports why`, async () => {
 
         const native = fake_native()

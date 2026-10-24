@@ -43,14 +43,33 @@ tarball="${WORK}/llama.cpp-${TAG}.tar.gz"
 echo "${SRC_SHA256}  ${tarball}" | shasum -a 256 -c --quiet - || { echo "sha256 mismatch: ${tarball}"; rm -f "${tarball}"; exit 1; }
 [[ -d "${SRC}" ]] || tar xzf "${tarball}" -C "${WORK}"
 
-# In process, one run's `shutdown_handler` (a [&] lambda over its stack) would
-# outlive it; reset it on entry so a stop before the next model loads is a no-op
-server_cpp="${SRC}/tools/server/server.cpp"
-grep -q 'gratis:' "${server_cpp}" || sed -i '' \
-    '/^int llama_server(int argc, char \*\* argv) {$/a\
-    shutdown_handler = nullptr; // gratis: no stale handler across in-process runs
-' "${server_cpp}"
-grep -q 'gratis:' "${server_cpp}" || { echo "server.cpp patch failed (upstream changed?)"; exit 1; }
+# In process, upstream's `shutdown_handler` (a [&] lambda over llama_server's
+# stack) must never run once that stack unwinds: guard it with a mutex, clear
+# it on entry and as soon as the server loop returns
+python3 - "${SRC}/tools/server/server.cpp" <<'PATCH'
+import sys
+path = sys.argv[ 1 ]
+source = open( path ).read()
+if 'gratis:' not in source:
+    lock = 'std::lock_guard<std::mutex> gratis_lock( gratis_handler_mutex );'
+    edits = [
+        ( 'static std::function<void(int)> shutdown_handler;',
+          'static std::function<void(int)> shutdown_handler;\nstatic std::mutex gratis_handler_mutex; // gratis: embedded server' ),
+        ( '    if (shutdown_handler) {\n        shutdown_handler(0);\n    }',
+          '    ' + lock + '\n    if (shutdown_handler) {\n        shutdown_handler(0);\n    }' ),
+        ( 'int llama_server(int argc, char ** argv) {\n',
+          'int llama_server(int argc, char ** argv) {\n    { ' + lock + ' shutdown_handler = nullptr; }\n' ),
+        ( '        shutdown_handler = [&](int) {\n            mcp_mgr.shutdown();\n            // this will unblock start_loop()\n            ctx_server.terminate();\n        };',
+          '        { ' + lock + '\n        shutdown_handler = [&](int) {\n            mcp_mgr.shutdown();\n            // this will unblock start_loop()\n            ctx_server.terminate();\n        }; }' ),
+        ( '        ctx_server.start_loop();\n',
+          '        ctx_server.start_loop();\n        { ' + lock + ' shutdown_handler = nullptr; }\n' ),
+    ]
+    for old, new in edits:
+        if source.count( old ) != 1: sys.exit( 'server.cpp patch failed (upstream changed?): ' + old.splitlines()[ 0 ] )
+        source = source.replace( old, new )
+    source = '#include <mutex>\n' + source
+    open( path, 'w' ).write( source )
+PATCH
 
 
 # ─── Build ────────────────────────────────────────────────────────────────────
@@ -84,16 +103,17 @@ xcrun --sdk iphoneos clang++ -std=c++17 -O2 -arch arm64 -isysroot "${sdk}" -miph
 
 # ─── Package ──────────────────────────────────────────────────────────────────
 
-# One static archive: shim + server + common + llama + mtmd + every ggml backend
+# One static archive (written outside BUILD so a rebuild never re-ingests it):
+# shim + server + common + llama + mtmd + every ggml backend
 archives=( $( find "${BUILD}" -name '*.a' -not -path '*/CMakeFiles/*' ) )
-xcrun libtool -static -o "${BUILD}/libllama-server.a" "${BUILD}/gratis_llama_server.o" "${archives[@]}"
+xcrun libtool -static -o "${WORK}/libllama-server.a" "${BUILD}/gratis_llama_server.o" "${archives[@]}"
 
 headers="${BUILD}/headers"
 rm -rf "${headers}" "${OUT}"
 mkdir -p "${headers}"
 cp "${SHIM}/gratis_llama_server.h" "${SHIM}/module.modulemap" "${headers}/"
 
-xcodebuild -create-xcframework -library "${BUILD}/libllama-server.a" -headers "${headers}" -output "${OUT}"
+xcodebuild -create-xcframework -library "${WORK}/libllama-server.a" -headers "${headers}" -output "${OUT}"
 
 echo
 echo "llama.cpp ${TAG} -> ${OUT}"
