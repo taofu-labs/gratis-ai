@@ -1,0 +1,93 @@
+# Build the Android and iOS apps (Capacitor) with their llama.cpp servers.
+# Unsigned for now: Android ships a debug APK, iOS an unsigned .ipa to be
+# signed off-CI. Artifacts only; nothing is published.
+
+name: Mobile apps
+
+on:
+  push:
+    branches: [mobile-apps]
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-apps-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Cache llama.cpp build
+        uses: actions/cache@v6
+        with:
+          path: vendor/android/.cache
+          key: llama-android-${{ hashFiles('scripts/build_android_llama_server.sh') }}
+
+      - name: Build llama-server (arm64-v8a)
+        run: |
+          sudo apt-get install -y ninja-build
+          ANDROID_NDK="$ANDROID_NDK_LATEST_HOME" CMAKE_BIN=/usr/bin scripts/build_android_llama_server.sh
+
+      - name: Build APK
+        run: |
+          npm ci
+          npm run build:native
+          cd mobile/android && ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: gratis-android-debug
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache llama.cpp build
+        uses: actions/cache@v6
+        with:
+          path: vendor/ios/.cache
+          key: llama-ios-${{ hashFiles('scripts/build_ios_llama_server.sh', 'mobile/plugin/ios/LlamaServerShim/**') }}
+
+      - name: Build llama-server (iphoneos arm64)
+        run: |
+          brew install ninja
+          scripts/build_ios_llama_server.sh
+
+      - name: Build unsigned app
+        run: |
+          npm ci
+          npm run build:native
+          xcodebuild -project mobile/ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+
+      # Payload/App.app zipped = an .ipa, ready for zsign / rcodesign
+      - name: Package .ipa
+        run: |
+          mkdir -p build/ipa/Payload
+          cp -R build/ios/Build/Products/Release-iphoneos/App.app build/ipa/Payload/
+          cd build/ipa && zip -qry ../gratis-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: gratis-ios-unsigned
+          path: build/gratis-unsigned.ipa

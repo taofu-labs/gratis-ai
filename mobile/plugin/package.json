@@ -1,0 +1,11 @@
+{
+    "name": "gratis-native",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Gratis native plugin: verified model downloads + llama.cpp llama-server (iOS half; Android half lives in mobile/android)",
+    "capacitor": {
+        "ios": {
+            "src": "ios"
+        }
+    }
+}

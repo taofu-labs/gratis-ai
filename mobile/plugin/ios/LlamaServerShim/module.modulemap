@@ -1,0 +1,5 @@
+module LlamaServer {
+    header "gratis_llama_server.h"
+    link "c++"
+    export *
+}

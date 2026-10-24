@@ -1,5 +1,5 @@
 """
-Generate the Android launcher icons and splash screens from build/icon.png.
+Generate the Android and iOS app icons and splash screens from build/icon.png.
 Usage: python3 scripts/mobile_icons.py
 """
 from pathlib import Path
@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path( __file__ ).resolve().parent.parent
 RES = ROOT / 'mobile/android/app/src/main/res'
+ASSETS = ROOT / 'mobile/ios/App/App/Assets.xcassets'
 BACKGROUND = ( 0x0F, 0x10, 0x11, 255 )
 icon = Image.open( ROOT / 'build/icon.png' ).convert( 'RGBA' )
 
@@ -35,8 +36,13 @@ for density, factor in DENSITIES.items():
     # Adaptive foreground: 108dp canvas, the launcher mask keeps the middle 66dp
     on_background( round( 108 * factor ), 0.5 ).save( folder / 'ic_launcher_foreground.png' )
 
+# iOS: one opaque 1024 icon (the system rounds the corners)
+square = Image.new( 'RGBA', ( 1024, 1024 ), BACKGROUND )
+square.alpha_composite( on_background( 1024, 0.7 ) )
+square.convert( 'RGB' ).save( ASSETS / 'AppIcon.appiconset/AppIcon-512@2x.png' )
+
 # Splash: the icon small and centred on the app background, any orientation
-for splash in RES.glob( 'drawable*/splash.png' ):
+for splash in [ *RES.glob( 'drawable*/splash.png' ), *ASSETS.glob( 'Splash.imageset/*.png' ) ]:
     width, height = Image.open( splash ).size
     canvas = Image.new( 'RGBA', ( width, height ), BACKGROUND )
     inner = min( width, height ) // 4
@@ -46,4 +52,4 @@ for splash in RES.glob( 'drawable*/splash.png' ):
 ( RES / 'values/ic_launcher_background.xml' ).write_text(
     '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0F1011</color>\n</resources>\n'
 )
-print( 'Icons and splash screens written to', RES )
+print( 'Icons and splash screens written to', RES, 'and', ASSETS )

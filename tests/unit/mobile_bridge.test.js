@@ -83,6 +83,26 @@ describe( `mobile bridge`, () => {
         // Unknown clocks: leave it to llama.cpp
         expect( tuning_args( {} ) ).toEqual( [] )
 
+        // iOS: performance-core count, no affinity
+        expect( tuning_args( { performance_cores: 2 } ) ).toEqual( [ `--threads`, `2`, `--threads-batch`, `2` ] )
+
+    } )
+
+    test( `iPhones with Metal keep the GPU; everything else runs on CPU`, async () => {
+
+        vi.stubGlobal( `fetch`, fake_server() )
+
+        for( const metal of [ true, false ] ) {
+            const native = fake_native()
+            native.getSystemInfo.mockResolvedValue( { total_memory: 6e9, free_memory: 3e9, performance_cores: 2, metal, models_dir: `/models` } )
+            const bridge = create_mobile_bridge( native, `ios` )
+            await bridge.download_model( MODEL )
+            await bridge.load_model( `m` )
+
+            expect( native.started[ 0 ].includes( `--device` ) ).toBe( !metal )
+            expect( ( await bridge.get_system_info() ).gpu.metal ).toBe( metal )
+        }
+
     } )
 
     test( `downloads model + projector, then records one manifest entry`, async () => {

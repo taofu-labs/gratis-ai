@@ -481,6 +481,10 @@ export const estimate_max_model_bytes = ( capabilities ) => {
         const total = capabilities.memory.total_bytes
         const gpu = capabilities.gpu || {}
 
+        // Phones (Android/iOS apps): the OS kills apps long before RAM runs out,
+        // Metal or not (iPhones report unified memory too)
+        if( [ `android`, `ios` ].includes( capabilities.platform ) ) return Math.floor( total * NATIVE_MOBILE_RAM_SHARE )
+
         // Apple Silicon: unified memory — GPU/CPU share the same pool
         // Metal can technically access ~75% of physical RAM, but macOS,
         // Electron, and background apps easily consume 2-3 GB on a laptop.
@@ -495,9 +499,6 @@ export const estimate_max_model_bytes = ( capabilities ) => {
         if( gpu.vram_total > 0 ) {
             return Math.floor( Math.max( gpu.vram_total, total * 0.6 ) )
         }
-
-        // Phones (Android/iOS apps): the OS kills apps long before RAM runs out
-        if( [ `android`, `ios` ].includes( capabilities.platform ) ) return Math.floor( total * NATIVE_MOBILE_RAM_SHARE )
 
         // CPU-only: 60% of system RAM — leaves headroom for the OS,
         // Electron overhead, and other apps running on a typical laptop

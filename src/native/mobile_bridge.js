@@ -38,10 +38,13 @@ const sleep = ms => new Promise( resolve => setTimeout( resolve, ms ) )
 /**
  * Thread settings for this phone's CPU. Decode is memory-bound and little
  * cores drag every step down, so run one thread per big core, pinned to them.
- * @param {{ cores?: Array<{ id: number, max_khz: number }> }} system_info
+ * iOS reports its performance-core count instead (no thread affinity there).
+ * @param {{ cores?: Array<{ id: number, max_khz: number }>, performance_cores?: number }} system_info
  * @returns {string[]} Extra llama-server arguments
  */
-export const tuning_args = ( { cores = [] } = {} ) => {
+export const tuning_args = ( { cores = [], performance_cores } = {} ) => {
+
+    if( performance_cores ) return [ `--threads`, String( performance_cores ), `--threads-batch`, String( performance_cores ) ]
 
     const fastest = Math.max( 0, ...cores.map( ( { max_khz } ) => max_khz ) )
     const big = cores.filter( ( { max_khz } ) => max_khz > LITTLE_CORE_MAX_KHZ || max_khz === fastest )
@@ -109,8 +112,9 @@ export const create_mobile_bridge = ( native, platform ) => {
             ...system_info,
             platform,
             gpu: {
-                type: false,
-                metal: false,
+                // iOS: Metal on Apple7+ GPUs (A14 and newer); Android stays on CPU
+                type: system_info.metal ? `metal` : false,
+                metal: !!system_info.metal,
                 cuda: false,
                 vulkan: false,
                 vram_total: 0,
@@ -229,7 +233,7 @@ export const create_mobile_bridge = ( native, platform ) => {
 
         const { port } = await native.freePort()
         const api_key = random_key()
-        const args = build_server_args( { ...config.args_base, port, api_key, cpu_only: true, extra: config.tuning } )
+        const args = build_server_args( { ...config.args_base, port, api_key, cpu_only: config.cpu_only, extra: config.tuning } )
 
         log.info( `[mobile] Starting llama-server: ${ args.join( ` ` ) }` )
         await native.startServer( { args } )
@@ -291,6 +295,7 @@ export const create_mobile_bridge = ( native, platform ) => {
             model_id,
             n_ctx,
             tuning: tuning_args( info ),
+            cpu_only: !info.metal,
             reasoning_enabled: model.reasoning_enabled,
             args_base: {
                 model_path: `${ models_dir }/${ model.file_name }`,

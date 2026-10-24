@@ -61,3 +61,9 @@ Branch chore/desktop-release-parity (not pushed, not merged). After secrets: ver
 
 - TPN Gemma 4 26B (g26): report scores are void (TPN's BF16 reference run broken, wiki PPL 7552). Published anyway after native text+image checks; card says no valid scores. Ask TPN to fix Gemma 4 in their harness and re-measure (along with the MTP converter bug).
 - tok/s reference table measured on a loaded 2-thread i3 (noisy, ±30%); rebench on a quiet machine with `xvfb-run -a node scripts/bench/speed_table.mjs <dir> 3` and bump SPEED_REFERENCE_ID. Probe is CPU-only: WebGPU-offloaded speeds get corrected only by real replies. Gemma 26B `browser_tps` 0.4 is derived (14 GB didn't fit the box's free RAM).
+
+## Mobile apps (2026-10-24)
+
+- Android app runs on the OnePlus Nord CE3 Lite (debug key, sideload). Release signing + Play listing: owner's call.
+- iOS: code written but never compiled (no Mac here). Needs (1) OK to push branch `mobile-apps` so `.github/workflows/mobile-apps.yml` builds the xcframework + unsigned .ipa on macOS; (2) signing material to install on the iPhone X (UDID 65571813aad839c16f5c8281a2cf532a7ee9f261): App Store Connect API key (issuer, key id, .p8) or a dev .p12 + provisioning profile. Expect a few CI fix rounds on the first build.
+- `increased-memory-limit` entitlement needs a paid team; without it iPhones cap the app around half of RAM.

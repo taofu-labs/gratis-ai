@@ -13,6 +13,7 @@
 - "Install app" pill (bottom left): links desktop browsers to the native apps, installs the web app on Android, explains Share → Add to Home Screen on iOS; hidden once installed and in chat. Replaces the top "try the desktop app" banner
 - Settings show the build (version · commit) and an "Update app" button that drops the cached app and reloads the latest version
 - Android app (Capacitor, unsigned debug builds for now): same UI, native llama.cpp `llama-server` on the phone's big cores, SHA-256 verified resumable downloads that keep going in the background (progress notification), vision models, voice input; 2-3× faster than the browser on the same phone. Build with `scripts/android_toolchain.sh` + `scripts/build_android_llama_server.sh` + `scripts/android_dev.sh`
+- iOS app project (same bridge; llama-server in process, Metal on A14+), built unsigned by the `Mobile apps` workflow — not yet run on a device
 
 ### Fixed
 - App updates no longer lose what you were typing: an update reload restores the draft, and a tab that is typing, has attachments, generating or downloading waits until idle (Settings can apply it right away). Open tabs check for updates hourly and when brought back to view

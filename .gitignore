@@ -175,3 +175,4 @@ vendor/
 
 # Mobile app icons and splash screens are real assets
 !mobile/**/*.png
+mobile/plugin/ios/LlamaServer.xcframework/

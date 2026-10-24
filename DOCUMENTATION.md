@@ -51,7 +51,24 @@ node-llama-cpp 3.x has no multimodal support (v4 pending), so vision models run 
 
 ### Desktop App Promotion
 
-Web users see a slim accent-colored banner encouraging them to try the desktop app. The banner links to `/get-app`, a download page with OS-specific cards (macOS, Windows, Linux) linking to the latest GitHub Release. The banner is hidden in Electron and can be permanently dismissed. Download links require `VITE_GITHUB_REPO` to be set at build time.
+A floating "Install app" pill (bottom left, hidden in chat and once installed) links desktop browsers to `/get-app`, a download page with OS-specific cards linking to the latest GitHub Release; on Android it triggers the PWA install prompt, on iOS it explains Add to Home Screen. Download links require `VITE_GITHUB_REPO` at build time.
+
+## Mobile apps
+
+Capacitor 8 wraps the same React build (`vite build --mode native`, no service worker). `src/native/install.js` puts an `electronAPI`-shaped bridge (`src/native/mobile_bridge.js`) on `window`, so the native provider, picker and downloads run unchanged. Inference = upstream llama.cpp `llama-server` (same tag as desktop) on `127.0.0.1`, protocol shared with desktop in `src/utils/llama_server_protocol.js`.
+
+| | Android (`mobile/android`) | iOS (`mobile/ios` + `mobile/plugin`) |
+|---|---|---|
+| Native plugin | `GratisNativePlugin.java` (in the app) | `mobile/plugin` Swift package (`gratis-native`, `file:` dependency) |
+| Server | Child process `libllama-server.so` from `nativeLibraryDir` | In process on a thread (`LlamaServer.xcframework`, C shim `gratis_llama_server_run/stop`) |
+| Backend | CPU (all ARM variants, ggml picks at runtime); threads = big cores, pinned | Metal on Apple7+ (A14+), else CPU; threads = performance cores |
+| Downloads | `noBackupFilesDir/models`, resumable, SHA-256; foreground `dataSync` service keeps them going in the background | Application Support/models (no iCloud backup), same rules; background-task grace only |
+| Build | `scripts/android_toolchain.sh` (once) → `scripts/build_android_llama_server.sh` → `scripts/android_dev.sh [adb-serial]` | macOS: `scripts/build_ios_llama_server.sh` → `npm run build:native` → Xcode. CI: `.github/workflows/mobile-apps.yml` (unsigned `.ipa`) |
+
+- Icons/splash: `python3 scripts/mobile_icons.py` (from `build/icon.png`).
+- Phones: picker budgets 45% of RAM (automatic pick ≤ 70% of free), context ≤ 8192, and ranks Q5_0/IQ quants below K-quants (no ARM repack kernels).
+- Debug the WebView: `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>` → Playwright `connectOverCDP`.
+- Signing: not set up yet (Android debug key; iOS unsigned).
 
 ## Scripts
 
