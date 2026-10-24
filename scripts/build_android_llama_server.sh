@@ -6,8 +6,8 @@
 #   WITH_OPENCL=1 scripts/build_android_llama_server.sh   + optional Adreno OpenCL backend
 #
 # Env:
-#   ANDROID_NDK   NDK root          (default: newest under ~/android-sdk/ndk)
-#   CMAKE_BIN     cmake binary dir  (default: newest under ~/android-sdk/cmake, else PATH)
+#   ANDROID_NDK   NDK root          (default: newest under vendor/android/sdk/ndk)
+#   CMAKE_BIN     cmake binary dir  (default: newest under vendor/android/sdk/cmake, else PATH)
 #   JOBS          parallel jobs     (default: nproc)
 #
 # Output (all `lib*.so` so Android's packager keeps + extracts them from jniLibs):
@@ -52,8 +52,8 @@ TOOLS_OUT="${ROOT}/vendor/android/tools/${ABI}"
 
 newest() { ls -d "$1"/*/ 2>/dev/null | sort -V | tail -1 | sed 's:/$::'; }
 
-ANDROID_NDK="${ANDROID_NDK:-$( newest ~/android-sdk/ndk )}"
-CMAKE_BIN="${CMAKE_BIN:-$( newest ~/android-sdk/cmake )/bin}"
+ANDROID_NDK="${ANDROID_NDK:-$( newest "${ROOT}/vendor/android/sdk/ndk" )}"
+CMAKE_BIN="${CMAKE_BIN:-$( newest "${ROOT}/vendor/android/sdk/cmake" )/bin}"
 export PATH="${CMAKE_BIN}:${PATH}"
 JOBS="${JOBS:-$( nproc )}"
 

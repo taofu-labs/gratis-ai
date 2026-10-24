@@ -2519,9 +2519,13 @@ export const runtime_memory = model => estimate_model_memory( model ) + projecto
 // WASM has SIMD kernels for Q4_0…Q8_0 and K-quants only; IQ* and MXFP4 run
 // scalar C there (llama.cpp arch-fallback.h). Legacy Q5_0 / Q5_1 have SIMD on
 // paper but measured 2-3× slower than Q4_K_M in wllama (TPN Q5_0+ bench).
-// Native builds are unaffected.
-const SCALAR_WASM_QUANT = /(^|[^a-z])(iq\d|mxfp4|q5_[01])/i
+// Native ARM (the phone apps) repacks Q4_0/Q8_0 and K-quants into wide-dot
+// kernels at load and the same formats miss out: on a Snapdragon 695, Q5_0
+// decodes 1.15× slower per byte and prefills 3× slower than Q4_K_M.
+// Native desktop (x86, Apple) is unaffected.
+const SLOW_KERNEL_QUANT = /(^|[^a-z])(iq\d|mxfp4|q5_[01])/i
 const SCALAR_WASM_PENALTY = 2.5
+const NO_REPACK_ARM_PENALTY = 1.5
 
 // Routing, top-k and barriers cost MoE ~25% of its byte advantage (CI bench)
 const MOE_EFFICIENCY = 0.75
@@ -2542,9 +2546,10 @@ const BROWSER_PER_TOKEN_BYTES = 170_000_000
  * bandwidth poorly, plus the fixed per-token work.
  * @param {ModelDefinition} model
  * @param {'browser'|'electron'} runtime
+ * @param {boolean} [mobile] - A phone or tablet
  * @returns {number} bytes
  */
-const decode_cost = ( model, runtime ) => {
+const decode_cost = ( model, runtime, mobile = false ) => {
 
     const kv = model.layers && model.kv_heads && model.head_dim
         ? estimate_model_memory( model ) - model.file_size_bytes - RUNTIME_OVERHEAD
@@ -2552,7 +2557,9 @@ const decode_cost = ( model, runtime ) => {
 
     const browser = runtime === `browser`
     const moe_factor = model.moe ? MOE_EFFICIENCY : 1
-    const quant_factor = browser && SCALAR_WASM_QUANT.test( model.quantization || `` ) ? 1 / SCALAR_WASM_PENALTY : 1
+    const slow_kernels = SLOW_KERNEL_QUANT.test( model.quantization || `` )
+    const kernel_penalty = browser ? SCALAR_WASM_PENALTY : mobile ? NO_REPACK_ARM_PENALTY : 1
+    const quant_factor = slow_kernels ? 1 / kernel_penalty : 1
 
     return ( decode_bytes( model ) + kv ) / ( moe_factor * quant_factor ) + ( browser ? BROWSER_PER_TOKEN_BYTES : 0 )
 
@@ -2570,7 +2577,7 @@ const decode_cost = ( model, runtime ) => {
  */
 export const estimate_decode_speed = ( model, device ) => device.runtime === `browser` && model.browser_tps && device.speed_ratio
     ? model.browser_tps * device.speed_ratio
-    : device.bandwidth_gbs * 1_000_000_000 / decode_cost( model, device.runtime )
+    : device.bandwidth_gbs * 1_000_000_000 / decode_cost( model, device.runtime, device.mobile )
 
 /**
  * Estimated reply speed in visible tokens/second: decode speed, minus the
@@ -2593,10 +2600,11 @@ export const estimate_reply_speed = ( model, device ) => {
  * @param {ModelDefinition} model
  * @param {'browser'|'electron'} runtime
  * @param {number} tokens_per_second - Measured decode speed
+ * @param {boolean} [mobile] - Measured in the phone apps
  * @returns {number} GB/s
  */
-export const implied_bandwidth_gbs = ( model, runtime, tokens_per_second ) =>
-    tokens_per_second * decode_cost( model, runtime ) / 1_000_000_000
+export const implied_bandwidth_gbs = ( model, runtime, tokens_per_second, mobile = false ) =>
+    tokens_per_second * decode_cost( model, runtime, mobile ) / 1_000_000_000
 
 /**
  * Speed as a calm band instead of a precise number.

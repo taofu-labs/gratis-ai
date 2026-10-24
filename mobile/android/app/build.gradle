@@ -25,7 +25,17 @@ android {
     packaging {
         jniLibs { useLegacyPackaging = true }
     }
+    // Stable debug key (scripts/android_dev.sh creates it) so reinstalls keep app data
+    signingConfigs {
+        debug {
+            storeFile file( '../../../vendor/android/debug.keystore' )
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
     buildTypes {
+        debug { signingConfig signingConfigs.debug }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

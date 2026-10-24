@@ -440,6 +440,10 @@ export const supports_browser_ram_override = () =>
     && !window.electronAPI?.native_inference
     && detect_wasm_capabilities().memory64
 
+// The mobile apps run native kernels but share the phone's RAM with the OS
+const NATIVE_MOBILE_RAM_SHARE = 0.45
+const NATIVE_MOBILE_FREE_SHARE = 0.7
+
 /**
  * Estimate the largest GGUF model (in bytes) the runtime can load.
  *
@@ -624,7 +628,8 @@ const BANDWIDTH_GBS = {
     // Two-term fit on the CI runner (see BROWSER_PER_TOKEN_BYTES)
     browser_desktop: 5.8,
     native_cpu: 15,
-    native_mobile: 8,
+    // Snapdragon 695 app, two A78 cores, Q4_K_M: 23 tok/s ≈ 15 GB/s effective
+    native_mobile: 15,
     native_gpu: 40,
     native_unified: 60,
 }
@@ -637,9 +642,6 @@ const learned_bandwidth = ( runtime, guess ) =>
 // picks at half the reported RAM, or a safe guess when the browser hides it.
 const MOBILE_RAM_SHARE = 0.5
 
-// The mobile apps run native kernels but share the phone's RAM with the OS
-const NATIVE_MOBILE_RAM_SHARE = 0.45
-const NATIVE_MOBILE_FREE_SHARE = 0.7
 const MOBILE_UNKNOWN_RAM_BYTES = 2_400_000_000
 
 /**

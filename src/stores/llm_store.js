@@ -346,7 +346,8 @@ const use_llm_store = create( ( set, get ) => ( {
             const model = get_model_by_id( get().loaded_model_id )
             const runtime = globalThis.window?.electronAPI?.native_inference ? `electron` : `browser`
             const { tokens_per_second, tokens_generated } = generation_stats
-            if( model ) record_bandwidth_sample( runtime, implied_bandwidth_gbs( model, runtime, tokens_per_second ), tokens_generated )
+            const mobile_app = [ `android`, `ios` ].includes( globalThis.window?.electronAPI?.platform )
+            if( model ) record_bandwidth_sample( runtime, implied_bandwidth_gbs( model, runtime, tokens_per_second, mobile_app ), tokens_generated )
             if( model?.browser_tps && runtime === `browser` ) record_speed_ratio( tokens_per_second / model.browser_tps, { tokens: tokens_generated } )
 
             set( { stats: generation_stats } )

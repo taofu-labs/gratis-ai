@@ -144,6 +144,17 @@ describe( `decode speed estimate`, () => {
         expect( estimate_decode_speed( unmeasured, profile() ) ).not.toBeCloseTo( small.browser_tps )
     } )
 
+    test( `the phone apps rank repackable K-quants above legacy Q5_0 of the same size`, () => {
+        stub_storage()
+        const phone = profile( ANDROID_UA, { runtime: `electron`, platform: `android`, gpu: {}, memory: { total_bytes: 8e9, free_bytes: 3e9 } } )
+        const desktop = profile( ``, { runtime: `electron`, platform: `linux`, gpu: {}, memory: { total_bytes: 16e9 } } )
+        const k_quant = { ...small, browser_tps: undefined, quantization: `Q4_K_M` }
+        const legacy = { ...k_quant, quantization: `Q5_0+` }
+
+        expect( estimate_decode_speed( legacy, phone ) ).toBeLessThan( estimate_decode_speed( k_quant, phone ) )
+        expect( estimate_decode_speed( legacy, desktop ) ).toBeCloseTo( estimate_decode_speed( k_quant, desktop ) )
+    } )
+
     test( `formats for display`, () => {
         expect( format_tokens_per_second( 0.42 ) ).toBe( `~0.4 tok/s` )
         expect( format_tokens_per_second( 3.456 ) ).toBe( `~3.5 tok/s` )

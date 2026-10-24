@@ -438,3 +438,9 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - Drafts: `EVENTS.before_update_reload` → ChatInput stashes text in sessionStorage; manual reloads intentionally start clean.
 - Verify an update path by building A, `vite preview`, rebuilding B into the same `dist/` and calling `registration.update()` (preview serves new files live). Done from 664ebec → current in Playwright.
 - App slug is `gratis` (from `.env` VITE_APP_NAME), so storage keys are `gratis:settings:*`, not `gratisai:`.
+
+## Android app (2026-10-24)
+- Container resets wipe `~` (JDK, SDK, debug key, scratchpad). Toolchain, Gradle cache and debug keystore live in `vendor/android/` (gitignored); reinstall with `scripts/android_toolchain.sh`. A new debug key => `adb uninstall` first (signature mismatch).
+- llama.cpp `--cpu-strict 1` with more threads than mask cores collapses to ~0.1 tok/s. `tuning_args` keeps threads ≤ big cores.
+- Phone CPU: Q5_0/IQ* get no ARM repack kernels (3× slower prefill). Prefer K-quants on phones.
+- WebView debugging: `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>` + Playwright `connectOverCDP`. Seed big models as `<file>.part` via `run-as` to skip slow phone Wi-Fi (~0.7 MB/s); the app still SHA-verifies them.
