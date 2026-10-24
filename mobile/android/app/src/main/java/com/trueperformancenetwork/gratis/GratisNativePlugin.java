@@ -1,7 +1,9 @@
 package com.trueperformancenetwork.gratis;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.StatFs;
 import android.util.Log;
@@ -221,6 +223,12 @@ public class GratisNativePlugin extends Plugin {
     @PluginMethod
     public void download( PluginCall call ) {
         download_aborted = false;
+        DownloadService.start( getContext() );
+
+        // The progress notification needs consent on Android 13+; the download runs either way
+        if( Build.VERSION.SDK_INT >= 33 && getContext().checkSelfPermission( Manifest.permission.POST_NOTIFICATIONS ) != PackageManager.PERMISSION_GRANTED ) {
+            getActivity().requestPermissions( new String[]{ Manifest.permission.POST_NOTIFICATIONS }, 0 );
+        }
         download_executor.execute( () -> {
             try {
                 call.resolve( run_download( call ) );
@@ -229,6 +237,7 @@ public class GratisNativePlugin extends Plugin {
                 call.reject( download_aborted ? "Download aborted" : e.getMessage() );
             } finally {
                 active_connection = null;
+                DownloadService.stop( getContext() );
             }
         } );
     }
@@ -441,6 +450,7 @@ public class GratisNativePlugin extends Plugin {
         event.put( "total", total );
         event.put( "verifying", verifying );
         notifyListeners( "downloadProgress", event );
+        DownloadService.progress( getContext(), verifying ? 0 : bytes, verifying ? 0 : total );
     }
 
     private static boolean has_gguf_magic( File file ) {
