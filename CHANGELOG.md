@@ -11,6 +11,8 @@
 - Downloads are SHA-256 checked against Hugging Face before a model counts as installed (browser and desktop); a corrupt file is removed with "please download it again" instead of loading and replying with garbage. Models downloaded before this are checked once on their next load
 
 ### Fixed
+- Safari no longer freezes on page load: the browser-memory check grew a non-shared WebAssembly memory, which WebKit copies on every grow (seconds per GB); it now uses a shared memory like the runtime itself, with a time limit
+- Safari (and every iOS browser) downloads models over plain HTTP: Hugging Face's Xet reader crashed WebKit tabs seconds into a download
 - Phones no longer reply with garbled multilingual text: mobile GPUs (Qualcomm Adreno, ARM Mali, PowerVR, Samsung Xclipse, any Android/iOS browser) now run models on the CPU instead of WebGPU, whose kernels computed wrong results on Adreno 830 (OnePlus 13) and gave no speedup on Adreno 619
 - A failed download is no longer a dead end: a Retry button resumes from what was already saved
 - Resuming an interrupted download can no longer append the whole file after the saved part (browsers drop the Range header across Hugging Face's CDN redirect); such resumes restart cleanly

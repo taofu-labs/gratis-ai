@@ -17,18 +17,26 @@ const abort_error = () => {
 }
 
 /**
- * Whether this browser can construct byte streams. The SDK's Xet reader needs
- * them; Safari before 16.4 (all of iOS 16) throws "ReadableByteStreamController
- * is not implemented", so those browsers fetch the plain HTTP file instead.
+ * Whether the SDK's Xet reader can run here. It needs byte streams, which
+ * Safari before 16.4 (all of iOS 16) lacks ("ReadableByteStreamController is
+ * not implemented"), and it crashes WebKit tabs outright seconds into a
+ * download even where byte streams exist. WebKit (Safari and every iOS
+ * browser) therefore fetches the plain HTTP file, which works everywhere.
+ * @param {string} [user_agent]
  * @returns {boolean}
  */
-export const supports_byte_streams = () => {
+export const can_use_xet = ( user_agent = globalThis.navigator?.userAgent || `` ) => {
+
+    const webkit = /AppleWebKit/.test( user_agent ) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test( user_agent )
+    if( webkit ) return false
+
     try {
         new ReadableStream( { type: `bytes` } )
         return true
     } catch {
         return false
     }
+
 }
 
 const with_abort_signal = ( fetch_impl, signal ) => ( input, init = {} ) =>
@@ -137,7 +145,7 @@ const get_hf_model_blob = async ( {
     const info = await sdk.fileDownloadInfo( params )
     if( !info ) throw new Error( `Hugging Face could not find that model or GGUF file.` )
 
-    const use_xet = !!info.xet && supports_byte_streams()
+    const use_xet = !!info.xet && can_use_xet()
     const blob = await sdk.downloadFile( {
         ...params,
         downloadInfo: info,

@@ -425,3 +425,8 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - Checksum digests are pinned to the bytes we hold: fresh downloads use the etag from the same `fileDownloadInfo` response; later lookups (`lookup_sha256`) return null when HF's current size != stored size (re-uploaded TPN builds would otherwise "condemn" an intact older copy). Lookups time out (15 s) so a stalled HF API never blocks loading a local model.
 - Browsers don't carry `Range` across HF's resolve→CDN redirect; WebBlob.slice() resume then gets a 200 full body and appends it after the prefix (iOS 16: 704/688 MB). `ranged_web_body()` retries the final URL and restarts at 0 on non-206. Xet path (XetBlob.slice) is unaffected.
 - WebKit `File.stream()` can throw "The I/O read operation failed" on big files (bug 272600); hash via `slice().arrayBuffer()` chunks.
+
+## WebKit / Safari (2026-10-24)
+- Playwright WebKit (UA Safari 27.2) reports Memory64 + JSPI → takes the Memory64 path. Non-shared `WebAssembly.Memory.grow` COPIES the buffer in WebKit (0.5–1 s per GB, growing) → `probe_wasm_memory_grant` froze the page. Shared memory grows in 0 ms; probe now uses shared + 500 ms budget.
+- `@huggingface/hub` XetBlob download crashes the WebKit tab within seconds. `can_use_xet()` disables Xet for any WebKit UA (AppleWebKit without Chrome/Chromium/Edg/OPR, incl. iOS CriOS/FxiOS).
+- Playwright WebKit *ephemeral* contexts have no OPFS ("UnknownError ... transient reason"); use `launchPersistentContext` for real download tests. Scripts: scratchpad `wk/` (wk3.mjs full flow, dl.mjs). Install: `npx playwright install webkit && sudo npx playwright install-deps webkit`.

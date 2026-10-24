@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import {
     abortable_stream,
+    can_use_xet,
     discard_partial_download,
     download_hf_model_file_to_cache,
     download_hf_model_file_to_external_file,
@@ -196,6 +197,18 @@ describe( `Hugging Face SDK download`, () => {
         } finally {
             vi.unstubAllGlobals()
         }
+    } )
+
+    test( `WebKit never uses the Xet reader, which crashes its tabs`, () => {
+        const safari = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15`
+        const ios_chrome = `Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0 Mobile/15E148 Safari/604.1`
+        const chrome = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36`
+        const firefox = `Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0`
+
+        expect( can_use_xet( safari ) ).toBe( false )
+        expect( can_use_xet( ios_chrome ) ).toBe( false )
+        expect( can_use_xet( chrome ) ).toBe( true )
+        expect( can_use_xet( firefox ) ).toBe( true )
     } )
 
     test( `forwards an optional token when one is configured`, async () => {

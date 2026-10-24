@@ -198,7 +198,7 @@ export const BROWSER_AUTOMATIC_MODEL_CEILING_BYTES = 5_600_000_000
  * How much linear memory the browser actually grants a Memory64 runtime: grow a
  * throwaway memory 1 GB at a time up to the model ceiling. Pages are never
  * touched, so no RAM is used, but engine, address-space and OS commit limits
- * all surface as a failed grow. ~65 ms in Chrome; measured once per tab.
+ * all surface as a failed grow. Milliseconds in Chrome and WebKit; measured once per tab.
  * @returns {number|null} Granted bytes, or null without Memory64
  */
 let cached_wasm_grant
@@ -208,11 +208,15 @@ export const probe_wasm_memory_grant = () => {
     if( cached_wasm_grant !== undefined ) return cached_wasm_grant
     if( !detect_wasm_capabilities().memory64 ) return cached_wasm_grant = null
 
+    // Shared, like wllama64's own memory. A non-shared memory may move on grow:
+    // WebKit copies the whole buffer each step (0.5 s+ per GB), which froze
+    // Safari 27 on page load. The deadline guards engines that still copy.
     let granted = 0
+    const deadline = performance.now() + 500
     try {
-        const memory = new WebAssembly.Memory( { address: `i64`, initial: 1n, maximum: 262_144n } )
+        const memory = new WebAssembly.Memory( { address: `i64`, initial: 1n, maximum: 262_144n, shared: true } )
         const step = BigInt( Math.floor( 1_000_000_000 / 65_536 ) )
-        while( granted < MEMORY64_MODEL_CEILING_BYTES ) {
+        while( granted < MEMORY64_MODEL_CEILING_BYTES && performance.now() < deadline ) {
             memory.grow( step )
             granted = Number( memory.buffer.byteLength )
         }
