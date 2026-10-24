@@ -22,6 +22,7 @@ import {
 
 const MANIFEST = `manifest.json`
 const HEALTH_POLL_MS = 250
+const PROBE_TIMEOUT_MS = 5_000
 const HEALTH_TIMEOUT_MS = 5 * 60_000
 
 // Phones: models may take ~55% of what the OS reports free right before load,
@@ -259,19 +260,22 @@ export const create_mobile_bridge = ( native, platform ) => {
                 throw new Error( `The model could not start: ${ ( log_tail || `` ).split( `\n` ).slice( -3 ).join( ` | ` ) }` )
             }
             try {
-                if( ( await request( `/health` ) ).ok ) break
+                if( ( await request( `/health`, { signal: AbortSignal.timeout( PROBE_TIMEOUT_MS ) } ) ).ok ) break
             } catch {
                 // Not listening yet
             }
             await sleep( HEALTH_POLL_MS )
         }
 
-        const response = await request( `/props` )
-        if( !response.ok ) {
+        const response = await request( `/props`, { signal: AbortSignal.timeout( PROBE_TIMEOUT_MS ) } )
+        const props = response.ok ? await response.json() : null
+
+        // Unloaded meanwhile, or not really up
+        if( launch_generation !== generation || !props ) {
             await stop_server()
-            throw new Error( `The model could not start (HTTP ${ response.status })` )
+            throw new Error( props ? `Model load cancelled` : `The model could not start (HTTP ${ response.status })` )
         }
-        const props = await response.json()
+
         return {
             context_size: props?.default_generation_settings?.n_ctx || config.n_ctx,
             has_image_input: !!props?.modalities?.vision,
@@ -329,6 +333,7 @@ export const create_mobile_bridge = ( native, platform ) => {
             max_ctx: MOBILE_MAX_CTX,
         } )
 
+        if( load_generation !== generation ) throw new Error( `Model load cancelled` )
         config = {
             model_id,
             n_ctx,

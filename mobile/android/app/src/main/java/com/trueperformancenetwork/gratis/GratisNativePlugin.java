@@ -277,10 +277,12 @@ public class GratisNativePlugin extends Plugin {
         HttpURLConnection connection = open_following_redirects( url, headers, offset );
         int status = connection.getResponseCode();
 
-        // The whole file is already there (416 alone only says "nothing past offset")
+        // The whole file is already there (416 alone only says "nothing past
+        // offset"; `Content-Range: bytes */N` names the real size)
         if( status == 416 && offset > 0 ) {
+            long reported = parse_total( connection.getHeaderField( "Content-Range" ) );
             connection.disconnect();
-            if( expected_size > 0 && offset != expected_size ) {
+            if( offset != ( expected_size > 0 ? expected_size : reported ) ) {
                 part.delete();
                 throw new IOException( "The partial download did not match the model. Please download it again." );
             }
@@ -324,6 +326,16 @@ public class GratisNativePlugin extends Plugin {
         if( !part.renameTo( dest ) ) throw new IOException( "Could not move " + dest.getName() + " into place" );
         return download_result( dest.length(), sha256 );
 
+    }
+
+    // N from `bytes */N` or `bytes a-b/N`; -1 when absent
+    private static long parse_total( String content_range ) {
+        if( content_range == null || !content_range.contains( "/" ) ) return -1;
+        try {
+            return Long.parseLong( content_range.substring( content_range.lastIndexOf( '/' ) + 1 ).trim() );
+        } catch( NumberFormatException e ) {
+            return -1;
+        }
     }
 
     private static JSObject download_result( long size, String sha256 ) {

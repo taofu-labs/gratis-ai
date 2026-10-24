@@ -76,9 +76,11 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
 
         if status == 416 && offset > 0 {
 
-            // The whole file is already there (416 alone only says "nothing past offset")
+            // The whole file is already there (416 alone only says "nothing past
+            // offset"; `Content-Range: bytes */N` names the real size)
             respond( .cancel )
-            if expected_size > 0 && offset != expected_size {
+            let reported = ( response.value( forHTTPHeaderField: "Content-Range" ) ?? "" ).split( separator: "/" ).last.flatMap { Int64( $0 ) }
+            if offset != ( expected_size > 0 ? expected_size : reported ) {
                 try? FileManager.default.removeItem( at: part )
                 throw PluginError.message( "The partial download did not match the model. Please download it again." )
             }
@@ -151,15 +153,18 @@ final class ModelDownloader: NSObject, URLSessionDataDelegate {
     private func start( _ request: URLRequest ) async throws -> HTTPURLResponse {
         try await withCheckedThrowingContinuation { continuation in
             let next = session.dataTask( with: request )
-            lock.withLock {
+            let cancelled: Bool = lock.withLock {
+                // Aborted while hashing or looking up the checksum: never start
+                if aborted { return true }
                 response_continuation = continuation
                 finish_continuation = nil
                 outcome = nil
                 output = nil
                 write_error = nil
                 task = next
+                return false
             }
-            next.resume()
+            if cancelled { continuation.resume( throwing: PluginError.message( "Download aborted" ) ) } else { next.resume() }
         }
     }
 

@@ -50,11 +50,12 @@ python3 - "${SRC}/tools/server/server.cpp" <<'PATCH'
 import sys
 path = sys.argv[ 1 ]
 source = open( path ).read()
-if 'gratis:' not in source:
+if 'gratis-v2:' not in source:
+    if 'gratis' in source: sys.exit( 'server.cpp carries an older gratis patch: delete vendor/ios/.cache and rebuild' )
     lock = 'std::lock_guard<std::mutex> gratis_lock( gratis_handler_mutex );'
     edits = [
         ( 'static std::function<void(int)> shutdown_handler;',
-          'static std::function<void(int)> shutdown_handler;\nstatic std::mutex gratis_handler_mutex; // gratis: embedded server' ),
+          'static std::function<void(int)> shutdown_handler;\nstatic std::mutex gratis_handler_mutex; // gratis-v2: embedded server' ),
         ( '    if (shutdown_handler) {\n        shutdown_handler(0);\n    }',
           '    ' + lock + '\n    if (shutdown_handler) {\n        shutdown_handler(0);\n    }' ),
         ( 'int llama_server(int argc, char ** argv) {\n',

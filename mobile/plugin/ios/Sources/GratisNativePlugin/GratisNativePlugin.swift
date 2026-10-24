@@ -32,6 +32,7 @@ public class GratisNativePlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     private let downloads = ModelDownloader()
+    private var download_chain: Task<Void, Never>?
     private let server = InProcessServer()
 
     // Server start/stop block (model load, shutdown); one at a time, off the JS thread
@@ -168,7 +169,10 @@ public class GratisNativePlugin: CAPPlugin, CAPBridgedPlugin {
         let headers = ( call.getObject( "headers" ) as? [ String: String ] ) ?? [:]
         let expected_size = Int64( call.getDouble( "expected_size" ) ?? 0 )
 
-        Task {
+        // One transfer at a time: a retry right after a cancel waits for the old one to wind down
+        let previous = download_chain
+        download_chain = Task { [ downloads ] in
+            _ = await previous?.result
             do {
                 let ( size, sha256 ) = try await downloads.run( url: url, file: try Self.model_file( path ), path: path, headers: headers, expected_size: expected_size )
                 call.resolve( [ "size": size, "sha256": sha256 as Any ] )
