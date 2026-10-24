@@ -66,5 +66,9 @@
     "duration_minutes_seconds": "~{{minutes}} min {{seconds}} s",
     "duration_hours": "~{{count}} godz.",
     "duration_hours_minutes": "~{{hours}} godz. {{minutes}} min",
-    "eta_remaining": "Pozostało {{duration}}"
+    "eta_remaining": "Pozostało {{duration}}",
+
+    "update_ready": "Aktualizacja gotowa · Odśwież",
+    "install_app": "Zainstaluj aplikację",
+    "install_ios_hint": "Aby zainstalować, stuknij Udostępnij, a potem „Do ekranu początkowego”."
 }

@@ -10,6 +10,8 @@ import use_llm_store from '../../stores/llm_store'
 import use_object_url from '../../hooks/use_object_url'
 import { compose_user_message, document_token_budget, is_image_file, prepare_image } from '../../utils/attachments'
 import { TEXT_EXTENSIONS, read_document } from '../../utils/document_text'
+import { forget_update_draft, read_update_draft, stash_update_draft } from '../../utils/app_update'
+import { EVENTS } from '../../utils/branding'
 
 // What the picker offers; paste and drop accept the same set
 const DOCUMENT_ACCEPT = [ `.pdf`, `application/pdf`, ...[ ...TEXT_EXTENSIONS ].map( extension => `.${ extension }` ) ].join( `,` )
@@ -327,7 +329,7 @@ const DraftImage = ( { image, on_remove, label } ) => {
 }
 
 // The ChatPage draft survives a detour (e.g. downloading image support) in
-// memory; a reload intentionally starts clean
+// memory; a manual reload intentionally starts clean, an update reload keeps the text
 let remembered_draft = null
 
 let next_draft_id = 0
@@ -392,7 +394,8 @@ export default function ChatInput( {
 
     // Only the ChatPage input (allow_images) remembers its draft
     const initial_draft = allow_images ? remembered_draft : null
-    const [ text, set_text ] = useState( initial_draft?.text || `` )
+    const update_draft_key = allow_images ? `chat` : `home`
+    const [ text, set_text ] = useState( () => initial_draft?.text || read_update_draft( update_draft_key ) )
     const [ images, set_images ] = useState( initial_draft?.images || [] )
     // { id, name, status: 'reading'|'ready', text, pages, empty_pages }
     const [ documents, set_documents ] = useState( initial_draft?.documents || [] )
@@ -412,6 +415,14 @@ export default function ChatInput( {
             remembered_draft = has_draft ? draft_ref.current : null
         }
     }, [ allow_images ] )
+
+    // An app update reloads the page: stash the text, restore it on the way back
+    useEffect( () => {
+        forget_update_draft( update_draft_key )
+        const stash = () => stash_update_draft( update_draft_key, draft_ref.current.text )
+        window.addEventListener( EVENTS.before_update_reload, stash )
+        return () => window.removeEventListener( EVENTS.before_update_reload, stash )
+    }, [ update_draft_key ] )
 
     // Expose focus() to parent via ref
     useImperativeHandle( ref, () => ( {

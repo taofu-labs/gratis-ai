@@ -44,9 +44,6 @@
     "change_model": "Model wijzigen",
     "theme_label": "Thema: {{theme}}",
 
-    "desktop_banner_text": "Meer kracht met dezelfde privacy — probeer de desktop-app",
-    "get_the_app": "Download de app",
-
     "update_version_available": "Versie {{version}} is beschikbaar",
     "update_version_ready": "Versie {{version}} staat klaar om te installeren",
     "update_downloading": "v{{version}} downloaden… {{progress}}%",

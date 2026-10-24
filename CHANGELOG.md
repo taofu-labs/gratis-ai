@@ -10,7 +10,11 @@
 - Speed estimates in tokens/second before you download: the picker times a tiny weightless copy of the smallest model in your browser (~10 s, ~11 MB, once) and scales speeds measured for every model on a reference machine to your device; real replies refine it
 - Downloads are SHA-256 checked against Hugging Face before a model counts as installed (browser and desktop); a corrupt file is removed with "please download it again" instead of loading and replying with garbage. Models downloaded before this are checked once on their next load
 
+- "Install app" pill (bottom left): links desktop browsers to the native apps, installs the web app on Android, explains Share → Add to Home Screen on iOS; hidden once installed and in chat. Replaces the top "try the desktop app" banner
+- Settings show the build (version · commit) and an "Update app" button that drops the cached app and reloads the latest version
+
 ### Fixed
+- App updates no longer lose what you were typing: an update reload restores the draft, and a tab that is typing, has attachments, generating or downloading waits until idle (Settings can apply it right away). Open tabs check for updates hourly and when brought back to view
 - Safari no longer freezes on page load: the browser-memory check grew a non-shared WebAssembly memory, which WebKit copies on every grow (seconds per GB); it now uses a shared memory like the runtime itself, with a time limit
 - Safari (and every iOS browser) downloads models over plain HTTP: Hugging Face's Xet reader crashed WebKit tabs seconds into a download
 - Phones no longer reply with garbled multilingual text: mobile GPUs (Qualcomm Adreno, ARM Mali, PowerVR, Samsung Xclipse, any Android/iOS browser) now run models on the CPU instead of WebGPU, whose kernels computed wrong results on Adreno 830 (OnePlus 13) and gave no speedup on Adreno 619

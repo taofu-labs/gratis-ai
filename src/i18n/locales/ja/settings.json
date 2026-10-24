@@ -74,5 +74,8 @@
     "purge_models_description": "ダウンロード済みのモデルをすべて削除します。会話と設定は残ります。",
     "danger_zone_description": "すべての会話、モデル、設定が完全に削除されます。",
     "delete_everything": "すべてを削除",
-    "confirm_delete_all": "すべての会話、キャッシュ済みモデル、設定が削除されます。この操作は取り消せません。"
+    "confirm_delete_all": "すべての会話、キャッシュ済みモデル、設定が削除されます。この操作は取り消せません。",
+
+    "update_app": "アプリを更新",
+    "update_app_description": "最新版をネットワークから読み込み直します。モデルとチャットは残ります。"
 }

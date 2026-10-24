@@ -44,9 +44,6 @@
     "change_model": "モデルを変更",
     "theme_label": "テーマ: {{theme}}",
 
-    "desktop_banner_text": "同じプライバシーでより高性能に — デスクトップアプリをお試しください",
-    "get_the_app": "アプリを入手",
-
     "update_version_available": "バージョン{{version}}が利用可能です",
     "update_version_ready": "バージョン{{version}}のインストール準備ができました",
     "update_downloading": "v{{version}}をダウンロード中… {{progress}}%",

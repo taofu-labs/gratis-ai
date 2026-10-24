@@ -44,9 +44,6 @@
     "change_model": "Changer de modèle",
     "theme_label": "Thème : {{theme}}",
 
-    "desktop_banner_text": "Plus de puissance avec la même confidentialité — essayez l'application de bureau",
-    "get_the_app": "Obtenir l'app",
-
     "update_version_available": "La version {{version}} est disponible",
     "update_version_ready": "La version {{version}} est prête à installer",
     "update_downloading": "Téléchargement de la v{{version}}… {{progress}} %",

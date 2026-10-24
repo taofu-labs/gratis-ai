@@ -66,5 +66,9 @@
     "duration_minutes_seconds": "~{{minutes}} min {{seconds}} sec",
     "duration_hours": "~{{count}} hr",
     "duration_hours_minutes": "~{{hours}} hr {{minutes}} min",
-    "eta_remaining": "{{duration}} left"
+    "eta_remaining": "{{duration}} left",
+
+    "update_ready": "Update ready · Reload",
+    "install_app": "Install app",
+    "install_ios_hint": "To install, tap Share, then “Add to Home Screen”."
 }

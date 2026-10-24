@@ -74,5 +74,8 @@
     "purge_models_description": "Löscht alle heruntergeladenen Modelle. Unterhaltungen und Einstellungen bleiben erhalten.",
     "danger_zone_description": "Hiermit werden alle Unterhaltungen, Modelle und Einstellungen unwiderruflich gelöscht.",
     "delete_everything": "Alles löschen",
-    "confirm_delete_all": "Hiermit werden alle Unterhaltungen, zwischengespeicherten Modelle und Einstellungen gelöscht. Dies kann nicht rückgängig gemacht werden."
+    "confirm_delete_all": "Hiermit werden alle Unterhaltungen, zwischengespeicherten Modelle und Einstellungen gelöscht. Dies kann nicht rückgängig gemacht werden.",
+
+    "update_app": "App aktualisieren",
+    "update_app_description": "Neueste Version aus dem Netz laden. Modelle und Chats bleiben."
 }

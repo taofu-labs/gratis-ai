@@ -74,5 +74,8 @@
     "purge_models_description": "Elimina todos los modelos descargados. Las conversaciones y los ajustes se conservan.",
     "danger_zone_description": "Esto eliminará permanentemente todas las conversaciones, modelos y ajustes.",
     "delete_everything": "Eliminar todo",
-    "confirm_delete_all": "Se eliminarán todas las conversaciones, modelos en caché y ajustes. Esta acción no se puede deshacer."
+    "confirm_delete_all": "Se eliminarán todas las conversaciones, modelos en caché y ajustes. Esta acción no se puede deshacer.",
+
+    "update_app": "Actualizar app",
+    "update_app_description": "Recarga la última versión desde la red. Modelos y chats se conservan."
 }

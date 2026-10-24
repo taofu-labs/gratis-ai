@@ -44,9 +44,6 @@
     "change_model": "Modell wechseln",
     "theme_label": "Design: {{theme}}",
 
-    "desktop_banner_text": "Mehr Leistung bei gleicher Privatsphäre — probiere die Desktop-App",
-    "get_the_app": "App holen",
-
     "update_version_available": "Version {{version}} ist verfügbar",
     "update_version_ready": "Version {{version}} ist zur Installation bereit",
     "update_downloading": "v{{version}} wird heruntergeladen… {{progress}}%",

@@ -66,5 +66,9 @@
     "duration_minutes_seconds": "~{{minutes}} мин {{seconds}} с",
     "duration_hours": "~{{count}} ч",
     "duration_hours_minutes": "~{{hours}} ч {{minutes}} мин",
-    "eta_remaining": "Осталось {{duration}}"
+    "eta_remaining": "Осталось {{duration}}",
+
+    "update_ready": "Обновление готово · Перезагрузить",
+    "install_app": "Установить приложение",
+    "install_ios_hint": "Чтобы установить, нажмите «Поделиться», затем «На экран „Домой“»."
 }

@@ -580,3 +580,4 @@
 - 2026-10-23 deployed edf3ce1 + afa6af2 (pre-download tok/s estimates: reference table × skeleton probe); live bundle index-Do2kg3qI.js.
 - 2026-10-23 21:00 — Garbage-answer investigation: SHA-256 verification for downloads (browser + Electron) + one-time check of old installs; real-device QA agents on OnePlus Nord CE3 Lite (Android 15, Chrome 155, Adreno 619) and iPhone (WDA).
 - 2026-10-23 22:00 — Pushed 9f9b8ff (SHA-256), 1431f22 (https redirect), 1525ec9 (iOS 16 byte-stream download fix); deployed. Garbage root cause: mobile WebGPU (Adreno 830) → mobile GPUs now CPU-only.
+- 2026-10-24 — PWA audit vs prefs: added install pill (native apps on desktop, PWA prompt on Android, iOS hint), build hash + "Update app" in Settings, draft-preserving auto-update with hourly checks. Human: no update badge (Settings only); removed top desktop banner in favour of the pill.

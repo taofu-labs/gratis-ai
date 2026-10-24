@@ -74,5 +74,8 @@
     "purge_models_description": "Verwijdert alle gedownloade modellen. Gesprekken en instellingen blijven bewaard.",
     "danger_zone_description": "Dit verwijdert permanent alle gesprekken, modellen en instellingen.",
     "delete_everything": "Alles verwijderen",
-    "confirm_delete_all": "Dit verwijdert alle gesprekken, opgeslagen modellen en instellingen. Dit kan niet ongedaan worden gemaakt."
+    "confirm_delete_all": "Dit verwijdert alle gesprekken, opgeslagen modellen en instellingen. Dit kan niet ongedaan worden gemaakt.",
+
+    "update_app": "App bijwerken",
+    "update_app_description": "Laad de nieuwste versie van het netwerk. Modellen en chats blijven."
 }

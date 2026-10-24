@@ -17,6 +17,9 @@ export const DISPLAY_NAME = raw
 /** App version from package.json (injected at build time) */
 export const APP_VERSION = typeof __APP_VERSION__ !== `undefined` ? __APP_VERSION__ : `dev`
 
+/** Short commit hash of this build (injected at build time) */
+export const COMMIT_HASH = typeof __COMMIT_HASH__ !== `undefined` ? __COMMIT_HASH__ : `dev`
+
 // ── Storage ──────────────────────────────────────────────────────
 
 /** Generic prefix for all app-owned keys: `gratisai:` */
@@ -46,4 +49,5 @@ export const EVENTS = {
     stop_generation: `${ slug }:stop-generation`,
     settings_changed: `${ slug }:settings-changed`,
     models_changed:  `${ slug }:models-changed`,
+    before_update_reload: `${ slug }:before-update-reload`,
 }

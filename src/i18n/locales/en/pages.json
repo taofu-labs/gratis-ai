@@ -44,9 +44,6 @@
     "change_model": "Change model",
     "theme_label": "Theme: {{theme}}",
 
-    "desktop_banner_text": "Get more power with the same privacy — try the desktop app",
-    "get_the_app": "Get the app",
-
     "update_version_available": "Version {{version}} is available",
     "update_version_ready": "Version {{version}} is ready to install",
     "update_downloading": "Downloading v{{version}}… {{progress}}%",

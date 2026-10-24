@@ -66,5 +66,9 @@
     "duration_minutes_seconds": "約{{minutes}}分{{seconds}}秒",
     "duration_hours": "約{{count}}時間",
     "duration_hours_minutes": "約{{hours}}時間{{minutes}}分",
-    "eta_remaining": "残り{{duration}}"
+    "eta_remaining": "残り{{duration}}",
+
+    "update_ready": "アップデート準備完了 · 再読み込み",
+    "install_app": "アプリをインストール",
+    "install_ios_hint": "共有をタップし、「ホーム画面に追加」を選んでください。"
 }

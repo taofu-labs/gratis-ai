@@ -1,6 +1,10 @@
 import { useId } from 'react'
 import styled from 'styled-components'
+import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import Button from '../atoms/Button'
+import { reinstall_app, reload_for_update, use_app_update_store } from '../../utils/app_update'
+import { APP_VERSION, COMMIT_HASH } from '../../utils/branding'
 
 const Section = styled.div`
     margin-bottom: ${ ( { theme } ) => theme.spacing.lg };
@@ -54,6 +58,22 @@ const ShortcutKey = styled.code`
     font-size: 0.75rem;
 `
 
+const AboutRow = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: ${ ( { theme } ) => theme.spacing.sm };
+    border-top: 1px solid ${ ( { theme } ) => theme.colors.border_subtle };
+    padding-top: ${ ( { theme } ) => theme.spacing.md };
+    margin-top: ${ ( { theme } ) => theme.spacing.md };
+    font-size: 0.75rem;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+`
+
+const BuildInfo = styled.span`
+    font-family: ${ ( { theme } ) => theme.fonts.mono };
+`
+
 /**
  * Basic settings tab — simple, non-intimidating options only.
  * @param {Object} props
@@ -68,6 +88,7 @@ export default function BasicSettings( {
 
     const { t } = useTranslation( `settings` )
     const id = useId()
+    const update_ready = use_app_update_store( state => state.update_ready )
 
     return <>
 
@@ -109,6 +130,20 @@ export default function BasicSettings( {
                 <ShortcutKey>Esc</ShortcutKey>
             </ShortcutRow>
         </ShortcutsSection>
+
+        { /* Build + manual update. A waiting update (tab was busy) applies with a plain
+            reload; otherwise drop the service worker so a stuck cache can never pin an old version */ }
+        <AboutRow>
+            <BuildInfo data-testid="build-info">v{ APP_VERSION } · { COMMIT_HASH }</BuildInfo>
+            { !window.electronAPI?.native_inference && <Button
+                $variant={ update_ready ? `primary` : `secondary` }
+                data-testid="update-app-btn"
+                title={ t( `update_app_description` ) }
+                onClick={ update_ready ? reload_for_update : reinstall_app }
+            >
+                <RefreshCw size={ 16 } /> { t( update_ready ? `common:update_ready` : `update_app` ) }
+            </Button> }
+        </AboutRow>
 
     </>
 

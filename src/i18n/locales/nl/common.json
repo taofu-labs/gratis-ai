@@ -66,5 +66,9 @@
     "duration_minutes_seconds": "~{{minutes}} min {{seconds}} sec",
     "duration_hours": "~{{count}} uur",
     "duration_hours_minutes": "~{{hours}} uur {{minutes}} min",
-    "eta_remaining": "Nog {{duration}}"
+    "eta_remaining": "Nog {{duration}}",
+
+    "update_ready": "Update klaar · Herladen",
+    "install_app": "App installeren",
+    "install_ios_hint": "Tik op Deel en daarna op ‘Zet op beginscherm’ om te installeren."
 }

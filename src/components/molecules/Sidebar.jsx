@@ -440,7 +440,7 @@ export default function Sidebar( {
                 </WipeButton>
             </SidebarFooter> }
 
-            { /* Electron: check for updates (the web "get the app" promo lives in DesktopAppBanner;
+            { /* Electron: check for updates (the web promo is InstallAppPill;
                  route /get-app lists the downloads) */ }
             { is_electron() && <SidebarFooter>
                 <CheckUpdateButton

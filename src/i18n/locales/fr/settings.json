@@ -74,5 +74,8 @@
     "purge_models_description": "Supprime tous les modèles téléchargés. Les conversations et les réglages sont conservés.",
     "danger_zone_description": "Ceci supprimera définitivement toutes les conversations, modèles et paramètres.",
     "delete_everything": "Tout supprimer",
-    "confirm_delete_all": "Toutes les conversations, modèles en cache et paramètres seront supprimés. Cette action est irréversible."
+    "confirm_delete_all": "Toutes les conversations, modèles en cache et paramètres seront supprimés. Cette action est irréversible.",
+
+    "update_app": "Mettre à jour l’app",
+    "update_app_description": "Recharge la dernière version depuis le réseau. Modèles et discussions restent."
 }

@@ -74,5 +74,8 @@
     "purge_models_description": "Usuwa wszystkie pobrane modele. Rozmowy i ustawienia pozostają.",
     "danger_zone_description": "To trwale usunie wszystkie rozmowy, modele i ustawienia.",
     "delete_everything": "Usuń wszystko",
-    "confirm_delete_all": "To usunie wszystkie rozmowy, zapisane modele i ustawienia. Tej operacji nie można cofnąć."
+    "confirm_delete_all": "To usunie wszystkie rozmowy, zapisane modele i ustawienia. Tej operacji nie można cofnąć.",
+
+    "update_app": "Zaktualizuj aplikację",
+    "update_app_description": "Wczytaj najnowszą wersję z sieci. Modele i czaty zostają."
 }

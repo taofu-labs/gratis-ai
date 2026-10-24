@@ -44,9 +44,6 @@
     "change_model": "Сменить модель",
     "theme_label": "Тема: {{theme}}",
 
-    "desktop_banner_text": "Больше мощности с той же приватностью — попробуйте десктопное приложение",
-    "get_the_app": "Скачать приложение",
-
     "update_version_available": "Доступна версия {{version}}",
     "update_version_ready": "Версия {{version}} готова к установке",
     "update_downloading": "Скачивание v{{version}}… {{progress}}%",

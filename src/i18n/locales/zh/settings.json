@@ -74,5 +74,8 @@
     "purge_models_description": "删除所有已下载的模型。对话和设置会保留。",
     "danger_zone_description": "这将永久删除所有对话、模型和设置。",
     "delete_everything": "删除所有内容",
-    "confirm_delete_all": "这将删除所有对话、缓存的模型和设置。此操作无法撤销。"
+    "confirm_delete_all": "这将删除所有对话、缓存的模型和设置。此操作无法撤销。",
+
+    "update_app": "更新应用",
+    "update_app_description": "从网络重新加载最新版本。模型和聊天记录会保留。"
 }

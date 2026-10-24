@@ -430,3 +430,11 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - Playwright WebKit (UA Safari 27.2) reports Memory64 + JSPI → takes the Memory64 path. Non-shared `WebAssembly.Memory.grow` COPIES the buffer in WebKit (0.5–1 s per GB, growing) → `probe_wasm_memory_grant` froze the page. Shared memory grows in 0 ms; probe now uses shared + 500 ms budget.
 - `@huggingface/hub` XetBlob download crashes the WebKit tab within seconds. `can_use_xet()` disables Xet for any WebKit UA (AppleWebKit without Chrome/Chromium/Edg/OPR, incl. iOS CriOS/FxiOS).
 - Playwright WebKit *ephemeral* contexts have no OPFS ("UnknownError ... transient reason"); use `launchPersistentContext` for real download tests. Scripts: scratchpad `wk/` (wk3.mjs full flow, dl.mjs). Install: `npx playwright install webkit && sudo npx playwright install-deps webkit`.
+
+## PWA updates (2026-10-24)
+
+- SW stays `registerType: autoUpdate` (skipWaiting + clientsClaim): old installs update with no page code of ours. Switching to `prompt` would strand old pages (their JS never sends SKIP_WAITING).
+- Reload is ours (`src/index.jsx` controllerchange → `reload_for_update`), gated by `has_active_browser_work`; busy => `update_ready` flag, surfaced only in Settings (human: no floating update badge).
+- Drafts: `EVENTS.before_update_reload` → ChatInput stashes text in sessionStorage; manual reloads intentionally start clean.
+- Verify an update path by building A, `vite preview`, rebuilding B into the same `dist/` and calling `registration.update()` (preview serves new files live). Done from 664ebec → current in Playwright.
+- App slug is `gratis` (from `.env` VITE_APP_NAME), so storage keys are `gratis:settings:*`, not `gratisai:`.

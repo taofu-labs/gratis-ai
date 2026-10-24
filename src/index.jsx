@@ -6,19 +6,29 @@ import './i18n'
 import App from './App'
 import './index.css'
 import { subscribe_to_nodejs_console } from './utils/nodejs_console'
+import { capture_install_prompt, reload_for_update, use_app_update_store, watch_for_updates } from './utils/app_update'
 
 // Pipe Node.js console output into the browser DevTools (Electron only)
 subscribe_to_nodejs_console()
 
 const SERVICE_WORKER_RELOAD_DELAY = 1_000
 
+capture_install_prompt()
+watch_for_updates()
+
 /**
  * Reloading during inference can lose an answer; reloading `/download` can
  * discard hours of model transfer progress. Wait until both are idle.
+ * Typed text is stashed across the reload; attachments and a focused,
+ * mid-sentence input are not interrupted.
  * @returns {Promise<boolean>}
  */
 const has_active_browser_work = async () => {
     if( window.location.pathname.startsWith( `/download` ) ) return true
+    if( document.querySelector( `[data-testid="draft-attachments"]` ) ) return true
+
+    const { activeElement: focused } = document
+    if( focused?.matches?.( `textarea, input[type="text"]` ) && focused.value?.trim() ) return true
 
     // Keep the provider graph out of the initial bundle. Service-worker
     // replacement is rare, so inspect the store only when it happens.
@@ -42,13 +52,15 @@ if( navigator.serviceWorker?.controller ) {
     const reload_when_idle = async () => {
         if( is_reloading ) return
 
+        // Busy: flag the waiting update (Settings can apply it now) and retry when idle
         if( await has_active_browser_work() ) {
+            use_app_update_store.setState( { update_ready: true } )
             window.setTimeout( reload_when_idle, SERVICE_WORKER_RELOAD_DELAY )
             return
         }
 
         is_reloading = true
-        window.location.reload()
+        reload_for_update()
     }
 
     navigator.serviceWorker.addEventListener( `controllerchange`, reload_when_idle )

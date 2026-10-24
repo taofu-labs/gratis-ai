@@ -66,5 +66,9 @@
     "duration_minutes_seconds": "~{{minutes}} Min. {{seconds}} Sek.",
     "duration_hours": "~{{count}} Std.",
     "duration_hours_minutes": "~{{hours}} Std. {{minutes}} Min.",
-    "eta_remaining": "Noch {{duration}}"
+    "eta_remaining": "Noch {{duration}}",
+
+    "update_ready": "Update bereit · Neu laden",
+    "install_app": "App installieren",
+    "install_ios_hint": "Zum Installieren auf Teilen tippen, dann „Zum Home-Bildschirm“."
 }
