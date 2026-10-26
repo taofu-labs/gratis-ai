@@ -78,5 +78,6 @@ Only `dolphin-mistral-24b-venice` has a persona. "You are Gratis… / You are Do
 - Play internal + TestFlight internal ship from this container (no Mac): see DEPLOYMENTS.md. TestFlight internal group "Gratis internal" has only mentor@palokaj.co (mirrors Play's 1-person list); add others with `--tester`.
 - New Apple Distribution certificate "Taofu B.V." created via API (expires 2027-10-26), key in `.secrets/apple/dist.*`. Back up `.secrets/` outside the container.
 - Still open: the 7 GitHub Actions signing secrets (CI builds unsigned; signing happens locally). External TestFlight testing would need Apple beta review — not requested.
-- OnePlus test phone unreachable (wireless debugging off) → Android builds were not checked on hardware this round; iPhone X was.
+- Android 0.49.0 verified on the OnePlus (release APK, upload-key signed via apksigner, in-place upgrade kept models): chat ~16 tok/s, 0.1 s to first token.
+- Gap to decide: on fast phones all three modes collapse to one model (OnePlus: Qwen 3.5 2B), so the gauge hides — but a phone still on an older default (MiniCPM5 1B) then gets no in-chat pointer to the 2B. Option: show the gauge when the loaded model is outside the modes even if only one mode exists.
 - UX to review: on phones both speed modes can be the same model in two quantizations ("MiniCPM5 1B" twice, Q5_0+ vs Q4_K_M); and the fixed speed words call ~15 tok/s "Slow" on fast devices. Consider showing the quant when names collide, and relative words ("Slower"/"Faster").
