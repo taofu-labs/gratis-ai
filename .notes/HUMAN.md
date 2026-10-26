@@ -66,6 +66,7 @@ Branch chore/desktop-release-parity (not pushed, not merged). After secrets: ver
 
 - 2026-10-26: signing set up (Taofu B.V. team 2GQT3SY42B; Play app com.trueperformancenetwork.gratis). Material in gitignored `.secrets/` (see DOCUMENTATION.md "Mobile apps"). Push of branch `mobile-apps` approved for CI.
 - OPEN: 7 GitHub Actions secrets (ANDROID_KEYSTORE_*, ANDROID_KEY_*, IOS_DEV_*) must be added by the human: our fine-grained GH_TOKEN can't write secrets (classic PAT forbidden by org). Values: `.secrets/handoff/github_actions_secrets.txt`. Until then CI builds unsigned and local signing (zsign / gradle) is used.
+- Both apps verified on real devices 2026-10-26 (Nord release APK, iPhone X dev build).
 - Play upload key = `.secrets/android/upload.jks` (SHA-256 69:2B:6E:53…:31:6E). Not yet uploaded to Play; first AAB upload locks it in. Back it up outside this container.
 - Apple Paid Apps agreement shows expired (free app/TestFlight unaffected; untouched).
 - `increased-memory-limit` entitlement needs a paid team; without it iPhones cap the app around half of RAM.
