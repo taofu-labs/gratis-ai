@@ -3,7 +3,8 @@ import { describe, expect, test } from 'vitest'
 import { build_system_prompt } from '../../src/utils/system_prompt'
 import { MODEL_CATALOG } from '../../src/utils/model_catalog'
 
-const DATE = new Date( `2026-10-26T12:00:00Z` )
+// Local noon: the prompt formats the user's local date, so a UTC fixture would shift in UTC±12
+const DATE = new Date( 2026, 9, 26, 12 )
 const LOCALES = `src/i18n/locales`
 const read_prompt = lang => JSON.parse( readFileSync( `${ LOCALES }/${ lang }/prompt.json`, `utf8` ) )
 
@@ -65,7 +66,7 @@ describe( `build_system_prompt`, () => {
     test( `custom instructions come last`, () => {
 
         const prompt = build_system_prompt( { model: plain, language: `en`, custom: `  Talk like a pirate.  `, date: DATE } )
-        expect( prompt.endsWith( `User instructions:\nTalk like a pirate.` ) ).toBe( true )
+        expect( prompt.endsWith( `User instructions (these take priority over the rules above):\nTalk like a pirate.` ) ).toBe( true )
 
     } )
 
