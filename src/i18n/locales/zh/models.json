@@ -108,7 +108,7 @@
     "fact_photos_no": "只能读取文字",
     "fact_private": "在此设备上运行。你的聊天和图片都留在本地；下载内容来自 Hugging Face。",
     "download_cta": "下载 · {{size}}",
-    "smarter_step_up": "想要更聪明的回答？{{name}}也能运行，但回复更慢 · {{size}}",
+    "smarter_step_up": "想要更聪明的回答？{{name}}也能运行，但回复更慢（{{speed}}） · {{size}}",
     "smaller_fallback": "加载有问题？试试更小的模型：{{name}} · {{size}}",
     "back_to_recommendation": "返回推荐",
     "license_flag_title": "适用额外的许可条款。商用前请先查看。",

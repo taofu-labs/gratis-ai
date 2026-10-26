@@ -108,7 +108,7 @@
     "fact_photos_no": "Reads text only",
     "fact_private": "Runs on this device. Your chats and images stay here; the download comes from Hugging Face.",
     "download_cta": "Download · {{size}}",
-    "smarter_step_up": "Want smarter answers? {{name}} also fits, but replies slower · {{size}}",
+    "smarter_step_up": "Want smarter answers? {{name}} also fits, but replies slower ({{speed}}) · {{size}}",
     "smaller_fallback": "Trouble loading? Try a smaller model: {{name}} · {{size}}",
     "back_to_recommendation": "Back to the recommendation",
     "license_flag_title": "Extra licence terms apply. Check them before commercial use.",

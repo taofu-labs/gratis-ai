@@ -108,7 +108,7 @@
     "fact_photos_no": "Czyta tylko tekst",
     "fact_private": "Działa na tym urządzeniu. Twoje czaty i obrazy zostają tutaj; pobieranie pochodzi z Hugging Face.",
     "download_cta": "Pobierz · {{size}}",
-    "smarter_step_up": "Chcesz mądrzejszych odpowiedzi? {{name}} też się zmieści, ale odpowiada wolniej · {{size}}",
+    "smarter_step_up": "Chcesz mądrzejszych odpowiedzi? {{name}} też się zmieści, ale odpowiada wolniej ({{speed}}) · {{size}}",
     "smaller_fallback": "Problem z wczytaniem? Spróbuj mniejszego modelu: {{name}} · {{size}}",
     "back_to_recommendation": "Wróć do rekomendacji",
     "license_flag_title": "Obowiązują dodatkowe warunki licencji. Sprawdź je przed użyciem komercyjnym.",

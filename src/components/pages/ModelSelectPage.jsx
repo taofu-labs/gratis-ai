@@ -828,6 +828,7 @@ export default function ModelSelectPage() {
                     fallback={ hero_kind === `recommended` || hero_kind === `winner` ? picks.fallback : null }
                     on_fallback={ () => choose_model( picks.fallback.id ) }
                     step_up={ hero_kind === `recommended` ? picks.step_up : null }
+                    step_up_tps={ picks.step_up && estimate_decode_speed( picks.step_up, device ) }
                     on_step_up={ () => choose_model( picks.step_up.id ) }
                     on_reset={ hero_kind === `choice` || hero_kind === `custom` ? reset_choice : null }
                 >

@@ -127,6 +127,7 @@ const SPEED_KEYS = { quick: `speed_quick`, steady: `speed_steady`, slow: `speed_
  * @param {Object|null} [props.fallback] - Smaller model to offer
  * @param {Function} [props.on_fallback]
  * @param {Object|null} [props.step_up] - Smarter, slower model the device can hold
+ * @param {number} [props.step_up_tps] - Its estimated decode speed
  * @param {Function} [props.on_step_up]
  * @param {Function} [props.on_reset] - Back to the recommendation (explicit choices only)
  * @param {boolean} [props.loading]
@@ -134,7 +135,7 @@ const SPEED_KEYS = { quick: `speed_quick`, steady: `speed_steady`, slow: `speed_
  */
 export default function ModelHero( {
     model, kind, reason, band, tokens_per_second, photos, download_text, cached, action_label, disabled, on_confirm,
-    change, fallback, on_fallback, step_up, on_step_up, on_reset, loading, children,
+    change, fallback, on_fallback, step_up, step_up_tps, on_step_up, on_reset, loading, children,
 } ) {
 
     const { t } = useTranslation( `models` )
@@ -198,7 +199,11 @@ export default function ModelHero( {
             { change && <Change data-testid="model-hero-change">{ change }</Change> }
 
             { step_up && <LinkButton type="button" data-testid="model-hero-step-up" onClick={ on_step_up }>
-                { t( `smarter_step_up`, { name: step_up.name, size: format_file_size( model_download_bytes( step_up ) ) } ) }
+                { t( `smarter_step_up`, {
+                    name: step_up.name,
+                    speed: format_tokens_per_second( step_up_tps ),
+                    size: format_file_size( model_download_bytes( step_up ) ),
+                } ) }
             </LinkButton> }
 
             { fallback && <LinkButton type="button" data-testid="model-hero-fallback" onClick={ on_fallback }>

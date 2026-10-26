@@ -2670,7 +2670,7 @@ const PRIORITY_WEIGHTS = {
 // Below this, a model is too slow to be anyone's automatic starting point
 const MIN_AUTOMATIC_SPEED = 0.7
 
-// A step-up the user opts into may be slow, but never painfully so
+// A step-up is opt-in and shows its speed, so it may be slow; below ~1 tok/s a reply takes minutes
 const MIN_STEP_UP_SPEED = 1
 
 // Quality points (0-100) below which a gap is noise between vendor benchmark tables
@@ -2720,9 +2720,13 @@ const best_within = ( candidates, device, priority, max_memory ) => {
  * @returns {ModelDefinition|null}
  */
 const step_up_from = ( pick, candidates, device ) => {
-    const usable = candidates.filter( m => estimate_reply_speed( m, device ) >= MIN_STEP_UP_SPEED )
-    const smarter = best_within( usable, device, `better`, device.automatic_bytes )
-    return smarter && quality_score( smarter ) - quality_score( pick ) >= NOTICEABLE_QUALITY_GAP ? smarter : null
+
+    // Gate on the quality gap before ranking, or a near-miss could outscore and hide a real step-up
+    const smarter = candidates.filter( m => quality_score( m ) - quality_score( pick ) >= NOTICEABLE_QUALITY_GAP
+        && estimate_reply_speed( m, device ) >= MIN_STEP_UP_SPEED )
+
+    return best_within( smarter, device, `better`, device.automatic_bytes )
+
 }
 
 /**

@@ -108,7 +108,7 @@
     "fact_photos_no": "Leest alleen tekst",
     "fact_private": "Draait op dit apparaat. Je chats en afbeeldingen blijven hier; de download komt van Hugging Face.",
     "download_cta": "Downloaden · {{size}}",
-    "smarter_step_up": "Slimmere antwoorden? {{name}} past ook, maar antwoordt trager · {{size}}",
+    "smarter_step_up": "Slimmere antwoorden? {{name}} past ook, maar antwoordt trager ({{speed}}) · {{size}}",
     "smaller_fallback": "Problemen met laden? Probeer een kleiner model: {{name}} · {{size}}",
     "back_to_recommendation": "Terug naar de aanbeveling",
     "license_flag_title": "Er gelden extra licentievoorwaarden. Controleer ze vóór commercieel gebruik.",

@@ -202,6 +202,19 @@ describe( `picker personas`, () => {
         expect( speed_band( speed ) ).toBe( `slow` )
     } )
 
+    test( `a near-miss that outscores a qualifying step-up does not hide it`, () => {
+        const base = MODEL_CATALOG.find( m => m.id === `minicpm5-1b-tpn-q4km` )
+        const variant = ( id, quality, browser_tps ) => ( { ...base, id, quality, browser_tps, tpn: undefined } )
+        const models = [ variant( `pick`, 60, 8 ), variant( `near_miss`, 67, 2.4 ), variant( `smarter`, 68, 1 ) ]
+        const device = { ...profile_for( `windows_laptop` ), speed_ratio: 1 }
+
+        // Faster picks the quick one; near_miss (+7) would rank first but is under the gap
+        expect( select_for_preferences( models, device, { priority: `faster` } ) ).toMatchObject( {
+            pick: { id: `pick` },
+            step_up: { id: `smarter` },
+        } )
+    } )
+
     test( `a slower device is offered a clearly smarter step-up it can still hold`, () => {
         const laptop = profile_for( `windows_laptop` )
         const slow_laptop = { ...laptop, bandwidth_gbs: laptop.bandwidth_gbs * 0.6 }
