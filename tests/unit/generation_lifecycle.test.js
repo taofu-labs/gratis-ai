@@ -348,8 +348,11 @@ describe( `prompt warm-up`, () => {
     test( `the store debounces warm-ups and drops them once a reply starts`, async () => {
 
         const prefill = vi.fn( async () => {} )
+        async function* chat_stream_ok() {
+            yield `ok`
+        }
         use_llm_store.setState( {
-            _provider: { is_ready: () => true, prefill, chat_stream: async function* () { yield `ok` } },
+            _provider: { is_ready: () => true, prefill, chat_stream: chat_stream_ok },
             is_loading: false,
             is_generating: false,
         } )
@@ -363,6 +366,24 @@ describe( `prompt warm-up`, () => {
 
         warm( [ { role: `user`, content: `hi there` } ] )
         await chat_stream( [], {} )
+        await sleep( 450 )
+        expect( prefill ).toHaveBeenCalledTimes( 1 )
+
+    } )
+
+    test( `re-requesting the loaded model keeps a queued warm-up`, async () => {
+
+        const prefill = vi.fn( async () => {} )
+        use_llm_store.setState( {
+            _provider: { is_ready: () => true, prefill },
+            loaded_model_id: `m`,
+            is_loading: false,
+            is_generating: false,
+        } )
+
+        const { warm, load_model } = use_llm_store.getState()
+        warm( [ { role: `user`, content: `` } ] )
+        await load_model( `m` )
         await sleep( 450 )
         expect( prefill ).toHaveBeenCalledTimes( 1 )
 

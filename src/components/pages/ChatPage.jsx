@@ -184,6 +184,12 @@ export default function ChatPage() {
     // The reply that just finished cleanly; stopped or failed ones stay quiet
     const [ fresh_reply_id, set_fresh_reply_id ] = useState( null )
 
+    // The draft as it stood when a reply was stopped or failed: reading ahead
+    // waits until the user edits it, or Stop would start new work by itself
+    const [ halted_draft, set_halted_draft ] = useState( null )
+    const draft_ref = useRef( draft )
+    draft_ref.current = draft
+
     // Bumped whenever the visible chat is swapped out (New Chat, navigation,
     // delete). Async flows capture it up front and drop their work once stale.
     const epoch_ref = useRef( 0 )
@@ -196,7 +202,7 @@ export default function ChatPage() {
     const messages_ref = useRef( messages )
     messages_ref.current = messages
 
-    const { load_model, chat_stream, warm, abort, is_generating, is_loading: is_model_loading, loaded_model_id, capabilities } = use_llm()
+    const { load_model, chat_stream, warm, cancel_warm, abort, is_generating, is_loading: is_model_loading, loaded_model_id, capabilities } = use_llm()
     const {
         conversations,
         create_conversation,
@@ -250,12 +256,22 @@ export default function ChatPage() {
     // the tokens that changed. Merely opening a chat stays idle: every chat
     // read in leaves the previous one in llama.cpp's RAM cache.
     useEffect( () => {
-        if( !has_model || is_generating || is_rewriting || draft === null ) return
-        const settled = !messages.length && !current_conversation_id || messages.at( -1 )?.id === fresh_reply_id
-        if( !draft && !settled ) return
+
+        const new_chat = !messages.length && !current_conversation_id && !conversation_id
+        const settled = new_chat || messages.at( -1 )?.id === fresh_reply_id
+        const typed = !!draft && draft !== halted_draft
+        const ready = has_model && !is_generating && !is_rewriting && draft !== null
+
+        // A skipped warm-up also drops the one queued for the previous state
+        if( !ready || !settled && !typed ) {
+            cancel_warm()
+            return
+        }
+
         const system_prompt = system_prompt_for( get_model_by_id( loaded_model_id ), settings.system_prompt )
         warm( build_turns( { messages, system_prompt, draft } ) )
-    }, [ has_model, is_generating, is_rewriting, loaded_model_id, settings.system_prompt, messages, draft, fresh_reply_id, current_conversation_id, warm ] )
+
+    }, [ has_model, is_generating, is_rewriting, loaded_model_id, settings.system_prompt, messages, draft, halted_draft, fresh_reply_id, current_conversation_id, conversation_id, warm, cancel_warm ] )
 
     // Try loading the active model on mount.
     // The store deduplicates — if HomePage already started a load, this is a no-op.
@@ -470,7 +486,8 @@ export default function ChatPage() {
                 partial.done = true
                 const final_assistant = { ...assistant_msg, content: result.text, stats: result.stats }
                 update_reply( final_assistant )
-                if( !result.stats.stopped ) set_fresh_reply_id( assistant_msg.id )
+                if( result.stats.stopped ) set_halted_draft( draft_ref.current )
+                else set_fresh_reply_id( assistant_msg.id )
 
                 // Saved into its own conversation even if the user moved on
                 if( conv_id ) {
@@ -486,6 +503,7 @@ export default function ChatPage() {
                 partial.done = true
                 const failed_reply = { ...assistant_msg, content: partial.text, stats: { interrupted: true }, error: err.message }
                 update_reply( failed_reply )
+                set_halted_draft( draft_ref.current )
                 if( conv_id ) {
                     await partial.saving
                     await save_message( conv_id, failed_reply ).catch( save_error => log.warn( `[ChatPage] Could not save failed reply:`, save_error ) )

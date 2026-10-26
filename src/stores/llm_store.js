@@ -195,7 +195,6 @@ const use_llm_store = create( ( set, get ) => ( {
      */
     load_model: async ( model_id, on_progress ) => {
 
-        cancel_warm()
         const state = get()
 
         // Already loaded — nothing to do
@@ -207,6 +206,9 @@ const use_llm_store = create( ( set, get ) => ( {
         if( state._load_promise && state._loading_model_id === model_id ) {
             return state._load_promise
         }
+
+        // A warm-up queued for the old model must not reach the new one
+        cancel_warm()
 
         // `promise` is read in the IIFE's finally, which always runs after its
         // first await, by which time the const below is initialised
@@ -410,6 +412,9 @@ const use_llm_store = create( ( set, get ) => ( {
         }, WARM_DEBOUNCE_MS )
 
     },
+
+    /** Drop a queued warm-up whose prompt no longer applies. */
+    cancel_warm,
 
     /**
      * Abort current generation. The UI updates at once; the provider

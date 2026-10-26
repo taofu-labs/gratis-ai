@@ -24,6 +24,7 @@ export default function use_llm() {
     const store_unload = use_llm_store( ( s ) => s.unload_model )
     const store_is_ready = use_llm_store( ( s ) => s.is_ready )
     const warm = use_llm_store( ( s ) => s.warm )
+    const cancel_warm = use_llm_store( ( s ) => s.cancel_warm )
 
     // Wrap in useCallback for consumers that include these in dependency arrays
     const load_model = useCallback( ( id, on_progress ) => store_load( id, on_progress ), [ store_load ] )
@@ -39,6 +40,7 @@ export default function use_llm() {
         unload_model,
         is_ready,
         warm,
+        cancel_warm,
         is_loading,
         is_generating,
         loaded_model_id,
