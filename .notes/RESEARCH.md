@@ -345,4 +345,5 @@ Probe: Playwright + `Worker` wrapper decoding wllama `get_result` → llama.cpp 
 - `cache_prompt` works for plain chatml (SmolLM2): `cache_n` = entire prior chat, `prompt_n` ≈ 18 (user msg + template wrapper).
 - WASM CPU prefill ≈ decode speed per token (180–400 ms/tok here) => 18 new tokens ≈ 3–7 s.
 - Qwen3 template (think stripping): `cache_n` stops at the start of the previous assistant turn => whole last reply re-read every turn (prompt_n 31 for an 8-token message with an 11-token reply; scales with reply length). History content still contains raw `<think>…</think>`.
+- DeepSeek R1 1.5B: same pattern; `cache_n` = prior prompt only, the stripped previous answer is re-read (~17 tok/turn for one-word answers). Its long think phase shows the thinking UI, not "Waking up".
 - Hybrid (Qwen 3.5) / SWA not measured (download too slow); depend on llama.cpp ctx checkpoints (wllama does not forward `n_ctx_checkpoints`, C++ default applies).
