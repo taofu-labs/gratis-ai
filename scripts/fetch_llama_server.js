@@ -146,8 +146,11 @@ const fetch_target = async ( key ) => {
     const archive = join( scratch, asset.file )
     writeFileSync( archive, bytes )
     const use_unzip = asset.file.endsWith( `.zip` ) && host_platform() !== `win32`
+    // Windows: name System32's bsdtar outright. Git for Windows puts GNU tar first on
+    // PATH, which can't read zips and parses `D:\…` as a remote host
+    const tar = host_platform() === `win32` ? join( process.env.SystemRoot || `C:\\Windows`, `System32`, `tar.exe` ) : `tar`
     if( use_unzip ) execFileSync( `unzip`, [ `-q`, archive, `-d`, scratch ] )
-    else execFileSync( `tar`, [ `-xf`, archive, `-C`, scratch ] )
+    else execFileSync( tar, [ `-xf`, archive, `-C`, scratch ] )
 
     // Release archives wrap everything in a `llama-<tag>/` folder (zip may not)
     const nested = join( scratch, `llama-${ TAG }` )

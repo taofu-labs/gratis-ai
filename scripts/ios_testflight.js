@@ -1,11 +1,12 @@
 // Sign the CI's unsigned iOS build for the App Store and upload it to
 // TestFlight, without a Mac: zsign + the App Store Connect build upload API.
 //
-// Usage: node scripts/ios_testflight.js path/to/gratis-unsigned.ipa
+// Usage: node scripts/ios_testflight.js path/to/gratis-unsigned.ipa [--tester email]…
 // Needs: vendor/zsign, and `node scripts/ios_signing.js --distribution` once
 //
 // Steps: sign → reserve an upload → PUT each part → commit → wait for Apple to
 // process it → hand the build to the internal "Gratis internal" TestFlight group.
+// --tester adds App Store Connect users (internal testers must be team members) to that group.
 
 import { execFileSync } from 'child_process'
 import { mkdtempSync, openSync, readSync, statSync } from 'fs'
@@ -18,8 +19,10 @@ const GROUP_NAME = `Gratis internal`
 const POLL_MS = 30_000
 const PROCESSING_LIMIT_MS = 60 * 60_000
 
-const [ unsigned ] = process.argv.slice( 2 )
-if( !unsigned ) throw new Error( `Usage: node scripts/ios_testflight.js <unsigned.ipa>` )
+const args = process.argv.slice( 2 )
+const testers = args.flatMap( ( arg, index ) => arg === `--tester` ? [ args[ index + 1 ] ] : [] )
+const [ unsigned ] = args.filter( ( arg, index ) => !arg.startsWith( `--` ) && args[ index - 1 ] !== `--tester` )
+if( !unsigned ) throw new Error( `Usage: node scripts/ios_testflight.js <unsigned.ipa> [--tester email]…` )
 
 const sleep = ms => new Promise( resolve => setTimeout( resolve, ms ) )
 
@@ -127,6 +130,27 @@ const ensure_internal_group = async app => {
 }
 
 
+/** Add team members to the group; Apple emails each a TestFlight invite */
+const add_testers = async group => {
+
+    const members = await api( `/betaGroups/${ group.id }/betaTesters?limit=200` )
+    const users = await api( `/users?limit=200` )
+
+    for( const email of testers ) {
+        if( members.some( ( { attributes } ) => attributes.email === email ) ) continue
+        const user = users.find( ( { attributes } ) => attributes.username === email )
+        if( !user ) throw new Error( `${ email } is not an App Store Connect user; internal testers must be` )
+        await api( `/betaTesters`, { method: `POST`, body: {
+            type: `betaTesters`,
+            attributes: { email, firstName: user.attributes.firstName, lastName: user.attributes.lastName },
+            relationships: { betaGroups: { data: [ { type: `betaGroups`, id: group.id } ] } },
+        } } )
+        console.log( `  added tester ${ email }` )
+    }
+
+}
+
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 const versions = read_versions( unsigned )
@@ -144,4 +168,5 @@ console.log( `Uploaded; waiting for Apple to process build ${ versions.build }�
 
 const build = await wait_for_build( build_upload, app, versions )
 const group = await ensure_internal_group( app )
+await add_testers( group )
 console.log( `TestFlight: build ${ build.attributes.version } is VALID; internal group "${ group.attributes.name }" sees every build` )

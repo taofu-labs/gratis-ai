@@ -469,3 +469,6 @@ Fails ~1/3 on a cold dev server (5 s toast timeout), also on the commit before t
 
 ## Rewriting locale JSON with json.dumps drops the blank-line key groups (2026-10-26)
 Edit locale files line-wise (append before the closing brace) to keep their layout.
+
+## Windows CI: `tar` resolves to Git's GNU tar (2026-10-26)
+GNU tar can't read .zip and treats `D:\…` as host `D`. fetch_llama_server.js calls `%SystemRoot%\System32\tar.exe` (bsdtar) on win32. Failed draft release → fix, push, then `gh workflow run release-electron.yml` (dispatch recovers drafts).
