@@ -17,8 +17,8 @@ import use_chat_history from '../../hooks/use_chat_history'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_settings from '../../hooks/use_settings'
 import use_voice_input from '../../hooks/use_voice_input'
-import use_speed_modes from '../../hooks/use_speed_modes'
-import { read_tip_message, tip_direction, write_speed_mode, write_tip_message } from '../../utils/speed_mode'
+import use_speed_modes, { use_speed_mode_choice } from '../../hooks/use_speed_modes'
+import { read_tip_message, tip_direction, write_tip_message } from '../../utils/speed_mode'
 import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
 import { MODEL_CATALOG, get_model_by_id, format_file_size, has_image_input, model_download_bytes, select_for_preferences } from '../../utils/model_catalog'
@@ -972,17 +972,7 @@ export default function ChatPage() {
 
     // Replies refine the device's measured speed, so re-read estimates after each
     const { modes: speed_modes, active: active_mode } = use_speed_modes( { loaded_model_id, cached_models, refresh: messages.length } )
-    const [ download_mode, set_download_mode ] = useState( null )
-
-    // An installed mode is a model switch; a missing one asks before downloading
-    const choose_mode = useCallback( mode => {
-        write_speed_mode( mode.priority )
-        if( mode.cached ) handle_model_switch( mode.model.id )
-        else set_download_mode( mode )
-    }, [ handle_model_switch ] )
-
-    const close_download_dialog = useCallback( () => set_download_mode( null ), [] )
-    const confirm_mode_download = () => navigate( `/download`, { state: { model: download_mode.model, return_to: location.pathname } } )
+    const { choose_mode, dialog: mode_download_dialog } = use_speed_mode_choice( handle_model_switch )
 
     // One inline offer per session, under the latest reply: slow → Faster, very fast → Smarter.
     // The session remembers which reply got it, so later replies stay quiet.
@@ -1151,7 +1141,7 @@ export default function ChatPage() {
         </Container>
 
         { /* A speed mode whose model still needs downloading */ }
-        <ModelDownloadDialog mode={ download_mode } on_confirm={ confirm_mode_download } on_close={ close_download_dialog } />
+        <ModelDownloadDialog { ...mode_download_dialog } />
 
         { /* Voice model download dialog */ }
         <VoiceModelDialog

@@ -5,6 +5,8 @@ import { log } from 'mentie'
 import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, HardDrive, Settings } from 'lucide-react'
 import ChatInput from '../molecules/ChatInput'
 import VoiceModelDialog from '../molecules/VoiceModelDialog'
+import SpeedModeMenu from '../molecules/SpeedModeMenu'
+import ModelDownloadDialog from '../molecules/ModelDownloadDialog'
 import LanguageSelector from '../molecules/LanguageSelector'
 import Sidebar from '../molecules/Sidebar'
 import SettingsModal from '../molecules/SettingsModal'
@@ -12,6 +14,7 @@ import use_llm from '../../hooks/use_llm'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_voice_input from '../../hooks/use_voice_input'
 import use_chat_history from '../../hooks/use_chat_history'
+import use_speed_modes, { use_speed_mode_choice } from '../../hooks/use_speed_modes'
 import { useTranslation } from 'react-i18next'
 import { export_conversation } from '../../utils/export'
 import { DISPLAY_NAME, EVENTS, storage_key } from '../../utils/branding'
@@ -314,6 +317,10 @@ export default function HomePage() {
 
     }, [ load_model ] )
 
+    // Reply speed gauge in the composer, the same modes as the chat page
+    const { modes: speed_modes, active: active_mode } = use_speed_modes( { loaded_model_id, cached_models } )
+    const { choose_mode, dialog: mode_download_dialog } = use_speed_mode_choice( handle_settings_model_switch )
+
     // Cancel any in-progress load and jump to model picker
     const handle_switch_model = useCallback( () => {
         unload_model()
@@ -441,9 +448,17 @@ export default function HomePage() {
                 audio_level={ voice_audio_level }
                 recording_start_time={ voice_recording_start_time }
                 append_text={ voice_text }
+                speed_control={ loaded_model_id && <SpeedModeMenu
+                    modes={ speed_modes }
+                    active={ active_mode }
+                    on_choose={ choose_mode }
+                    disabled={ is_loading }
+                /> }
             />
 
             { /* Voice model download dialog */ }
+            <ModelDownloadDialog { ...mode_download_dialog } />
+
             <VoiceModelDialog
                 is_open={ show_voice_dialog }
                 on_close={ handle_voice_dialog_close }

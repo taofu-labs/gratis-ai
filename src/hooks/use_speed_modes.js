@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import use_device_capabilities from './use_device_capabilities'
 import { build_device_profile } from '../utils/device_detection'
+import { write_speed_mode } from '../utils/speed_mode'
 import {
     MODEL_CATALOG,
     estimate_decode_speed,
@@ -48,5 +50,31 @@ export default function use_speed_modes( { loaded_model_id, cached_models, refre
 
     // `refresh` is only a recompute trigger
     }, [ capabilities, max_model_bytes, loaded_model_id, cached_models, refresh ] )
+
+}
+
+/**
+ * Choosing a mode: an installed model is a switch, a missing one opens the
+ * download dialog, whose confirm hands over to the download page and back.
+ *
+ * @param {Function} on_switch - Loads an installed model by id
+ * @returns {{ choose_mode: Function, dialog: { mode: Object|null, on_confirm: Function, on_close: Function } }} Spread `dialog` into ModelDownloadDialog
+ */
+export function use_speed_mode_choice( on_switch ) {
+
+    const navigate = useNavigate()
+    const location = useLocation()
+    const [ download_mode, set_download_mode ] = useState( null )
+
+    const choose_mode = useCallback( mode => {
+        write_speed_mode( mode.priority )
+        if( mode.cached ) on_switch( mode.model.id )
+        else set_download_mode( mode )
+    }, [ on_switch ] )
+
+    const on_close = useCallback( () => set_download_mode( null ), [] )
+    const on_confirm = () => navigate( `/download`, { state: { model: download_mode.model, return_to: location.pathname } } )
+
+    return { choose_mode, dialog: { mode: download_mode, on_confirm, on_close } }
 
 }

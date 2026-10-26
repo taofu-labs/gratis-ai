@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.48.1] - 2026-10-26
+
+### Fixed
+- Reply speed gauge also on the home screen's composer (the screen the apps open on), not only in a conversation
+- Windows desktop build: llama-server zip extracted with the system's bsdtar
+
 ## [0.48.0] - 2026-10-26
 
 ### Added
