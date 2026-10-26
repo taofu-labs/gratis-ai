@@ -5,8 +5,9 @@ import { useTranslation } from 'react-i18next'
 import SpeedGauge from '../atoms/SpeedGauge'
 import { format_file_size, format_tokens_per_second, model_download_bytes } from '../../utils/model_catalog'
 
+// Not positioned: the menu anchors to the composer (ChatInput's pill), so it
+// right-aligns with the composer and never runs off a phone screen
 const Anchor = styled.div`
-    position: relative;
     flex-shrink: 0;
 `
 
@@ -35,16 +36,19 @@ const Trigger = styled.button`
         cursor: not-allowed;
     }
 
-    /* Narrow phones: the needle and the menu speak; the label would squeeze the text field */
-    @media ( max-width: 480px ) {
-        padding: 0 0.5rem;
-        & > span { display: none; }
-    }
-
     @media ${ ( { theme } ) => theme.media.touch } {
         height: 2.75rem;
         padding-block: 0.375rem;
         background-clip: content-box;
+    }
+
+    /* Narrow phones: a 32px circle like its neighbours (44px hit area); the needle
+       and the menu speak, a label would squeeze the text field */
+    @media ( max-width: 480px ) {
+        justify-content: center;
+        width: 2.75rem;
+        padding: 0.375rem;
+        & > span { display: none; }
     }
 `
 
@@ -52,6 +56,7 @@ const Menu = styled.div`
     position: absolute;
     bottom: calc( 100% + 0.5rem );
     right: 0;
+    max-width: 100%;
     z-index: 50;
     width: min( 20rem, calc( 100vw - 2rem ) );
     padding: ${ ( { theme } ) => theme.spacing.xs };

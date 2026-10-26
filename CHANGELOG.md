@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.48.2] - 2026-10-26
+
+### Fixed
+- Phones: the reply speed menu stays on screen (anchored to the composer) and the gauge is a round button like its neighbours
+
 ## [0.48.1] - 2026-10-26
 
 ### Fixed

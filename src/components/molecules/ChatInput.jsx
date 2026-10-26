@@ -23,6 +23,8 @@ const MIN_DOCUMENT_TOKENS = 200
 // ── Pill container — owns all visual appearance ─────────────────────
 
 const InputPill = styled.div`
+    /* Anchors popovers from the button row (speed mode menu) */
+    position: relative;
     display: flex;
     flex-direction: column;
     max-width: ${ ( { $max_width } ) => $max_width || `65ch` };

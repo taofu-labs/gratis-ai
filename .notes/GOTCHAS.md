@@ -472,3 +472,9 @@ Edit locale files line-wise (append before the closing brace) to keep their layo
 
 ## Windows CI: `tar` resolves to Git's GNU tar (2026-10-26)
 GNU tar can't read .zip and treats `D:\…` as host `D`. fetch_llama_server.js calls `%SystemRoot%\System32\tar.exe` (bsdtar) on win32. Failed draft release → fix, push, then `gh workflow run release-electron.yml` (dispatch recovers drafts).
+
+## Composer popovers anchor to the pill, not the button (2026-10-26)
+ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not positioned. A button-anchored `right: 0` menu ran off the left edge of a 375px iPhone (button sits mid-composer). Check new composer UI at 375px and on the iPhone before release.
+
+## iPhone install over Wi-Fi: reply never arrives, install still lands (2026-10-26)
+`install_from_local` hangs after the 100% AFC upload; the phone finishes installing anyway. Cap it (`timeout 420`), then poll WDA `app_launch` until it stops reporting "installing".
