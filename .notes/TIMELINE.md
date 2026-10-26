@@ -586,3 +586,4 @@
 - 2026-10-26 — First iOS build on CI (after CMAKE_MACOSX_BUNDLE fix), zsign-signed on Linux, installed over Wi-Fi: iPhone X runs MiniCPM5 1B at 14-15 tok/s (CPU). Fixed iOS status-bar overlap + keyboard covering the composer. Android release build verified (16 tok/s).
 
 - 2026-10-26 — System prompt moved env → code (`src/utils/system_prompt.js` + `locales/*/prompt.json`). Layered: identity/persona → date → rules → uncensored line → custom. Real-model A/B (de question): Qwen3 0.6B clean German under de prompt, Denglish under en; SmolLM2 360M hallucinates under de prompt → `english_only` catalog flag forces English prompt.
+- 2026-10-26 — Picker leans on intelligence: balanced's "never slow if a steady model exists" rule → per-priority speed floors (faster 2.5 / balanced 1.5 / better 0.7 tok/s). New `step_up` (≥8 quality pts, comfortable fit, ≥1 tok/s) shown as a hero link. No live TPN winners at the time, so catalog scoring is what users get.

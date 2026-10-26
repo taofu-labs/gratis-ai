@@ -140,7 +140,7 @@ describe( `model selection`, () => {
 
     test( `returns no recommendation when even the smallest runtime cannot fit`, () => {
         const device = { runtime: `browser`, ceiling_bytes: 500_000_000, budget_bytes: 500_000_000, automatic_bytes: 500_000_000, bandwidth_gbs: 5 }
-        expect( select_for_preferences( MODEL_CATALOG, device ) ).toEqual( { pick: null, fit: null, fallback: null, relaxed: [] } )
+        expect( select_for_preferences( MODEL_CATALOG, device ) ).toEqual( { pick: null, fit: null, fallback: null, step_up: null, relaxed: [] } )
     } )
 
     test( `keeps transformer block counts separate from hybrid KV layers`, () => {

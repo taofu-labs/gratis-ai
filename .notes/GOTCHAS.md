@@ -460,3 +460,6 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - iOS WebView defaults: draws under the status bar (fix: `ios.contentInset: always`) and doesn't shrink for the keyboard (fix: Keyboard plugin `resize: native`).
 - Only one heartbeat client per phone: a leftover syslog/heartbeat process makes installs hang after the AFC upload. Check `pgrep -f "python3 syslog"` before installing; never `pkill -f` (matches its own shell).
 - Tap without a new WDA session: `POST /session/<sessionId from /status>/wda/tap/0 {x, y}` (points = pixels / 3 on iPhone X).
+
+## Killing dev servers: never `pkill -f`/`pgrep -f` with the server's args (2026-10-26)
+The pattern matches the Bash tool's own shell command line → kills the shell (exit 144). Use `ps -eo pid,args | grep "[v]ite"` or track the PID.

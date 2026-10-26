@@ -37,6 +37,7 @@ import {
     quality_score,
     runtime_memory,
     select_picker_models,
+    NOTICEABLE_QUALITY_GAP,
     speed_band,
 } from '../../utils/model_catalog'
 import { build_download_url, parse_hf_url, resolve_hf_model } from '../../utils/hf_url_parser'
@@ -385,9 +386,6 @@ const model_download_url = model => model?.hugging_face_repo && model?.file_name
     : null
 
 const BAND_ORDER = [ `slow`, `steady`, `quick` ]
-
-// A quality gap smaller than this is noise between vendor benchmark tables
-const NOTICEABLE_QUALITY_GAP = 8
 
 const scroll_into_view = element => {
     const reduced = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches
@@ -829,6 +827,8 @@ export default function ModelSelectPage() {
                     change={ describe_change() }
                     fallback={ hero_kind === `recommended` || hero_kind === `winner` ? picks.fallback : null }
                     on_fallback={ () => choose_model( picks.fallback.id ) }
+                    step_up={ hero_kind === `recommended` ? picks.step_up : null }
+                    on_step_up={ () => choose_model( picks.step_up.id ) }
                     on_reset={ hero_kind === `choice` || hero_kind === `custom` ? reset_choice : null }
                 >
                     { empty_state }

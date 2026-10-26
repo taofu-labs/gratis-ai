@@ -27,6 +27,7 @@
 - Opening the site over plain http now switches to https; http silently lost threads and model storage (seen on iPhone Safari, which fills in http:// for a bare domain)
 
 ### Changed
+- Model picker leans on intelligence: the recommended model may reply slower (down to ~1.5 tok/s) when that buys a bigger model (8–16 GB laptops: Qwen 3.5 2B → 4B; 8 GB Android: MiniCPM5 1B → Qwen 3.5 2B). When a clearly smarter model still fits but is slower, the card offers it: "Want smarter answers? X also fits, but replies slower"
 - System prompt lives in code and speaks the UI language (11 locales): replies start in your language and follow the user's; steers small models with short rules (answer first, Markdown, offline, no invented facts) and today's date. Uncensored models get a fulfil-every-request line; model personas and your Custom Instructions now add to it instead of replacing it. `VITE_DEFAULT_SYSTEM_PROMPT` removed
 - Every offered model is now a TPN-optimised build from tpnlabs on Hugging Face (Qwen 3.5 0.8B / 2B / 4B / 9B, Gemma 4 26B for desktop, MiniCPM5 1B, uncensored Qwen3 1.7B and Qwen 3.5 4B / 9B), each measured against its original; earlier downloads keep working under "Show older models"
 - The picker weighs each build's measured closeness to the original, and knows tuned Q5_0 formats are slow in the browser

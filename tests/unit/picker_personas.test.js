@@ -2,10 +2,12 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { build_device_profile, estimate_max_model_bytes } from '../../src/utils/device_detection'
 import {
     MODEL_CATALOG,
+    NOTICEABLE_QUALITY_GAP,
     check_fit,
     estimate_reply_speed,
     has_image_input,
     implied_bandwidth_gbs,
+    quality_score,
     runtime_memory,
     select_for_preferences,
     speed_band,
@@ -184,15 +186,39 @@ describe( `picker personas`, () => {
         expect( matrix ).toEqual( {
             cheap_android: [ `qwen35-0.8b-tpn-q5km`, `minicpm5-1b-tpn-q4km`, `minicpm5-1b-tpn-q50t`, `qwen35-0.8b-tpn-q5km` ],
             iphone: [ `qwen35-0.8b-tpn-q5km`, `minicpm5-1b-tpn-q4km`, `minicpm5-1b-tpn-q50t`, `qwen35-0.8b-tpn-q5km` ],
-            windows_laptop: [ `qwen35-0.8b-tpn-q5km`, `qwen35-2b-tpn-q4km`, `qwen35-4b-tpn-q4km`, `qwen35-2b-tpn-q4km` ],
+            windows_laptop: [ `qwen35-0.8b-tpn-q5km`, `qwen35-4b-tpn-q4km`, `qwen35-4b-tpn-q4km`, `qwen35-4b-tpn-q4km` ],
             macbook_desktop: [ `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs`, `qwen35-9b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs` ],
         } )
     } )
 
-    test( `balanced prefers steady replies over a slow but smarter model`, () => {
+    test( `balanced takes a smarter model over a faster one while replies stay usable`, () => {
         const laptop = profile_for( `windows_laptop` )
         const { pick } = select_for_preferences( MODEL_CATALOG, laptop )
-        expect( speed_band( estimate_reply_speed( pick, laptop ) ) ).not.toBe( `slow` )
+        const speed = estimate_reply_speed( pick, laptop )
+
+        // The 4B over the 2B: slower, but well above the 1.5 tok/s floor
+        expect( pick.id ).toBe( `qwen35-4b-tpn-q4km` )
+        expect( speed ).toBeGreaterThanOrEqual( 1.5 )
+        expect( speed_band( speed ) ).toBe( `slow` )
+    } )
+
+    test( `a slower device is offered a clearly smarter step-up it can still hold`, () => {
+        const laptop = profile_for( `windows_laptop` )
+        const slow_laptop = { ...laptop, bandwidth_gbs: laptop.bandwidth_gbs * 0.6 }
+
+        for( const device of [ laptop, slow_laptop ] ) {
+            const { pick, step_up } = select_for_preferences( MODEL_CATALOG, device )
+            if( !step_up ) continue
+            expect( quality_score( step_up ) - quality_score( pick ) ).toBeGreaterThanOrEqual( NOTICEABLE_QUALITY_GAP )
+            expect( check_fit( step_up, device ).comfortable ).toBe( true )
+            expect( estimate_reply_speed( step_up, device ) ).toBeGreaterThanOrEqual( 1 )
+        }
+
+        // 2B stays the pick (4B is under 1.5 tok/s there), 4B is offered as the step-up
+        expect( select_for_preferences( MODEL_CATALOG, slow_laptop ) ).toMatchObject( {
+            pick: { id: `qwen35-2b-tpn-q4km` },
+            step_up: { id: `qwen35-4b-tpn-q4km` },
+        } )
     } )
 
 } )

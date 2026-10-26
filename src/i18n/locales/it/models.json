@@ -108,6 +108,7 @@
     "fact_photos_no": "Legge solo testo",
     "fact_private": "Funziona su questo dispositivo. Le tue chat e immagini restano qui; il download arriva da Hugging Face.",
     "download_cta": "Scarica · {{size}}",
+    "smarter_step_up": "Vuoi risposte più intelligenti? Anche {{name}} ci sta, ma risponde più lentamente · {{size}}",
     "smaller_fallback": "Problemi di caricamento? Prova un modello più piccolo: {{name}} · {{size}}",
     "back_to_recommendation": "Torna al consiglio",
     "license_flag_title": "Si applicano condizioni di licenza aggiuntive. Controllale prima dell'uso commerciale.",

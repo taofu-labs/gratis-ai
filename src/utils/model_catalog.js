@@ -2657,16 +2657,24 @@ export const fit_level = ( fit, device ) => !fit.fits ? null
         : fit.memory <= device.automatic_bytes * 0.6 ? `roomy`
             : `fits`
 
-// How much each priority values answer quality vs reply speed
-// "Balanced" additionally insists on steady replies whenever any model offers them.
+// How much each priority values answer quality vs reply speed, and the reply
+// speed (tok/s) it won't go below while anything faster exists. Balanced leans
+// on intelligence: 1.5 tok/s is slow but usable, and the 1B → 2B → 4B steps are
+// the biggest jumps in answer quality.
 const PRIORITY_WEIGHTS = {
-    faster: { quality: 0.5, speed: 1 },
-    balanced: { quality: 1, speed: 0.25 },
-    better: { quality: 1, speed: 0.05 },
+    faster: { quality: 0.5, speed: 1, min_speed: 2.5 },
+    balanced: { quality: 1, speed: 0.25, min_speed: 1.5 },
+    better: { quality: 1, speed: 0.05, min_speed: 0.7 },
 }
 
 // Below this, a model is too slow to be anyone's automatic starting point
 const MIN_AUTOMATIC_SPEED = 0.7
+
+// A step-up the user opts into may be slow, but never painfully so
+const MIN_STEP_UP_SPEED = 1
+
+// Quality points (0-100) below which a gap is noise between vendor benchmark tables
+export const NOTICEABLE_QUALITY_GAP = 8
 
 // Past ~4× reading pace, extra speed no longer changes how a chat feels
 const SPEED_SATURATION = 16
@@ -2697,12 +2705,24 @@ const best_within = ( candidates, device, priority, max_memory ) => {
         .filter( m => check_fit( m, device ).fits && runtime_memory( m ) <= max_memory )
         .filter( m => estimate_reply_speed( m, device ) >= MIN_AUTOMATIC_SPEED )
 
-    // Balanced never settles for "slow" when a steady option exists
-    const steady = runnable.filter( m => speed_band( estimate_reply_speed( m, device ) ) !== `slow` )
-    const pool = priority === `balanced` && steady.length ? steady : runnable
+    // Respect the priority's speed floor while anything clears it
+    const { min_speed } = PRIORITY_WEIGHTS[ priority ] || PRIORITY_WEIGHTS.balanced
+    const usable = runnable.filter( m => estimate_reply_speed( m, device ) >= min_speed )
+    const pool = usable.length ? usable : runnable
 
     return pool.sort( ( a, b ) => preference_score( b, device, priority ) - preference_score( a, device, priority ) )[ 0 ] ?? null
 
+}
+
+/**
+ * A noticeably smarter model this device holds comfortably, offered next to a
+ * pick that was chosen partly for speed. Slower, never unusable.
+ * @returns {ModelDefinition|null}
+ */
+const step_up_from = ( pick, candidates, device ) => {
+    const usable = candidates.filter( m => estimate_reply_speed( m, device ) >= MIN_STEP_UP_SPEED )
+    const smarter = best_within( usable, device, `better`, device.automatic_bytes )
+    return smarter && quality_score( smarter ) - quality_score( pick ) >= NOTICEABLE_QUALITY_GAP ? smarter : null
 }
 
 /**
@@ -2711,12 +2731,13 @@ const best_within = ( candidates, device, priority, max_memory ) => {
  * - `pick`: comfortable fit first; a tight fit only when nothing comfortable exists
  * - `fit`: `roomy` (≤60% of the comfortable budget), `fits`, or `tight`
  * - `fallback`: a clearly smaller option to offer if the pick fails to load
+ * - `step_up`: a clearly smarter, slower option the device can still hold
  * - `relaxed`: when nothing fits, the nearest picks without each requirement
  *
  * @param {ModelDefinition[]} models
  * @param {DeviceProfile} device
  * @param {Partial<PickerPreferences>} [preferences]
- * @returns {{ pick: ModelDefinition|null, fit: 'roomy'|'fits'|'tight'|null, fallback: ModelDefinition|null, relaxed: { drop: 'vision'|'fewer_refusals', model: ModelDefinition }[] }}
+ * @returns {{ pick: ModelDefinition|null, fit: 'roomy'|'fits'|'tight'|null, fallback: ModelDefinition|null, step_up: ModelDefinition|null, relaxed: { drop: 'vision'|'fewer_refusals', model: ModelDefinition }[] }}
  */
 export const select_for_preferences = ( models, device, preferences = {} ) => {
 
@@ -2732,13 +2753,13 @@ export const select_for_preferences = ( models, device, preferences = {} ) => {
             .filter( key => prefs[ key ] )
             .map( key => ( { drop: key, model: select_for_preferences( models, device, { ...prefs, [ key ]: false } ).pick } ) )
             .filter( ( { model } ) => model )
-        return { pick: null, fit: null, fallback: null, relaxed }
+        return { pick: null, fit: null, fallback: null, step_up: null, relaxed }
     }
 
     // A recovery path if the pick fails: something at most ~60% of its memory
     const fallback = best_within( candidates.filter( m => m.id !== pick.id ), device, prefs.priority, runtime_memory( pick ) * 0.6 )
 
-    return { pick, fit: fit_level( check_fit( pick, device ), device ), fallback, relaxed: [] }
+    return { pick, fit: fit_level( check_fit( pick, device ), device ), fallback, step_up: step_up_from( pick, candidates, device ), relaxed: [] }
 
 }
 
@@ -2801,7 +2822,8 @@ export const select_picker_models = ( { winners = [], models = MODEL_CATALOG, de
     // The catalog pick doubles as the recovery path when it is the smaller download
     const fallback = catalog.pick && runtime_memory( catalog.pick ) < runtime_memory( winner ) ? catalog.pick : null
 
-    return { ...catalog, pick: winner, fit: fit_level( check_fit( winner, device ), device ), fallback, winners: sorted_winners, from_winner: true }
+    // Winners carry no quality score, so there is nothing to measure a step-up against
+    return { ...catalog, pick: winner, fit: fit_level( check_fit( winner, device ), device ), fallback, step_up: null, winners: sorted_winners, from_winner: true }
 
 }
 

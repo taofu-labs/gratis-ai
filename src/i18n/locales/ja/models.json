@@ -108,6 +108,7 @@
     "fact_photos_no": "テキストのみ読み取れます",
     "fact_private": "このデバイス上で動作します。チャットや画像はここに留まり、ダウンロードは Hugging Face から行われます。",
     "download_cta": "ダウンロード · {{size}}",
+    "smarter_step_up": "もっと賢い回答が必要ですか？{{name}}も動作しますが、応答は遅くなります · {{size}}",
     "smaller_fallback": "読み込めない場合は、より小さいモデルをお試しください：{{name}} · {{size}}",
     "back_to_recommendation": "おすすめに戻る",
     "license_flag_title": "追加のライセンス条件があります。商用利用の前にご確認ください。",
