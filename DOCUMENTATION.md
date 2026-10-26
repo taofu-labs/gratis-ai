@@ -84,6 +84,7 @@ Capacitor 8 wraps the same React build (`vite build --mode native`, no service w
 - CI secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `IOS_DEV_P12_BASE64`, `IOS_DEV_P12_PASSWORD`, `IOS_DEV_PROFILE_BASE64` (+ `APPLE_TEAM_ID`, `ASC_*`, `PLAY_SERVICE_ACCOUNT_JSON_BASE64`). Missing → CI builds unsigned.
 - Versions: `versionName` = package.json, `versionCode` = major·10000 + minor·100 + patch, or `ANDROID_VERSION_CODE`.
 - Release APKs are not debuggable: no `run-as` model seeding; use the debug build for that.
+- No Mac / no iOS secrets in CI: sign the CI `gratis-unsigned.ipa` with zsign (build github.com/zhlynn/zsign into `vendor/zsign`): `zsign -k .secrets/apple/dev.p12 -p "$(cat .secrets/apple/dev.p12.password)" -m .secrets/apple/Gratis_Development.mobileprovision -o gratis-dev.ipa gratis-unsigned.ipa`. Reinstalling with the same identity keeps app data (models).
 - iOS needs no notarization (macOS only); development profiles install on listed devices, TestFlight needs a distribution certificate.
 
 ## Scripts

@@ -455,3 +455,6 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - iOS CMake: `CMAKE_MACOSX_BUNDLE=OFF` or llama.cpp's server `install()` fails to configure.
 - Release APKs aren't debuggable: no `run-as` seeding; installing release over debug (different key) needs `adb uninstall` (wipes models).
 - macOS `security import` rejects OpenSSL 3 default .p12 encryption: export with PBE-SHA1-3DES + sha1 MAC (scripts/ios_signing.js does).
+- iPhone over Wi-Fi (pymobiledevice3 TCP lockdown): every service (installation_proxy, afc, syslog…) drops right after TLS unless the same client runs `HeartbeatService(lockdown).start()` in the background. /opt/ios/wda.py's relaunch has the same problem.
+- WDA: `c.session()` without a bundle ID backgrounds our app; `c.session(bundle)` relaunches it (kills downloads). Do all taps of one flow in one bundle-bound session; `c.screenshot()` needs no session.
+- iOS WebView defaults: draws under the status bar (fix: `ios.contentInset: always`) and doesn't shrink for the keyboard (fix: Keyboard plugin `resize: native`).
