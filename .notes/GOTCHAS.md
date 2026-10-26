@@ -447,3 +447,11 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - Mobile bridge lifecycle is serialized (promise queue + generation): never call native start/stop outside `serialized()`, or a stale launch can resurrect/kill the wrong server.
 - iOS Swift was never built on a Mac yet; run `scripts/swift_typecheck.sh` after edits (Swift 6.2 Linux toolchain in vendor/swift; Debian 13 needs the libncurses.so.6 → libncursesw symlink in vendor/swift/compat).
 - Codex CLI here: its bubblewrap sandbox fails (no user namespaces) → run reviews with `--dangerously-bypass-approvals-and-sandbox` and a "do not change files" prompt.
+
+## Mobile signing (2026-10-26)
+
+- Never commit `.secrets/` (gitignored + `*.p8 *.p12 *.jks *.keystore *.mobileprovision`). Stage with `git add -A -- . ':!.env'` and grep the cached diff for key material.
+- `git push` over SSH has no access; push with the fine-grained `GH_TOKEN` from `.env.local` over HTTPS (extraheader). That token cannot read/write Actions secrets.
+- iOS CMake: `CMAKE_MACOSX_BUNDLE=OFF` or llama.cpp's server `install()` fails to configure.
+- Release APKs aren't debuggable: no `run-as` seeding; installing release over debug (different key) needs `adb uninstall` (wipes models).
+- macOS `security import` rejects OpenSSL 3 default .p12 encryption: export with PBE-SHA1-3DES + sha1 MAC (scripts/ios_signing.js does).

@@ -6,7 +6,8 @@
         "path": "mobile/android"
     },
     "ios": {
-        "path": "mobile/ios"
+        "path": "mobile/ios",
+        "contentInset": "always"
     },
     "backgroundColor": "#0F1011",
     "plugins": {

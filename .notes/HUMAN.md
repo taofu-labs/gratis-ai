@@ -64,6 +64,8 @@ Branch chore/desktop-release-parity (not pushed, not merged). After secrets: ver
 
 ## Mobile apps (2026-10-24)
 
-- Android app runs on the OnePlus Nord CE3 Lite (debug key, sideload). Release signing + Play listing: owner's call.
-- iOS: code written but never compiled (no Mac here). Needs (1) OK to push branch `mobile-apps` so `.github/workflows/mobile-apps.yml` builds the xcframework + unsigned .ipa on macOS; (2) signing material to install on the iPhone X (UDID 65571813aad839c16f5c8281a2cf532a7ee9f261): App Store Connect API key (issuer, key id, .p8) or a dev .p12 + provisioning profile. Expect a few CI fix rounds on the first build.
+- 2026-10-26: signing set up (Taofu B.V. team 2GQT3SY42B; Play app com.trueperformancenetwork.gratis). Material in gitignored `.secrets/` (see DOCUMENTATION.md "Mobile apps"). Push of branch `mobile-apps` approved for CI.
+- OPEN: 7 GitHub Actions secrets (ANDROID_KEYSTORE_*, ANDROID_KEY_*, IOS_DEV_*) must be added by the human: our fine-grained GH_TOKEN can't write secrets (classic PAT forbidden by org). Values: `.secrets/handoff/github_actions_secrets.txt`. Until then CI builds unsigned and local signing (zsign / gradle) is used.
+- Play upload key = `.secrets/android/upload.jks` (SHA-256 69:2B:6E:53…:31:6E). Not yet uploaded to Play; first AAB upload locks it in. Back it up outside this container.
+- Apple Paid Apps agreement shows expired (free app/TestFlight unaffected; untouched).
 - `increased-memory-limit` entitlement needs a paid team; without it iPhones cap the app around half of RAM.
