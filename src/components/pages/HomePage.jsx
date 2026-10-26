@@ -15,6 +15,7 @@ import use_model_manager from '../../hooks/use_model_manager'
 import use_voice_input from '../../hooks/use_voice_input'
 import use_chat_history from '../../hooks/use_chat_history'
 import use_speed_modes, { use_speed_mode_choice } from '../../hooks/use_speed_modes'
+import use_settings from '../../hooks/use_settings'
 import { useTranslation } from 'react-i18next'
 import { export_conversation } from '../../utils/export'
 import { DISPLAY_NAME, EVENTS, storage_key } from '../../utils/branding'
@@ -22,6 +23,8 @@ import { is_model_fit_error } from '../../utils/model_fit_error'
 import BrowserRamOverride from '../atoms/BrowserRamOverride'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 import { get_model_by_id } from '../../utils/model_catalog'
+import { build_turns } from '../../utils/chat_turns'
+import { build_system_prompt } from '../../utils/system_prompt'
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -214,10 +217,11 @@ const ErrorAction = styled.button`
  */
 export default function HomePage() {
 
-    const { t } = useTranslation( 'pages' )
+    const { t, i18n } = useTranslation( 'pages' )
     const navigate = useNavigate()
 
-    const { load_model, unload_model, is_loading, loaded_model_id } = use_llm()
+    const { load_model, unload_model, warm, is_loading, loaded_model_id } = use_llm()
+    const { settings } = use_settings()
     const { cached_models } = use_model_manager()
     const { conversations, load_messages, delete_conversation, delete_all_conversations } = use_chat_history()
 
@@ -291,6 +295,14 @@ export default function HomePage() {
     const handle_send = useCallback( ( text ) => {
         navigate( `/chat?q=${ encodeURIComponent( text ) }` )
     }, [ navigate ] )
+
+    // The first message opens a new chat: read it ahead while it is typed
+    const handle_draft = useCallback( ( draft ) => {
+        if( !loaded_model_id || draft === null ) return
+        // Identical to the prompt the real request builds, or the warm-up is wasted
+        const system_prompt = build_system_prompt( { model: get_model_by_id( loaded_model_id ), language: i18n.language, custom: settings.system_prompt } )
+        warm( build_turns( { messages: [], system_prompt, draft } ) )
+    }, [ loaded_model_id, settings.system_prompt, warm, i18n.language ] )
 
     // Retry loading after a transient failure
     const handle_retry = useCallback( () => {
@@ -436,6 +448,7 @@ export default function HomePage() {
 
             <ChatInput
                 on_send={ handle_send }
+                on_draft={ handle_draft }
                 as_form
                 max_width="540px"
                 placeholder={ t( 'chat:placeholder_ask' ) }

@@ -20,14 +20,12 @@ const ListContainer = styled.div`
  * @param {Object} props
  * @param {Array} props.messages - Array of message objects
  * @param {boolean} props.is_streaming - Whether currently streaming
- * @param {boolean} props.is_endpoint_warming - Whether the cloud endpoint is still spinning up
- * @param {boolean} props.is_cloud_model - Whether the active model is a cloud model
  * @param {Function} props.on_regenerate - Regenerate last response
  * @param {Function} props.on_edit - Edit and resend a message
  * @param {Object|null} [props.speed_tip] - Inline speed offer for the latest reply (see SpeedTip)
  * @returns {JSX.Element}
  */
-export default function MessageList( { messages, is_streaming, is_endpoint_warming, is_cloud_model, on_regenerate, on_edit, speed_tip } ) {
+export default function MessageList( { messages, is_streaming, on_regenerate, on_edit, speed_tip } ) {
 
     const list_ref = useRef( null )
     const stick_to_bottom = useRef( true )
@@ -73,8 +71,6 @@ export default function MessageList( { messages, is_streaming, is_endpoint_warmi
                 message={ message }
                 is_streaming={ is_streaming && index === messages.length - 1 && message.role === `assistant` }
                 is_busy={ is_streaming }
-                is_endpoint_warming={ is_endpoint_warming }
-                is_cloud_model={ is_cloud_model }
                 is_last_assistant={ index === last_assistant_index }
                 speed_tip={ index === last_assistant_index ? speed_tip : null }
                 index={ index }

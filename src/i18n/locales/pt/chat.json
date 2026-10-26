@@ -18,8 +18,7 @@
     "no_model_description": "Você precisa baixar um modelo de IA antes de começar a conversar. Leva apenas um minuto.",
     "set_up_a_model": "Configurar um modelo",
 
-    "waking_up": "Despertando a IA",
-    "waking_up_hint": "IAs na nuvem podem levar 1–5 minutos para iniciar. Elas também adormecem após 5 minutos de inatividade.",
+    "reading": "Lendo sua mensagem…",
     "waiting_for_model": "Aguardando o modelo carregar",
     "reading_message": "Lendo sua mensagem… {{percent}}%",
     "save_and_resend": "Salvar e reenviar",

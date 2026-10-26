@@ -478,3 +478,13 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 
 ## iPhone install over Wi-Fi: reply never arrives, install still lands (2026-10-26)
 `install_from_local` hangs after the 100% AFC upload; the phone finishes installing anyway. Cap it (`timeout 420`), then poll WDA `app_launch` until it stops reporting "installing".
+
+## Prompt warm-ups (2026-10-26)
+
+- Warm-up and real request must build messages via `build_turns` (`utils/chat_turns.js`); any drift = cache miss. Draft goes through the same merge as the sent message.
+- `WllamaProvider.prefill` settle = `Promise.all([previous_request, run])`. Plain `run` lets a reply overtake a still-running earlier warm when a queued one is cancelled (unit test covers it).
+- Never warm after Stop/error (re-reads the stopped prompt), on image drafts (history image budget shifts the prefix), or on mere chat open (llama-server RAM prompt cache, 8 GiB default, not capped from JS → wllama64#12).
+- `n_cache_reuse` deliberately off: shifted KV was computed attending to the removed reasoning.
+- Hybrid (Qwen 3.5): each draft warm rolls back to the checkpoint at the last user-turn start; still ends ~4 new tokens. Expected, not a bug.
+- `max_tokens: 0` is not "read only": llama-server still samples ≥1 token. Use 1.
+- System prompt for warm-ups and requests: `build_system_prompt` (utils/system_prompt.js) with the UI language. It carries today's date, so a warm-up before midnight misses once after it — harmless.

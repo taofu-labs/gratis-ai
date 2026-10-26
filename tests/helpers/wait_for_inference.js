@@ -21,7 +21,7 @@ export async function wait_for_inference( page, min_length = 10, timeout = 90_00
         expect( messages.length ).toBeGreaterThanOrEqual( user_count )
         await expect( page.getByTestId( `stop-btn` ) ).toHaveCount( 0 )
         expect( last_message ).toBeDefined()
-        await expect( last_message.getByTestId( `waking-up-indicator` ) ).toHaveCount( 0 )
+        await expect( last_message.getByTestId( `reading-indicator` ) ).toHaveCount( 0 )
         const text = await last_message.textContent()
         expect( text?.length ).toBeGreaterThanOrEqual( min_length )
 

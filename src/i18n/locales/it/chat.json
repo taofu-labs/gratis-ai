@@ -18,8 +18,7 @@
     "no_model_description": "Devi scaricare un modello IA prima di poter iniziare a chattare. Ci vuole solo un minuto.",
     "set_up_a_model": "Configura un modello",
 
-    "waking_up": "Risveglio dell'IA",
-    "waking_up_hint": "Le IA cloud possono impiegare 1–5 minuti per avviarsi. Si addormentano anche dopo 5 minuti di inattività.",
+    "reading": "Lettura del messaggio…",
     "waiting_for_model": "In attesa che il modello si carichi",
     "reading_message": "Lettura del messaggio… {{percent}}%",
     "save_and_resend": "Salva e reinvia",

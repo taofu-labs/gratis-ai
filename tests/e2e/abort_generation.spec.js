@@ -24,7 +24,7 @@ test.describe( `Abort Generation`, () => {
             const msgs = await page.locator( `[data-testid="assistant-message"]` ).all()
             expect( msgs.length ).toBeGreaterThanOrEqual( 1 )
             const last = msgs[ msgs.length - 1 ]
-            await expect( last.getByTestId( `waking-up-indicator` ) ).toHaveCount( 0 )
+            await expect( last.getByTestId( `reading-indicator` ) ).toHaveCount( 0 )
             const content = await last.textContent()
             expect( content?.length ).toBeGreaterThan( 0 )
         } ).toPass( { timeout: 180_000 } )

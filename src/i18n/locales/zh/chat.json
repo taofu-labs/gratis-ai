@@ -18,8 +18,7 @@
     "no_model_description": "开始聊天前需要下载一个 AI 模型，只需一分钟即可完成。",
     "set_up_a_model": "设置模型",
 
-    "waking_up": "正在唤醒 AI",
-    "waking_up_hint": "云端 AI 可能需要 1–5 分钟启动，闲置 5 分钟后也会进入休眠。",
+    "reading": "正在读取你的消息…",
     "waiting_for_model": "正在等待模型加载",
     "reading_message": "正在读取你的消息… {{percent}}%",
     "save_and_resend": "保存并重新发送",

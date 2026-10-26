@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.49.0] - 2026-10-26
+
+### Added
+- Faster replies in the browser: the model reads your message while you type, and reads the chat history while you read a reply. Sending then only processes what changed (Qwen3 0.6B on a slow CPU: first word after ~9 s → under 1 s)
+
+### Fixed
+- "Waking up the AI" no longer appears before every reply: the indicator now says "Reading your message…" (with a percentage when available), since local models never sleep
+
+### Changed
+- Earlier reasoning (`<think>` blocks) is left out of the history sent back to the model, as model makers recommend; keeps prompts shorter and the cache reusable
+- Prompt warm-ups use the same localized system prompt as replies, so the read-ahead is reused
+
 ## [0.48.3] - 2026-10-26
 
 ### Fixed

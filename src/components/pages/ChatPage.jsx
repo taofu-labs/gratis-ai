@@ -11,7 +11,6 @@ import ChatInput from '../molecules/ChatInput'
 import VoiceModelDialog from '../molecules/VoiceModelDialog'
 import SpeedModeMenu from '../molecules/SpeedModeMenu'
 import ModelDownloadDialog from '../molecules/ModelDownloadDialog'
-import WakingUpIndicator from '../atoms/WakingUpIndicator'
 import use_llm from '../../hooks/use_llm'
 import use_chat_history from '../../hooks/use_chat_history'
 import use_model_manager from '../../hooks/use_model_manager'
@@ -24,6 +23,7 @@ import { parse_model_param, resolve_cached_model } from '../../utils/model_param
 import { MODEL_CATALOG, NOTICEABLE_QUALITY_GAP, get_model_by_id, format_file_size, has_image_input, model_download_bytes, quality_score, select_for_preferences } from '../../utils/model_catalog'
 import { estimate_history_tokens, split_documents } from '../../utils/attachments'
 import { build_system_prompt } from '../../utils/system_prompt'
+import { build_turns } from '../../utils/chat_turns'
 import { projector_source } from '../../utils/model_download'
 import { build_device_profile, detect_capabilities, estimate_max_model_bytes } from '../../utils/device_detection'
 import { useTranslation } from 'react-i18next'
@@ -183,6 +183,18 @@ export default function ChatPage() {
     const rewrite_owner_ref = useRef( 0 )
     const [ is_rewriting, set_is_rewriting ] = useState( false )
 
+    // The unsent message, as it would be sent (null: not safe to read ahead)
+    const [ draft, set_draft ] = useState( `` )
+
+    // The reply that just finished cleanly; stopped or failed ones stay quiet
+    const [ fresh_reply_id, set_fresh_reply_id ] = useState( null )
+
+    // The draft as it stood when a reply was stopped or failed: reading ahead
+    // waits until the user edits it, or Stop would start new work by itself
+    const [ halted_draft, set_halted_draft ] = useState( null )
+    const draft_ref = useRef( draft )
+    draft_ref.current = draft
+
     // Bumped whenever the visible chat is swapped out (New Chat, navigation,
     // delete). Async flows capture it up front and drop their work once stale.
     const epoch_ref = useRef( 0 )
@@ -195,7 +207,7 @@ export default function ChatPage() {
     const messages_ref = useRef( messages )
     messages_ref.current = messages
 
-    const { load_model, chat_stream, abort, is_generating, is_endpoint_warming, is_loading: is_model_loading, loaded_model_id, capabilities } = use_llm()
+    const { load_model, chat_stream, warm, cancel_warm, abort, is_generating, is_loading: is_model_loading, loaded_model_id, capabilities } = use_llm()
     const {
         conversations,
         create_conversation,
@@ -243,6 +255,28 @@ export default function ChatPage() {
     // Whether we're in the process of loading a model (includes the initial mount gap)
     const has_pending_model = !!pending_model_id
     const is_loading_model = is_model_loading ||  model_loaded === null && has_pending_model
+
+    // Read the next prompt ahead while the user reads or types: after a clean
+    // reply, in a new chat, or once they pause typing. Sending then only costs
+    // the tokens that changed. Merely opening a chat stays idle: every chat
+    // read in leaves the previous one in llama.cpp's RAM cache.
+    useEffect( () => {
+
+        const new_chat = !messages.length && !current_conversation_id && !conversation_id
+        const settled = new_chat || messages.at( -1 )?.id === fresh_reply_id
+        const typed = !!draft && draft !== halted_draft
+        const ready = has_model && !is_generating && !is_rewriting && draft !== null
+
+        // A skipped warm-up also drops the one queued for the previous state
+        if( !ready || !settled && !typed ) {
+            cancel_warm()
+            return
+        }
+
+        const system_prompt = build_system_prompt( { model: get_model_by_id( loaded_model_id ), language: i18n.language, custom: settings.system_prompt } )
+        warm( build_turns( { messages, system_prompt, draft } ) )
+
+    }, [ has_model, is_generating, is_rewriting, loaded_model_id, settings.system_prompt, i18n.language, messages, draft, halted_draft, fresh_reply_id, current_conversation_id, conversation_id, warm, cancel_warm ] )
 
     // Try loading the active model on mount.
     // The store deduplicates — if HomePage already started a load, this is a no-op.
@@ -430,27 +464,14 @@ export default function ChatPage() {
             m.id === assistant_msg.id ? { ...m, ...changes } : m
         ) )
 
-        // Localized base prompt + model persona + user custom instructions
+        // Localized base prompt + model persona + user custom instructions; the
+        // warm-up builds the same turns, so llama.cpp reuses what it already read
         const system_prompt = build_system_prompt( {
             model: get_model_by_id( loaded_model_id ),
             language: i18n.language,
             custom: settings.system_prompt,
         } )
-        // Empty replies (a stop before the first token) carry nothing for the model.
-        // Strict templates (Gemma, Mistral) demand alternating roles, so turns
-        // left adjacent by a dropped empty reply are merged
-        const history = history_msgs
-            .filter( ( { content, attachments } ) => content || attachments?.length )
-            .reduce( ( turns, { role, content, attachments } ) => {
-                const images = attachments?.filter( ( { kind } ) => kind === `image` ) || []
-                const previous = turns.at( -1 )
-                if( previous?.role === role ) {
-                    previous.content = [ previous.content, content ].filter( Boolean ).join( `\n\n` )
-                    previous.attachments = [ ...previous.attachments || [], ...images ]
-                } else turns.push( { role, content, ... images.length ? { attachments: images } : {} } )
-                return turns
-            }, [] )
-        history.unshift( { role: `system`, content: system_prompt } )
+        const history = build_turns( { messages: history_msgs, system_prompt } )
 
         const partial = {
             conv_id,
@@ -475,6 +496,8 @@ export default function ChatPage() {
                 partial.done = true
                 const final_assistant = { ...assistant_msg, content: result.text, stats: result.stats }
                 update_reply( final_assistant )
+                if( result.stats.stopped ) set_halted_draft( draft_ref.current )
+                else set_fresh_reply_id( assistant_msg.id )
 
                 // Saved into its own conversation even if the user moved on
                 if( conv_id ) {
@@ -490,6 +513,7 @@ export default function ChatPage() {
                 partial.done = true
                 const failed_reply = { ...assistant_msg, content: partial.text, stats: { interrupted: true }, error: err.message }
                 update_reply( failed_reply )
+                set_halted_draft( draft_ref.current )
                 if( conv_id ) {
                     await partial.saving
                     await save_message( conv_id, failed_reply ).catch( save_error => log.warn( `[ChatPage] Could not save failed reply:`, save_error ) )
@@ -1041,7 +1065,6 @@ export default function ChatPage() {
                     { id: `${ pending_query.id }-reply`, role: `assistant`, content: `` },
                 ] }
                 is_streaming
-                is_cloud_model={ false }
             />
         }
 
@@ -1079,8 +1102,6 @@ export default function ChatPage() {
         return <MessageList
             messages={ messages }
             is_streaming={ is_generating }
-            is_endpoint_warming={ is_endpoint_warming }
-            is_cloud_model={ false }
             on_regenerate={ handle_regenerate }
             on_edit={ handle_edit }
             speed_tip={ speed_tip }
@@ -1112,16 +1133,13 @@ export default function ChatPage() {
                 { !has_messages && <WelcomeContent $visible={ should_center } aria-hidden={ !should_center }>
                     <WelcomeTitle>{ t( 'what_can_i_help_with' ) }</WelcomeTitle>
                     <PrivacyHint>{ t( `privacy_local` ) }</PrivacyHint>
-                    { is_endpoint_warming && <WakingUpIndicator /> }
                 </WelcomeContent> }
-
-                { /* Warming indicator persists above the input after the welcome area collapses */ }
-                { is_endpoint_warming && has_messages && <WakingUpIndicator show_hint /> }
 
                 <ChatInput
                     ref={ chat_input_ref }
                     on_send={ handle_send }
                     on_stop={ handle_stop }
+                    on_draft={ set_draft }
                     is_generating={ is_generating }
                     disabled={ !has_model || is_rewriting }
                     auto_focus

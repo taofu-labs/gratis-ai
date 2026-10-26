@@ -370,6 +370,7 @@ const draft_id = () => `draft-${ ++next_draft_id }`
  * @param {number|null} [props.recording_start_time] - Timestamp when recording began
  * @param {string} [props.append_text] - Text to inject into the textarea (from voice transcription)
  * @param {React.ReactNode} [props.speed_control] - Speed mode gauge, first in the button row
+ * @param {Function} [props.on_draft] - Called with the unsent message as it would be sent (null when it holds images), so the model can read ahead
  * @returns {JSX.Element}
  */
 export default function ChatInput( {
@@ -395,6 +396,7 @@ export default function ChatInput( {
     recording_start_time = null,
     append_text,
     speed_control,
+    on_draft,
 } ) {
 
     const { t } = useTranslation( `chat` )
@@ -477,6 +479,13 @@ export default function ChatInput( {
         const { attachments = [] } = compose_user_message( { text: ``, documents: ready_documents, budget_tokens } )
         return new Map( attachments.map( ( { truncated }, index ) => [ ready_documents[ index ].id, truncated ] ) )
     }, [ documents, budget_tokens ] )
+
+    // Report the unsent message as it would be sent. Null with images: they
+    // can push older history images out, so no prefix is safe to read ahead.
+    useEffect( () => {
+        if( !on_draft ) return
+        on_draft( images.length ? null : compose_user_message( { text, documents: ready_documents, budget_tokens } ).content )
+    }, [ text, images.length, documents, budget_tokens, on_draft ] )
 
     const no_room = ready_documents.length > 0 && budget_tokens < MIN_DOCUMENT_TOKENS
     const images_blocked = images.length > 0 && !image_input
