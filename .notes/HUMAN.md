@@ -73,3 +73,10 @@ Branch chore/desktop-release-parity (not pushed, not merged). After secrets: ver
 
 ## 2026-10-26 — Catalog persona replaces the identity line (not the whole base)
 Only `dolphin-mistral-24b-venice` has a persona. "You are Gratis… / You are Dolphin…" would contradict itself, so the persona swaps just the first line; rules, uncensored line, custom instructions still apply. All 5 Codex reviewers flagged it as not "additive" enough. Flip in `src/utils/system_prompt.js` if Gratis branding should win.
+
+## 2026-10-26 — Store testing releases live; open items
+- Play internal + TestFlight internal ship from this container (no Mac): see DEPLOYMENTS.md. TestFlight internal group "Gratis internal" has only mentor@palokaj.co (mirrors Play's 1-person list); add others with `--tester`.
+- New Apple Distribution certificate "Taofu B.V." created via API (expires 2027-10-26), key in `.secrets/apple/dist.*`. Back up `.secrets/` outside the container.
+- Still open: the 7 GitHub Actions signing secrets (CI builds unsigned; signing happens locally). External TestFlight testing would need Apple beta review — not requested.
+- OnePlus test phone unreachable (wireless debugging off) → Android builds were not checked on hardware this round; iPhone X was.
+- UX to review: on phones both speed modes can be the same model in two quantizations ("MiniCPM5 1B" twice, Q5_0+ vs Q4_K_M); and the fixed speed words call ~15 tok/s "Slow" on fast devices. Consider showing the quant when names collide, and relative words ("Slower"/"Faster").
