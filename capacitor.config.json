@@ -13,6 +13,10 @@
     "plugins": {
         "SystemBars": {
             "style": "DARK"
+        },
+        "Keyboard": {
+            "resize": "native",
+            "resizeOnFullScreen": true
         }
     }
 }
