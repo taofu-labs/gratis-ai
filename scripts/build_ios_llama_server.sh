@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build llama.cpp `llama-server` as a static library for the iOS app (runs in
 # process: iOS apps cannot spawn executables). macOS + Xcode only; CI runs it
-# in .github/workflows/mobile-ios.yml.
+# in .github/workflows/mobile-apps.yml.
 #
 # Usage: scripts/build_ios_llama_server.sh
 # Output: mobile/plugin/ios/LlamaServer.xcframework (iphoneos arm64, gitignored)
@@ -75,12 +75,15 @@ PATCH
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 
+# CMAKE_MACOSX_BUNDLE=OFF: iOS turns executables into .app bundles by default
+# and upstream's install() has no BUNDLE destination for llama-server
 cmake -S "${SRC}" -B "${BUILD}" -G Ninja \
     -DCMAKE_SYSTEM_NAME=iOS \
     -DCMAKE_OSX_SYSROOT=iphoneos \
     -DCMAKE_OSX_ARCHITECTURES=arm64 \
     -DCMAKE_OSX_DEPLOYMENT_TARGET="${IOS_MIN}" \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_MACOSX_BUNDLE=OFF \
     -DBUILD_SHARED_LIBS=OFF \
     -DGGML_NATIVE=OFF \
     -DGGML_OPENMP=OFF \
