@@ -18,8 +18,7 @@
     "no_model_description": "You need to download an AI model before you can start chatting. It only takes a minute.",
     "set_up_a_model": "Set up a model",
 
-    "waking_up": "Waking up the AI",
-    "waking_up_hint": "Cloud AIs can take 1–5 minutes to start. They also fall asleep after 5 minutes of inactivity.",
+    "reading": "Reading your message…",
     "slow_device_warning": "Replies are slow on this device. A smaller model answers faster.",
     "pick_faster_model": "Pick a faster model",
     "waiting_for_model": "Waiting for the model to load",

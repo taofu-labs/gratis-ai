@@ -18,8 +18,7 @@
     "no_model_description": "Vous devez télécharger un modèle d'IA avant de pouvoir commencer à discuter. Cela ne prend qu'une minute.",
     "set_up_a_model": "Configurer un modèle",
 
-    "waking_up": "Réveil de l'IA",
-    "waking_up_hint": "Les IA cloud peuvent mettre 1 à 5 minutes à démarrer. Elles se rendorment aussi après 5 minutes d'inactivité.",
+    "reading": "Lecture de votre message…",
     "slow_device_warning": "Les réponses sont lentes sur cet appareil. Un modèle plus petit répond plus vite.",
     "pick_faster_model": "Choisir un modèle plus rapide",
     "waiting_for_model": "En attente du chargement du modèle",

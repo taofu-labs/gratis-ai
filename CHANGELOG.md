@@ -14,6 +14,7 @@
 - Settings show the build (version · commit) and an "Update app" button that drops the cached app and reloads the latest version
 - Android app (Capacitor; release APK/AAB signed with the Play upload key): same UI, native llama.cpp `llama-server` on the phone's big cores, SHA-256 verified resumable downloads that keep going in the background (progress notification), vision models, voice input; 2-3× faster than the browser on the same phone. Build with `scripts/android_toolchain.sh` + `scripts/build_android_llama_server.sh` + `scripts/android_dev.sh`
 - iOS app (same bridge; llama-server in process, Metal on A14+, CPU before): built by the `Mobile apps` workflow, development-signed via the App Store Connect API (`scripts/ios_signing.js`); runs on an iPhone X (MiniCPM5 1B, 14 tok/s on CPU). Respects the status bar and keyboard
+- Faster replies in the browser: the model reads your message while you type, and reads the chat history while you read a reply. Sending then only processes what changed (Qwen3 0.6B on a slow CPU: first word after ~9 s → under 1 s)
 
 ### Fixed
 - App updates no longer lose what you were typing: an update reload restores the draft, and a tab that is typing, has attachments, generating or downloading waits until idle (Settings can apply it right away). Open tabs check for updates hourly and when brought back to view
@@ -25,6 +26,7 @@
 - Download verification reads files in chunks, avoiding Safari's "The I/O read operation failed" on large files
 - Model downloads work on iOS 16 Safari again: browsers without byte-stream support fetch the plain file instead of failing at 0% with "ReadableByteStreamController is not implemented"
 - Opening the site over plain http now switches to https; http silently lost threads and model storage (seen on iPhone Safari, which fills in http:// for a bare domain)
+- "Waking up the AI" no longer appears before every reply: the indicator now says "Reading your message…" (with a percentage when available), since local models never sleep
 
 ### Changed
 - Every offered model is now a TPN-optimised build from tpnlabs on Hugging Face (Qwen 3.5 0.8B / 2B / 4B / 9B, Gemma 4 26B for desktop, MiniCPM5 1B, uncensored Qwen3 1.7B and Qwen 3.5 4B / 9B), each measured against its original; earlier downloads keep working under "Show older models"
@@ -33,6 +35,7 @@
 - Reply-speed estimates learn from this device: each real reply calibrates the picker's speed guess, and small models are no longer overestimated (fixed per-token cost now counted)
 - Browsers that report more than 8 GB of RAM get their full model budget: a 32 GB Mac no longer sees 7–9 GB models as a "tight fit". A quick check of how much memory the browser actually grants caps it, and the budget notice now shows both the comfortable and the maximum size when they differ
 - Large browser downloads stay in browser storage: the "choose save location" dialog now appears only when the browser is out of space, and Gratis asks the browser to keep downloaded models
+- Earlier reasoning (`<think>` blocks) is left out of the history sent back to the model, as model makers recommend; keeps prompts shorter and the cache reusable
 
 ## [0.47.0] - 2026-10-21
 

@@ -1,6 +1,6 @@
 # Memory Index
 
-- [`GOTCHAS.md`](GOTCHAS.md) — load before modifying providers, storage, downloads/checksums, WebGPU/Safari/mobile paths, Electron IPC, UI layout, or end-to-end tests.
+- [`GOTCHAS.md`](GOTCHAS.md) — load before modifying providers, storage, downloads/checksums, WebGPU/Safari/mobile paths, Electron IPC, UI layout, end-to-end tests, or prompt warm-ups / chat history building.
 - [`RESEARCH.md`](RESEARCH.md) — load when evaluating GGUF sources, browser runtimes, model licenses, catalog additions, or TTFT / prompt-cache behaviour.
 - [`MODEL_SELECTION.md`](MODEL_SELECTION.md) — load when changing recommendation scoring, memory budgets, quantization, or model tiers.
 - [`QUANTIZATION_REFERENCE.md`](QUANTIZATION_REFERENCE.md) — load for quant quality, bits-per-weight, KV-cache, or WASM sizing work.

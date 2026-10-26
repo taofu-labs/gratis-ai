@@ -18,8 +18,7 @@
     "no_model_description": "Je moet eerst een AI-model downloaden voordat je kunt chatten. Het duurt maar een minuutje.",
     "set_up_a_model": "Een model instellen",
 
-    "waking_up": "AI wordt wakker",
-    "waking_up_hint": "Cloud-AI's kunnen 1–5 minuten nodig hebben om op te starten. Ze gaan ook in slaapstand na 5 minuten inactiviteit.",
+    "reading": "Je bericht wordt gelezen…",
     "slow_device_warning": "Antwoorden zijn traag op dit apparaat. Een kleiner model antwoordt sneller.",
     "pick_faster_model": "Kies een sneller model",
     "waiting_for_model": "Wachten tot het model is geladen",

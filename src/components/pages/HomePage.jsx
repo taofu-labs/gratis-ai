@@ -12,6 +12,7 @@ import use_llm from '../../hooks/use_llm'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_voice_input from '../../hooks/use_voice_input'
 import use_chat_history from '../../hooks/use_chat_history'
+import use_settings from '../../hooks/use_settings'
 import { useTranslation } from 'react-i18next'
 import { export_conversation } from '../../utils/export'
 import { DISPLAY_NAME, EVENTS, storage_key } from '../../utils/branding'
@@ -19,6 +20,7 @@ import { is_model_fit_error } from '../../utils/model_fit_error'
 import BrowserRamOverride from '../atoms/BrowserRamOverride'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 import { get_model_by_id } from '../../utils/model_catalog'
+import { build_turns, system_prompt_for } from '../../utils/chat_turns'
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -214,7 +216,8 @@ export default function HomePage() {
     const { t } = useTranslation( 'pages' )
     const navigate = useNavigate()
 
-    const { load_model, unload_model, is_loading, loaded_model_id } = use_llm()
+    const { load_model, unload_model, warm, is_loading, loaded_model_id } = use_llm()
+    const { settings } = use_settings()
     const { cached_models } = use_model_manager()
     const { conversations, load_messages, delete_conversation, delete_all_conversations } = use_chat_history()
 
@@ -288,6 +291,13 @@ export default function HomePage() {
     const handle_send = useCallback( ( text ) => {
         navigate( `/chat?q=${ encodeURIComponent( text ) }` )
     }, [ navigate ] )
+
+    // The first message opens a new chat: read it ahead while it is typed
+    const handle_draft = useCallback( ( draft ) => {
+        if( !loaded_model_id || draft === null ) return
+        const system_prompt = system_prompt_for( get_model_by_id( loaded_model_id ), settings.system_prompt )
+        warm( build_turns( { messages: [], system_prompt, draft } ) )
+    }, [ loaded_model_id, settings.system_prompt, warm ] )
 
     // Retry loading after a transient failure
     const handle_retry = useCallback( () => {
@@ -429,6 +439,7 @@ export default function HomePage() {
 
             <ChatInput
                 on_send={ handle_send }
+                on_draft={ handle_draft }
                 as_form
                 max_width="540px"
                 placeholder={ t( 'chat:placeholder_ask' ) }

@@ -308,6 +308,21 @@ src/
 └── utils/            # Utilities
 ```
 
+### Prompt warm-ups (browser)
+
+Time to first token is spent reading the prompt. llama.cpp reuses its cache for an identical prefix, so the app reads the next prompt ahead of time:
+
+| Trigger | What gets read |
+| --- | --- |
+| New chat, model ready | System prompt + empty user turn |
+| Reply finished cleanly | History + empty user turn |
+| Typing pause (400 ms) | History + draft (text and documents) |
+
+- `build_turns` (`utils/chat_turns.js`) builds both warm-ups and real requests, so their prefixes match exactly. It drops earlier `<think>` blocks.
+- `WllamaProvider.prefill`: `max_tokens: 1`. A reply cancels it but still waits for the batch already running, and what was read stays cached.
+- No warm-up after Stop or an error, for drafts with images (history images may shift), or when a chat is merely opened (each chat read moves the previous one into llama.cpp's uncapped RAM cache; wllama64#12).
+- Native apps (Electron, mobile) skip warm-ups: their providers have no `prefill`.
+
 ## Tech Stack
 
 React 19, Vite, styled-components, react-router, zustand, Playwright, wllama64 (browser), node-llama-cpp (Electron)

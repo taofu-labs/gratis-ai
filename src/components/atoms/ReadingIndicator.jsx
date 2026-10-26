@@ -37,12 +37,6 @@ const Indicator = styled.span`
     color: ${ ( { theme } ) => theme.colors.text_muted };
 `
 
-const Hint = styled.span`
-    font-size: 0.72rem;
-    color: ${ ( { theme } ) => theme.colors.text_muted };
-    opacity: 0.7;
-`
-
 const Dot = styled.span`
     display: inline-block;
     width: 4px;
@@ -56,13 +50,12 @@ const Dot = styled.span`
 
 /**
  * Animated indicator shown between pressing send and the first token
- * arriving (TTFT gap). Says "Loading" while the model loads, then how much
- * of the prompt the model has read once llama.cpp reports progress.
- *
- * @param {Object} [props]
- * @param {boolean} [props.show_hint] - Show cold-start explanation below the indicator
+ * arriving (TTFT gap). Says "Waiting for the model" while it loads, then
+ * that the model reads the message, with a percentage once llama.cpp reports
+ * one. Progress only arrives between prompt batches, so a short message is
+ * read before any number shows.
  */
-export default function WakingUpIndicator( { show_hint = false } = {} ) {
+export default function ReadingIndicator() {
 
     const { t } = useTranslation( `chat` )
     const is_loading = use_llm_store( s => s.is_loading )
@@ -70,9 +63,9 @@ export default function WakingUpIndicator( { show_hint = false } = {} ) {
 
     const label = is_loading ? t( `waiting_for_model` )
         : percent !== null ? t( `reading_message`, { percent } )
-            : t( `waking_up` )
+            : t( `reading` )
 
-    return <Wrapper data-testid="waking-up-indicator">
+    return <Wrapper data-testid="reading-indicator">
 
         <Indicator>
             { label }
@@ -80,8 +73,6 @@ export default function WakingUpIndicator( { show_hint = false } = {} ) {
             <Dot $delay={ 0.2 } />
             <Dot $delay={ 0.4 } />
         </Indicator>
-
-        { show_hint && <Hint>{ t( `waking_up_hint` ) }</Hint> }
 
     </Wrapper>
 

@@ -21,6 +21,15 @@ const stage_from_status = ( status = `` ) => LOAD_STAGE_PATTERNS.find( ( [ patte
 
 const HIDDEN_TAB_FLUSH_MS = 250
 
+// Typing pause before the draft is read ahead; newer text replaces older
+const WARM_DEBOUNCE_MS = 400
+let warm_timer = null
+
+const cancel_warm = () => {
+    clearTimeout( warm_timer )
+    warm_timer = null
+}
+
 // Before a provider reports, assume a text-only model with a small context
 const DEFAULT_CAPABILITIES = Object.freeze( { image_input: false, image_blocked: null, context_size: 4096 } )
 
@@ -101,7 +110,6 @@ const use_llm_store = create( ( set, get ) => ( {
 
     is_loading: false,
     is_generating: false,
-    is_endpoint_warming: false,
     loaded_model_id: null,
     load_stage: null,
     load_started_at: null,
@@ -161,7 +169,7 @@ const use_llm_store = create( ( set, get ) => ( {
             try {
                 await state._provider.unload_model()
             } catch { /* best effort */ }
-            set( { _provider: null, _provider_promise: null, loaded_model_id: null, is_endpoint_warming: false } )
+            set( { _provider: null, _provider_promise: null, loaded_model_id: null } )
         }
 
         // Standard local provider
@@ -187,6 +195,7 @@ const use_llm_store = create( ( set, get ) => ( {
      */
     load_model: async ( model_id, on_progress ) => {
 
+        cancel_warm()
         const state = get()
 
         // Already loaded — nothing to do
@@ -271,6 +280,7 @@ const use_llm_store = create( ( set, get ) => ( {
      */
     chat_stream: async ( messages, opts, on_token ) => {
 
+        cancel_warm()
         const provider = get()._provider
 
         if( !provider || !provider.is_ready() ) {
@@ -381,6 +391,27 @@ const use_llm_store = create( ( set, get ) => ( {
     },
 
     /**
+     * Read the next prompt ahead of time while the user reads or types, so
+     * sending only costs the tokens that changed. Debounced; the newest
+     * messages win. A no-op for providers without prefill (native apps) and
+     * while a model loads or a reply streams.
+     *
+     * @param {Array} messages - Exactly what the next chat_stream will send, minus unsent text
+     */
+    warm: ( messages ) => {
+
+        cancel_warm()
+
+        warm_timer = setTimeout( () => {
+            warm_timer = null
+            const { _provider: provider, is_loading, is_generating } = get()
+            if( is_loading || is_generating || !provider?.prefill || !provider.is_ready() ) return
+            provider.prefill( messages )
+        }, WARM_DEBOUNCE_MS )
+
+    },
+
+    /**
      * Abort current generation. The UI updates at once; the provider
      * finishes its in-flight work in the background.
      */
@@ -398,6 +429,7 @@ const use_llm_store = create( ( set, get ) => ( {
      */
     unload_model: async () => {
 
+        cancel_warm()
         const provider = get()._provider
 
         // Reset state synchronously so the next load_model call starts fresh

@@ -460,3 +460,12 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - iOS WebView defaults: draws under the status bar (fix: `ios.contentInset: always`) and doesn't shrink for the keyboard (fix: Keyboard plugin `resize: native`).
 - Only one heartbeat client per phone: a leftover syslog/heartbeat process makes installs hang after the AFC upload. Check `pgrep -f "python3 syslog"` before installing; never `pkill -f` (matches its own shell).
 - Tap without a new WDA session: `POST /session/<sessionId from /status>/wda/tap/0 {x, y}` (points = pixels / 3 on iPhone X).
+
+## Prompt warm-ups (2026-10-26)
+
+- Warm-up and real request must build messages via `build_turns` (`utils/chat_turns.js`); any drift = cache miss. Draft goes through the same merge as the sent message.
+- `WllamaProvider.prefill` settle = `Promise.all([previous_request, run])`. Plain `run` lets a reply overtake a still-running earlier warm when a queued one is cancelled (unit test covers it).
+- Never warm after Stop/error (re-reads the stopped prompt), on image drafts (history image budget shifts the prefix), or on mere chat open (llama-server RAM prompt cache, 8 GiB default, not capped from JS → wllama64#12).
+- `n_cache_reuse` deliberately off: shifted KV was computed attending to the removed reasoning.
+- Hybrid (Qwen 3.5): each draft warm rolls back to the checkpoint at the last user-turn start; still ends ~4 new tokens. Expected, not a bug.
+- `max_tokens: 0` is not "read only": llama-server still samples ≥1 token. Use 1.

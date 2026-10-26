@@ -7,7 +7,7 @@ import { ChevronRight, LoaderCircle, FileText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import StreamingIndicator from '../atoms/StreamingIndicator'
 import CodeBlock from '../atoms/CodeBlock'
-import WakingUpIndicator from '../atoms/WakingUpIndicator'
+import ReadingIndicator from '../atoms/ReadingIndicator'
 import GenerationStats from '../atoms/GenerationStats'
 import SlowDeviceWarning from '../atoms/SlowDeviceWarning'
 import MessageActions from './MessageActions'
@@ -318,8 +318,6 @@ const MessageBubble = memo( ( {
     message,
     is_streaming,
     is_busy,
-    is_endpoint_warming,
-    is_cloud_model,
     is_last_assistant,
     index,
     on_regenerate,
@@ -490,9 +488,9 @@ const MessageBubble = memo( ( {
                     { t( `reply_error`, { message: message.error } ) }
                 </ReplyError> }
 
-                { /* Streaming indicator — waking up before first token, cursor after */ }
+                { /* Streaming indicator — reading the prompt before the first token, cursor after */ }
                 { is_streaming && !is_thinking && (
-                    response ? <StreamingIndicator /> : <WakingUpIndicator show_hint={ is_cloud_model } />
+                    response ? <StreamingIndicator /> : <ReadingIndicator />
                 ) }
 
             </Bubble> }

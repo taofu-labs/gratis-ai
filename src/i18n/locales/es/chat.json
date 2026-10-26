@@ -18,8 +18,7 @@
     "no_model_description": "Necesitas descargar un modelo de IA antes de empezar a chatear. Solo toma un minuto.",
     "set_up_a_model": "Configurar un modelo",
 
-    "waking_up": "Despertando la IA",
-    "waking_up_hint": "Las IAs en la nube pueden tardar 1–5 minutos en arrancar. También se duermen tras 5 minutos de inactividad.",
+    "reading": "Leyendo tu mensaje…",
     "slow_device_warning": "Las respuestas son lentas en este dispositivo. Un modelo más pequeño responde más rápido.",
     "pick_faster_model": "Elige un modelo más rápido",
     "waiting_for_model": "Esperando a que cargue el modelo",

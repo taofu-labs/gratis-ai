@@ -18,8 +18,7 @@
     "no_model_description": "Zanim zaczniesz rozmawiać, musisz pobrać model AI. To zajmie tylko chwilę.",
     "set_up_a_model": "Skonfiguruj model",
 
-    "waking_up": "Budzenie AI",
-    "waking_up_hint": "AI w chmurze może potrzebować 1–5 minut na uruchomienie. Usypia też po 5 minutach bezczynności.",
+    "reading": "Czytam Twoją wiadomość…",
     "slow_device_warning": "Odpowiedzi na tym urządzeniu są wolne. Mniejszy model odpowie szybciej.",
     "pick_faster_model": "Wybierz szybszy model",
     "waiting_for_model": "Czekam na załadowanie modelu",

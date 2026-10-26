@@ -24,7 +24,7 @@ globalThis.localStorage = { getItem: () => null, setItem: () => {}, removeItem: 
 const { default: WllamaProvider } = await import( `../../src/providers/wllama_provider.js` )
 const { default: use_llm_store } = await import( `../../src/stores/llm_store.js` )
 const { format_stats } = await import( `../../src/utils/format.js` )
-const { prompt_percent } = await import( `../../src/components/atoms/WakingUpIndicator.jsx` )
+const { prompt_percent } = await import( `../../src/components/atoms/ReadingIndicator.jsx` )
 
 const sleep = ms => new Promise( resolve => setTimeout( resolve, ms ) )
 
@@ -296,6 +296,75 @@ describe( `llm store load ownership`, () => {
         expect( state.is_loading ).toBe( true )
         expect( state._loading_model_id ).toBe( `b` )
         expect( state.error ).toBeNull()
+
+    } )
+
+} )
+
+describe( `prompt warm-up`, () => {
+
+    const timings_chunk = { timings: { prompt_n: 3, cache_n: 10 } }
+
+    test( `a reply cancels a running prefill and starts once its batch is done`, async () => {
+
+        const provider = new WllamaProvider()
+        const runtime = fake_runtime( { batch_ms: 200, chunks: [ timings_chunk, timings_chunk ] } )
+        provider._wllama = runtime
+
+        const warmed = provider.prefill( [ { role: `user`, content: `draft` } ] )
+        await sleep( 50 )
+
+        const reply = provider.chat_stream( [ { role: `user`, content: `draft` } ] )
+        await reply.next()
+        await warmed
+
+        expect( runtime.requests ).toHaveLength( 2 )
+        expect( runtime.requests[ 1 ].started_at ).toBeGreaterThanOrEqual( runtime.requests[ 0 ].finished_at )
+        await reply.return()
+
+    } )
+
+    test( `cancelling a queued prefill still waits for the one ahead of it`, async () => {
+
+        const provider = new WllamaProvider()
+        const runtime = fake_runtime( { batch_ms: 200, chunks: [ timings_chunk, timings_chunk ] } )
+        provider._wllama = runtime
+
+        // A runs; B queues behind it; the reply cancels B before it starts
+        provider.prefill( [ { role: `user`, content: `a` } ] )
+        await sleep( 20 )
+        provider.prefill( [ { role: `user`, content: `ab` } ] )
+
+        const reply = provider.chat_stream( [ { role: `user`, content: `abc` } ] )
+        await reply.next()
+
+        const [ first, second ] = runtime.requests
+        expect( runtime.requests ).toHaveLength( 2 )
+        expect( second.started_at ).toBeGreaterThanOrEqual( first.finished_at )
+        await reply.return()
+
+    } )
+
+    test( `the store debounces warm-ups and drops them once a reply starts`, async () => {
+
+        const prefill = vi.fn( async () => {} )
+        use_llm_store.setState( {
+            _provider: { is_ready: () => true, prefill, chat_stream: async function* () { yield `ok` } },
+            is_loading: false,
+            is_generating: false,
+        } )
+
+        const { warm, chat_stream } = use_llm_store.getState()
+        warm( [ { role: `user`, content: `h` } ] )
+        warm( [ { role: `user`, content: `hi` } ] )
+        await sleep( 450 )
+        expect( prefill ).toHaveBeenCalledTimes( 1 )
+        expect( prefill ).toHaveBeenCalledWith( [ { role: `user`, content: `hi` } ] )
+
+        warm( [ { role: `user`, content: `hi there` } ] )
+        await chat_stream( [], {} )
+        await sleep( 450 )
+        expect( prefill ).toHaveBeenCalledTimes( 1 )
 
     } )
 

@@ -124,7 +124,7 @@ test.describe( `Message Actions`, () => {
 
         await expect( async () => {
             const last = page.locator( `[data-testid="assistant-message"]` ).last()
-            await expect( last.getByTestId( `waking-up-indicator` ) ).toHaveCount( 0 )
+            await expect( last.getByTestId( `reading-indicator` ) ).toHaveCount( 0 )
             expect( ( await last.textContent() )?.length ).toBeGreaterThan( 0 )
         } ).toPass( { timeout: 180_000 } )
 

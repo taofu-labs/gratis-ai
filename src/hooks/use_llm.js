@@ -12,7 +12,6 @@ export default function use_llm() {
 
     const is_loading = use_llm_store( ( s ) => s.is_loading )
     const is_generating = use_llm_store( ( s ) => s.is_generating )
-    const is_endpoint_warming = use_llm_store( ( s ) => s.is_endpoint_warming )
     const loaded_model_id = use_llm_store( ( s ) => s.loaded_model_id )
     const stats = use_llm_store( ( s ) => s.stats )
     const error = use_llm_store( ( s ) => s.error )
@@ -24,6 +23,7 @@ export default function use_llm() {
     const store_abort = use_llm_store( ( s ) => s.abort )
     const store_unload = use_llm_store( ( s ) => s.unload_model )
     const store_is_ready = use_llm_store( ( s ) => s.is_ready )
+    const warm = use_llm_store( ( s ) => s.warm )
 
     // Wrap in useCallback for consumers that include these in dependency arrays
     const load_model = useCallback( ( id, on_progress ) => store_load( id, on_progress ), [ store_load ] )
@@ -38,9 +38,9 @@ export default function use_llm() {
         abort,
         unload_model,
         is_ready,
+        warm,
         is_loading,
         is_generating,
-        is_endpoint_warming,
         loaded_model_id,
         stats,
         error,

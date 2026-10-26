@@ -158,6 +158,7 @@ export default class WllamaProvider {
         this._wllama = null
         this._loaded_model_id = null
         this._abort_controller = null
+        this._prefill_controller = null
         this._gpu_disabled = false
         this._gpu_layers = 0
         this._reload_context = null
@@ -185,6 +186,7 @@ export default class WllamaProvider {
 
     /** Release waiters on the disposed worker and start a fresh epoch. */
     _end_runtime_epoch() {
+        this._cancel_prefill()
         this._runtime_epoch++
         this._settling = Promise.resolve()
         this._epoch_ended.resolve()
@@ -470,6 +472,7 @@ export default class WllamaProvider {
      */
     async chat( messages, opts = {} ) {
 
+        this._cancel_prefill()
         await this._settling
         this._assert_ready()
 
@@ -512,6 +515,9 @@ export default class WllamaProvider {
      * @returns {AsyncGenerator<string|{ prompt_progress: Object }|{ timings: Object }>}
      */
     async *chat_stream( messages, opts = {} ) {
+
+        // A reply outranks a warm-up; it waits only for the batch in flight
+        this._cancel_prefill()
 
         const abort_controller = new AbortController()
         const { signal } = abort_controller
@@ -603,6 +609,78 @@ export default class WllamaProvider {
             }
         }
 
+    }
+
+    /**
+     * Read a prompt into llama.cpp's cache without answering it, so the next
+     * reply to the same prefix only reads what changed. One sampled token is
+     * the cheapest complete request. A newer prefill or any reply cancels this
+     * one; the worker still finishes its current batch, and what it read
+     * stays cached. Never throws: a warm-up that fails just warms nothing.
+     * @param {import('./types').ChatMessage[]} messages
+     * @returns {Promise<void>} Settles once the worker is free again
+     */
+    prefill( messages ) {
+
+        this._prefill_controller?.abort()
+        const controller = new AbortController()
+        this._prefill_controller = controller
+
+        const { signal } = controller
+        const epoch = this._runtime_epoch
+        const epoch_ended = this._epoch_ended.promise
+        const previous_request = Promise.race( [ this._settling, epoch_ended ] )
+
+        let pending_stream = null
+        let iterator = null
+
+        const run = ( async () => {
+
+            const started_at = performance.now()
+
+            try {
+
+                await until_aborted( previous_request, signal )
+                this._assert_ready()
+                const wllama_messages = await until_aborted( this._prepare_messages( messages ), signal )
+
+                pending_stream = this._create_chat_completion( {
+                    messages: wllama_messages,
+                    ...this._build_completion_options( { max_tokens: 1 } ),
+                    stream: true,
+                    abortSignal: signal,
+                } )
+                iterator = ( await until_aborted( pending_stream, signal ) )[ Symbol.asyncIterator ]()
+
+                let timings = null
+                while( true ) {
+                    const { value: chunk, done } = await until_aborted( this._next_stream_chunk( iterator ), signal )
+                    if( done ) break
+                    if( chunk.timings ) ( { timings } = chunk )
+                }
+
+                log.debug( `[wllama] Prefilled ${ timings?.prompt_n ?? `?` } new tokens (${ timings?.cache_n ?? `?` } cached) in ${ ( performance.now() - started_at ).toFixed( 0 ) }ms` )
+
+            } catch ( error ) {
+                if( !signal.aborted && !is_abort( error ) ) log.debug( `[wllama] Prefill skipped:`, error?.message )
+            } finally {
+                if( this._prefill_controller === controller ) this._prefill_controller = null
+                if( signal.aborted && this._runtime_epoch === epoch ) await this._drain( pending_stream, iterator, epoch, epoch_ended )
+            }
+
+        } )()
+
+        // Whatever comes next waits for the worker this prefill, or the request
+        // it queued behind, occupies; cancelling it while queued must not skip that
+        this._settling = Promise.all( [ previous_request, run ] )
+        return this._settling
+
+    }
+
+    /** Cancel a pending prefill; the next request waits for its current batch. */
+    _cancel_prefill() {
+        this._prefill_controller?.abort()
+        this._prefill_controller = null
     }
 
     /**
