@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { log } from 'mentie'
 import toast from 'react-hot-toast'
-import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, SlidersHorizontal, List, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, List, Trash2 } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_device_speed_probe from '../../hooks/use_device_speed_probe'
 import use_model_manager from '../../hooks/use_model_manager'
@@ -15,7 +15,8 @@ import Button from '../atoms/Button'
 import LanguageSelector from '../molecules/LanguageSelector'
 import SettingsModal from '../molecules/SettingsModal'
 import ModelHero from '../molecules/ModelHero'
-import ModelPreferences, { ModelToggles } from '../molecules/ModelPreferences'
+import SpeedModePicker, { ModelToggles } from '../molecules/ModelPreferences'
+import { read_speed_mode, write_speed_mode } from '../../utils/speed_mode'
 import ModelBrowser from '../molecules/ModelBrowser'
 import {
     build_device_profile,
@@ -37,6 +38,7 @@ import {
     quality_score,
     runtime_memory,
     select_picker_models,
+    select_mode_models,
     NOTICEABLE_QUALITY_GAP,
     speed_band,
 } from '../../utils/model_catalog'
@@ -411,8 +413,8 @@ export default function ModelSelectPage() {
 
     // `?need=vision` arrives from "this model can't read images" prompts
     const needs_vision = search_params.get( `need` ) === `vision`
-    const [ preferences, set_preferences ] = useState( () => ( { ...DEFAULT_PREFERENCES, vision: needs_vision } ) )
-    const [ adjust_open, set_adjust_open ] = useState( false )
+    // Reply speed is shared with the chat's gauge, so it starts from the last choice
+    const [ preferences, set_preferences ] = useState( () => ( { ...DEFAULT_PREFERENCES, priority: read_speed_mode(), vision: needs_vision } ) )
     const [ browse_open, set_browse_open ] = useState( false )
     const [ settings_open, set_settings_open ] = useState( false )
 
@@ -479,6 +481,11 @@ export default function ModelSelectPage() {
     )
     const baseline = useMemo( () => select_picker_models( { winners: tpn_models, device } ), [ tpn_models, device ] )
 
+    // Speed modes with a distinct model under the current photo / uncensored choices.
+    // The highlighted one is whichever holds the recommendation (merged modes included).
+    const mode_models = useMemo( () => select_mode_models( MODEL_CATALOG, device, preferences ), [ device, preferences ] )
+    const active_mode = mode_models.find( ( { model } ) => model.id === picks.pick?.id )?.priority ?? preferences.priority
+
     // Hold the recommendation back until discovery settles, so winners don't pop in over it
     const deciding = tpn_loading || is_detecting || !capabilities
 
@@ -513,6 +520,7 @@ export default function ModelSelectPage() {
 
     // Adjusting tailors the recommendation, so it replaces any explicit pick
     const update_preferences = patch => {
+        if( patch.priority ) write_speed_mode( patch.priority )
         set_preferences( current => ( { ...current, ...patch } ) )
         set_selected_id( null )
         set_custom_model( null )
@@ -843,24 +851,18 @@ export default function ModelSelectPage() {
                 </ModelHero>
             </Section>
 
+            { /* ── Reply speed: the same gauges as the chat, always in view ── */ }
+            <Section>
+                <SpeedModePicker
+                    active={ active_mode }
+                    available={ mode_models.map( ( { priority } ) => priority ) }
+                    on_change={ update_preferences }
+                />
+            </Section>
+
             { /* ── Photos and uncensored: always in view, they change what fits ── */ }
             <Section>
                 <ModelToggles preferences={ preferences } on_change={ update_preferences } />
-            </Section>
-
-            { /* ── Optional tailoring ── */ }
-            <Section>
-                <Disclosure
-                    type="button"
-                    aria-expanded={ adjust_open }
-                    data-testid="adjust-toggle"
-                    onClick={ () => set_adjust_open( !adjust_open ) }
-                >
-                    <SlidersHorizontal size={ 16 } />
-                    { t( 'adjust' ) }
-                    { adjust_open ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
-                </Disclosure>
-                { adjust_open && <ModelPreferences preferences={ preferences } on_change={ update_preferences } /> }
             </Section>
 
             { /* ── Expert view: the whole catalog ── */ }

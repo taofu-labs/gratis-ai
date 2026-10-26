@@ -2,6 +2,7 @@ import { useId } from 'react'
 import styled from 'styled-components'
 import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Switch } from './ModelPreferences'
 import toast from 'react-hot-toast'
 import Button from '../atoms/Button'
 import { reinstall_app, reload_for_update, use_app_update_store } from '../../utils/app_update'
@@ -80,11 +81,15 @@ const BuildInfo = styled.span`
  * @param {Object} props
  * @param {string} props.system_prompt - Current system prompt
  * @param {Function} props.on_system_prompt_change - Handler for system prompt changes
+ * @param {boolean} props.speed_tips - Inline "faster / smarter model?" offers in chat
+ * @param {Function} props.on_speed_tips_change - Receives the new on/off value
  * @returns {JSX.Element}
  */
 export default function BasicSettings( {
     system_prompt,
     on_system_prompt_change,
+    speed_tips,
+    on_speed_tips_change,
 } ) {
 
     const { t } = useTranslation( `settings` )
@@ -108,6 +113,17 @@ export default function BasicSettings( {
                 onChange={ ( e ) => on_system_prompt_change( e.target.value ) }
                 placeholder={ t( `custom_instructions_placeholder` ) }
             />
+        </Section>
+
+        { /* Speed tips: re-enable after "Don't show these tips" */ }
+        <Section>
+            <Switch
+                data-testid="speed-tips-switch"
+                on={ speed_tips }
+                label={ t( `speed_tips` ) }
+                on_toggle={ () => on_speed_tips_change( !speed_tips ) }
+            />
+            <Description>{ t( `speed_tips_description` ) }</Description>
         </Section>
 
         { /* Keyboard Shortcuts Reference */ }

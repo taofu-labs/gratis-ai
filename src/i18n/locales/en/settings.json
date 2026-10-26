@@ -86,5 +86,8 @@
 
     "update_app": "Update app",
     "update_app_description": "Reload the latest version from the network. Models and chats stay.",
-    "update_app_offline": "You're offline. Connect to the internet to update."
+    "update_app_offline": "You're offline. Connect to the internet to update.",
+
+    "speed_tips": "Speed tips in chat",
+    "speed_tips_description": "Once per session, suggest a faster model when replies are slow, or a smarter one when they are very fast."
 }

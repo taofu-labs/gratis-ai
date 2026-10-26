@@ -20,8 +20,6 @@
 
     "waking_up": "AI wordt wakker",
     "waking_up_hint": "Cloud-AI's kunnen 1–5 minuten nodig hebben om op te starten. Ze gaan ook in slaapstand na 5 minuten inactiviteit.",
-    "slow_device_warning": "Antwoorden zijn traag op dit apparaat. Een kleiner model antwoordt sneller.",
-    "pick_faster_model": "Kies een sneller model",
     "waiting_for_model": "Wachten tot het model is geladen",
     "reading_message": "Je bericht wordt gelezen… {{percent}}%",
     "save_and_resend": "Opslaan & opnieuw versturen",

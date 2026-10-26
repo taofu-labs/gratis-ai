@@ -9,12 +9,16 @@ import AppLayout from '../molecules/AppLayout'
 import MessageList from '../molecules/MessageList'
 import ChatInput from '../molecules/ChatInput'
 import VoiceModelDialog from '../molecules/VoiceModelDialog'
+import SpeedModeMenu from '../molecules/SpeedModeMenu'
+import ModelDownloadDialog from '../molecules/ModelDownloadDialog'
 import WakingUpIndicator from '../atoms/WakingUpIndicator'
 import use_llm from '../../hooks/use_llm'
 import use_chat_history from '../../hooks/use_chat_history'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_settings from '../../hooks/use_settings'
 import use_voice_input from '../../hooks/use_voice_input'
+import use_speed_modes from '../../hooks/use_speed_modes'
+import { read_tip_message, tip_direction, write_speed_mode, write_tip_message } from '../../utils/speed_mode'
 import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
 import { MODEL_CATALOG, get_model_by_id, format_file_size, has_image_input, model_download_bytes, select_for_preferences } from '../../utils/model_catalog'
@@ -207,7 +211,7 @@ export default function ChatPage() {
         is_loading: is_model_switching,
         refresh_models,
     } = use_model_manager()
-    const { settings, get_generate_options } = use_settings()
+    const { settings, update_setting, get_generate_options } = use_settings()
 
     // Voice input hook
     const {
@@ -964,6 +968,64 @@ export default function ChatPage() {
 
     } )()
 
+    // ── Speed modes: Smarter / Balanced / Faster from the composer ──
+
+    // Replies refine the device's measured speed, so re-read estimates after each
+    const { modes: speed_modes, active: active_mode } = use_speed_modes( { loaded_model_id, cached_models, refresh: messages.length } )
+    const [ download_mode, set_download_mode ] = useState( null )
+
+    // An installed mode is a model switch; a missing one asks before downloading
+    const choose_mode = useCallback( mode => {
+        write_speed_mode( mode.priority )
+        if( mode.cached ) handle_model_switch( mode.model.id )
+        else set_download_mode( mode )
+    }, [ handle_model_switch ] )
+
+    const close_download_dialog = useCallback( () => set_download_mode( null ), [] )
+    const confirm_mode_download = () => navigate( `/download`, { state: { model: download_mode.model, return_to: location.pathname } } )
+
+    // One inline offer per session, under the latest reply: slow → Faster, very fast → Smarter.
+    // The session remembers which reply got it, so later replies stay quiet.
+    const [ tip_message, set_tip_message ] = useState( read_tip_message )
+    const last_reply = !is_generating ? messages.findLast( ( { role } ) => role === `assistant` ) : null
+    const speed_tip = ( () => {
+
+        if( !settings.speed_tips || !last_reply?.stats || last_reply.stats.model_id !== loaded_model_id ) return null
+        if( tip_message && tip_message !== last_reply.id ) return null
+
+        const direction = tip_direction( last_reply.stats.tokens_per_second )
+        const target = direction && direction !== active_mode && speed_modes.find( ( { priority } ) => priority === direction )
+        if( !target || target.model.id === loaded_model_id ) return null
+
+        const dismiss = () => {
+            write_tip_message( `dismissed` )
+            set_tip_message( `dismissed` )
+        }
+
+        return {
+            target,
+            tokens_per_second: last_reply.stats.tokens_per_second,
+            on_accept: () => {
+                dismiss()
+                choose_mode( target )
+            },
+            on_dismiss: dismiss,
+            on_disable: () => {
+                dismiss()
+                update_setting( `speed_tips`, 0 )
+            },
+        }
+
+    } )()
+
+    // Claim this session's one tip for the reply it first appeared under
+    const tip_reply_id = speed_tip && last_reply.id
+    useEffect( () => {
+        if( !tip_reply_id || tip_message ) return
+        write_tip_message( tip_reply_id )
+        set_tip_message( tip_reply_id )
+    }, [ tip_reply_id, tip_message ] )
+
     const history_tokens = estimate_history_tokens( messages )
 
     const has_messages = messages.length > 0 || !!pending_query
@@ -1022,6 +1084,7 @@ export default function ChatPage() {
             is_cloud_model={ false }
             on_regenerate={ handle_regenerate }
             on_edit={ handle_edit }
+            speed_tip={ speed_tip }
         />
     }
 
@@ -1075,11 +1138,20 @@ export default function ChatPage() {
                     audio_level={ voice_audio_level }
                     recording_start_time={ voice_recording_start_time }
                     append_text={ voice_text }
+                    speed_control={ has_model && <SpeedModeMenu
+                        modes={ speed_modes }
+                        active={ active_mode }
+                        on_choose={ choose_mode }
+                        disabled={ is_generating || is_model_loading || is_model_switching }
+                    /> }
                 />
 
             </InputSection>
 
         </Container>
+
+        { /* A speed mode whose model still needs downloading */ }
+        <ModelDownloadDialog mode={ download_mode } on_confirm={ confirm_mode_download } on_close={ close_download_dialog } />
 
         { /* Voice model download dialog */ }
         <VoiceModelDialog

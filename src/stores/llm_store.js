@@ -303,6 +303,8 @@ const use_llm_store = create( ( set, get ) => ( {
                 ttft_ms,
                 decode_ms,
                 ... timings?.prompt_n ? { prompt_tokens: timings.prompt_n } : {},
+                // Speed tips must judge the model that is loaded now, not an earlier one
+                model_id: get().loaded_model_id,
                 ...extra,
             }
         }

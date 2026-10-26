@@ -78,5 +78,8 @@
 
     "update_app": "Zaktualizuj aplikację",
     "update_app_description": "Wczytaj najnowszą wersję z sieci. Modele i czaty zostają.",
-    "update_app_offline": "Jesteś offline. Połącz się z internetem, aby zaktualizować."
+    "update_app_offline": "Jesteś offline. Połącz się z internetem, aby zaktualizować.",
+
+    "speed_tips": "Wskazówki o szybkości w czacie",
+    "speed_tips_description": "Raz na sesję zaproponuj szybszy model, gdy odpowiedzi są wolne, lub mądrzejszy, gdy są bardzo szybkie."
 }

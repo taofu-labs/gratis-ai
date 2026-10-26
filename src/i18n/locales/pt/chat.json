@@ -20,8 +20,6 @@
 
     "waking_up": "Despertando a IA",
     "waking_up_hint": "IAs na nuvem podem levar 1–5 minutos para iniciar. Elas também adormecem após 5 minutos de inatividade.",
-    "slow_device_warning": "As respostas estão lentas neste dispositivo. Um modelo menor responde mais rápido.",
-    "pick_faster_model": "Escolher um modelo mais rápido",
     "waiting_for_model": "Aguardando o modelo carregar",
     "reading_message": "Lendo sua mensagem… {{percent}}%",
     "save_and_resend": "Salvar e reenviar",

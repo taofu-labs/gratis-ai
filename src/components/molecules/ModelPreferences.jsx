@@ -1,14 +1,7 @@
 import { useId } from 'react'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
-
-const Panel = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: ${ ( { theme } ) => theme.spacing.md };
-    padding-top: ${ ( { theme } ) => theme.spacing.md };
-    border-top: 1px solid ${ ( { theme } ) => theme.colors.border };
-`
+import SpeedGauge from '../atoms/SpeedGauge'
 
 const GroupLabel = styled.p`
     font-size: 0.8rem;
@@ -27,8 +20,12 @@ const Segments = styled.div`
 `
 
 const Segment = styled.button`
-    flex: 1 1 auto;
-    min-height: 2.75rem;
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: ${ ( { theme } ) => theme.spacing.sm };
+    min-height: 3.25rem;
     padding: 0 ${ ( { theme } ) => theme.spacing.sm };
     font-size: 0.85rem;
     color: ${ ( { theme, $active } ) => $active ? theme.colors.text : theme.colors.text_secondary };
@@ -39,6 +36,20 @@ const Segment = styled.button`
 
     & + & { border-left: 1px solid ${ ( { theme } ) => theme.colors.border_control }; }
     &:hover { background: ${ ( { theme, $active } ) => $active ? `${ theme.colors.accent }29` : theme.colors.surface_hover }; }
+`
+
+const SegmentText = styled.span`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.25;
+`
+
+// The speed in words, under the mode name: Slow / Medium / Fast
+const SegmentSpeed = styled.span`
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
 `
 
 // Whole row toggles; the track is decoration, the row carries role="switch"
@@ -93,13 +104,7 @@ const Toggles = styled.div`
     gap: ${ ( { theme } ) => theme.spacing.xs };
 `
 
-const PRIORITIES = [
-    { key: `faster`, label: `priority_faster` },
-    { key: `balanced`, label: `priority_balanced` },
-    { key: `better`, label: `priority_better` },
-]
-
-function Switch( { on, label, on_toggle, ...props } ) {
+export function Switch( { on, label, on_toggle, ...props } ) {
     return <SwitchRow type="button" role="switch" aria-checked={ on } onClick={ on_toggle } { ...props }>
         { label }
         <Track $on={ on } aria-hidden="true" />
@@ -140,36 +145,47 @@ export function ModelToggles( { preferences, on_change } ) {
 }
 
 /**
- * Optional tailoring: reply speed vs quality. Changes apply live.
+ * Reply speed as three gauges, slow → fast: Smarter, Balanced, Faster. Each
+ * names its speed in words, so the needle is never the only signal. Modes this
+ * device can't tell apart are left out. Changes apply live.
  *
  * @param {Object} props
- * @param {import('../../utils/model_catalog').PickerPreferences} props.preferences
+ * @param {string} props.active - Highlighted mode
+ * @param {string[]} props.available - Priorities with a distinct model here, slow → fast
  * @param {Function} props.on_change - Receives a partial preferences patch
  */
-export default function ModelPreferences( { preferences, on_change } ) {
+export default function SpeedModePicker( { active: active_mode, available, on_change } ) {
 
     const { t } = useTranslation( `models` )
-    const replies_label_id = useId()
+    const label_id = useId()
 
-    return <Panel data-testid="model-preferences">
+    if( available.length < 2 ) return null
 
-        <div>
-            <GroupLabel id={ replies_label_id }>{ t( `replies_label` ) }</GroupLabel>
-            <Segments role="radiogroup" aria-labelledby={ replies_label_id }>
-                { PRIORITIES.map( ( { key, label } ) => <Segment
-                    key={ key }
+    return <div data-testid="speed-mode-picker">
+
+        <GroupLabel id={ label_id }>{ t( `speed_mode_title` ) }</GroupLabel>
+
+        <Segments role="radiogroup" aria-labelledby={ label_id }>
+            { available.map( priority => {
+                const active = active_mode === priority
+                return <Segment
+                    key={ priority }
                     type="button"
                     role="radio"
-                    aria-checked={ preferences.priority === key }
-                    $active={ preferences.priority === key }
-                    data-testid={ `priority-${ key }` }
-                    onClick={ () => on_change( { priority: key } ) }
+                    aria-checked={ active }
+                    $active={ active }
+                    data-testid={ `priority-${ priority }` }
+                    onClick={ () => on_change( { priority } ) }
                 >
-                    { t( label ) }
-                </Segment> ) }
-            </Segments>
-        </div>
+                    <SpeedGauge mode={ priority } size={ 20 } colored={ active } />
+                    <SegmentText>
+                        { t( `mode_${ priority }` ) }
+                        <SegmentSpeed>{ t( `mode_${ priority }_speed` ) }</SegmentSpeed>
+                    </SegmentText>
+                </Segment>
+            } ) }
+        </Segments>
 
-    </Panel>
+    </div>
 
 }

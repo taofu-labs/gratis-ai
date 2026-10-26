@@ -78,5 +78,8 @@
 
     "update_app": "更新应用",
     "update_app_description": "从网络重新加载最新版本。模型和聊天记录会保留。",
-    "update_app_offline": "当前处于离线状态。请连接互联网后再更新。"
+    "update_app_offline": "当前处于离线状态。请连接互联网后再更新。",
+
+    "speed_tips": "聊天中的速度提示",
+    "speed_tips_description": "每次会话提示一次：回复慢时推荐更快的模型，回复很快时推荐更聪明的模型。"
 }

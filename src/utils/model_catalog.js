@@ -2660,11 +2660,11 @@ export const fit_level = ( fit, device ) => !fit.fits ? null
 // How much each priority values answer quality vs reply speed, and the reply
 // speed (tok/s) it won't go below while anything faster exists. Balanced leans
 // on intelligence: 1.5 tok/s is slow but usable, and the 1B → 2B → 4B steps are
-// the biggest jumps in answer quality.
+// the biggest jumps in answer quality. Smarter stops at 1 tok/s: below that a reply takes minutes.
 const PRIORITY_WEIGHTS = {
     faster: { quality: 0.5, speed: 1, min_speed: 2.5 },
     balanced: { quality: 1, speed: 0.25, min_speed: 1.5 },
-    better: { quality: 1, speed: 0.05, min_speed: 0.7 },
+    better: { quality: 1, speed: 0.05, min_speed: 1 },
 }
 
 // Below this, a model is too slow to be anyone's automatic starting point
@@ -2766,6 +2766,34 @@ export const select_for_preferences = ( models, device, preferences = {} ) => {
     return { pick, fit: fit_level( check_fit( pick, device ), device ), fallback, step_up: step_up_from( pick, candidates, device ), relaxed: [] }
 
 }
+
+// Speed modes, slow → fast: the order the gauge needle sweeps
+export const SPEED_MODES = [ `better`, `balanced`, `faster` ]
+
+/**
+ * The model behind each speed mode on this device. Modes that land on the same
+ * model merge into the end of the scale (Smarter or Faster), so every mode left
+ * is a real choice. One mode left means there is nothing to choose.
+ *
+ * @param {ModelDefinition[]} models
+ * @param {DeviceProfile} device
+ * @param {Partial<PickerPreferences>} [preferences] - Vision / fewer refusals carry into every mode
+ * @returns {{ priority: 'better'|'balanced'|'faster', model: ModelDefinition }[]}
+ */
+export const select_mode_models = ( models, device, preferences = {} ) => {
+
+    const pick = priority => select_for_preferences( models, device, { ...preferences, priority } ).pick
+    const [ better, balanced, faster ] = SPEED_MODES.map( pick )
+    const same = ( a, b ) => a && b && a.id === b.id
+
+    return [
+        { priority: `better`, model: better },
+        { priority: `balanced`, model: same( balanced, better ) || same( balanced, faster ) ? null : balanced },
+        { priority: `faster`, model: same( faster, better ) ? null : faster },
+    ].filter( ( { model } ) => model )
+
+}
+
 
 /**
  * Every visible local model for the expert view, with fit and speed facts.

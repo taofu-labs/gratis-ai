@@ -78,5 +78,8 @@
 
     "update_app": "App bijwerken",
     "update_app_description": "Laad de nieuwste versie van het netwerk. Modellen en chats blijven.",
-    "update_app_offline": "Je bent offline. Maak verbinding met internet om bij te werken."
+    "update_app_offline": "Je bent offline. Maak verbinding met internet om bij te werken.",
+
+    "speed_tips": "Snelheidstips in de chat",
+    "speed_tips_description": "Eén keer per sessie: een sneller model voorstellen als antwoorden traag zijn, of een slimmer model als ze erg snel zijn."
 }

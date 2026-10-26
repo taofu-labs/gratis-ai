@@ -201,6 +201,8 @@ export default function SettingsModal( { is_open, on_close, on_model_switch, on_
                     <BasicSettings
                         system_prompt={ settings.system_prompt }
                         on_system_prompt_change={ ( v ) => update_setting( `system_prompt`, v ) }
+                        speed_tips={ !!settings.speed_tips }
+                        on_speed_tips_change={ ( on ) => update_setting( `speed_tips`, on ? 1 : 0 ) }
                     /> }
 
                 { active_tab === `advanced` &&

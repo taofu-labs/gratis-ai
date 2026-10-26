@@ -78,5 +78,8 @@
 
     "update_app": "Atualizar app",
     "update_app_description": "Recarrega a versão mais recente da rede. Modelos e conversas ficam.",
-    "update_app_offline": "Você está offline. Conecte-se à internet para atualizar."
+    "update_app_offline": "Você está offline. Conecte-se à internet para atualizar.",
+
+    "speed_tips": "Dicas de velocidade no chat",
+    "speed_tips_description": "Uma vez por sessão, sugere um modelo mais rápido quando as respostas estão lentas, ou mais inteligente quando estão muito rápidas."
 }

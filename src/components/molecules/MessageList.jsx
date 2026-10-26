@@ -24,9 +24,10 @@ const ListContainer = styled.div`
  * @param {boolean} props.is_cloud_model - Whether the active model is a cloud model
  * @param {Function} props.on_regenerate - Regenerate last response
  * @param {Function} props.on_edit - Edit and resend a message
+ * @param {Object|null} [props.speed_tip] - Inline speed offer for the latest reply (see SpeedTip)
  * @returns {JSX.Element}
  */
-export default function MessageList( { messages, is_streaming, is_endpoint_warming, is_cloud_model, on_regenerate, on_edit } ) {
+export default function MessageList( { messages, is_streaming, is_endpoint_warming, is_cloud_model, on_regenerate, on_edit, speed_tip } ) {
 
     const list_ref = useRef( null )
     const stick_to_bottom = useRef( true )
@@ -75,6 +76,7 @@ export default function MessageList( { messages, is_streaming, is_endpoint_warmi
                 is_endpoint_warming={ is_endpoint_warming }
                 is_cloud_model={ is_cloud_model }
                 is_last_assistant={ index === last_assistant_index }
+                speed_tip={ index === last_assistant_index ? speed_tip : null }
                 index={ index }
                 on_regenerate={ stable_regenerate }
                 on_edit={ stable_edit }

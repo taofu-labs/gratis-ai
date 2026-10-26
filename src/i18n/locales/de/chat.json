@@ -20,8 +20,6 @@
 
     "waking_up": "KI wird geweckt",
     "waking_up_hint": "Cloud-KIs können 1–5 Minuten zum Starten brauchen. Sie schlafen auch nach 5 Minuten Inaktivität wieder ein.",
-    "slow_device_warning": "Antworten sind auf diesem Gerät langsam. Ein kleineres Modell antwortet schneller.",
-    "pick_faster_model": "Schnelleres Modell wählen",
     "waiting_for_model": "Warte, bis das Modell geladen ist",
     "reading_message": "Lese deine Nachricht… {{percent}} %",
     "save_and_resend": "Speichern & neu senden",

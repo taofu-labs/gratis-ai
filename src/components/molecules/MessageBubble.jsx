@@ -9,7 +9,7 @@ import StreamingIndicator from '../atoms/StreamingIndicator'
 import CodeBlock from '../atoms/CodeBlock'
 import WakingUpIndicator from '../atoms/WakingUpIndicator'
 import GenerationStats from '../atoms/GenerationStats'
-import SlowDeviceWarning from '../atoms/SlowDeviceWarning'
+import SpeedTip from '../atoms/SpeedTip'
 import MessageActions from './MessageActions'
 import { render_emoji_text } from '../../utils/emoji_text'
 import { split_documents } from '../../utils/attachments'
@@ -309,6 +309,7 @@ const ExpandButton = styled.button`
  * @param {boolean} props.is_streaming - Whether this message is currently streaming
  * @param {boolean} props.is_busy - Whether any reply in the conversation is streaming
  * @param {boolean} props.is_last_assistant - Whether this is the last assistant message
+ * @param {Object|null} [props.speed_tip] - Inline speed offer, latest reply only (see SpeedTip)
  * @param {Function} props.on_regenerate - Regenerate handler
  * @param {number} props.index - Position in the conversation, passed back to on_edit
  * @param {Function} props.on_edit - Edit handler, called as on_edit( index, text )
@@ -324,6 +325,7 @@ const MessageBubble = memo( ( {
     index,
     on_regenerate,
     on_edit,
+    speed_tip,
 } ) => {
 
     const { t } = useTranslation( `chat` )
@@ -501,9 +503,8 @@ const MessageBubble = memo( ( {
         { !is_user && !is_streaming && message.stats &&
             <GenerationStats stats={ message.stats } /> }
 
-        { /* Slow device nudge — web-only, latest reply only, dismissible */ }
-        { !is_user && !is_streaming && is_last_assistant && message.stats &&
-            <SlowDeviceWarning tokens_per_second={ message.stats.tokens_per_second } /> }
+        { /* Once-per-session offer to switch speed mode, latest reply only */ }
+        { !is_user && !is_streaming && speed_tip && <SpeedTip { ...speed_tip } /> }
 
     </BubbleContainer>
 

@@ -463,3 +463,9 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 
 ## Killing dev servers: never `pkill -f`/`pgrep -f` with the server's args (2026-10-26)
 The pattern matches the Bash tool's own shell command line → kills the shell (exit 144). Use `ps -eo pid,args | grep "[v]ite"` or track the PID.
+
+## Pre-existing flaky e2e: error_handling "invalid model param shows toast" (2026-10-26)
+Fails ~1/3 on a cold dev server (5 s toast timeout), also on the commit before the speed gauge. Not a regression; raise the timeout if it bites CI.
+
+## Rewriting locale JSON with json.dumps drops the blank-line key groups (2026-10-26)
+Edit locale files line-wise (append before the closing brace) to keep their layout.

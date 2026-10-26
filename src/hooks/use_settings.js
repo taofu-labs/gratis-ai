@@ -18,6 +18,8 @@ const DEFAULTS = {
     presence_penalty: 0,
     seed: -1,
     stop_sequences: ``,
+    // 1 = inline "switch to a faster / smarter model?" offers in chat, once per session
+    speed_tips: 1,
     [ HF_TOKEN_SETTING ]: ``,
 }
 

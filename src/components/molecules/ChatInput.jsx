@@ -367,6 +367,7 @@ const draft_id = () => `draft-${ ++next_draft_id }`
  * @param {number} [props.audio_level] - Normalised audio input level 0–1
  * @param {number|null} [props.recording_start_time] - Timestamp when recording began
  * @param {string} [props.append_text] - Text to inject into the textarea (from voice transcription)
+ * @param {React.ReactNode} [props.speed_control] - Speed mode gauge, first in the button row
  * @returns {JSX.Element}
  */
 export default function ChatInput( {
@@ -391,6 +392,7 @@ export default function ChatInput( {
     audio_level = 0,
     recording_start_time = null,
     append_text,
+    speed_control,
 } ) {
 
     const { t } = useTranslation( `chat` )
@@ -692,6 +694,8 @@ export default function ChatInput( {
                     /> }
 
                 <ButtonRow>
+
+                    { speed_control }
 
                     { /* Attach images or documents */ }
                     <AttachButton
