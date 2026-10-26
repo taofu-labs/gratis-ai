@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.48.0] - 2026-10-26
 
 ### Added
 - Reply speed gauge: Smarter (slow) · Balanced (medium) · Faster (fast), always visible on the model page and in the chat composer. The needle shows the speed, each mode names it in words. Switch modes mid-chat; a mode that isn't downloaded yet asks first (size, speed, offline) and downloads. Modes that land on the same model merge; one model left hides the gauge

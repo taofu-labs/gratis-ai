@@ -1,13 +1,14 @@
 # Build the Android and iOS apps (Capacitor) with their llama.cpp servers.
 # Android: release APK + AAB signed with the upload key. iOS: development
 # .ipa for the devices in the "Gratis Development" profile
-# (scripts/ios_signing.js). Artifacts only; nothing is published.
+# (scripts/ios_signing.js), or unsigned for scripts/ios_testflight.js to sign
+# and upload. Artifacts only; nothing is published from CI.
 
 name: Mobile apps
 
 on:
   push:
-    branches: [mobile-apps]
+    branches: [main, mobile-apps]
   workflow_dispatch:
 
 concurrency:
@@ -108,11 +109,16 @@ jobs:
           npm ci
           npm run build:native
 
+          # Same versions as Android: package.json, build number = major·10000 + minor·100 + patch
+          VERSION=$( node -p "require('./package.json').version" )
+          BUILD=$( node -p "const [ a, b, c ] = require('./package.json').version.split( /[.-]/ ).map( Number ); a * 10000 + b * 100 + c" )
+          VERSIONS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD"
+
           # No identity yet: unsigned Payload/App.app zip, signable with zsign
           if [ "$SIGNED" != true ]; then
             xcodebuild -project mobile/ios/App/App.xcodeproj -scheme App -configuration Release \
               -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/ios \
-              CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+              CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO $VERSIONS build
             mkdir -p build/ipa/Payload
             cp -R build/ios/Build/Products/Release-iphoneos/App.app build/ipa/Payload/
             ( cd build/ipa && zip -qry gratis-unsigned.ipa Payload )
@@ -123,7 +129,7 @@ jobs:
             -destination 'generic/platform=iOS' -derivedDataPath build/ios -archivePath build/Gratis.xcarchive \
             CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} \
             CODE_SIGN_IDENTITY="Apple Development" PROVISIONING_PROFILE_SPECIFIER="Gratis Development" \
-            archive
+            $VERSIONS archive
           cat > build/ExportOptions.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

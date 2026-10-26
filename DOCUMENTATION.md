@@ -86,6 +86,19 @@ Capacitor 8 wraps the same React build (`vite build --mode native`, no service w
 - Release APKs are not debuggable: no `run-as` model seeding; use the debug build for that.
 - No Mac / no iOS secrets in CI: sign the CI `gratis-unsigned.ipa` with zsign (build github.com/zhlynn/zsign into `vendor/zsign`): `zsign -k .secrets/apple/dev.p12 -p "$(cat .secrets/apple/dev.p12.password)" -m .secrets/apple/Gratis_Development.mobileprovision -o gratis-dev.ipa gratis-unsigned.ipa`. Reinstalling with the same identity keeps app data (models).
 - iOS needs no notarization (macOS only); development profiles install on listed devices, TestFlight needs a distribution certificate.
+- Versions: iOS uses the same `package.json` version and build number as Android (`MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` passed by CI).
+
+### Store testing releases (no Mac needed)
+
+| Step | Command |
+|---|---|
+| Build | Push to `main` (or `mobile-apps`): `Mobile apps` workflow → `gratis-android` + `gratis-ios` artifacts |
+| iOS signing (once) | `node scripts/ios_signing.js --distribution` → Apple Distribution cert + `Gratis App Store` profile in `.secrets/apple` |
+| TestFlight | `node scripts/ios_testflight.js gratis-unsigned.ipa` → zsign + App Store Connect build upload API, waits for processing; internal group `Gratis internal` sees every build |
+| Play internal | `node scripts/play_internal.js app-release.aab [--draft]` → signs with the upload key if needed (jarsigner), releases to the `internal` track |
+
+- Each upload needs a higher build number: bump `package.json` (build = major·10000 + minor·100 + patch).
+- Shared App Store Connect client: `scripts/app_store_connect.js`.
 
 ## Scripts
 
