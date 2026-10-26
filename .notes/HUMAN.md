@@ -70,3 +70,6 @@ Branch chore/desktop-release-parity (not pushed, not merged). After secrets: ver
 - Play upload key = `.secrets/android/upload.jks` (SHA-256 69:2B:6E:53…:31:6E). Not yet uploaded to Play; first AAB upload locks it in. Back it up outside this container.
 - Apple Paid Apps agreement shows expired (free app/TestFlight unaffected; untouched).
 - `increased-memory-limit` entitlement needs a paid team; without it iPhones cap the app around half of RAM.
+
+## 2026-10-26 — Catalog persona replaces the identity line (not the whole base)
+Only `dolphin-mistral-24b-venice` has a persona. "You are Gratis… / You are Dolphin…" would contradict itself, so the persona swaps just the first line; rules, uncensored line, custom instructions still apply. All 5 Codex reviewers flagged it as not "additive" enough. Flip in `src/utils/system_prompt.js` if Gratis branding should win.
