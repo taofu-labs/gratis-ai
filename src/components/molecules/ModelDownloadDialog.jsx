@@ -106,6 +106,7 @@ export default function ModelDownloadDialog( { mode, on_confirm, on_close } ) {
     const { t } = useTranslation( `models` )
     const title_id = useId()
     const confirm_ref = useRef( null )
+    const dialog_ref = useRef( null )
 
     // Escape (app-wide close event) and focus on the primary action
     useEffect( () => {
@@ -123,11 +124,25 @@ export default function ModelDownloadDialog( { mode, on_confirm, on_close } ) {
 
     if( !mode ) return null
 
+    // Focus trap: Tab and Shift+Tab cycle inside the dialog, never into the page behind it
+    const trap_focus = e => {
+        if( e.key !== `Tab` ) return
+        const focusable = [ ...dialog_ref.current.querySelectorAll( `button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])` ) ]
+        const [ first, last ] = [ focusable[ 0 ], focusable.at( -1 ) ]
+        if( e.shiftKey && document.activeElement === first ) {
+            e.preventDefault()
+            last.focus()
+        } else if( !e.shiftKey && document.activeElement === last ) {
+            e.preventDefault()
+            first.focus()
+        }
+    }
+
     const { label, speed } = mode_text( t, mode.priority )
     const size = format_file_size( model_download_bytes( mode.model ) )
 
     return <Overlay onClick={ e => e.target === e.currentTarget && on_close() }>
-        <Dialog role="dialog" aria-modal="true" aria-labelledby={ title_id } data-testid="mode-download-dialog">
+        <Dialog ref={ dialog_ref } role="dialog" aria-modal="true" aria-labelledby={ title_id } onKeyDown={ trap_focus } data-testid="mode-download-dialog">
 
             <Header>
                 <Title id={ title_id }>{ t( `mode_download_title`, { mode: label } ) }</Title>

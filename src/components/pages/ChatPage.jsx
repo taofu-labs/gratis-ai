@@ -18,10 +18,10 @@ import use_model_manager from '../../hooks/use_model_manager'
 import use_settings from '../../hooks/use_settings'
 import use_voice_input from '../../hooks/use_voice_input'
 import use_speed_modes, { use_speed_mode_choice } from '../../hooks/use_speed_modes'
-import { read_tip_message, tip_direction, write_tip_message } from '../../utils/speed_mode'
+import { MIN_TIP_SPEEDUP, read_tip_message, tip_direction, write_tip_message } from '../../utils/speed_mode'
 import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
-import { MODEL_CATALOG, get_model_by_id, format_file_size, has_image_input, model_download_bytes, select_for_preferences } from '../../utils/model_catalog'
+import { MODEL_CATALOG, NOTICEABLE_QUALITY_GAP, get_model_by_id, format_file_size, has_image_input, model_download_bytes, quality_score, select_for_preferences } from '../../utils/model_catalog'
 import { estimate_history_tokens, split_documents } from '../../utils/attachments'
 import { build_system_prompt } from '../../utils/system_prompt'
 import { projector_source } from '../../utils/model_download'
@@ -970,8 +970,8 @@ export default function ChatPage() {
 
     // ── Speed modes: Smarter / Balanced / Faster from the composer ──
 
-    // Replies refine the device's measured speed, so re-read estimates after each
-    const { modes: speed_modes, active: active_mode } = use_speed_modes( { loaded_model_id, cached_models, refresh: messages.length } )
+    // Replies refine the device's measured speed, so re-read estimates as each one finishes
+    const { modes: speed_modes, active: active_mode } = use_speed_modes( { loaded_model_id, cached_models, refresh: `${ messages.length }:${ is_generating }` } )
     const { choose_mode, dialog: mode_download_dialog } = use_speed_mode_choice( handle_model_switch )
 
     // One inline offer per session, under the latest reply: slow → Faster, very fast → Smarter.
@@ -983,9 +983,18 @@ export default function ChatPage() {
         if( !settings.speed_tips || !last_reply?.stats || last_reply.stats.model_id !== loaded_model_id ) return null
         if( tip_message && tip_message !== last_reply.id ) return null
 
-        const direction = tip_direction( last_reply.stats.tokens_per_second )
+        const { tokens_per_second } = last_reply.stats
+        const direction = tip_direction( tokens_per_second )
         const target = direction && direction !== active_mode && speed_modes.find( ( { priority } ) => priority === direction )
         if( !target || target.model.id === loaded_model_id ) return null
+
+        // Only promise what the target delivers: clearly faster than this reply,
+        // or a noticeable quality step over a known model
+        const loaded = get_model_by_id( loaded_model_id )
+        const delivers = direction === `faster`
+            ? target.tokens_per_second >= tokens_per_second * MIN_TIP_SPEEDUP
+            : !!loaded && quality_score( target.model ) - quality_score( loaded ) >= NOTICEABLE_QUALITY_GAP
+        if( !delivers ) return null
 
         const dismiss = () => {
             write_tip_message( `dismissed` )
@@ -994,7 +1003,7 @@ export default function ChatPage() {
 
         return {
             target,
-            tokens_per_second: last_reply.stats.tokens_per_second,
+            tokens_per_second,
             on_accept: () => {
                 dismiss()
                 choose_mode( target )

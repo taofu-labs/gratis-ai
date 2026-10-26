@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.48.3] - 2026-10-26
+
+### Fixed
+- Speed menu locks while a reply generates or a model loads (an already-open menu could still switch models)
+- Keyboard: the speed menu opens on the current mode, arrows move, Escape returns to the gauge; the picker's gauges are a proper radio group; the download dialog keeps focus inside
+- Speed tips only promise what they deliver: "faster" must be ≥1.5× the measured reply, "smarter" a noticeable step over the loaded model (no smarter tip for unknown custom models); estimates refresh when each reply finishes
+
 ## [0.48.2] - 2026-10-26
 
 ### Fixed

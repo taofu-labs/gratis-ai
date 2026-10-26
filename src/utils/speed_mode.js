@@ -14,6 +14,9 @@ const TIP_KEY = storage_key( `speed_tip_message` )
 export const SLOW_TIP_SPEED = 2.5
 export const FAST_TIP_SPEED = 20
 
+// A "faster" offer must be at least this many times the measured reply speed
+export const MIN_TIP_SPEEDUP = 1.5
+
 // Storage can throw in locked-down browsers; losing a preference is harmless
 const safely = ( fn, fallback ) => {
     try {

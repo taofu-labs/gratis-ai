@@ -154,22 +154,27 @@ export default function SpeedModeMenu( { modes, active, on_choose, disabled } ) 
     const { t } = useTranslation( `models` )
     const [ open, set_open ] = useState( false )
     const anchor_ref = useRef( null )
+    const trigger_ref = useRef( null )
+    const menu_ref = useRef( null )
     const menu_id = useId()
 
-    // Outside tap and Escape close without changing anything
+    // A reply or model load starting locks the menu too, not only the trigger
+    const is_open = open && !disabled
+
+    // Keyboard users land on the current mode (or the first) when it opens
     useEffect( () => {
+        if( !is_open ) return
+        const rows = [ ...menu_ref.current.querySelectorAll( `[role="menuitemradio"]` ) ]
+        ;( rows.find( row => row.getAttribute( `aria-checked` ) === `true` ) || rows[ 0 ] )?.focus()
+    }, [ is_open ] )
 
-        if( !open ) return
+    // Outside tap closes without changing anything
+    useEffect( () => {
+        if( !is_open ) return
         const handle_pointer = e => !anchor_ref.current?.contains( e.target ) && set_open( false )
-        const handle_key = e => e.key === `Escape` && set_open( false )
         document.addEventListener( `pointerdown`, handle_pointer )
-        document.addEventListener( `keydown`, handle_key )
-        return () => {
-            document.removeEventListener( `pointerdown`, handle_pointer )
-            document.removeEventListener( `keydown`, handle_key )
-        }
-
-    }, [ open ] )
+        return () => document.removeEventListener( `pointerdown`, handle_pointer )
+    }, [ is_open ] )
 
     // A single mode is no choice at all
     if( modes.length < 2 ) return null
@@ -177,20 +182,46 @@ export default function SpeedModeMenu( { modes, active, on_choose, disabled } ) 
     const current = active ? mode_text( t, active ) : null
     const trigger_label = current ? `${ current.label } · ${ current.speed }` : t( `mode_custom` )
 
-    const choose = mode => {
+    // Closing hands focus back to the gauge, so keyboard users keep their place
+    const close = () => {
         set_open( false )
-        if( mode.priority !== active ) on_choose( mode )
+        trigger_ref.current?.focus()
+    }
+
+    const choose = mode => {
+        close()
+        if( !disabled && mode.priority !== active ) on_choose( mode )
+    }
+
+    // Arrow keys move between rows, Home / End jump, Escape closes
+    const handle_menu_key = e => {
+        const rows = [ ...menu_ref.current.querySelectorAll( `[role="menuitemradio"]` ) ]
+        const index = rows.indexOf( document.activeElement )
+        const target = {
+            ArrowDown: rows[ ( index + 1 ) % rows.length ],
+            ArrowUp: rows[ ( index - 1 + rows.length ) % rows.length ],
+            Home: rows[ 0 ],
+            End: rows.at( -1 ),
+        }[ e.key ]
+        if( e.key === `Escape` ) {
+            e.stopPropagation()
+            close()
+        }
+        if( !target ) return
+        e.preventDefault()
+        target.focus()
     }
 
     return <Anchor ref={ anchor_ref }>
 
         <Trigger
+            ref={ trigger_ref }
             type="button"
             data-testid="speed-mode-btn"
             data-mode={ active || `custom` }
             aria-haspopup="menu"
-            aria-expanded={ open }
-            aria-controls={ open ? menu_id : undefined }
+            aria-expanded={ is_open }
+            aria-controls={ is_open ? menu_id : undefined }
             aria-label={ t( `speed_mode_aria`, { mode: trigger_label } ) }
             title={ trigger_label }
             disabled={ disabled }
@@ -200,7 +231,7 @@ export default function SpeedModeMenu( { modes, active, on_choose, disabled } ) 
             <span>{ current ? current.label : t( `mode_custom` ) }</span>
         </Trigger>
 
-        { open && <Menu id={ menu_id } role="menu" data-testid="speed-mode-menu">
+        { is_open && <Menu ref={ menu_ref } id={ menu_id } role="menu" aria-label={ t( `speed_mode_title` ) } onKeyDown={ handle_menu_key } data-testid="speed-mode-menu">
 
             <MenuTitle>{ t( `speed_mode_title` ) }</MenuTitle>
 
@@ -214,6 +245,7 @@ export default function SpeedModeMenu( { modes, active, on_choose, disabled } ) 
                     type="button"
                     role="menuitemradio"
                     aria-checked={ checked }
+                    tabIndex={ -1 }
                     data-testid={ `speed-mode-${ mode.priority }` }
                     onClick={ () => choose( mode ) }
                 >

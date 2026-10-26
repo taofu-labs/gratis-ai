@@ -161,11 +161,22 @@ export default function SpeedModePicker( { active: active_mode, available, on_ch
 
     if( available.length < 2 ) return null
 
+    // Radio group keys: one Tab stop, arrows move (and apply) the selection
+    const handle_key = e => {
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ e.key ]
+        if( !step ) return
+        e.preventDefault()
+        const index = Math.max( 0, available.indexOf( active_mode ) )
+        const next = available[ ( index + step + available.length ) % available.length ]
+        on_change( { priority: next } )
+        e.currentTarget.querySelector( `[data-priority="${ next }"]` )?.focus()
+    }
+
     return <div data-testid="speed-mode-picker">
 
         <GroupLabel id={ label_id }>{ t( `speed_mode_title` ) }</GroupLabel>
 
-        <Segments role="radiogroup" aria-labelledby={ label_id }>
+        <Segments role="radiogroup" aria-labelledby={ label_id } onKeyDown={ handle_key }>
             { available.map( priority => {
                 const active = active_mode === priority
                 return <Segment
@@ -173,7 +184,9 @@ export default function SpeedModePicker( { active: active_mode, available, on_ch
                     type="button"
                     role="radio"
                     aria-checked={ active }
+                    tabIndex={ active || !available.includes( active_mode ) && priority === available[ 0 ] ? 0 : -1 }
                     $active={ active }
+                    data-priority={ priority }
                     data-testid={ `priority-${ priority }` }
                     onClick={ () => on_change( { priority } ) }
                 >
