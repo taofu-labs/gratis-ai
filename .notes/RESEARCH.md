@@ -337,3 +337,12 @@ Harness: scratchpad/est (session-only): gguf_skeleton.mjs (header-only, zero wei
 - SmolLM2-135M calib: 16%/209%, 28%/181%. Same-quant SmolLM worse (576-dim => K/IQ quants silently fall back).
 - Skeleton 2-point (L4,L8 extrapolate): 13%/42%, 10%/297% (slope noise). Catches quant/arch effects. 4B skeleton 0.8 GB (vocab tables), bench 25-75 s.
 - CI table × device ratio (one probe): 2%/25% (skeleton probe), 10%/11% (SmolLM probe). Same-CPU thread change flatters it; cross-arch likely 15-30%.
+
+## Per-turn TTFT / "Waking up the AI" (2026-10-26)
+Probe: Playwright + `Worker` wrapper decoding wllama `get_result` → llama.cpp `timings` (`cache_n`, `prompt_n`). Slow 4-core box, 2 threads => relative only.
+- Model stays loaded between turns; no reload. `is_endpoint_warming` is dead (cloud era, always false).
+- "Waking up" = `WakingUpIndicator` default label while `prompt_progress` is null. Worker blocks inside `llama_decode`; the 0 % and final progress events both surface only after the batch. Follow-ups < `n_batch` (128 CPU) = 1 batch => "Waking up" for the whole prefill, then 0→99 % flash.
+- `cache_prompt` works for plain chatml (SmolLM2): `cache_n` = entire prior chat, `prompt_n` ≈ 18 (user msg + template wrapper).
+- WASM CPU prefill ≈ decode speed per token (180–400 ms/tok here) => 18 new tokens ≈ 3–7 s.
+- Qwen3 template (think stripping): `cache_n` stops at the start of the previous assistant turn => whole last reply re-read every turn (prompt_n 31 for an 8-token message with an 11-token reply; scales with reply length). History content still contains raw `<think>…</think>`.
+- Hybrid (Qwen 3.5) / SWA not measured (download too slow); depend on llama.cpp ctx checkpoints (wllama does not forward `n_ctx_checkpoints`, C++ default applies).
