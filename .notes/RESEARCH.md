@@ -348,3 +348,9 @@ Probe: Playwright + `Worker` wrapper decoding wllama `get_result` → llama.cpp 
 - DeepSeek R1 1.5B: same pattern; `cache_n` = prior prompt only, the stripped previous answer is re-read (~17 tok/turn for one-word answers). Its long think phase shows the thinking UI, not "Waking up".
 - Hybrid (Qwen 3.5) / SWA not measured (download too slow); depend on llama.cpp ctx checkpoints (wllama does not forward `n_ctx_checkpoints`, C++ default applies).
 - Warm-ups shipped (same day). Real request after type→pause: prompt_n 1 (SmolLM2, Qwen3 0.6B), 4 (Qwen3.5 0.8B hybrid). TTFT: SmolLM2 4–7 s → 2.0 s, Qwen3 0.6B ~9 s → 0.8 s. Send-immediately ≈ old cost (no regression). Upstream asks: wllama64#11 (`n_threads_batch`), #12 (`cache_ram_mib` cap + OPFS slot persistence).
+
+## MiniCPM5 1B quality check (2026-10-26)
+- Haiku A/B, vendor llama-server, no-think (app path), 5 samples: MiniCPM5 1B drifts to Chinese, rambles, "I can't write haikus" — at **Q8_0 too** => model weakness, not quant. Qwen3.5 0.8B Q5_K_M: 5/5 short, on-task.
+- Thinking on: MiniCPM hits 300-token cap 4/6 before answering.
+- Curated `quality: 58` (vendor, thinking-mode) vs AA 8.8 => over-rated; Qwen 0.8B at 42 under-rated relative. Vendor self-reports are not comparable across families.
+- TPN MiniCPM Q4_K_M template omits `<s>` BOS (openbmb Q8_0 has it) — minor, not the cause.
