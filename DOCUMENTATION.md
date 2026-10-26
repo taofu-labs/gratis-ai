@@ -63,14 +63,28 @@ Capacitor 8 wraps the same React build (`vite build --mode native`, no service w
 | Server | Child process `libllama-server.so` from `nativeLibraryDir` | In process on a thread (`LlamaServer.xcframework`, C shim `gratis_llama_server_run/stop`) |
 | Backend | CPU (all ARM variants, ggml picks at runtime); threads = big cores, pinned | Metal on Apple7+ (A14+), else CPU; threads = performance cores |
 | Downloads | `noBackupFilesDir/models`, resumable, SHA-256; foreground `dataSync` service keeps them going in the background | Application Support/models (no iCloud backup), same rules; background-task grace only |
-| Build | `scripts/android_toolchain.sh` (once) → `scripts/build_android_llama_server.sh` → `scripts/android_dev.sh [adb-serial]` | macOS: `scripts/build_ios_llama_server.sh` → `npm run build:native` → Xcode. CI: `.github/workflows/mobile-apps.yml` (unsigned `.ipa`) |
+| Build | `scripts/android_toolchain.sh` (once) → `scripts/build_android_llama_server.sh` → `scripts/android_dev.sh [adb-serial]` | macOS: `scripts/build_ios_llama_server.sh` → `npm run build:native` → Xcode. CI: `.github/workflows/mobile-apps.yml` (development `.ipa`) |
 
 - Icons/splash: `python3 scripts/mobile_icons.py` (from `build/icon.png`).
 - No Mac: `scripts/swift_typecheck.sh` typechecks the plugin's Swift on Linux against stubs (needs a swift.org toolchain in `vendor/swift`).
 - In-process server: the build patches upstream `server.cpp` so its `shutdown_handler` is mutex-guarded and cleared before the run's stack unwinds; Swift waits for the run to return before starting another.
 - Phones: picker budgets 45% of RAM (automatic pick ≤ 70% of free), context ≤ 8192, and ranks Q5_0/IQ quants below K-quants (no ARM repack kernels).
 - Debug the WebView: `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>` → Playwright `connectOverCDP`.
-- Signing: not set up yet (Android debug key; iOS unsigned).
+- Signing: all material lives in gitignored `.secrets/` (never commit; `.gitignore` also blocks `*.p8 *.p12 *.jks *.keystore *.mobileprovision`).
+
+| Path | What |
+|---|---|
+| `.secrets/apple/signing.env` + `AuthKey_*.p8` | Team ID, App Store Connect API key (Admin) |
+| `.secrets/apple/dev.{key,cer,p12,p12.password}`, `Gratis_Development.mobileprovision` | Apple Development identity + profile, from `node scripts/ios_signing.js` |
+| `.secrets/android/upload.jks` + `keystore.properties` | Play upload key (alias `upload`); `assembleRelease`/`bundleRelease` sign with it |
+| `.secrets/google/play-service-account.json` | Play Developer API (testing tracks only) |
+| `.secrets/handoff/` | Original handoff + values for the GitHub Actions secrets |
+
+- `node scripts/ios_signing.js`: reuses the certificate while Apple lists it, recreates the profile with every enabled team iPhone/iPad. Rerun after registering a device, then update `IOS_DEV_PROFILE_BASE64`.
+- CI secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `IOS_DEV_P12_BASE64`, `IOS_DEV_P12_PASSWORD`, `IOS_DEV_PROFILE_BASE64` (+ `APPLE_TEAM_ID`, `ASC_*`, `PLAY_SERVICE_ACCOUNT_JSON_BASE64`). Missing → CI builds unsigned.
+- Versions: `versionName` = package.json, `versionCode` = major·10000 + minor·100 + patch, or `ANDROID_VERSION_CODE`.
+- Release APKs are not debuggable: no `run-as` model seeding; use the debug build for that.
+- iOS needs no notarization (macOS only); development profiles install on listed devices, TestFlight needs a distribution certificate.
 
 ## Scripts
 

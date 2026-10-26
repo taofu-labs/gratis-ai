@@ -1,5 +1,20 @@
 apply plugin: 'com.android.application'
 
+import groovy.json.JsonSlurper
+
+// Version from package.json; versionCode = major·10000 + minor·100 + patch
+// unless CI overrides it (Play rejects a repeated code)
+def app_version = new JsonSlurper().parse( file( '../../../package.json' ) ).version
+def version_parts = app_version.tokenize( '.-' ).take( 3 ).collect { it as int }
+def version_code = ( System.getenv( 'ANDROID_VERSION_CODE' ) ?: ( version_parts[ 0 ] * 10000 + version_parts[ 1 ] * 100 + version_parts[ 2 ] ) ) as int
+
+// Upload key for release builds: CI passes env vars, locally .secrets/android
+// holds keystore.properties (both gitignored, see DOCUMENTATION.md)
+def upload = new Properties()
+def upload_properties = file( '../../../.secrets/android/keystore.properties' )
+if( upload_properties.exists() ) upload_properties.withInputStream { upload.load( it ) }
+def upload_store = System.getenv( 'ANDROID_KEYSTORE_PATH' ) ?: ( upload.storeFile ? "${ upload_properties.parent }/${ upload.storeFile }" : null )
+
 android {
     namespace = "com.trueperformancenetwork.gratis"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +22,8 @@ android {
         applicationId "com.trueperformancenetwork.gratis"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode version_code
+        versionName app_version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // llama.cpp is built for 64-bit ARM only (scripts/build_android_llama_server.sh)
         ndk { abiFilters 'arm64-v8a' }
@@ -35,10 +50,17 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if( upload_store ) release {
+            storeFile file( upload_store )
+            storePassword System.getenv( 'ANDROID_KEYSTORE_PASSWORD' ) ?: upload.storePassword
+            keyAlias System.getenv( 'ANDROID_KEY_ALIAS' ) ?: upload.keyAlias
+            keyPassword System.getenv( 'ANDROID_KEY_PASSWORD' ) ?: upload.keyPassword
+        }
     }
     buildTypes {
         debug { if( dev_keystore.exists() ) signingConfig signingConfigs.dev }
         release {
+            if( upload_store ) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

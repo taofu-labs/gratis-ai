@@ -176,3 +176,13 @@ vendor/
 # Mobile app icons and splash screens are real assets
 !mobile/**/*.png
 mobile/plugin/ios/LlamaServer.xcframework/
+
+# Signing material (keys, certificates, profiles, keystores): never commit
+.secrets/
+.secrets_handoff/
+*.p8
+*.p12
+*.mobileprovision
+*.jks
+*.keystore
+keystore.properties
