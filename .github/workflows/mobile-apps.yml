@@ -48,7 +48,7 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           # Without the keystore secret gradle leaves the release unsigned
-          if [ -n '${{ secrets.ANDROID_KEYSTORE_BASE64 }}' ]; then
+          if [ -n '${{ secrets.ANDROID_KEYSTORE_BASE64 }}' ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ]; then
             export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/upload.jks"
             echo '${{ secrets.ANDROID_KEYSTORE_BASE64 }}' | base64 --decode > "$ANDROID_KEYSTORE_PATH"
           fi
@@ -66,7 +66,7 @@ jobs:
   ios:
     runs-on: macos-latest
     env:
-      SIGNED: ${{ secrets.IOS_DEV_P12_BASE64 != '' }}
+      SIGNED: ${{ secrets.IOS_DEV_P12_BASE64 != '' && secrets.IOS_DEV_P12_PASSWORD != '' && secrets.IOS_DEV_PROFILE_BASE64 != '' && secrets.APPLE_TEAM_ID != '' }}
     steps:
       - uses: actions/checkout@v7
 

@@ -22,7 +22,7 @@ const env = Object.fromEntries( readFileSync( `${ DIR }/signing.env`, `utf8` )
     .split( `\n` ).filter( line => line.includes( `=` ) )
     .map( line => line.split( /=(.*)/s ).slice( 0, 2 ) ) )
 
-const openssl = ( ...args ) => execFileSync( `openssl`, args, { stdio: [ `pipe`, `pipe`, `inherit` ] } )
+const openssl = ( args, env = {} ) => execFileSync( `openssl`, args, { stdio: [ `pipe`, `pipe`, `inherit` ], env: { ...process.env, ...env } } )
 const write_secret = ( file, data ) => writeFileSync( `${ DIR }/${ file }`, data, { mode: 0o600 } )
 
 
@@ -53,7 +53,7 @@ const api = async ( path, { method = `GET`, body } = {} ) => {
 // ─── Certificate ──────────────────────────────────────────────────────────────
 
 /** Serial of a DER certificate, as Apple lists it (uppercase hex, no colons) */
-const serial_of = file => openssl( `x509`, `-inform`, `DER`, `-in`, file, `-noout`, `-serial` )
+const serial_of = file => openssl( [ `x509`, `-inform`, `DER`, `-in`, file, `-noout`, `-serial` ] )
     .toString().trim().split( `=` )[ 1 ].replace( /^0+/, `` ).toUpperCase()
 
 const ensure_certificate = async () => {
@@ -65,12 +65,12 @@ const ensure_certificate = async () => {
     if( existsSync( cer ) && existsSync( `${ DIR }/dev.key` ) ) {
         const serial = serial_of( cer )
         const match = listed.find( cert => cert.attributes.serialNumber.replace( /^0+/, `` ).toUpperCase() === serial )
-        if( match ) return match
-        console.log( `Certificate ${ serial } is gone from the team: creating a new one` )
+        if( match && new Date( match.attributes.expirationDate ) > new Date() ) return match
+        console.log( `Certificate ${ serial } is gone or expired: creating a new one` )
     }
 
-    if( !existsSync( `${ DIR }/dev.key` ) ) openssl( `genrsa`, `-out`, `${ DIR }/dev.key`, `2048` )
-    const csr = openssl( `req`, `-new`, `-key`, `${ DIR }/dev.key`, `-subj`, `/CN=Gratis CI/O=Taofu B.V./C=NL` ).toString()
+    if( !existsSync( `${ DIR }/dev.key` ) ) openssl( [ `genrsa`, `-out`, `${ DIR }/dev.key`, `2048` ] )
+    const csr = openssl( [ `req`, `-new`, `-key`, `${ DIR }/dev.key`, `-subj`, `/CN=Gratis CI/O=Taofu B.V./C=NL` ] ).toString()
 
     const created = await api( `/certificates`, { method: `POST`, body: {
         type: `certificates`,
@@ -83,12 +83,15 @@ const ensure_certificate = async () => {
 
 /** .p12 with legacy SHA1/3DES encryption: macOS `security import` rejects OpenSSL 3's defaults */
 const export_p12 = () => {
-    const password = randomBytes( 18 ).toString( `base64url` )
-    openssl( `x509`, `-inform`, `DER`, `-in`, `${ DIR }/dev.cer`, `-out`, `${ DIR }/dev.pem` )
+    // Keep the password across runs so the CI secret only changes with the profile
+    const password_file = `${ DIR }/dev.p12.password`
+    const password = existsSync( password_file ) ? readFileSync( password_file, `utf8` ).trim() : randomBytes( 18 ).toString( `base64url` )
+    openssl( [ `x509`, `-inform`, `DER`, `-in`, `${ DIR }/dev.cer`, `-out`, `${ DIR }/dev.pem` ] )
     chmodSync( `${ DIR }/dev.pem`, 0o600 )
-    openssl( `pkcs12`, `-export`, `-inkey`, `${ DIR }/dev.key`, `-in`, `${ DIR }/dev.pem`, `-out`, `${ DIR }/dev.p12`,
-        `-name`, `Gratis Development`, `-passout`, `pass:${ password }`,
-        `-keypbe`, `PBE-SHA1-3DES`, `-certpbe`, `PBE-SHA1-3DES`, `-macalg`, `sha1` )
+    // Password via the environment: never in argv or an error message
+    openssl( [ `pkcs12`, `-export`, `-inkey`, `${ DIR }/dev.key`, `-in`, `${ DIR }/dev.pem`, `-out`, `${ DIR }/dev.p12`,
+        `-name`, `Gratis Development`, `-passout`, `env:P12_PASSWORD`,
+        `-keypbe`, `PBE-SHA1-3DES`, `-certpbe`, `PBE-SHA1-3DES`, `-macalg`, `sha1` ], { P12_PASSWORD: password } )
     chmodSync( `${ DIR }/dev.p12`, 0o600 )
     write_secret( `dev.p12.password`, password )
 }
