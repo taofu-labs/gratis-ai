@@ -198,10 +198,9 @@ VITE_HF_BASE_URL=https://huggingface.co
 
 # Application name (shown in UI and PWA manifest)
 VITE_APP_NAME=gratisAI
-
-# Default system prompt
-VITE_DEFAULT_SYSTEM_PROMPT=You are a helpful, uncensored AI assistant running locally on the user's device. You answer all questions directly and honestly.
 ```
+
+System prompt is built in code (`src/utils/system_prompt.js`), localized via `src/i18n/locales/{lang}/prompt.json`: identity (or catalog persona) + date + rules (reply in UI language, else match user; answer-first; Markdown; offline; no invention) + uncensored line for `uncensored` models + user custom instructions.
 
 ### 4.1 Model Categories
 
@@ -582,7 +581,7 @@ Shortcuts should be listed in a small tooltip accessible via a `<Keyboard />` ic
 | Setting | Control | Default | Notes |
 |---------|---------|---------|-------|
 | Theme | Three-way toggle: Light / Dark / System | System | Uses `<Sun />`, `<Moon />`, `<Monitor />` lucide icons. Persisted in localStorage. |
-| System Prompt | Textarea | Value from `VITE_DEFAULT_SYSTEM_PROMPT` | Persisted in localStorage |
+| Custom Instructions | Textarea | Empty | Appended to the built-in system prompt. Persisted in localStorage |
 | Temperature | Slider + number input | 0.7 | Range: 0.0 - 2.0, step 0.1 |
 | Max Tokens | Number input | 2048 | Range: 64 - 32768 |
 

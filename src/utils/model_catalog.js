@@ -62,6 +62,7 @@
  * @property {number} [quality] - Curated 0-100 general-chat index (≈ vendor MMLU-Pro, sanity-checked against the Artificial Analysis index)
  * @property {boolean} [hidden] - Retired: never offered, but installed copies stay loadable and removable
  * @property {boolean} [multilingual] - Strong beyond English (vendor multilingual evals)
+ * @property {boolean} [english_only] - Breaks down in other languages; always gets the English system prompt
  * @property {string} [specialist] - Niche focus (e.g. 'coding'): listed for experts, never auto-picked
  * @property {string} [license_flag] - Short flag for non-Apache/MIT terms (e.g. 'Gemma terms')
  * @property {{ score: number, willingness: number, date: string }} [ugi] - UGI leaderboard evidence for `uncensored`
@@ -126,6 +127,7 @@ const COMMUNITY_MODELS = [
         reasoning: false,
         benchmarks: { mmlu: 47.96, gpqa: null, humaneval: null, math: null, gsm8k: 7.43 },
         license: `Apache-2.0`,
+        english_only: true,
         category: `lightweight`,
         hidden: true,
     },
@@ -175,6 +177,7 @@ const COMMUNITY_MODELS = [
         reasoning: false,
         benchmarks: { mmlu: 25.2, gpqa: null, humaneval: 7.93, math: null, gsm8k: 1.6 },
         license: `Apache-2.0`,
+        english_only: true,
         category: `lightweight`,
         hidden: true,
     },
@@ -1052,6 +1055,7 @@ const COMMUNITY_MODELS = [
         reasoning: false,
         benchmarks: { mmlu: null, gpqa: null, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
+        english_only: true,
         vision: true,
         hidden: true,
         mmproj: { file_name: `mmproj-SmolVLM2-2.2B-Instruct-Q8_0.gguf`, file_size_bytes: 592_523_200 },

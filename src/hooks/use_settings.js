@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { log } from 'mentie'
 import { EVENTS, STORAGE_PREFIX } from '../utils/branding'
 import { HF_TOKEN_SETTING } from '../utils/hf_auth'
+import { LEGACY_DEFAULT_PROMPTS } from '../utils/system_prompt'
 
 // Default values for all settings
 const DEFAULTS = {
@@ -51,10 +52,8 @@ export default function use_settings() {
             initial[ key ] = read_setting( key, default_value )
         }
 
-        // System prompt defaults from env var
-        if( !initial.system_prompt ) {
-            initial.system_prompt = import.meta.env.VITE_DEFAULT_SYSTEM_PROMPT || ``
-        }
+        // The base prompt lives in code now; a stored copy of an old default is not a custom instruction
+        if( LEGACY_DEFAULT_PROMPTS.has( initial.system_prompt.trim() ) ) initial.system_prompt = ``
 
         return initial
 

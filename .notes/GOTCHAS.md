@@ -4,7 +4,7 @@
 
 - Use `mentie` with named log levels; do not replace it with direct console logging.
 - Local model IDs are catalog IDs. Cloud IDs retain their `openrouter:` or `venice:` prefix so provider routing remains unambiguous.
-- Model-specific system prompts take precedence over the global default. Preserve this order when changing settings or session initialization.
+- System prompt = layered, never replaced: base (catalog persona swaps only the identity line) → rules → uncensored line → user custom instructions. Keep `prompt.json` short imperative bullets; small models (360M–1B) need them. Add a locale ⇒ add its `prompt.json`.
 
 ## electron-updater v6: never call setFeedURL() (2026-03-03)
 

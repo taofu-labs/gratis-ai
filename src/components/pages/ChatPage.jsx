@@ -19,6 +19,7 @@ import { export_conversation } from '../../utils/export'
 import { parse_model_param, resolve_cached_model } from '../../utils/model_param_resolver'
 import { MODEL_CATALOG, get_model_by_id, format_file_size, has_image_input, model_download_bytes, select_for_preferences } from '../../utils/model_catalog'
 import { estimate_history_tokens, split_documents } from '../../utils/attachments'
+import { build_system_prompt } from '../../utils/system_prompt'
 import { projector_source } from '../../utils/model_download'
 import { build_device_profile, detect_capabilities, estimate_max_model_bytes } from '../../utils/device_detection'
 import { useTranslation } from 'react-i18next'
@@ -154,7 +155,7 @@ export default function ChatPage() {
     const navigate = useNavigate()
     const location = useLocation()
     const [ search_params, set_search_params ] = useSearchParams()
-    const { t } = useTranslation( 'chat' )
+    const { t, i18n } = useTranslation( 'chat' )
 
     const [ messages, set_messages ] = useState( [] )
     // A ?q= message that arrived while the model was still loading
@@ -425,11 +426,13 @@ export default function ChatPage() {
             m.id === assistant_msg.id ? { ...m, ...changes } : m
         ) )
 
-        // Model-specific system prompt takes priority (e.g. uncensored personas),
-        // falling back to user settings → env default. Empty replies (a stop
-        // before the first token) carry nothing for the model.
-        const active_model = get_model_by_id( loaded_model_id )
-        const system_prompt = active_model?.system_prompt || settings.system_prompt || ``
+        // Localized base prompt + model persona + user custom instructions
+        const system_prompt = build_system_prompt( {
+            model: get_model_by_id( loaded_model_id ),
+            language: i18n.language,
+            custom: settings.system_prompt,
+        } )
+        // Empty replies (a stop before the first token) carry nothing for the model.
         // Strict templates (Gemma, Mistral) demand alternating roles, so turns
         // left adjacent by a dropped empty reply are merged
         const history = history_msgs
@@ -443,7 +446,7 @@ export default function ChatPage() {
                 } else turns.push( { role, content, ... images.length ? { attachments: images } : {} } )
                 return turns
             }, [] )
-        if( system_prompt ) history.unshift( { role: `system`, content: system_prompt } )
+        history.unshift( { role: `system`, content: system_prompt } )
 
         const partial = {
             conv_id,
@@ -497,7 +500,7 @@ export default function ChatPage() {
         replies_settled_ref.current = Promise.allSettled( [ replies_settled_ref.current, reply ] )
         return reply
 
-    }, [ chat_stream, save_message, save_partial_reply, refresh, get_generate_options, settings.system_prompt, loaded_model_id ] )
+    }, [ chat_stream, save_message, save_partial_reply, refresh, get_generate_options, settings.system_prompt, loaded_model_id, i18n.language ] )
 
     /**
      * Rewrite stored history once earlier replies have finished saving, so a
@@ -555,7 +558,7 @@ export default function ChatPage() {
     const build_status_response = useCallback( () => {
 
         const model = get_model_by_id( loaded_model_id )
-        const system_prompt = model?.system_prompt || settings.system_prompt || ``
+        const system_prompt = build_system_prompt( { model, language: i18n.language, custom: settings.system_prompt } )
         const opts = get_generate_options()
 
         const lines = [
@@ -575,7 +578,8 @@ export default function ChatPage() {
                 : `- _No model loaded_`,
             ``,
             `### System prompt`,
-            system_prompt ? `\`\`\`\n${ system_prompt }\n\`\`\`` : `_No system prompt configured_`,
+            // Four-tick fence: the prompt itself mentions ``` code blocks
+            `\`\`\`\`\n${ system_prompt }\n\`\`\`\``,
             ``,
             `### System metadata`,
             `- **App:** ${ DISPLAY_NAME } v${ APP_VERSION }`,
@@ -590,7 +594,7 @@ export default function ChatPage() {
 
         return lines.join( `\n` )
 
-    }, [ loaded_model_id, settings.system_prompt, get_generate_options ] )
+    }, [ loaded_model_id, settings.system_prompt, get_generate_options, i18n.language ] )
 
     /**
      * Send a user message and stream the reply.
