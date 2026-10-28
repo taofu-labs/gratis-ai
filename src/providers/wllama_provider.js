@@ -309,7 +309,9 @@ export default class WllamaProvider {
 
         // Prefill is short and compute-bound: twice the decode threads lifts it
         // 45–65% (RunPod bench, wllama64 1.2.0) while decode stays memory-bound.
-        const n_threads_batch = Math.min( hardware_threads, n_threads * 2 )
+        // Phones keep one pool: big.LITTLE cores and thermals are unmeasured.
+        const mobile = /Android|Mobile|iPhone|iPad/.test( navigator.userAgent || `` )
+        const n_threads_batch = mobile ? n_threads : Math.min( hardware_threads, n_threads * 2 )
         const model_size = cached.file_size_bytes || model.file_size_bytes || 0
 
         // Near-ceiling models need compute-graph headroom more than prompt
@@ -360,7 +362,12 @@ export default class WllamaProvider {
 
         // Mobile GPUs can compute wrong results in llama.cpp's WebGPU kernels
         const gpu_trusted = webgpu_offload_trusted( capabilities.gpu?.adapter_info )
-        if( capabilities.gpu?.webgpu && !gpu_trusted ) log.info( `[wllama] WebGPU offload not trusted on this GPU; loading on CPU` )
+        if( capabilities.gpu?.webgpu && !gpu_trusted ) {
+            log.info( `[wllama] WebGPU offload not trusted on this GPU; loading on CPU` )
+
+            // The capability hook may still hold probe buffers in shared memory
+            await wait_for_existing_webgpu_memory_probe()
+        }
 
         if( !this._gpu_disabled && gpu_trusted && capabilities.gpu?.webgpu ) {
             if( fit_model.block_count ) {
@@ -839,6 +846,9 @@ export default class WllamaProvider {
         runtime.setCompat( COMPAT_PATHS, `firefox_safari` )
         const { compat } = runtime.getWorkerResources()
         this._wllama = runtime
+
+        // Compat (wllama 3.8.1) ignores n_threads_batch but would still spawn its pool
+        if( compat ) load_options = { ...load_options, n_threads_batch: load_options.n_threads }
 
         const timeout_ms = Math.max(
             GPU_LOAD_MIN_TIMEOUT_MS,

@@ -8,6 +8,7 @@ const mocks = vi.hoisted( () => ( {
     fail_benign_inference: false,
     probed: true,
     memory64: true,
+    compat: false,
     memory_budget: 4_000_000_000,
     put: vi.fn(),
     cached_model: null,
@@ -48,7 +49,7 @@ vi.mock( `wllama64`, () => {
         }
         setCompat() {}
         getWorkerResources() {
-            return { compat: false }
+            return { compat: mocks.compat }
         }
         async loadModel( source, options ) {
             this.source = source
@@ -146,6 +147,7 @@ describe( `Wllama WebGPU fallback`, () => {
         mocks.fail_benign_inference = false
         mocks.probed = true
         mocks.memory64 = true
+        mocks.compat = false
         mocks.memory_budget = 4_000_000_000
         mocks.cached_model = null
         mocks.projector = null
@@ -170,6 +172,17 @@ describe( `Wllama WebGPU fallback`, () => {
 
         const { n_threads, n_threads_batch } = mocks.instances[ 0 ].load_options
         expect( [ n_threads, n_threads_batch ] ).toEqual( [ 4, 8 ] )
+    } )
+
+    test( `keeps one thread pool on phones and in the compat runtime`, async () => {
+        vi.stubGlobal( `navigator`, { ...navigator, hardwareConcurrency: 8, userAgent: `Mozilla/5.0 (Linux; Android 15) Mobile` } )
+        await new WllamaProvider().load_model( `smollm2-360m-q4km` )
+
+        vi.stubGlobal( `navigator`, { ...navigator, hardwareConcurrency: 8, userAgent: `Mozilla/5.0 (X11; Linux x86_64)` } )
+        mocks.compat = true
+        await new WllamaProvider().load_model( `smollm2-360m-q4km` )
+
+        for( const { load_options } of mocks.instances ) expect( load_options.n_threads_batch ).toBe( load_options.n_threads )
     } )
 
     test( `loads on CPU on mobile GPUs whose WebGPU kernels produce garbage`, async () => {

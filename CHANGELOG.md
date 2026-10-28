@@ -4,7 +4,7 @@
 
 ### Changed
 - Browser engine upgraded to wllama64 1.2.0: prompt cache capped at 256 MB instead of 8 GB, clearer WebGPU fallbacks
-- Long prompts read 45–65% faster on CPU: prompt processing uses twice the reply threads (never more than the cores)
+- Long prompts read 45–65% faster on computers (CPU): prompt processing uses twice the reply threads (never more than the cores)
 - Firefox runs models on CPU; its WebGPU is slower than CPU
 
 ## [0.52.0] - 2026-10-28
