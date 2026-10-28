@@ -223,6 +223,7 @@ export const WASM_GRANT_TIMEOUT_MS = 10_000
 
 let cached_wasm_grant = null
 let grant_measurement = null
+let grant_measured = false
 
 /** The latest measured grant: bytes, or null when unmeasured or without Memory64 */
 export const probe_wasm_memory_grant = () => cached_wasm_grant
@@ -269,6 +270,7 @@ export const measure_wasm_memory_grant = ( { timeout_ms = WASM_GRANT_TIMEOUT_MS 
 
     } ).then( granted => {
         cached_wasm_grant = granted
+        grant_measured = true
         grant_measurement = null
         globalThis.window?.dispatchEvent( new CustomEvent( EVENTS.device_measured, { detail: { wasm_grant_bytes: granted } } ) )
         return granted
@@ -351,7 +353,8 @@ const detect_capabilities_uncached = async () => {
     // Memory detection
     const device_memory = navigator.deviceMemory || null
     const js_heap_limit = performance?.memory?.jsHeapSizeLimit || null
-    const wasm_grant_bytes = await measure_wasm_memory_grant()
+    // Reuse a finished measurement (the model screen may have raced ahead)
+    const wasm_grant_bytes = grant_measured ? cached_wasm_grant : await measure_wasm_memory_grant()
 
     // CPU info
     const cores = navigator.hardwareConcurrency || 4

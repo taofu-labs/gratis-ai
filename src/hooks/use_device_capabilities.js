@@ -80,7 +80,8 @@ export default function use_device_capabilities( { inspect = false } = {} ) {
                 const cached_only = !!( llm.is_loading || llm.is_generating || llm.loaded_model_id )
 
                 const measured = await probe_capabilities_gpu_memory( result, { cached_only } )
-                if( !cancelled ) set_capabilities( measured )
+                // A grant measured meanwhile (another hook) must survive this update
+                if( !cancelled ) set_capabilities( with_latest_grant( measured ) )
 
             } )
             .catch( () => {
