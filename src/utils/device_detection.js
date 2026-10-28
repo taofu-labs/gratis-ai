@@ -249,6 +249,7 @@ export const measure_wasm_memory_grant = ( { timeout_ms = WASM_GRANT_TIMEOUT_MS 
         const source = `postMessage( ( ${ grow_wasm_memory } )( ${ MEMORY64_MODEL_CEILING_BYTES } ) )`
         const url = URL.createObjectURL( new Blob( [ source ], { type: `text/javascript` } ) )
         let worker = null
+        let timer = null
 
         const finish = granted => {
             clearTimeout( timer )
@@ -256,7 +257,7 @@ export const measure_wasm_memory_grant = ( { timeout_ms = WASM_GRANT_TIMEOUT_MS 
             URL.revokeObjectURL( url )
             resolve( granted )
         }
-        const timer = setTimeout( () => finish( null ), timeout_ms )
+        timer = setTimeout( () => finish( null ), timeout_ms )
 
         try {
             worker = new Worker( url )
