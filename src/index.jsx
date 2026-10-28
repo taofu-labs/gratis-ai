@@ -75,15 +75,6 @@ if( navigator.serviceWorker ) {
         reload_when_idle()
     } )
 
-    // While an update waits, this page's lazily loaded chunks are gone from the
-    // server. A failed one means the old version can't go on: move to the new one.
-    window.addEventListener( `vite:preloadError`, event => {
-        if( !use_app_update_store.getState().update_ready || is_reloading ) return
-        event.preventDefault()
-        is_reloading = true
-        reload_for_update()
-    } )
-
 }
 
 // Mount the React application

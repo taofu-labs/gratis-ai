@@ -10,7 +10,6 @@
 
 ### Fixed
 - App updates also reach a first visit left open (e.g. a long model download), still waiting until you stop typing, generating or downloading
-- An update waiting in a busy tab no longer breaks features that load on demand: the app moves to the new version instead
 - Model picker: corner buttons no longer float over the content while scrolling
 
 ## [0.50.0] - 2026-10-28

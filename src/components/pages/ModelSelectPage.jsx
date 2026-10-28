@@ -40,6 +40,7 @@ import {
     runtime_memory,
     select_picker_models,
     select_mode_models,
+    SPEED_MODES,
     NOTICEABLE_QUALITY_GAP,
     speed_band,
 } from '../../utils/model_catalog'
@@ -645,8 +646,10 @@ export default function ModelSelectPage() {
         ? t( `wizard_facts`, { size: format_file_size( model_download_bytes( model ) ), speed: t( `speed_${ band_of( model ) }` ) } )
         : t( `wizard_unavailable`, { device: device_name } )
     const pick_with = patch => select_picker_models( { winners: tpn_models, device, preferences: { ...preferences, ...patch } } ).pick
-    const option_for = ( key, patch, icon ) => {
-        const model = !deciding && pick_with( patch )
+    // Later questions come later: photos is weighed with standard care, or a
+    // saved "answers freely" would make photos look impossible here
+    const option_for = ( key, patch, icon, assume = {} ) => {
+        const model = !deciding && pick_with( { ...assume, ...patch } )
         return {
             key,
             patch,
@@ -661,21 +664,21 @@ export default function ModelSelectPage() {
 
     const wizard = {
         photos: [
-            option_for( `photos_no`, { vision: false }, <ImageOff size={ 20 } /> ),
-            option_for( `photos_yes`, { vision: true }, <Image size={ 20 } /> ),
+            option_for( `photos_no`, { vision: false }, <ImageOff size={ 20 } />, { fewer_refusals: false } ),
+            option_for( `photos_yes`, { vision: true }, <Image size={ 20 } />, { fewer_refusals: false } ),
         ],
         topics: [
             option_for( `topics_careful`, { fewer_refusals: false }, <ShieldCheck size={ 20 } /> ),
             option_for( `topics_free`, { fewer_refusals: true }, <MessageCircleQuestion size={ 20 } /> ),
         ],
-        // Slow → fast, each with the model it would download here
-        speed: ( deciding ? [ `better`, `balanced`, `faster` ].map( priority => ( { priority } ) ) : mode_models ).map( ( { priority, model } ) => ( {
+        // Slow → fast, each with the model it would download here (TPN winners included)
+        speed: ( deciding ? SPEED_MODES : mode_models.map( ( { priority } ) => priority ) ).map( priority => ( {
             key: `speed_${ priority }`,
             patch: { priority },
             icon: <SpeedGauge mode={ priority } size={ 20 } />,
             title: t( `wizard_speed_${ priority }` ),
             body: t( `wizard_speed_${ priority }_body` ),
-            facts: model && facts_of( model ),
+            facts: !deciding && facts_of( pick_with( { priority } ) ),
             active: active_mode === priority,
         } ) ),
     }
