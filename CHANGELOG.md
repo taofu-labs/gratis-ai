@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.52.0] - 2026-10-28
+
+### Added
+- Model screen shows "Inspecting your device's capabilities…" while it measures what this browser can hold (fresh on every visit, 10 s at most)
+
+### Fixed
+- Memory measurement runs in a background worker, so slow page loads no longer cut it short and its test memory no longer lingers to block a later check
+
 ## [0.51.1] - 2026-10-28
 
 ### Fixed

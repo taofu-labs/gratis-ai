@@ -50,4 +50,5 @@ export const EVENTS = {
     settings_changed: `${ slug }:settings-changed`,
     models_changed:  `${ slug }:models-changed`,
     before_update_reload: `${ slug }:before-update-reload`,
+    device_measured: `${ slug }:device-measured`,
 }

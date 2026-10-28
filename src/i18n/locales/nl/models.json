@@ -201,5 +201,7 @@
     "wizard_speed_faster": "Snelste antwoorden",
     "wizard_speed_faster_body": "Vlot voor snelle vragen, met eenvoudigere antwoorden.",
     "wizard_summary_title": "Op basis van:",
-    "wizard_edit_aria": "Antwoord wijzigen: {{answer}}"
+    "wizard_edit_aria": "Antwoord wijzigen: {{answer}}",
+    "inspecting_device": "De mogelijkheden van je apparaat worden bekeken…",
+    "inspecting_device_hint": "Zodat de aanbeveling bij dit apparaat past. Dit duurt hooguit een paar seconden."
 }

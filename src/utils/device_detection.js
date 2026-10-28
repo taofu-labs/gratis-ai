@@ -195,39 +195,85 @@ export const WASM32_MODEL_CEILING_BYTES = 3_400_000_000
 export const BROWSER_AUTOMATIC_MODEL_CEILING_BYTES = 5_600_000_000
 
 /**
- * How much linear memory the browser actually grants a Memory64 runtime: grow a
- * throwaway memory 1 GB at a time up to the model ceiling. Pages are never
+ * Grow a throwaway Memory64 1 GB at a time up to `ceiling`. Pages are never
  * touched, so no RAM is used, but engine, address-space and OS commit limits
- * all surface as a failed grow. Milliseconds in Chrome and WebKit; measured once per tab.
- * @returns {number|null} Granted bytes, or null without Memory64 or when out of time
+ * all surface as a failed grow. Shared, like wllama64's own memory: a
+ * non-shared memory may move on grow, and WebKit copies the whole buffer each
+ * step (0.5 s+ per GB). Self-contained: it runs inside a worker from its source.
+ * @param {number} ceiling - Bytes to stop at
+ * @returns {number} Granted bytes
  */
-let cached_wasm_grant
+export const grow_wasm_memory = ceiling => {
 
-export const probe_wasm_memory_grant = () => {
-
-    if( cached_wasm_grant !== undefined ) return cached_wasm_grant
-    if( !detect_wasm_capabilities().memory64 ) return cached_wasm_grant = null
-
-    // Shared, like wllama64's own memory. A non-shared memory may move on grow:
-    // WebKit copies the whole buffer each step (0.5 s+ per GB), which froze
-    // Safari 27 on page load. The deadline guards engines that still copy.
     let granted = 0
-    const deadline = performance.now() + 500
     try {
         const memory = new WebAssembly.Memory( { address: `i64`, initial: 1n, maximum: 262_144n, shared: true } )
         const step = BigInt( Math.floor( 1_000_000_000 / 65_536 ) )
-        while( granted < MEMORY64_MODEL_CEILING_BYTES ) {
-
-            // Out of time is not a refusal: a slow or busy page load would read
-            // as a ~4 GB device. Unmeasured leaves the budget to the other signals
-            if( performance.now() >= deadline ) return cached_wasm_grant = null
-
+        while( granted < ceiling ) {
             memory.grow( step )
             granted = Number( memory.buffer.byteLength )
         }
     } catch { /* the first refused grow is the practical limit */ }
 
-    return cached_wasm_grant = granted
+    return granted
+
+}
+
+export const WASM_GRANT_TIMEOUT_MS = 10_000
+
+let cached_wasm_grant = null
+let grant_measurement = null
+
+/** The latest measured grant: bytes, or null when unmeasured or without Memory64 */
+export const probe_wasm_memory_grant = () => cached_wasm_grant
+
+/**
+ * How much linear memory the browser actually grants a Memory64 runtime,
+ * measured in a throwaway worker: the page (and its spinner) stays responsive,
+ * and terminating the worker frees the reservation at once, so the model
+ * runtime and later measurements never contend with a probe awaiting GC.
+ * Out of time is not a refusal: it resolves null, leaving the budget to the
+ * other signals rather than reading a slow device as a small one.
+ *
+ * @param {Object} [options]
+ * @param {number} [options.timeout_ms]
+ * @returns {Promise<number|null>}
+ */
+export const measure_wasm_memory_grant = ( { timeout_ms = WASM_GRANT_TIMEOUT_MS } = {} ) => {
+
+    const native = globalThis.window?.electronAPI?.native_inference
+    if( native || !detect_wasm_capabilities().memory64 || typeof Worker === `undefined` ) return Promise.resolve( null )
+
+    grant_measurement ??= new Promise( resolve => {
+
+        const source = `postMessage( ( ${ grow_wasm_memory } )( ${ MEMORY64_MODEL_CEILING_BYTES } ) )`
+        const url = URL.createObjectURL( new Blob( [ source ], { type: `text/javascript` } ) )
+        let worker = null
+
+        const finish = granted => {
+            clearTimeout( timer )
+            worker?.terminate()
+            URL.revokeObjectURL( url )
+            resolve( granted )
+        }
+        const timer = setTimeout( () => finish( null ), timeout_ms )
+
+        try {
+            worker = new Worker( url )
+            worker.onmessage = ( { data } ) => finish( data )
+            worker.onerror = () => finish( null )
+        } catch {
+            finish( null )
+        }
+
+    } ).then( granted => {
+        cached_wasm_grant = granted
+        grant_measurement = null
+        globalThis.window?.dispatchEvent( new CustomEvent( EVENTS.device_measured, { detail: { wasm_grant_bytes: granted } } ) )
+        return granted
+    } )
+
+    return grant_measurement
 
 }
 
@@ -304,7 +350,7 @@ const detect_capabilities_uncached = async () => {
     // Memory detection
     const device_memory = navigator.deviceMemory || null
     const js_heap_limit = performance?.memory?.jsHeapSizeLimit || null
-    const wasm_grant_bytes = probe_wasm_memory_grant()
+    const wasm_grant_bytes = await measure_wasm_memory_grant()
 
     // CPU info
     const cores = navigator.hardwareConcurrency || 4
@@ -342,6 +388,14 @@ const detect_capabilities_uncached = async () => {
 let capabilities_promise = null
 
 /**
+ * @param {DeviceCapabilities} capabilities
+ * @returns {DeviceCapabilities} With the latest measured WASM grant (browser only)
+ */
+export const with_latest_grant = capabilities => capabilities?.runtime === `browser`
+    ? { ...capabilities, memory: { ...capabilities.memory, wasm_grant_bytes: cached_wasm_grant } }
+    : capabilities
+
+/**
  * Detect capabilities once per tab. WebGPU adapters are one-device objects, so
  * sharing this promise also avoids redundant adapter requests across hooks.
  *
@@ -354,7 +408,8 @@ export const detect_capabilities = () => {
         throw error
     } )
 
-    return capabilities_promise
+    // The model screen re-measures the grant on each visit; hand out the latest
+    return capabilities_promise.then( with_latest_grant )
 }
 
 /** Reset shared detection state for isolated unit tests. */

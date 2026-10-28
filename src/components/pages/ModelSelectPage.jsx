@@ -345,6 +345,31 @@ const Spinner = styled( LoaderCircle )`
     @keyframes spin { to { transform: rotate( 360deg ); } }
 `
 
+// Shown while the device check runs; fades in late so a quick check never flickers
+const Inspecting = styled.div`
+    display: flex;
+    align-items: flex-start;
+    gap: ${ ( { theme } ) => theme.spacing.md };
+    padding: ${ ( { theme } ) => theme.spacing.lg };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border };
+    border-radius: ${ ( { theme } ) => theme.border_radius.lg };
+    background: ${ ( { theme } ) => theme.colors.surface };
+    color: ${ ( { theme } ) => theme.colors.text };
+    font-size: 0.95rem;
+    animation: inspecting-in 0.2s ease-out 0.3s both;
+    @keyframes inspecting-in { from { opacity: 0; } to { opacity: 1; } }
+
+    svg { flex-shrink: 0; margin-top: 0.1rem; color: ${ ( { theme } ) => theme.colors.text_secondary }; }
+    @media ( prefers-reduced-motion: reduce ) { animation-duration: 0s; svg { animation: none; } }
+`
+
+const InspectingHint = styled.span`
+    display: block;
+    margin-top: ${ ( { theme } ) => theme.spacing.xs };
+    font-size: 0.85rem;
+    color: ${ ( { theme } ) => theme.colors.text_secondary };
+`
+
 // Step progress indicator
 const StepIndicator = styled.div`
     display: flex;
@@ -447,7 +472,7 @@ export default function ModelSelectPage() {
     }, [] )
 
     // Device memory budget and cached model detection
-    const { capabilities, max_model_bytes, is_detecting } = use_device_capabilities()
+    const { capabilities, max_model_bytes, is_detecting, is_inspecting } = use_device_capabilities( { inspect: true } )
     const { cached_models, delete_model } = use_model_manager()
     const [ confirming_delete, set_confirming_delete ] = useState( null )
     const [ tpn_models, set_tpn_models ] = useState( [] )
@@ -501,7 +526,7 @@ export default function ModelSelectPage() {
     const active_mode = mode_models.find( ( { model } ) => model.id === picks.pick?.id )?.priority ?? preferences.priority
 
     // Hold the recommendation back until discovery settles, so winners don't pop in over it
-    const deciding = tpn_loading || is_detecting || !capabilities
+    const deciding = tpn_loading || is_detecting || is_inspecting || !capabilities
 
     const catalog_rows = useMemo( () => describe_models( MODEL_CATALOG.filter( m => !m.hidden ), device ), [ device ] )
     const retired_rows = useMemo( () => describe_models( MODEL_CATALOG.filter( m => m.hidden ), device ), [ device ] )
@@ -891,8 +916,19 @@ export default function ModelSelectPage() {
                 </ModelList>
             </Section> }
 
+            { /* ── Measuring what this browser grants: answers below depend on it ── */ }
+            { is_inspecting && <Section>
+                <Inspecting data-testid="inspecting-device" role="status">
+                    <Spinner size={ 18 } aria-hidden="true" />
+                    <span>
+                        <strong>{ t( 'inspecting_device' ) }</strong>
+                        <InspectingHint>{ t( 'inspecting_device_hint' ) }</InspectingHint>
+                    </span>
+                </Inspecting>
+            </Section> }
+
             { /* ── The wizard: one plain question at a time ── */ }
-            { question !== null && question < questions.length && <Section>
+            { !is_inspecting && question !== null && question < questions.length && <Section>
                 <WizardQuestion
                     id={ questions[ question ] }
                     index={ question }
@@ -906,7 +942,7 @@ export default function ModelSelectPage() {
                 />
             </Section> }
 
-            { question === null && <>
+            { !is_inspecting && question === null && <>
 
                 { /* ── Low free RAM warning (Electron only) ── */ }
                 { low_memory && <LowMemoryWarning>

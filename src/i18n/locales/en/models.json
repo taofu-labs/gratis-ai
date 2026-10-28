@@ -201,5 +201,7 @@
     "wizard_speed_faster": "Quickest replies",
     "wizard_speed_faster_body": "Snappy for quick questions, with simpler answers.",
     "wizard_summary_title": "Based on:",
-    "wizard_edit_aria": "Change answer: {{answer}}"
+    "wizard_edit_aria": "Change answer: {{answer}}",
+    "inspecting_device": "Inspecting your device's capabilities…",
+    "inspecting_device_hint": "So the recommendation fits this device. This takes a few seconds at most."
 }

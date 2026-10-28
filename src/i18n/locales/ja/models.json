@@ -201,5 +201,7 @@
     "wizard_speed_faster": "いちばん速い返答",
     "wizard_speed_faster_body": "簡単な質問にサクサク答えます。回答はシンプルです。",
     "wizard_summary_title": "選択内容：",
-    "wizard_edit_aria": "回答を変更：{{answer}}"
+    "wizard_edit_aria": "回答を変更：{{answer}}",
+    "inspecting_device": "デバイスの性能を確認しています…",
+    "inspecting_device_hint": "このデバイスに合ったモデルをおすすめするためです。数秒で終わります。"
 }

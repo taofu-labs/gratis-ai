@@ -201,5 +201,7 @@
     "wizard_speed_faster": "Respostas mais rápidas",
     "wizard_speed_faster_body": "Ágil para perguntas rápidas, com respostas mais simples.",
     "wizard_summary_title": "Com base em:",
-    "wizard_edit_aria": "Alterar resposta: {{answer}}"
+    "wizard_edit_aria": "Alterar resposta: {{answer}}",
+    "inspecting_device": "A analisar as capacidades do seu dispositivo…",
+    "inspecting_device_hint": "Para que a recomendação se adapte a este dispositivo. Demora no máximo alguns segundos."
 }

@@ -201,5 +201,7 @@
     "wizard_speed_faster": "Самые быстрые ответы",
     "wizard_speed_faster_body": "Мгновенно отвечает на простые вопросы, но ответы проще.",
     "wizard_summary_title": "На основе:",
-    "wizard_edit_aria": "Изменить ответ: {{answer}}"
+    "wizard_edit_aria": "Изменить ответ: {{answer}}",
+    "inspecting_device": "Проверяем возможности вашего устройства…",
+    "inspecting_device_hint": "Чтобы рекомендация подошла этому устройству. Это займёт не больше нескольких секунд."
 }

@@ -201,5 +201,7 @@
     "wizard_speed_faster": "Réponses les plus rapides",
     "wizard_speed_faster_body": "Vif pour les questions rapides, avec des réponses plus simples.",
     "wizard_summary_title": "D’après :",
-    "wizard_edit_aria": "Modifier la réponse : {{answer}}"
+    "wizard_edit_aria": "Modifier la réponse : {{answer}}",
+    "inspecting_device": "Analyse des capacités de votre appareil…",
+    "inspecting_device_hint": "Pour que la recommandation convienne à cet appareil. Cela prend quelques secondes au plus."
 }

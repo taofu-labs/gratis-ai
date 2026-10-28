@@ -201,5 +201,7 @@
     "wizard_speed_faster": "最快的回复",
     "wizard_speed_faster_body": "快速提问时反应敏捷，回答更简单。",
     "wizard_summary_title": "依据：",
-    "wizard_edit_aria": "更改答案：{{answer}}"
+    "wizard_edit_aria": "更改答案：{{answer}}",
+    "inspecting_device": "正在检测你的设备性能…",
+    "inspecting_device_hint": "以便推荐适合此设备的模型。最多只需几秒钟。"
 }
