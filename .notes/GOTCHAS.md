@@ -510,3 +510,4 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Wizard answers persist in `model_wizard_answers` (vision, fewer_refusals) + `speed_mode`. Stored answers or `?need=vision` → page opens on the recommendation. e2e: `skip_model_wizard()` helper, or seed the key in an init script (ux_improvements does)
 - Phone Chrome speed probe is noisy: ratio 0.40 (2026-10-28 am) vs 1.20 (pm) on the same OnePlus → wizard/hero speeds on phone Chrome can read ~3× optimistic until a real reply recalibrates
 - Release APK sideloaded on the OnePlus: `./gradlew assembleRelease` (upload key from .secrets) installs over it with `adb install -r` (keeps models); its WebView isn't debuggable → drive with screencap + `input tap` (screenshot px × 1.2 = device px)
+- `scripts/play_internal.js` needs `jarsigner` on PATH: `PATH=$PWD/vendor/android/jdk/bin:$PATH node scripts/play_internal.js <aab>`

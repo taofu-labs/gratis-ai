@@ -594,3 +594,4 @@
 - 2026-10-28 — Catalog: LFM2.5 1.2B (Q4/Q6) + Gemma 4 E2B/E4B TPN builds added; MiniCPM5 1B hidden. Phones/iPhone default to LFM2.5, Windows laptop smarter/vision → Gemma E2B. KLD discount halved (`KLD_QUALITY_WEIGHT` 0.5) after evals showed Gemma loses far less than its KLD. Phone (Android) measured: native 12-16× Chrome
 - 2026-10-28 — LFM licence accepted by human (keep lfm25 rows); phone adb back on :42395
 - 2026-10-28 — v0.51.0: guided model wizard replaces speed segments + switches; MEMORY_LENIENCY 1.2 on soft memory shares (human: "prefer better models over ~20% lower memory"); PWA update reaches first visits + preloadError recovery
+- 2026-10-28 — 0.51.0 deployed: web (gratis.trueperformancenetwork.com, verified), Electron v0.51.0 release, Play internal 5100, TestFlight 5100
