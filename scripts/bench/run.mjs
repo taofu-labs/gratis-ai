@@ -8,6 +8,9 @@
  *        BENCH_WASM_DIR   (default public/wasm)
  *        BENCH_CONFIGS    (JSON { label: load_options }, overrides defaults)
  *        BENCH_MAX_TOKENS, BENCH_PROMPT_REPS
+ *        BENCH_LOG           print native log lines matching this regex (e.g. `webgpu|offload`)
+ *        BENCH_BROWSER_ARGS  extra Chromium flags, space-separated (e.g. WebGPU on Linux:
+ *                            `--enable-unsafe-webgpu --enable-features=Vulkan --use-angle=vulkan`)
  * Needs a display for headful Chromium: wrap in `xvfb-run -a` on Linux.
  */
 import { spawn } from 'node:child_process'
@@ -54,13 +57,17 @@ const run_cell = async ( model, load_options ) => {
         headless: false,
         // Sandboxed locally; Ubuntu 24.04 CI runners block its user namespaces
         chromiumSandbox: !process.env.CI,
-        args: [ `--unlimited-storage` ],
+        args: [ `--unlimited-storage`, ...( process.env.BENCH_BROWSER_ARGS || `` ).split( ` ` ).filter( Boolean ) ],
     } )
 
     try {
         const page = await browser.newPage()
         const console_tail = []
-        page.on( `console`, message => console_tail.push( message.text() ) && console_tail.length > 15 && console_tail.shift() )
+        const log_filter = process.env.BENCH_LOG && new RegExp( process.env.BENCH_LOG, `i` )
+        page.on( `console`, message => {
+            if( log_filter?.test( message.text() ) ) console.log( `[native] ${ message.text() }` )
+            console_tail.push( message.text() ) && console_tail.length > 15 && console_tail.shift()
+        } )
         const cfg = encodeURIComponent( JSON.stringify( load_options ) )
         await page.goto( `http://localhost:${ port }/?model=${ model }&cfg=${ cfg }&${ query_tail }` )
         await page.waitForFunction( () => window.__result, null, { timeout: 900_000 } )
@@ -103,6 +110,7 @@ for( let round = 0; round < Number( rounds ); round++ ) {
             samples[ key ].tg.push( timings?.predicted_per_second )
             samples[ key ].load.push( result.load_ms / 1000 )
             console.log( `[bench] round ${ round + 1 } ${ key }: pp ${ timings?.prompt_per_second?.toFixed( 1 ) } tg ${ timings?.predicted_per_second?.toFixed( 1 ) }` )
+            console.log( `[bench]   reply: ${ JSON.stringify( result.runs[ 0 ].text ) }` )
 
         }
     }

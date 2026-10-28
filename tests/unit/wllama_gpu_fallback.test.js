@@ -163,6 +163,15 @@ describe( `Wllama WebGPU fallback`, () => {
         expect( provider.is_ready() ).toBe( true )
     } )
 
+    test( `prefills with twice the decode threads, never more than the cores`, async () => {
+        vi.stubGlobal( `navigator`, { ...navigator, hardwareConcurrency: 8 } )
+        const provider = new WllamaProvider()
+        await provider.load_model( `smollm2-360m-q4km` )
+
+        const { n_threads, n_threads_batch } = mocks.instances[ 0 ].load_options
+        expect( [ n_threads, n_threads_batch ] ).toEqual( [ 4, 8 ] )
+    } )
+
     test( `loads on CPU on mobile GPUs whose WebGPU kernels produce garbage`, async () => {
         mocks.adapter_info = { vendor: `qualcomm`, architecture: `adreno-8xx` }
 

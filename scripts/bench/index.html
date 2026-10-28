@@ -44,6 +44,7 @@
 
             let timings = null
             let first_token_at = null
+            let text = ``
             const started = performance.now()
 
             const stream = await wllama.createChatCompletion( {
@@ -56,11 +57,14 @@
             } )
 
             for await ( const chunk of stream ) {
-                if( chunk.choices?.[ 0 ]?.delta?.content && first_token_at === null ) first_token_at = performance.now()
+                const delta = chunk.choices?.[ 0 ]?.delta?.content
+                if( delta && first_token_at === null ) first_token_at = performance.now()
+                if( delta ) text += delta
                 if( chunk.timings ) timings = chunk.timings
             }
 
-            runs.push( { wall_ms: performance.now() - started, ttft_ms: first_token_at - started, timings } )
+            // The reply itself: GPU paths can be fast and wrong
+            runs.push( { wall_ms: performance.now() - started, ttft_ms: first_token_at - started, timings, text: text.slice( 0, 240 ) } )
 
         }
 
@@ -69,6 +73,7 @@
             multithread: wllama.isMultithread?.(),
             compat: wllama.getWorkerResources?.()?.compat,
             hardware_concurrency: navigator.hardwareConcurrency,
+            webgpu_adapter: await navigator.gpu?.requestAdapter().then( adapter => adapter && `${ adapter.info?.vendor } ${ adapter.info?.architecture } ${ adapter.info?.description }`.trim() ).catch( () => null ),
         }
 
         await wllama.exit()

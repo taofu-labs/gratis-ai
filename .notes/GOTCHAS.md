@@ -484,7 +484,7 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 
 - Warm-up and real request must build messages via `build_turns` (`utils/chat_turns.js`); any drift = cache miss. Draft goes through the same merge as the sent message.
 - `WllamaProvider.prefill` settle = `Promise.all([previous_request, run])`. Plain `run` lets a reply overtake a still-running earlier warm when a queued one is cancelled (unit test covers it).
-- Never warm after Stop/error (re-reads the stopped prompt), on image drafts (history image budget shifts the prefix), or on mere chat open (llama-server RAM prompt cache, 8 GiB default, not capped from JS → wllama64#12).
+- Never warm after Stop/error (re-reads the stopped prompt), on image drafts (history image budget shifts the prefix), or on mere chat open (was the 8 GiB RAM prompt cache, wllama64#12; capped at 256 MiB since wllama64 1.2.0).
 - `n_cache_reuse` deliberately off: shifted KV was computed attending to the removed reasoning.
 - Hybrid (Qwen 3.5): each draft warm rolls back to the checkpoint at the last user-turn start; still ends ~4 new tokens. Expected, not a bug.
 - `max_tokens: 0` is not "read only": llama-server still samples ≥1 token. Use 1.
@@ -500,7 +500,7 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Picker before vs after the speed probe can differ: unprobed browsers use the bandwidth model (Windows laptop: E2B ~3.6 tok/s → balanced = E2B); after the probe, browser_tps × ratio (~1.2 on the i3 ref) → balanced falls back to LFM. Pinned matrix = unprobed
 
 ## Phone wireless adb port moves
-- Re-enabling Wireless debugging picks a new random port (5555 → refused). Find it with a quick TCP scan of 30000–50000 on 192.168.2.114, then `adb connect ip:port` (2026-10-28: 42395). mDNS discovery returns nothing in the container
+- Re-enabling Wireless debugging picks a new random port (5555 → refused). Find it with a quick TCP scan of 30000–50000 on 192.168.2.114, then `adb connect ip:port` (2026-10-28: 42395, later 39669). mDNS discovery returns nothing in the container
 
 ## PWA updates: verify with two real builds (2026-10-28)
 - `vite preview` precomputes its file list → can't swap builds under it. Verify updates with a tiny node static server that switches root dist_a → dist_b (COOP/COEP headers, 404 for missing `/assets/*`), then `registration.update()`. Script: scratchpad `zz_pwa_update.mjs` (session-only); rebuild B with a bumped `package.json` version (index.html revision carries it)
@@ -512,3 +512,14 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Phone Chrome speed probe is noisy: ratio 0.40 (2026-10-28 am) vs 1.20 (pm) on the same OnePlus → wizard/hero speeds on phone Chrome can read ~3× optimistic until a real reply recalibrates
 - Release APK sideloaded on the OnePlus: `./gradlew assembleRelease` (upload key from .secrets) installs over it with `adb install -r` (keeps models); its WebView isn't debuggable → drive with screencap + `input tap` (screenshot px × 1.2 = device px)
 - `scripts/play_internal.js` needs `jarsigner` on PATH: `PATH=$PWD/vendor/android/jdk/bin:$PATH node scripts/play_internal.js <aab>`
+
+## WebGPU on RunPod (NVIDIA, Linux Chrome) (2026-10-28)
+- Recipe (scratchpad runpod/webgpu/pod.sh + runner.py): `nvidia/cuda:*-base` image, env `NVIDIA_DRIVER_CAPABILITIES=all`, apt `libegl1 libgl1 libglvnd0 libvulkan1 xvfb` (without glvnd's libEGL the NVIDIA Vulkan ICD fails `vkCreateInstance`), Playwright Chromium headful under xvfb, `XDG_RUNTIME_DIR=/tmp`.
+- Flags: `--enable-unsafe-webgpu --enable-features=Vulkan --use-angle=vulkan --ignore-gpu-blocklist --enable-dawn-features=vulkan_enable_f16_on_nvidia`. Dawn hides `shader-f16` on NVIDIA drivers < 615.71 unless that toggle is on; llama.cpp's WebGPU backend registers 0 devices without shader-f16 → silent all-CPU load (every "buffer size" log says CPU). `about:blank` has no navigator.gpu (not a secure context): test on localhost.
+- Bench: `scripts/bench/run.mjs` with BENCH_BROWSER_ARGS, BENCH_LOG, BENCH_CONFIGS (`n_gpu_layers: 99999` vs `0`). wllama64 1.1.1 on a 4090: decode 3–5× CPU, prefill 15–35×, replies coherent.
+- wllama64 1.2.0 on the same 4090: GPU decode on par/slightly up (LFM 75, E2B 47, Granite 51 tok/s), replies coherent. CPU `n_threads_batch` = 2× n_threads (8→16): prefill +45–65%, decode flat → app sets `n_threads_batch = min(hw, 2 × n_threads)`. Pool = n_threads + n_threads_batch workers when they differ.
+
+## wllama64 1.2.0 (2026-10-28)
+- `cache_ram_mib` defaults to 256 (llama.cpp's 8192 could exhaust the heap; was wllama64#12). Warming on mere chat open is no longer RAM-blocked, only not yet done.
+- Firefox: wllama defaults `n_gpu_layers: 0`, but the app always passes `n_gpu_layers` explicitly, so `webgpu_offload_trusted` returns false for Firefox itself.
+- `@wllama/wllama-compat` is wasm only; JS glue comes from wllama64 (`compatVersion` in its package.json pins the matching compat, 3.8.1 for 1.2.0).

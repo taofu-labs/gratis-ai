@@ -88,6 +88,9 @@ export const webgpu_offload_trusted = (
     if( /qualcomm|adreno|\barm\b|mali|img-tec|imagination|powervr|samsung|xclipse/.test( identity ) ) return false
     if( /android|iphone|ipad|ipod/i.test( user_agent ) ) return false
 
+    // Firefox's WebGPU runs llama.cpp much slower than its CPU (wllama64 1.2.0 measured)
+    if( /firefox\//i.test( user_agent ) ) return false
+
     // iPadOS Safari asks for desktop sites with a Macintosh UA; Macs have no touch screen
     if( /macintosh/i.test( user_agent ) && max_touch_points > 1 ) return false
 

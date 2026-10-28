@@ -215,6 +215,9 @@ describe( `WebGPU memory probing`, () => {
         // iPadOS requests desktop sites with a Macintosh UA; only touch support gives it away
         expect( webgpu_offload_trusted( { vendor: `apple` }, desktop, 5 ) ).toBe( false )
 
+        // Firefox: WebGPU slower than its CPU
+        expect( webgpu_offload_trusted( { vendor: `nvidia` }, `Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0` ) ).toBe( false )
+
         // Desktop GPUs keep offload, including masked adapters
         expect( webgpu_offload_trusted( { vendor: `nvidia` }, desktop ) ).toBe( true )
         expect( webgpu_offload_trusted( { vendor: `apple`, architecture: `metal-3` }, desktop ) ).toBe( true )

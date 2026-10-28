@@ -306,6 +306,10 @@ export default class WllamaProvider {
         // otherwise create a wasteful pthread pool in desktop-class browsers.
         const hardware_threads = navigator.hardwareConcurrency || 1
         const n_threads = Math.min( 8, Math.max( 1, Math.floor( hardware_threads / 2 ) ) )
+
+        // Prefill is short and compute-bound: twice the decode threads lifts it
+        // 45–65% (RunPod bench, wllama64 1.2.0) while decode stays memory-bound.
+        const n_threads_batch = Math.min( hardware_threads, n_threads * 2 )
         const model_size = cached.file_size_bytes || model.file_size_bytes || 0
 
         // Near-ceiling models need compute-graph headroom more than prompt
@@ -322,6 +326,7 @@ export default class WllamaProvider {
             n_ctx,
             n_batch,
             n_threads,
+            n_threads_batch,
             n_parallel: 1,
 
             cache_type_k: `f16`,

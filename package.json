@@ -1,6 +1,6 @@
 {
     "name": "gratisai",
-    "version": "0.52.0",
+    "version": "0.53.0",
     "description": "Privacy-first, offline-capable local LLM chat application",
     "repository": {
         "type": "git",
@@ -57,7 +57,7 @@
         "unpdf": "^1.9.1",
         "use-query-params": "^2.2.2",
         "uuid": "^14.0.3",
-        "wllama64": "1.1.1",
+        "wllama64": "1.2.0",
         "zustand": "^5.0.15"
     },
     "devDependencies": {
