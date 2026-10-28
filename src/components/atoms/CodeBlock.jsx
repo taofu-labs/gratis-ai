@@ -50,8 +50,12 @@ const Pre = styled.pre`
     overflow-x: auto;
     background: none;
 
-    /* Prose small models fence off: wrap it, phones can't side-scroll a paragraph */
-    ${ ( { $wrap } ) => $wrap && `white-space: pre-wrap; overflow-wrap: anywhere;` }
+    /* Prose fenced as text/markdown wraps; unlabelled fences only on phones, which
+       can't side-scroll a paragraph (wider screens keep diagrams and output aligned) */
+    ${ ( { $wrap } ) => $wrap === `always` && `white-space: pre-wrap; overflow-wrap: anywhere;` }
+    @media ( max-width: 30rem ) {
+        ${ ( { $wrap } ) => $wrap === `phone` && `white-space: pre-wrap; overflow-wrap: anywhere;` }
+    }
 
     code {
         background: none;
@@ -66,8 +70,11 @@ const Pre = styled.pre`
     }
 `
 
-// Fences without a real language are usually prose, not code
-const PROSE_LANGUAGES = [ null, `text`, `txt`, `plaintext`, `markdown`, `md` ]
+// Fences labelled as prose; an unlabelled fence may be prose or code
+const PROSE_LANGUAGES = [ `text`, `txt`, `plaintext`, `markdown`, `md` ]
+
+/** @returns {'always'|'phone'|null} When this fence's lines wrap */
+const wrap_for = language => PROSE_LANGUAGES.includes( language ) ? `always` : language ? null : `phone`
 
 /**
  * Pick the language from rehype-highlight's `language-xxx` class
@@ -112,7 +119,7 @@ export default function CodeBlock( { children, node: _node, ...props } ) {
             </CopyButton>
         </Header>
 
-        <Pre ref={ pre_ref } $wrap={ PROSE_LANGUAGES.includes( language ) } { ...props }>
+        <Pre ref={ pre_ref } $wrap={ wrap_for( language ) } { ...props }>
             { children }
         </Pre>
 

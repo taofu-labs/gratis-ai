@@ -51,11 +51,15 @@ const median = values => [ ...values ].sort( ( a, b ) => a - b )[ Math.floor( va
 const cell = async query => {
     const page = await browser.newPage()
     const base = process.env.BENCH_MODEL_BASE ? { base: process.env.BENCH_MODEL_BASE } : {}
-    await page.goto( `http://localhost:${ port }/speed_table.html?${ new URLSearchParams( { ...query, ...base } ) }` )
-    await page.waitForFunction( () => window.__result, null, { timeout: 1_800_000, polling: 1000 } )
-    const result = await page.evaluate( () => window.__result )
-    await page.close()
-    return result
+
+    // Always close: a remote browser (a phone) keeps a failed cell's model loaded otherwise
+    try {
+        await page.goto( `http://localhost:${ port }/speed_table.html?${ new URLSearchParams( { ...query, ...base } ) }` )
+        await page.waitForFunction( () => window.__result, null, { timeout: 1_800_000, polling: 1000 } )
+        return await page.evaluate( () => window.__result )
+    } finally {
+        await page.close().catch( () => {} )
+    }
 }
 
 const measure = async ( label, query ) => {

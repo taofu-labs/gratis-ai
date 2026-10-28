@@ -2238,6 +2238,9 @@ const TPN_BUILDS = [
         // Phone-anchored: Unsloth's Q4_K_M ran 0.75× Qwen3.5 2B Q4_K_M in Chrome on Android
         browser_tps: 1.2,
         kld: 0.1518,
+        // Template quality is an Unsloth Q4_K_M eval: the KLD discount would count the loss twice
+        quality: 77,
+        gratis_eval: { score: 77.4, build: `tpnlabs Q4_K_M`, date: `2026-10-28` },
         report: `https://bench.trueperformancenetwork.com/r/JVnVN-u7fd6DAXk20VYwyA`,
         // Projector: the template's ggml-org Q8_0 (0.56 GB) over TPN's F16 (0.99 GB)
     },
@@ -2253,6 +2256,9 @@ const TPN_BUILDS = [
         // Provisional: 1.14× Qwen3.5 4B Q4_K_M in native CPU decode (RunPod EPYC); no clean browser run yet
         browser_tps: 1.1,
         kld: 0.0714,
+        // Template quality is an Unsloth Q4_K_M eval: the KLD discount would count the loss twice
+        quality: 79,
+        gratis_eval: { score: 79.4, build: `tpnlabs Q4_K_M`, date: `2026-10-27` },
         report: `https://bench.trueperformancenetwork.com/r/qa-keidreGuyRCaMtLB3Pw`,
         // Projector: the template's ggml-org Q8_0 (0.56 GB) over TPN's F16 (0.99 GB)
     },
@@ -2350,7 +2356,7 @@ const tpn_model = ( { from, kld, report, ...files } ) => {
         ...base,
         ...files,
         bpw,
-        tpn: { kld, report },
+        tpn: { kld, report, evaluated: !!files.gratis_eval },
 
         // A shipped projector means image input, even for bases listed text-only
         vision: base.vision || !!files.mmproj,
@@ -2539,8 +2545,9 @@ export const quality_score = ( model ) => {
     // Curated index wins: vendor benchmark sets no longer overlap across families.
     // TPN builds are discounted by their measured KLD, a ranking heuristic that keeps
     // a closer build of the same model ahead; an unmeasured build is never assumed lossless
+    // A build scored by the chat eval itself (`gratis_eval` on its TPN row) needs no estimate
     if( model.quality != null ) {
-        const kld = model.tpn ? model.tpn.kld ?? UNMEASURED_KLD : 0
+        const kld = model.tpn && !model.tpn.evaluated ? model.tpn.kld ?? UNMEASURED_KLD : 0
         return model.quality * ( 1 - KLD_QUALITY_WEIGHT * kld )
     }
     if( !model.benchmarks ) return 0

@@ -192,7 +192,7 @@ describe( `picker personas`, () => {
         expect( matrix ).toEqual( {
             cheap_android: [ `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q6k`, `qwen35-0.8b-tpn-q5km` ],
             iphone: [ `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q6k`, `qwen35-0.8b-tpn-q5km` ],
-            windows_laptop: [ `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q4km`, `gemma4-e2b-tpn-q4km`, `gemma4-e2b-tpn-q4km` ],
+            windows_laptop: [ `lfm25-1.2b-tpn-q4km`, `gemma4-e2b-tpn-q4km`, `gemma4-e2b-tpn-q4km`, `gemma4-e2b-tpn-q4km` ],
             macbook_desktop: [ `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs` ],
         } )
     } )
@@ -207,6 +207,10 @@ describe( `picker personas`, () => {
         expect( pick.id ).toBe( `smart` )
         expect( speed ).toBeGreaterThanOrEqual( 1.5 )
         expect( speed_band( speed ) ).toBe( `slow` )
+
+        // The real catalog's balanced pick on this laptop holds the same floor
+        const laptop = profile_for( `windows_laptop` )
+        expect( estimate_reply_speed( select_for_preferences( MODEL_CATALOG, laptop ).pick, laptop ) ).toBeGreaterThanOrEqual( 1.5 )
     } )
 
     test( `a near-miss that outscores a qualifying step-up does not hide it`, () => {

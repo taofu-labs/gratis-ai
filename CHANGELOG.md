@@ -3,7 +3,7 @@
 ## [0.50.0] - 2026-10-28
 
 ### Added
-- New default small model: LFM2.5 1.2B, smarter than Qwen3.5 0.8B/2B and MiniCPM5 1B on our chat eval and as fast; phones and laptops start with it
+- New default small model: LFM2.5 1.2B, smarter than Qwen3.5 0.8B/2B and MiniCPM5 1B on our chat eval, about as fast as Qwen3.5 0.8B; phones and laptops start with it
 - Gemma 4 E2B and E4B (TPN-measured builds, image input): the smarter pick on laptops
 
 ### Changed
@@ -12,7 +12,7 @@
 
 ### Fixed
 - Phones: typing no longer wraps every ~2 words; the composer's buttons move below the text
-- Phones: prose fenced as plain code blocks wraps instead of running off-screen; replies use the full width
+- Phones: prose fenced as plain code blocks wraps instead of running off-screen (text/markdown fences everywhere); replies use the full width
 
 ## [0.49.0] - 2026-10-26
 
