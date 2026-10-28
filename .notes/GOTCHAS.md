@@ -496,3 +496,4 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Code fences without a language (or text/md) wrap: small models fence prose. Replies use the full column on phones (only user bubbles cap at 85%)
 - Chat page needs a loaded model to show messages: in dev, seed IndexedDB then `setState` the llm_store module at its exact `?t=` URL (performance entries), else Vite gives a second instance
 - Playwright on Linux adds --no-sandbox unless `chromiumSandbox: true`; repo convention `chromiumSandbox: !process.env.CI` (container forbids --no-sandbox)
+- Picker before vs after the speed probe can differ: unprobed browsers use the bandwidth model (Windows laptop: E2B ~3.6 tok/s → balanced = E2B); after the probe, browser_tps × ratio (~1.2 on the i3 ref) → balanced falls back to LFM. Pinned matrix = unprobed

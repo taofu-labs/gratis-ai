@@ -2228,6 +2228,22 @@ const TPN_BUILDS = [
     },
 
     {
+        from: `granite42-3b-q4km`,
+        id: `granite42-3b-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/granite-4.2-3b-TPN-GGUF`,
+        file_name: `granite-4.2-3b-Q4_K_M.gguf`,
+        file_size_bytes: 2_244_011_680,
+        quantization: `Q4_K_M`,
+        // Phone-anchored: 0.58× Qwen3.5 2B Q4_K_M in Chrome on Android
+        browser_tps: 0.9,
+        kld: 0.0551,
+        report: `https://bench.trueperformancenetwork.com/r/_xkA5jgS8wRQ523Epzbirg`,
+        // Template quality is IBM's own Q4_K_M eval: the KLD discount would count the loss twice
+        quality: 73,
+        gratis_eval: { score: 72.7, build: `tpnlabs Q4_K_M`, date: `2026-10-28` },
+    },
+
+    {
         from: `gemma4-e2b-q4km`,
         id: `gemma4-e2b-tpn-q4km`,
         hugging_face_repo: `tpnlabs/gemma-4-E2B-it-TPN-GGUF`,
@@ -2253,8 +2269,9 @@ const TPN_BUILDS = [
         // TPN keeps the per-layer embedding tables wider than Unsloth (5.34 vs 4.98 GB); they aren't read per token
         file_size_bytes: 5_335_292_160,
         quantization: `Q4_K_M`,
-        // Provisional: 1.14× Qwen3.5 4B Q4_K_M in native CPU decode (RunPod EPYC); no clean browser run yet
-        browser_tps: 1.1,
+        // Provisional: 0.95× Qwen3.5 4B Q4_K_M in native decode on an Android phone (Chrome's tab
+        // ran out of memory there); no clean browser run yet
+        browser_tps: 0.9,
         kld: 0.0714,
         // Template quality is an Unsloth Q4_K_M eval: the KLD discount would count the loss twice
         quality: 79,

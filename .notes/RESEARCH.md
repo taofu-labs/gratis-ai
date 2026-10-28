@@ -389,3 +389,4 @@ tok/s decode. Native = app's libllama-server.so, 2 threads, big cores; web = Chr
 - Web on phone looks compute-bound for ~1B models (LFM Q4≈Q6); one scalar speed_ratio overestimates big-vocab small models (Qwen 0.8B ~2×). Self-corrects after first reply
 - MiniCPM + Qwen 2B reproduce ref → used as anchors: LFM browser_tps 3.1 / 2.6
 - iPhone X native (MiniCPM 1B) ~10-11.6 ≈ 0.5× this phone native
+- Round 2 (same phone): native Qwen 4B Q4 4.24, E4B Q4 (unsloth 4.98 GB) 4.0, Qwen 2B 9.0; Chrome Qwen 4B 0.31 vs 2B 0.70 (ratio 0.44 → ref-scaled ~0.7 vs catalog 1.0). E4B in Chrome: tab killed (OOM) on 7.5 GB phone

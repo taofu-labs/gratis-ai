@@ -87,3 +87,5 @@ Pipeline (scratchpad/tpn): `fetch.sh <name> <variants>` (sha256-checked) → rep
 - Published tpnlabs/LFM2.5-1.2B-Instruct-TPN-GGUF (Q4_K_M/Q5_K_M/Q6_K + upstream LICENSE). Gratis eval of exact files: 61.8/65.8/65.0 (unsloth same quants 65.6/–/69.4; greedy outputs identical → judge/sampling noise ≈ ±4)
 - Gemma 4 E4B settled $10.40 (c0396fa2). Reference OK this time (Q8_0 KLD 0.003). TPN Q4_K_M 5.34 GB (unsloth 4.98) KLD 0.071, Q5_K_M 0.024, Q6_K 0.016; Q3_K_M 0.53 broken. mmproj F16 in BF16 variant
 - Gemma 4 E2B settled $57.49 (b089ce63). No rung fit 2.6 GB (Q2_K 2.99). TPN Q4_K_M 3.43 GB (unsloth 3.11) KLD 0.152, Q5_K_M 0.058, Q6_K 0.030; Q3_K_M 0.53 / Q2_K 1.03 broken. Eval 77.4/78.7/78.9. Share https://bench.trueperformancenetwork.com/r/JVnVN-u7fd6DAXk20VYwyA. Published tpnlabs/gemma-4-E2B-it-TPN-GGUF (+ unsloth mmproj F16)
+- Granite 4.2 3B settled $26.36 (a8d4c371). TPN rec Q4_K_M 2.24 GB KLD 0.055 (Q5_K_M 0.024, Q6_K 0.016, IQ4_XS 0.063). Eval 72.7/74.5/74.9 (ibm Q4 75.7). Share https://bench.trueperformancenetwork.com/r/_xkA5jgS8wRQ523Epzbirg → tpnlabs/granite-4.2-3b-TPN-GGUF
+- Round 4 total: LFM $8.97 + E4B $10.40 + E2B $57.49 + Granite $26.36 = $103.22

@@ -5,6 +5,7 @@
 ### Added
 - New default small model: LFM2.5 1.2B, smarter than Qwen3.5 0.8B/2B and MiniCPM5 1B on our chat eval, about as fast as Qwen3.5 0.8B; phones and laptops start with it
 - Gemma 4 E2B and E4B (TPN-measured builds, image input): the smarter pick on laptops
+- Granite 4.2 3B (TPN-measured build) in the model list
 
 ### Changed
 - Model quality now comes from our own chat eval of quantized builds (`scripts/model_eval`); MiniCPM5 1B retired (installed copies still load)
