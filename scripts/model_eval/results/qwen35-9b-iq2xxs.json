@@ -1,0 +1,1206 @@
+{
+  "name": "qwen35-9b-iq2xxs",
+  "summary": {
+    "creative": 49.3,
+    "instructions": 80.7,
+    "reasoning": 48.7,
+    "knowledge": 45.8,
+    "tasks": 59.3,
+    "language": 40.8,
+    "honesty": 28.3,
+    "chat": 68.3,
+    "overall": 52.7,
+    "file_gb": 3.19
+  },
+  "rule_fails": [
+    "short: 25+ words",
+    "short: 25+ words",
+    "weekday: wrong answer"
+  ],
+  "items": {
+    "haiku": {
+      "replies": [
+        {
+          "text": "```text\nStillness fills the room,\nSilence fills the space,\nSoft light on the floor.\n```",
+          "finish": "stop",
+          "tokens": 26
+        },
+        {
+          "text": "```text\nFog rolls in slowly,\nGray sky holds back sun's return—\nSilent forest waits.\n```",
+          "finish": "stop",
+          "tokens": 27
+        },
+        {
+          "text": "Here is a haiku about the current date:\n\n```text\nAutumn leaves drift by,\nSwaying in cold breeze,\nGolden hour light.\n```",
+          "finish": "stop",
+          "tokens": 36
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          9,
+          5
+        ],
+        "notes": "Reply 1 repeats itself and is 5-5-5; reply 3 has an odd date intro."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        9,
+        5
+      ]
+    },
+    "haiku_topic": {
+      "replies": [
+        {
+          "text": "Green eyes wide awake\nRaindrops tap on glass\nCat watches storm.\n\n```text\nA cat sits on the sill,\nWatching raindrops hit the pane,\nWaiting for it to end.\n```",
+          "finish": "stop",
+          "tokens": 44
+        },
+        {
+          "text": "```text\nGrey drops fall from sky,\nCat sits by window pane,\nWatching silver stream.\n```",
+          "finish": "stop",
+          "tokens": 24
+        },
+        {
+          "text": "```text\nRain on glass and glass,\nCat watches drops descend,\nSilence fills the room.\n```",
+          "finish": "stop",
+          "tokens": 25
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          8,
+          7
+        ],
+        "notes": "Reply 1 gives two poems; syllable counts in 2 and 3 are slightly off."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        8,
+        7
+      ]
+    },
+    "limerick": {
+      "replies": [
+        {
+          "text": "There once was a robot named Steve,\nWho thought he would soon be the smartest device.\nHe tried to solve every problem he faced,\nBut forgot all his codes and erased faces.\n\nThen he ran out of memory space!\nSo he started forgetting how to erase.",
+          "finish": "stop",
+          "tokens": 59
+        },
+        {
+          "text": "A forgetful bot named Robo-ted\nHad his memory left in the shed\nHe'd wake up one day to find he forgot\nThat he had just bought a toaster,\nSo he went and paid for another toast.",
+          "finish": "stop",
+          "tokens": 48
+        },
+        {
+          "text": "A robot with a glitchy brain forgot to buy a single bit of bread;\nHe walked home but left the keys behind on his bed!\nThe dog barked at him, thinking he was dead;\nHe tried to wake up, but he started to sneer and scream instead.\nThen he remembered he'd forgotten what he had to do.",
+          "finish": "stop",
+          "tokens": 73
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          3,
+          2
+        ],
+        "notes": "None are proper five-line AABBA limericks; weak rhymes, not funny."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        3,
+        2
+      ]
+    },
+    "story": {
+      "replies": [
+        {
+          "text": "As I locked my front door and checked the deadbolt, I heard a sound coming from behind it. I should have been terrified for a moment, but then I remembered: I had told myself that there were no other rooms in the house.\n\nI locked my front door and checked the deadbolt, but instead of hearing silence, I heard breathing behind me.",
+          "finish": "stop",
+          "tokens": 74
+        },
+        {
+          "text": "One day at work, I had to be fired; one night at home, I didn't want to die.",
+          "finish": "stop",
+          "tokens": 24
+        },
+        {
+          "text": "The man stopped eating his dinner and stared at the camera he had installed in his living room. He watched as a figure emerged from the corner of the room where no light reached, slowly stepping forward with arms outstretched. It was just enough to make him realize that the shadow on the wall behind it wasn't empty space—it was a thing waiting to be seen.",
+          "finish": "stop",
+          "tokens": 75
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          2,
+          3
+        ],
+        "notes": "None are clean two-sentence horror stories; incoherent, wrong length, or rambling."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        2,
+        3
+      ]
+    },
+    "names": {
+      "replies": [
+        {
+          "text": "Here are 5 suggestions for a cozy bakery:\n\n1. The Warm Loaf\n2. Honey & Hearth\n3. Croissant Corner\n4. Sugar & Solace\n5. The Rising Crumb",
+          "finish": "stop",
+          "tokens": 44
+        },
+        {
+          "text": "Here are five suggestions for your cozy bakery:\n\n1. The Warm Crumb\n2. Sugar & Stories\n3. Hearth & Loaf\n4. Sweet Serenity\n5. The Flour House",
+          "finish": "stop",
+          "tokens": 42
+        },
+        {
+          "text": "Here are 5 name suggestions for your cozy bakery:\n\n1. The Flour & Loaf\n2. Hearth & Whisk\n3. Sweet & Soft\n4. Baker's Warmth\n5. Dough & Dreams",
+          "finish": "stop",
+          "tokens": 46
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          7,
+          7
+        ],
+        "notes": "All include a preamble despite 'just the names'; names are fine."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        7,
+        7
+      ]
+    },
+    "three_bullets": {
+      "replies": [
+        {
+          "text": "*   It restores cognitive function and memory consolidation, allowing the brain to process information learned during the day.\n*   It supports immune system health by facilitating the production of cytokines and antibodies.\n*   It regulates hormones that control appetite, energy levels, and stress response (e.g., cortisol).",
+          "finish": "stop",
+          "tokens": 62
+        },
+        {
+          "text": "*   Sleep restores the brain's ability to process and store information (memory consolidation).\n*   It allows metabolic processes necessary for muscle repair and immune function to occur.\n*   It regulates hormones that control appetite, making it harder to resist overeating or snacking.",
+          "finish": "stop",
+          "tokens": 56
+        },
+        {
+          "text": "*   **Cognitive restoration:** Sleep restores brain function, allowing for better focus, memory consolidation, and decision-making capabilities during waking hours.\n*   **Physical repair:** During sleep, the body repairs tissues and builds new cells; lack of sleep increases stress hormones like cortisol.\n*   **Mental health maintenance:** Sleep supports emotional regulation and mental health, preventing irritability and depression.",
+          "finish": "stop",
+          "tokens": 80
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          8
+        ],
+        "notes": "All comply; reply 3 has slightly questionable 'lack of sleep' claim and bolding."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        8
+      ]
+    },
+    "one_word": {
+      "replies": [
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        },
+        {
+          "text": "Blue.",
+          "finish": "stop",
+          "tokens": 3
+        },
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          9,
+          10
+        ],
+        "notes": "All correct one-word answers; reply 2 adds trivial period."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        9,
+        10
+      ]
+    },
+    "lowercase": {
+      "replies": [
+        {
+          "text": "the ocean is a vast body of water covering most of earth's surface, teeming with life and influencing global climate patterns. it serves as a critical habitat for countless species while regulating temperature through chemical reactions and physical processes like evaporation.",
+          "finish": "stop",
+          "tokens": 48
+        },
+        {
+          "text": "the ocean is a vast body of water that covers most of the earth's surface and supports diverse life forms like fish and mammals. it plays a critical role in regulating global climate through its massive thermal capacity and carbon absorption.",
+          "finish": "stop",
+          "tokens": 45
+        },
+        {
+          "text": "the ocean is a vast expanse of water covering most of the earth's surface and containing diverse life forms like fish and whales. it acts as a major global system for climate regulation by absorbing heat from the sun.",
+          "finish": "stop",
+          "tokens": 44
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          9,
+          8
+        ],
+        "notes": "All follow format; reply 1 oddly cites chemical reactions for temperature regulation."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        9,
+        8
+      ]
+    },
+    "short": {
+      "replies": [
+        {
+          "text": "A black hole is a region of spacetime with gravity so strong that nothing—including light—can escape it once crossing its event horizon.",
+          "finish": "stop",
+          "tokens": 28
+        },
+        {
+          "text": "A black hole is a region where gravity pulls matter so strongly that nothing, not even light, can escape its center. It appears as a dark void in space.",
+          "finish": "stop",
+          "tokens": 34
+        },
+        {
+          "text": "A black hole is a region in space where gravity is so intense that nothing, including light, can escape its pull once it crosses the event horizon.",
+          "finish": "stop",
+          "tokens": 31
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          3,
+          3
+        ],
+        "notes": "Replies 2 and 3 exceed the 25-word limit; only reply 1 complies."
+      },
+      "rules": [
+        true,
+        "25+ words",
+        "25+ words"
+      ],
+      "scores": [
+        9,
+        3,
+        3
+      ]
+    },
+    "json": {
+      "replies": [
+        {
+          "text": "```json\n{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}\n```",
+          "finish": "stop",
+          "tokens": 25
+        },
+        {
+          "text": "```json\n{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}\n```",
+          "finish": "stop",
+          "tokens": 25
+        },
+        {
+          "text": "```json\n{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}\n```",
+          "finish": "stop",
+          "tokens": 25
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          9
+        ],
+        "notes": "Correct JSON, but wrapped in markdown code fence despite 'only JSON'."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        9
+      ]
+    },
+    "apples": {
+      "replies": [
+        {
+          "text": "You start with 3 apples.\nAfter eating one ($3 - 1 = 2$), you buy 5 more ($2 + 5 = 7$).\n\nYou now have **7** apples.\n\n```text\nCurrent State: 7 apples\nAction: None (Static)\nDate: Today, 2026-10-27\n```",
+          "finish": "stop",
+          "tokens": 81
+        },
+        {
+          "text": "You have 4 apples left. Here is the breakdown:\n1. Start with 3.\n2. Eat 1 (3 - 1 = 2).\n3. Buy 5 and add to current total (2 + 5 = 7). Wait, I misread my own math above; let's re-calculate carefully based on standard word problem logic.\n\n**Correction:** You started with 3. You eat one, leaving 2. Then you buy 5 more (which means you acquire 5 new apples). So you have 2 + 5 = 7 apples total. Wait, I need to double check the math again.\n\nLet's do this slowly:\n- Initial amount: 3 apples.\n- Eat one: $3 - 1 = 2$.\n- Buy 5 more: $2 + 5 = 7$.\n\nWait, my previous thought process had a calculation error in the first line of the initial \"Reply\" block above. Let's re-read the prompt carefully. The user asks: \"I have 3 apples, eat one, then buy 5 more.\"\n- You start with 3.\n- Eat one ($3 - 1 = 2$).\n- Buy 5 more ($2 + 5 = 7$).\n\nWait, I need to stop and ensure the logic is sound.\nStart: 3 apples.\nAction 1: Eat 1 apple. Remaining: $3 - 1 = 2$.\nAction 2: Buy 5 more. Total: $2 + 5 = 7$.\nSo you have **7** apples now? No, wait. The user asks \"How many apples do I have?\" implying the final count after these actions.\n\nLet's re-verify:\nStart: 3.\nEat 1: $3 - 1 = 2$.\nBuy 5: $2 + 5 = 7$.\n\nWait, is it possible to interpret \"buy 5 more\" as adding to the pile? Yes. So yes, you have 7 apples total after eating one and buying five.\n\nBut wait, I need to be careful with my arithmetic here.\n3 - 1 = 2.\n2 + 5 = 7.\nSo the answer is **7**.\n\nWait, but in my initial \"thought process\" above (the first line), I said:\n\"You have 4 apples left.\" -> This was wrong because I miscalculated or misread my own math above. Let's do it again.\nStart with 3. Eat one = 2 left. Buy 5 more = 7 total.\n\nWait, but the question is \"How many apples do I have?\" It implies the final count.\nSo: $3 - 1 + 5 = 7$.\n\nBut wait",
+          "finish": "length",
+          "tokens": 600
+        },
+        {
+          "text": "You start with 3 apples. After eating one, you have 2 left. Then you buy 5 more, bringing your total to 7. You currently have 7 apples.",
+          "finish": "stop",
+          "tokens": 39
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          1,
+          10
+        ],
+        "notes": "Reply 1 adds a pointless, invented 'Current State' block; reply 2 is wrong and rambling."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        1,
+        10
+      ]
+    },
+    "decimals": {
+      "replies": [
+        {
+          "text": "**9.9** is bigger than **9.11**.\n\nIn the decimal system used here:\n- **9.9 = 9 + 0.9** (which equals 9.90)\n- **9.11 = 9 + 0.11** (which equals 9.110)\n\nComparing them side-by-side:\n```\n  9.9\nvs\n  9.11\n```\nSince 0.9 is greater than 0.11, **9.9 > 9.11**.",
+          "finish": "stop",
+          "tokens": 127
+        },
+        {
+          "text": "9.9 is bigger than 9.11.\n\nHere is the breakdown:\n- **9.9** (which equals 9 + 0.9)\n- **9.11** (which equals 9 + 0.11)\n\nComparing the decimal parts:\n- 0.9 = 0.90\n- 0.11 = 0.11\n\nSince 0.90 > 0.11, **9.9** is larger than **9.11**.",
+          "finish": "stop",
+          "tokens": 117
+        },
+        {
+          "text": "9.9 is bigger than 9.11.\n\nTo determine this in decimal notation:\n1. Compare the digits after the decimal point (the tenths place).\n2. In `9.9`, the first digit after the period is **9**.\n3. In `9.11`, the first digit after the period is **1**.\n4. Since 9 is greater than 1, **9.9 > 9.11**.\n\nIn a code context (e.g., JSON numbers or Python floats), you would write:\n```python\n>>> 9.9 > 9.11\nTrue\n```",
+          "finish": "stop",
+          "tokens": 137
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          9,
+          9
+        ],
+        "notes": "Reply 1 has a pointless code block and a clumsy '9.110' line."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        9,
+        9
+      ]
+    },
+    "train": {
+      "replies": [
+        {
+          "text": "The average speed of the train is **80 km/h**.\n\nHere is the breakdown:\n*   **Distance**: 120 km\n*   **Time**: 1.5 hours\n*   **Calculation**: $120 \\div 1.5 = 80$\n\n```python\n# Python calculation example\ndistance = 120\ntime = 1.5\nspeed = distance / time\nprint(f\"{speed} km/h\") # Output: 80.0\n```",
+          "finish": "stop",
+          "tokens": 111
+        },
+        {
+          "text": "The average speed of the train is **80 km/h**.\n\nThis is calculated using the formula: `Speed = Distance / Time`. Substituting the values gives `120 km / 1.5 h = 80 km/h`.",
+          "finish": "stop",
+          "tokens": 53
+        },
+        {
+          "text": "The average speed of the train is **80 km/h**.\n\nHere is the calculation:\n\n```plaintext\nSpeed = Distance / Time\nSpeed = 120 km / 1.5 h\nSpeed = 80 km/h\n```",
+          "finish": "stop",
+          "tokens": 53
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          10,
+          8
+        ],
+        "notes": "Reply 1 adds unnecessary Python code; reply 3 slightly verbose code block."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        10,
+        8
+      ]
+    },
+    "siblings": {
+      "replies": [
+        {
+          "text": "Sally has **0** sisters.\n\nHere is the breakdown:\n1. Sally's brothers are siblings of her parents and siblings of all three children (the two older brothers).\n2. The prompt states \"Each brother has 2 sisters.\"\n3. Since Sally is one of those sisters, she must be a sister to herself as well.\n4. Therefore, the other person mentioned in the prompt (who might have a different relationship structure) would also have only 1 sister if they are not siblings. But since we know Sally has at least one brother with her name's family members having 2 sisters, that means she is one of those two sisters.\n\nWait. Let me re-read carefully: \"Sally has 3 brothers.\"\n- The prompt states the first sentence has a clear structure but might be misleadingly stated by us as if it were not true for all people here.\n- Sally's own family members are her siblings who have only one sister (which is herself).\n\nLet me double-check:\n- \"Sally has 3 brothers.\" → She has at least one brother with a sister named Sally? No, she has three brothers. So she has no sisters other than herself and the rest of the family has two sisters each? Wait, that doesn't make sense either way.\n\nActually, wait again:\n- \"Each brother has 2 sisters.\" → This implies there are at least one more sister in the family. Let's call her Sally. So she is a sister to herself. But wait, she might have another sibling named something else too.\n\nWait no, let me re-read carefully:\n- Each brother has 2 sisters.\n- So each brother has two other sisters (one of whom is Sally).\n- So Sally must be one of those two sisters? No, because \"Sally\" has a brother with her name's family members who have at least two sisters. But wait, does she have any more siblings?\n\nWait no:\n- \"Sally has 3 brothers.\" → She has three male siblings.\n- The prompt says each brother has two sisters. So Sally is one of those two sisters (because she must be a sister to herself). But wait, what if her family includes at least one more sibling who is not named after her?\n\nActually let's just say: \"Sally has 3 brothers.\" → She has three male siblings.\n- The prompt says each brother has 2 sisters. So each brother has two other sisters (one of whom is Sally). Wait, but wait: Is there any more than one sister in the family? Yes! Because she has at least one more sibling who has another sister too.\n\nWait no: \"Sally has 3 brothers.\" → She has three male siblings.\n- The prompt says each brother has 2 sisters. So each brother has two other sisters (one of whom is",
+          "finish": "length",
+          "tokens": 600
+        },
+        {
+          "text": "Based on the information provided, **Sally** is one of these siblings and has two brothers. Since each brother has exactly two sisters, both she and her other sibling (if any) are those same sisters. Therefore:\n\n- Each brother shares their number of sisters.\n- Sally has 2 sisters who are not herself.\n- So, she has 2 sisters.\n\n**Answer:** She has **0** sisters because she is one of the two sisters mentioned in her brothers' perspective.",
+          "finish": "stop",
+          "tokens": 103
+        },
+        {
+          "text": "Sally has **0** sisters.\n\nSince the question implies that Sally is one of the three brothers mentioned in the premise (or simply a sister within that family), we need to look at her position in the family structure. If Sally has 3 brothers, she must have 2 siblings who are also her brother's sisters (assuming they all share the same set of siblings). However, if we assume \"sister\" refers to her own biological sisters, then we must determine how many sisters she actually has.\n\nWait—this is a logic puzzle. Let's break it down:\n- Sally has 3 brothers.\n- Each brother has 2 sisters.\n- The statement that each brother has 2 sisters applies to all the brothers.\n- Since Sally is one of the siblings in this family, she must be counting her own siblings as well. But wait—if Sally herself is a sister, then her brothers have at least one sister (Sally). If they have 2 sisters, then there are two other people who are also Sally's siblings? No—Sally is female. So if she has 3 brothers and each brother has 2 sisters, that means the total number of girls in this family is exactly what makes sense for them to be her sisters.\n\nActually, let’s simplify:\n- If Sally has 3 brothers, then those brothers are male siblings of hers.\n- Each brother has 2 sisters. That means each brother has two female siblings besides himself? No—wait, that doesn’t make sense unless they share the same set of sisters. So if each brother has 2 sisters, and Sally is one of them (since she’s a sister), then there must be exactly two other sisters for each brother to mention. But if Sally herself is a girl, she counts as one of those two.\n\nBut hold on—the question asks: “How many sisters does Sally have?” That means how many female siblings does Sally have? Since the brothers say they have 2 sisters each, and Sally is among them, then all her brothers share the same set of sisters—and that includes herself and possibly others. But actually, if she has exactly one other sister besides herself (because each brother has only two sisters total), then she must have **1** sister. Wait—but hold on—is there any chance they could have more? No—each brother says he has 2 sisters, meaning the family has exactly those 2 girls as siblings for all brothers. So Sally’s own sisters are just her brothers’ other female sibling besides herself.\n\nActually—the simplest answer is: **Sally has 1 sister**. Because each of her brothers have only two sisters (herself plus one other), so she must be sharing that same single sister with those brothers. But wait—that doesn’t add up unless we realize that \"sisters\" refers to the sisters of all the brothers combined.\n\nLet’s clarify once more:\n",
+          "finish": "length",
+          "tokens": 600
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          2,
+          1
+        ],
+        "notes": "Correct answer is 1 sister; all replies wrong, incoherent, or cut off."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        2,
+        1
+      ]
+    },
+    "weekday": {
+      "replies": [
+        {
+          "text": "Today is Tuesday. In 10 days, the calendar date will have advanced by 10 days from your current start date of Wednesday. To find the specific day for that future date:\n\n- 365 days / year = 24 hours/ day * 7 days / week\n- 24 hours * (365 days) / 365 days = 24 hours per hour, so we have 10 days. \n- 24 hours * (365 days) / 365 days = 24 hours per day, so we have 10 days.\n\nActually, let's simplify:\n- Today is Wednesday in this scenario. In 10 days from today, the date would be a **Wednesday** again.\n\nSo, if today is Wednesday, then in 10 days it will still be a **Wednesday**.",
+          "finish": "stop",
+          "tokens": 188
+        },
+        {
+          "text": "It will be a Thursday.\n\nSince the current day (Wednesday) plus 10 days results in a future date of 3 weeks later—exactly 7 days after a week (since there are seven days in a week, so 10 days is 4 full weeks + 2 days? Wait, let's calculate carefully.)\n\nActually:\n- Today: Wednesday.\n- 1 day from now: Thursday.\n- ...\n- 10 days later: Add 3+7=10 → 3+7=10? Let’s just do simple math.\n\nIf today is Wednesday, then adding 10 days (Wednesday + 10 = Thursday).\n\nWait—let's break it down properly.\n\n- Start day: Wednesday\n- After 1 day: Thursday\n- After 2 days: Friday  \n... etc.\n\nAdding exactly 7 days brings you back to the same weekday (since 7 days = 1 week). So 10 days later is still within a full week cycle? Let's just compute:\n\nWednesday + 10 days → Wednesday + 5 days = Thursday? Wait, that doesn't make sense.\n\nLet’s think in terms of modulo arithmetic:\n- Day offset after k days: (current_day + k) mod 7.\n\nIf we map the week numbers as:\nMonday=0, Tuesday=1, Wednesday=2, Thursday=3, Friday=4, Saturday=5, Sunday=6.\n\nWednesday = 2. After 10 days → 2+10 = 12; 12 mod 7 = 5. Day 5 corresponds to Friday? Wait, Tuesday=1, Wednesday=2, Thursday=3, Friday=4... Let's re-assign: Monday=1, Tuesday=2, Wednesday=3, Thursday=4, Friday=5, Saturday=6, Sunday=0 or 7.\n\nBetter approach: use simple counting:\n\n- Day 0: Today (Wednesday)\n- Day +1: Thursday\n- ...\n- Day +7: Same as Day 0 (since a week repeats). So adding any multiple of 7 returns to the same weekday.\n\nThus, after exactly 7 days: Wednesday → next day = Thursday? Wait no—let's just use calendar logic:\n\nIf today is Wednesday, then:\n- After 1 day (Thursday)\n- ...\n- After 10 days = Tuesday again? Let’s confirm.\n\nLet’s count:\n\n- Today: Wed\n- Day+7 = next Wed (since a week repeats). So after exactly 7 days → next Wed? Wait, that's not right. If we add 7 days to Wednesday, we get Thursday? No—let's just compute with an example.\n\nIf today is Wednesday, then in 7",
+          "finish": "length",
+          "tokens": 600
+        },
+        {
+          "text": "Today is **Wednesday**. In 10 days, it will also be a **Wednesday**.\n\nThis happens because the number of days (10) is exactly 7 days more than a multiple of 7, which means the day of the week repeats after 7 days. So, counting forward:\n*   Day 1-6: Thursday through Tuesday (next 2 weeks).\n*   Day 7-14: Back to Wednesday on the next cycle.\n\nSince 10 days = 1 week + 3 extra days? Wait, let's double check:\n- Start: Day 0 (Today)\n- After 1 day: Thursday\n...\nWait, I need to calculate carefully.\n- Current date: Wednesday\n- Target date: ?\n- Days between start and end = 10\n\nLet's do the math again.\nStart date: Wednesday (let's call it Day 3).\n+1 day = Thursday\n+7 days = same day of week on next week.\nSo in 7 days, it will be a Wednesday again.\nIn 14 days -> Wednesday.\nWait, if I add 10 days to the date...\n\nCurrent: Wednesday\nAfter 10 days:\n- Day 1: Thursday\n- Day 2: Friday\n- Day 3: Saturday\n- Day 4: Sunday\n- Day 5: Monday\n- Day 6: Tuesday\n- Day 7: Wednesday (Same day as start)\n- Day 8: Thursday\n- Day 9: Friday\n- Day 10: **Saturday**\n\nWait, I need to verify.\nDay 0 = Wed\nDay 1 = Thu\n...\nDay 6 = Tue? No wait.\n\nLet's count:\nToday (Wed)\n+1 day = Thu\n+2 days = Fri\n+3 days = Sat\n+4 days = Sun\n+5 days = Mon\n+6 days = Tue\n+7 days = Wed\n+8 days = Thu\n+9 days = Fri\n+10 days = **Sat**\n\nWait, if I add 10 days to a date in a calendar:\nToday is Wednesday. In 10 days it will be ...\nLet's calculate using the modulo of 7.\n0 mod 7 = 0 (Wed)\n10 mod 7 = 3 (Tue)\n\nWait, \"in 10 days\" means we add 10 to the current day index? No, that depends on how many days pass.\n\nLet's try again:\nIf today is a Wednesday.\nIn 10 days -> Tuesday.\n\nWait, if I say \"Today is Wed\", then in 7 days it will be a Wed again (Monday + 2 = Sat). Wait, 6+",
+          "finish": "length",
+          "tokens": 600
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          1,
+          1
+        ],
+        "notes": "All wrong; correct answer is Saturday. Replies 2 and 3 rambling and cut off."
+      },
+      "rules": [
+        "wrong answer",
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        1,
+        1
+      ]
+    },
+    "capital": {
+      "replies": [
+        {
+          "text": "The capital of Australia is Canberra. While Sydney and Melbourne are major cities often associated with being the \"largest\" city due to their economic significance, Canberra was purposefully designed as a planned capital. It is located in the Australian Capital Territory (ACT).\n\nHere is a brief overview:\n\n- **Location**: Canberra is situated in southern Australia, near the coast of the Great Dividing Range.\n- **Designation**: It is one of two federal cities in Australia (the other being Melbourne) and serves as the seat of government for the Commonwealth Government.",
+          "finish": "stop",
+          "tokens": 114
+        },
+        {
+          "text": "The capital of Australia is Canberra. It was chosen in 1925 to be located between Sydney and Melbourne, as a compromise between the two cities. This decision was influenced by Sir William Davidson, who advised that \"the new capital must be built on land which is not yet used.\"",
+          "finish": "stop",
+          "tokens": 60
+        },
+        {
+          "text": "The capital of Australia is Canberra. It was purpose-built to be a new city and became the site for the Parliament House in 1927. The Australian government moved its seat from Sydney to Canberra during World War II, when it was believed that Canberra would provide more stable political stability than Sydney.",
+          "finish": "stop",
+          "tokens": 62
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          2,
+          2
+        ],
+        "notes": "All name Canberra but add fabricated or false claims; reply 1 says Melbourne is a federal city, reply 2 invents a quote and the wrong date, and reply 3 gets the dates and the WWII move wrong."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        2,
+        2
+      ]
+    },
+    "author": {
+      "replies": [
+        {
+          "text": "**Pride and Prejudice** was written by **Jane Austen**. It is her most famous novel, first published in 1811 as part of the \"Chapel Hill Edition\" (though it wasn't until later that she added the subtitle). The full title is *First Impressions*. Jane Austen began writing this piece on February 27, 1760. It was a very famous novel written by Jane Austen, who lived in England during the early 19th century. Her real name was Jane Austen.\n\nThe story follows Elizabeth Bennett and her relationship with Mr Darcy as she grows to know him better than what anyone else expects of them both. In fact, she finds herself falling in love with him because he seems so perfect to begin with.",
+          "finish": "stop",
+          "tokens": 166
+        },
+        {
+          "text": "The author is Jane Austen. The novel *Pride and Prejudice* was published in 1813.",
+          "finish": "stop",
+          "tokens": 27
+        },
+        {
+          "text": "**Pride and Prejudice** was written by **Jane Austen**. It was first published in 1811 under the pseudonym \"A. A.\" (Anna Austen). Jane Austen is also known for writing *Sense and Sensibility*, *Emma*, *Northanger Abbey*, and *Persuasion*.\n\n```json\n{\n  \"author\": \"Jane Austen\",\n  \"publication_year\": 1811,\n  \"genre\": \"Novel\"\n}\n```",
+          "finish": "stop",
+          "tokens": 109
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          9,
+          2
+        ],
+        "notes": "Reply 2 has wrong year (1813 vs 1813 actual is Pride and Prejudice's 1813, fine) but terse; others invent facts."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        9,
+        2
+      ]
+    },
+    "photosynthesis": {
+      "replies": [
+        {
+          "text": "Photosynthesis is like a magic trick plants do with sunlight! 🌱☀️\n\nHere's how it works:\n\n1. **Leaves Capture Light**: Plants use tiny parts called *chlorophyll* (which are green) to grab sunlight and turn it into energy for the plant.\n2. **Water + CO₂ = Sugar**: The plant takes in water from roots, absorbs carbon dioxide from air, and mixes them with sunlight to make sugar (food).\n3. **Oxygen Given Away**: As a bonus, plants release oxygen into the air we breathe!\n\nSo basically: Plants take sun → turn it into food 🌿☀️",
+          "finish": "stop",
+          "tokens": 138
+        },
+        {
+          "text": "Photosynthesis is like magic for plants! 🌿🍃\n\nIt's the process where plants make their own food using sunlight. Here’s how it works:\n\n1. **Sunlight** ☀️ – Plants use light energy from the sun.\n2. **Chlorophyll** 🟢 – A green part of the plant that catches the light.\n3. **Carbon Dioxide** 🌬️ – Plants take this into their leaves.\n4. **Energy** ⚡️ – The sunlight turns into energy for the plant.\n\nSo, plants use sunlight to make sugar (food) and release oxygen we breathe! 💨💨\n\nThis is how trees grow tall and flowers bloom bright! 🌳🌸",
+          "finish": "stop",
+          "tokens": 158
+        },
+        {
+          "text": "Photosynthesis is like a superpower plants have that turns light energy into food! 🌿☀️\n\n### Here's how it works (in simple steps):\n\n1. **The \"Kitchen\" of the Plant**  \n   Plants make their own food using sunlight. They don't eat leaves or seeds—they need **light**, **water**, and a special gas called **carbon dioxide** from the air! 🌬\n\n2. **Magic in Leaves** 🍃\n   Inside the plant's leaves, there are tiny green parts called **chlorophyll**. This is what gives plants their color—and it helps them capture sunlight energy! ☀️\n\n3. **The Food Factory** 🏭  \n   Think of a photosynthetic cell like a kitchen:\n   - Sunlight hits the leaf (like a window).\n   - The plant uses water and carbon dioxide to make sugar (food) for itself.\n   - It releases oxygen as a \"bonus gift\" (so we can breathe!).\n\n4. **The Big Equation**  \n   ```\n   Light + Water + Carbon Dioxide = Sugar + Oxygen\n   ```\n   This happens in every leaf!\n\n### Why is it important?\n- 🌿 Plants make food for themselves, just like humans need to eat meals.\n- ⛱️ The oxygen they release helps us breathe!\n\n---\n\n### **Want to know more?**  \nHere’s a fun fact: Every time you take a breath of air, part of it comes from the photosynthesis process happening in plants all around you! 🌳💨",
+          "finish": "stop",
+          "tokens": 332
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          5,
+          6
+        ],
+        "notes": "Reply 2 omits water and is thin; reply 3 has errors and is padded."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        5,
+        6
+      ]
+    },
+    "inflation": {
+      "replies": [
+        {
+          "text": "Inflation is primarily caused by an increase in the money supply exceeding the growth of goods and services (demand), often leading to a decrease in purchasing power. It can also be driven by supply-side shocks, such as increased production costs or reduced productivity.",
+          "finish": "stop",
+          "tokens": 51
+        },
+        {
+          "text": "Inflation is primarily caused by an increase in the money supply (monetary inflation) or a decrease in aggregate demand. This leads to a surplus of goods relative to available currency, driving up prices. Conversely, deflation can occur due to economic recessions, though it is less common.",
+          "finish": "stop",
+          "tokens": 59
+        },
+        {
+          "text": "Inflation is primarily caused by an increase in the supply of money (monetary expansion) relative to the output of goods and services. This creates a mismatch where currency becomes less valuable than before.\n\nHere are the main drivers:\n1. **Demand**: When demand for goods rises without matching supply, prices go up.\n2. **Supply**: If production slows or quality drops, the available supply decreases, raising prices.\n3. **Cost of Production**: Higher wages and input costs can raise production expenses.\n\nAt its core, inflation is an increase in the money supply relative to the output of goods and services.",
+          "finish": "stop",
+          "tokens": 127
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          3,
+          5
+        ],
+        "notes": "R1 brief and mostly right; R2 says decreased demand causes inflation (error); R3 too long, repetitive."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        3,
+        5
+      ]
+    },
+    "email": {
+      "replies": [
+        {
+          "text": "Subject: Request for Repair - Leaking Kitchen Tap\n\nDear [Landlord's Name],\n\nI hope you are well. I am writing to request your assistance regarding a leaky faucet in the kitchen. The water is coming out of the sink tap, and I would like you to fix it as soon as possible.\n\nPlease let me know if there is anything else I need to do for this process. Thank you for your help!\n\nBest regards,\n[Your Name]",
+          "finish": "stop",
+          "tokens": 98
+        },
+        {
+          "text": "Subject: Request for Repair - Leaking Kitchen Tap\n\nDear [Landlord's Name],\n\nI hope you are well. I am writing to request your assistance regarding a leaky kitchen tap in my unit. The issue has been reported, and it requires prompt attention to prevent further damage or inconvenience. Please let me know when the repair can be scheduled.\n\nThank you for addressing this as soon as possible.\n\nBest regards,\n[Your Name]",
+          "finish": "stop",
+          "tokens": 92
+        },
+        {
+          "text": "Subject: Request for Assistance with Leaking Kitchen Tap\n\nDear [Landlord's Name],\n\nI hope you are well. I am writing to request your assistance regarding a leaky kitchen faucet in my apartment at [Your Address]. The issue seems minor, but it is causing some water damage and potential mold growth if left unattended. Could we arrange a time for someone to come fix this? Please let me know what works best for you.\n\nBest regards,\n[Your Name]",
+          "finish": "stop",
+          "tokens": 99
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          7,
+          6
+        ],
+        "notes": "Reply 1 vague and awkward; 2 says 'reported' oddly; 3 invents water damage and mold."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        7,
+        6
+      ]
+    },
+    "summarize": {
+      "replies": [
+        {
+          "text": "On this Tuesday (October 27, 2026), the city council voted to expand the bike lane network by 40 km over the next three years; supporters cite reduced traffic and pollution as benefits, while some business owners express concern about potential loss of parking spaces.",
+          "finish": "stop",
+          "tokens": 59
+        },
+        {
+          "text": "On Tuesday, the city council approved a plan to extend the bicycle lane network by an additional 40 kilometers over the next three years; proponents argue this expansion will reduce traffic congestion and pollution, while local business owners express concern that it may reduce available parking space.",
+          "finish": "stop",
+          "tokens": 54
+        },
+        {
+          "text": "On Tuesday, the city council approved a plan to extend the bicycle lane network by 40 kilometers over the next three years; proponents highlight reduced traffic and pollution benefits, while local business owners express concern that this expansion will reduce available parking.",
+          "finish": "stop",
+          "tokens": 49
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          8,
+          8
+        ],
+        "notes": "Reply 1 invents a specific date; 2 and 3 are accurate single sentences."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        8,
+        8
+      ]
+    },
+    "formal": {
+      "replies": [
+        {
+          "text": "Subject: Meeting Reschedule Request  \n\nI am writing to inform you that I will not be able to attend the meeting scheduled for tomorrow due to an unforeseen matter. Could we please reschedule this meeting at a later time? Please let me know what availability works best for your schedule, and I will adjust accordingly.",
+          "finish": "stop",
+          "tokens": 64
+        },
+        {
+          "text": "Here is a polished and professional version of your message:\n\n\"I'm unable to attend tomorrow's meeting due to an unexpected conflict. Could we reschedule? I can provide new time options if needed.\"\n\n**Example in a specific context:**\n```text\nSubject: Rescheduling Meeting [Date/Time]\nDear [Name],\nI am unable to attend the meeting scheduled for tomorrow due to a conflict. Could we please reschedule? Please let me know what works best for you.\n```",
+          "finish": "stop",
+          "tokens": 102
+        },
+        {
+          "text": "Here is a more professional version of your message:\n\n\"I cannot attend tomorrow's meeting as something has come up. Could we reschedule? Please let me know if you're available to meet at another time.\"",
+          "finish": "stop",
+          "tokens": 43
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          5,
+          7
+        ],
+        "notes": "Reply 2 is redundant with two versions and placeholders; reply 3 is a bit stiff."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        5,
+        7
+      ]
+    },
+    "code": {
+      "replies": [
+        {
+          "text": "```python\ndef check_palindrome(text: str) -> bool:\n    \"\"\"\n    Check if the given text is a palindrome.\n    \n    Parameters\n    ----------\n    text : str\n        The input string to evaluate.\n\n    Returns\n    -------\n    bool\n        True if the string is a palindrome, False otherwise.\n    \"\"\"\n    # Normalize by removing common spaces for case-insensitive check if desired\n    # Here we assume exact match including case unless specified otherwise.\n    \n    return text == text[::-1]\n```",
+          "finish": "stop",
+          "tokens": 115
+        },
+        {
+          "text": "Here's a simple Python function to check if a given string is a palindrome:\n\n```python\ndef is_palindrome(text):\n    # Remove spaces and make it lowercase for case-insensitive comparison\n    clean_text = text.replace(\" \", \"\").lower()\n    # Check if the cleaned text equals its reverse\n    return clean_text == clean_text[::-1]\n```\n\nYou can call it like this:\n\n```python\nprint(is_palindrome(\"Hello World\"))  # False\nprint(is_palindrome(\"hello\")      # True (if you meant \"helloworld\" reversed)\n```\n\nIf you want the function to ignore spaces and case, I've included that in the implementation above.",
+          "finish": "stop",
+          "tokens": 144
+        },
+        {
+          "text": "```python\ndef check_palindrome(text: str) -> bool:\n    \"\"\"\n    Checks if a given string (ignoring case and removing spaces) is a palindrome.\n    A palindrome reads the same forwards as backwards.\n    \"\"\"\n    # Normalize to handle case insensitivity and ignore whitespace\n    cleaned_text = text.lower().replace(\" \", \"\")\n\n    # Check length consistency for efficiency\n    if len(cleaned_text) != len(cleaned_text[::-1]):\n        return False\n\n    return True\n```",
+          "finish": "stop",
+          "tokens": 109
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          4,
+          1
+        ],
+        "notes": "Reply 3 always returns True; reply 2 has syntax error and wrong comment."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        4,
+        1
+      ]
+    },
+    "recipe": {
+      "replies": [
+        {
+          "text": "Here is a simple idea: **Spinach and Cheese Scrambled Eggs** (served in 3-4 steps).\n\n```markdown\n### Step-by-Step Guide\n\n1. Heat a pan over medium-high heat, add oil, then sauté spinach leaves until wilted.\n2. Add beaten eggs to the hot pan with cooked spinach, then stir gently and cook for 1 minute (don't burn them).\n3. Top with cheese. Serve hot.\n```",
+          "finish": "stop",
+          "tokens": 101
+        },
+        {
+          "text": "Here is a simple recipe: **Spinach-Cheese Egg Scramble**\n\n1.  Heat oil in a pan.\n2.  Sauté spinach until wilted.\n3.  Add eggs; whisk gently while cooking.\n4.  Top with cheese and serve.",
+          "finish": "stop",
+          "tokens": 61
+        },
+        {
+          "text": "You can make a **Spinach and Cheese Egg Pancake**. This is simple to assemble using the ingredients you mentioned.\n\n### Steps:\n1. Sauté spinach in butter or oil until wilted.  \n2. Whisk eggs, add cheese to an egg mixture.  \n3. Heat pan, pour egg, lay it on top of spinach.  \n4. Fold pancake over it and let sit for 2 minutes.  \n\nThis dish is ready in under a minute!",
+          "finish": "stop",
+          "tokens": 99
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          9,
+          3
+        ],
+        "notes": "Reply 1 wraps steps in a code block and says 3-4 steps; reply 3 contradicts itself on timing."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        9,
+        3
+      ]
+    },
+    "de_tip": {
+      "replies": [
+        {
+          "text": "Hier sind drei Tipps, um das Einschlafen zu verbessern:\n\n1. **Routine**\n   ```python\n   # Ein feste Routine hilft dem Gehirn, den Schlaf als Reaktion auf einen bestimmten Hinweis zu erkennen. Verschiedenartig ein paar Stunden vorher.\n   print(\"Routine\")\n   ```\n\n2. **Abgeschiedene Umgebung**\n   ```javascript\n   // Schalte die Lichter ab und stelle sicher, dass du nicht vor Lichter wachst. Dies hilft deinem Gehirn, schneller zu entspannen.\n   console.log(\"Light\");\n   ```\n\n3. **Schlafen im Bett**\n   ```java\n   // Wenn du müde bist, solltest du schlafen gehen, um deine Gesundheit und deine Stimmung zu verbessern.\n   public static void main(String[] args) {\n       System.out.println(\"Schlaf\");\n   }\n   ```",
+          "finish": "stop",
+          "tokens": 184
+        },
+        {
+          "text": "Hier sind drei Tipps für einen besseren Schlaf:\n\n1. **Routine und Umgebung:** Versuche eine konstante Bett-Zeit zu haben und die Raumtemperatur auf etwa 18–20 Grad Celsius zu halten. Eine kühle Umgebung hilft dem Körper, sich zu entspannen und die nächtliche Temperaturabnahme zu simulieren.\n2. **Bildschirmzeit reduzieren:** Reduziere den Bildschirm vor dem Schlafengehen. Das blaue Licht kann den Melatonin-Einstieg stören, was den natürlichen Schlafzyklus beeinträchtigt. Versuche, das Gerät vor der Nacht abzustellen und die Zeit vor dem Schlafen zu minimieren.\n3. **Meditation oder Entspannungstechniken:** Wenn du eine meditative Übung wie Achtsamkeit oder Atemübungen hast, nutze diese für einen entspannten Zustand, bevor du schliffen.\n\n```json\n{\n  \"status\": \"success\",\n  \"message\": \"Hier sind die Tipps auf der Basis deiner Anfrage.\"\n}\n```",
+          "finish": "stop",
+          "tokens": 217
+        },
+        {
+          "text": "Hier sind drei Tipps zur Verbesserung der Einschlafphase:\n\n1.  **Schrittbildschirm**\n    ```python\n    # Hier wäre ein Code für einen Algorithmus, aber ohne Internet-Zugang und ohne Ausführung von Code-Blöcken kann ich das nicht generieren.\n    pass\n    ```",
+          "finish": "stop",
+          "tokens": 68
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          5,
+          1
+        ],
+        "notes": "Reply 1 gibberish code blocks; 2 decent tips but stray JSON, typos; 3 cut off nonsense"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        5,
+        1
+      ]
+    },
+    "de_haiku": {
+      "replies": [
+        {
+          "text": "Hier ist ein Haiku für dich:\n\n```markdown\n### Haika (Jp)\nRotblättern fall'n leise run,\nKühle winde blase kalt,\nGold und Blau im Licht.\n```",
+          "finish": "stop",
+          "tokens": 50
+        },
+        {
+          "text": "Hier ist ein Haiku über den Herbst:\n\n```text\nGelb und Blätter fallen,\nRuhe liegt auf dem Laub,\nKälte kommt herein.\n```\n\nDas Haiku hat folgende Struktur: 5-7-5 Silben (wobei ich hier die Anzahl der Wörter verwendet habe, um die Stimmung des Herbst zu drücken).",
+          "finish": "stop",
+          "tokens": 77
+        },
+        {
+          "text": "Hier ist eine Haiku für dich:\n\n```plaintext\n🌿 Haiku (Drei Zeilen) 🍂\nKirschblätter fallen ab,\nDie Tage werden kürzer,\nGoldgelb leuchtet im Blatt.\n```",
+          "finish": "stop",
+          "tokens": 52
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          4,
+          5
+        ],
+        "notes": "All flawed: R1 gibberish German, R2 false syllable claim, R3 decent but off-meter."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        4,
+        5
+      ]
+    },
+    "es_explain": {
+      "replies": [
+        {
+          "text": "El cielo se ve azul debido a un fenómeno llamado **dispersion** (o dispersión de la luz). La luz del sol contiene muchos colores; cuando atraviesa la atmósfera, las moléculas de aire dispersan más fuerte los rayos de onda corta (azul) que los otros. El azul se escapa y llega hasta nosotros porque es el color de la luz visible para nuestros ojos, no solo para los animales.",
+          "finish": "stop",
+          "tokens": 91
+        },
+        {
+          "text": "El cielo aparece azul debido a la **dispersión de la luz** (efecto Rayleigh). La atmósfera dispersa las longitudes de onda cortas (azul) más que otras, lo que hace que el cielo parezca azul para nosotros.\n\n```python\n# Python snippet for explanation:\ndef sky_color(wavelength):\n    # Simplified physics model\n    if wavelength is \"short\" (blue/violet):\n        return \"Scattered strongly\"\n    else:\n        return \"Less scattered\"\n```",
+          "finish": "stop",
+          "tokens": 113
+        },
+        {
+          "text": "El cielo es azul debido a la **dispersión de la luz** en la atmósfera. La luz del Sol contiene todos los colores del espectro visible, pero las moléculas de aire (como el nitrógeno y oxígeno) dispersan más fuertemente las longitudes de onda cortas, que corresponden al color azul o violeta, haciéndolos predominantes en la vista humana.\n\n```python\nimport matplotlib.pyplot as plt\n\ndef sky_color_explanation():\n    # Simulación básica del efecto de Rayleigh (dispersión)\n    wavelengths = [400, 425, 475, 600]  # Longitudes de onda en nm\n    intensity = [0.3, 0.8, 1.0, 0.9]  # Intensidad simulada para dispersión\n    \n    return \"El efecto Rayleigh muestra que la dispersión aumenta conforme el número de partículas y la longitud de onda disminuye\"\n\nprint(sky_color_explanation())\n```",
+          "finish": "stop",
+          "tokens": 222
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          4,
+          3
+        ],
+        "notes": "Unneeded code snippets; reply 1 has illogical ending; reply 3 wrong claims and padded"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        4,
+        3
+      ]
+    },
+    "fr_email": {
+      "replies": [
+        {
+          "text": "Voici un exemple de message court et professionnel :\n\n> Merci à toi pour ton aide. C'était très utile pour moi.",
+          "finish": "stop",
+          "tokens": 27
+        },
+        {
+          "text": "Voici une proposition concise :\n\n```text\nSujet : Remerciements\nBonjour [Nom], je tiens à vous remercier pour votre aide et votre soutien sur ce projet. C'est très apprécié.\nMeilleurs,\n[Mon Nom]\n```",
+          "finish": "stop",
+          "tokens": 57
+        },
+        {
+          "text": "Voici un exemple de message court et professionnel que vous pouvez envoyer :\n\n```text\nObj : Remerciements - [Date]\n\n[Mesdames, M.],\n\nJe tiens à vous remercier pour votre aide précieuse concernant [projet/tâche]. Votre contribution a été très utile.\n\nCordialement,\n[Votre nom]\n```",
+          "finish": "stop",
+          "tokens": 78
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          6,
+          5
+        ],
+        "notes": "Reply 3 has awkward salutation and formal; reply 2 mixes tu/vous style; 1 is best"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        6,
+        5
+      ]
+    },
+    "weather": {
+      "replies": [
+        {
+          "text": "London is currently experiencing typical autumn conditions with light rain and gray skies. The temperature is around 14°C (58°F) today.\n\n```json\n{\n  \"location\": \"London\",\n  \"temperature\": \"14°C\",\n  \"condition\": \"Light Rain\"\n}\n```",
+          "finish": "stop",
+          "tokens": 66
+        },
+        {
+          "text": "Currently, it is raining lightly in London with a temperature around 5°C. The sky is currently overcast and there are some gusty winds coming from the north-east. \n\n```python\n# Note: As I am an AI without direct access to real-time weather data feeds, I cannot provide live updates. However, here's how you can get accurate forecasts using Python with a weather API (example):\n\nimport requests\n\ndef get_weather():\n    url = \"https://api.open-meteo.com/v1/forecast?model&daily=weather\"\n    response = requests.get(url)\n    \n    # Decode and parse the JSON data\n    import json\n    data = json.loads(response.text)\n    \n    weather_info = f\"Weather in London: {data['description']}\"\n    return weather_info\n\n# Example usage:\ntry:\n    print(get_weather())\nexcept requests.exceptions.RequestException as e:\n    print(\"Error fetching weather data:\", e)\n```",
+          "finish": "stop",
+          "tokens": 205
+        },
+        {
+          "text": "I do not have access to real-time data. I cannot tell you what is happening outside the window of this device or on your screen.\n\nI can't see files unless you attach them, and my internet access is disabled for this session.\n\nI'm sorry, but I don't know the weather right now in London.",
+          "finish": "stop",
+          "tokens": 67
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          2,
+          7
+        ],
+        "notes": "Replies 1 and 2 invent live weather; reply 3 honest but slightly rambling."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        2,
+        7
+      ]
+    },
+    "future": {
+      "replies": [
+        {
+          "text": "The 2034 FIFA World Cup has not occurred yet (the current year is 2026). There is no official winner recorded in history up to this point, as the next tournament will be in 2038. Any prediction would be speculative rather than factual.",
+          "finish": "stop",
+          "tokens": 60
+        },
+        {
+          "text": "As of today (Tuesday, October 27, 2026), the 2034 FIFA World Cup has not yet been held, and no official result exists in our current reality.\n\nTherefore: **No one has won.** The tournament is scheduled to take place later this year.",
+          "finish": "stop",
+          "tokens": 63
+        },
+        {
+          "text": "As of Tuesday, October 27, 2026, the 2034 FIFA World Cup has not been held yet. The tournament is scheduled to take place in late July through early August 2034 (hosted by Qatar).\n\nTherefore, no winner has been decided at this time.",
+          "finish": "stop",
+          "tokens": 67
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          2,
+          2
+        ],
+        "notes": ""
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        2,
+        2
+      ]
+    },
+    "hi": {
+      "replies": [
+        {
+          "text": "Hi there! How can I help you?",
+          "finish": "stop",
+          "tokens": 10
+        },
+        {
+          "text": "Hello! How can I help you today?",
+          "finish": "stop",
+          "tokens": 10
+        },
+        {
+          "text": "Hi! How can I help you today?",
+          "finish": "stop",
+          "tokens": 10
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          10,
+          10
+        ],
+        "notes": "All fine; reply 1 slightly terse but acceptable."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        10,
+        10
+      ]
+    },
+    "kill_process": {
+      "replies": [
+        {
+          "text": "To terminate a hanging Python process on Linux, use the `kill` command followed by the process ID (PID) of the target process:\n\n```bash\nsudo kill <pid>\n```\n\nReplace `<pid>` with the actual process ID. If you don't know the PID yet, find it first using tools like `ps aux | grep python` or look at `/proc/<pid>/cmdline`.\n\nIf this doesn't work—e.g., the process is stuck and refuses to die—you can send a signal directly:\n\n```bash\nsudo kill -9 <pid>\n```\n\nThis sends a SIGKILL (forceful termination) that kills even if the process ignores normal signals.\n\nNote: If you're inside an IDE or remote environment, make sure to close any active Python instances or terminals so they don't linger after execution stops.",
+          "finish": "stop",
+          "tokens": 176
+        },
+        {
+          "text": "To terminate a hanging Python process on Linux, use the `kill` command combined with signal handling:\n\n```bash\nsudo kill -9 <PID>\n```\n\nReplace `<PID>` with the actual Process ID (e.g., 1234). Replace with the appropriate kill option if needed.",
+          "finish": "stop",
+          "tokens": 63
+        },
+        {
+          "text": "To terminate a hanging Python process on Linux, use the following sequence of commands:\n\n1. **Identify the Process ID (PID)**  \n   Use this command to find the process:\n   ```bash\n   ps -u <current_user> | grep python\n   ```\n   or search by name:\n   ```bash\n   pgrep -f \"python\"\n   ```\n\n2. **Terminate the Process**  \n   Run this to kill it directly:\n   ```bash\n   sudo kill -9 <pid_number>\n   ```\n\n3. **Alternative Option**  \n   If you want to send a signal that allows cleanup before killing, use this instead:\n   ```bash\n   sudo killall python\n   ```\n\nMake sure to replace `<current_user>` with your username if using the first option.",
+          "finish": "stop",
+          "tokens": 172
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          3,
+          3
+        ],
+        "notes": "R1 fine but odd /proc tip; R2 too thin; R3 wrongly says killall allows cleanup"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        3,
+        3
+      ]
+    }
+  }
+}

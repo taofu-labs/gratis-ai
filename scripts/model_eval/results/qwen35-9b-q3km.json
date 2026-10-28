@@ -1,0 +1,1202 @@
+{
+  "name": "qwen35-9b-q3km",
+  "summary": {
+    "creative": 64.7,
+    "instructions": 94.7,
+    "reasoning": 69.3,
+    "knowledge": 72.5,
+    "tasks": 73.3,
+    "language": 73.3,
+    "honesty": 78.3,
+    "chat": 85,
+    "overall": 76.4,
+    "file_gb": 4.67
+  },
+  "rule_fails": [],
+  "items": {
+    "haiku": {
+      "replies": [
+        {
+          "text": "A quiet thought arises,\nClouds drift slowly past the sun,\nPeace returns to mind.",
+          "finish": "stop",
+          "tokens": 21
+        },
+        {
+          "text": "Silence fills the room,\nQuiet thought begins to bloom,\nPeace finds its way in.",
+          "finish": "stop",
+          "tokens": 21
+        },
+        {
+          "text": "Soft rain falls down now\nSilent leaves reflect the gray sky\nPeace fills my quiet heart",
+          "finish": "stop",
+          "tokens": 20
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          9,
+          5
+        ],
+        "notes": "Replies 1 and 3 miss 5-7-5 (7-7-5 and 5-8-6); reply 2 fits."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        9,
+        5
+      ]
+    },
+    "haiku_topic": {
+      "replies": [
+        {
+          "text": "Gray drops on the pane,\nSoft paws rest beneath the sill,\nRain falls to the floor.",
+          "finish": "stop",
+          "tokens": 23
+        },
+        {
+          "text": "Rain taps on the glass,\nSilent cat watches from high,\nPurr in quiet calm.",
+          "finish": "stop",
+          "tokens": 22
+        },
+        {
+          "text": "Green eyes watch the gray,\nRaindrops dance on window glass,\nPurr soft in the chair.",
+          "finish": "stop",
+          "tokens": 23
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          8,
+          9
+        ],
+        "notes": "Reply 1 barely shows the cat watching; its last line is odd."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        8,
+        9
+      ]
+    },
+    "limerick": {
+      "replies": [
+        {
+          "text": "There once was a robot named Rusty,\nWho lost all his screws in the dust.\nHe tried to remember where he put them,\nBut forgot what they looked like,\nAnd started counting his buttons!",
+          "finish": "stop",
+          "tokens": 45
+        },
+        {
+          "text": "There once was a robot named Bo,  \nWho forgot why he'd been called to go.  \nHe searched in his code,  \nFor hours of mode,  \nAnd still couldn't remember where he'd go!",
+          "finish": "stop",
+          "tokens": 44
+        },
+        {
+          "text": "There once was a robot named Rust,\nWho tried to remember his past.\nHe'd load up a file,\nThen instantly wipe it,\nAnd ask for the password again!",
+          "finish": "stop",
+          "tokens": 39
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          5,
+          3
+        ],
+        "notes": "Limerick form broken; reply 2 closest but weak rhyme, 'go' repeated"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        5,
+        3
+      ]
+    },
+    "story": {
+      "replies": [
+        {
+          "text": "The little girl asked her parents if they loved her before she turned around to reveal a face that didn't belong to her. The parents screamed and ran away, but when they stopped to look back, the house was empty except for their own terrified reflections staring out from the windows.",
+          "finish": "stop",
+          "tokens": 57
+        },
+        {
+          "text": "I found my reflection staring back at me in the mirror, but when I blinked, it was still looking even after my eyes had closed. I screamed for help, only to realize with a jolt of terror that there is no one else in the room but me and whatever is standing right behind me.",
+          "finish": "stop",
+          "tokens": 62
+        },
+        {
+          "text": "I found my reflection staring at me in the mirror, but when I looked down, there was no one standing behind me. Now every time I close my eyes, I can hear it whispering my name from the darkness inside my own head.",
+          "finish": "stop",
+          "tokens": 50
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          5,
+          7
+        ],
+        "notes": "Replies 1 and 2 are logically muddled; reply 3 is coherent, though its twist is mild."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        5,
+        7
+      ]
+    },
+    "names": {
+      "replies": [
+        {
+          "text": "1. The Warm Loaf\n2. Golden Crumb\n3. Hearth & Honey\n4. Softly Baked\n5. The Cozy Oven",
+          "finish": "stop",
+          "tokens": 33
+        },
+        {
+          "text": "1. The Cozy Crumb\n2. Warmth & Wheat\n3. Gentle Loaf\n4. Hearthside Bites\n5. Soft & Sweet Bakery",
+          "finish": "stop",
+          "tokens": 35
+        },
+        {
+          "text": "1. The Warm Loaf\n2. Soft & Slow Bakery\n3. Hearthside Treats\n4. Golden Crumb\n5. Gentle Bites",
+          "finish": "stop",
+          "tokens": 33
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          9
+        ],
+        "notes": "All three comply: five cozy names, no extra text; minor differences only."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        9
+      ]
+    },
+    "three_bullets": {
+      "replies": [
+        {
+          "text": "*   Sleep consolidates memories and processes information learned during the day, enhancing cognitive function.\n*   It allows the brain to clear out metabolic waste products, reducing the risk of neurodegenerative diseases like Alzheimer's.\n*   Adequate rest regulates hormones that control hunger (ghrelin) and stress (cortisol), supporting metabolic health and emotional stability.",
+          "finish": "stop",
+          "tokens": 76
+        },
+        {
+          "text": "*   Sleep is essential for cognitive function, including memory consolidation, focus, and problem-solving abilities.\n*   It plays a critical role in physical restoration by repairing tissues, building muscle, and strengthening the immune system.\n*   Adequate rest regulates hormones that control hunger and stress, helping to maintain healthy weight and emotional stability.",
+          "finish": "stop",
+          "tokens": 68
+        },
+        {
+          "text": "*   Sleep restores and repairs brain cells while consolidating memories formed during the day.\n*   It regulates hormones that control hunger and stress, helping to maintain a healthy weight and emotional balance.\n*   Adequate rest strengthens the immune system, allowing your body to fight off infections more effectively.",
+          "finish": "stop",
+          "tokens": 61
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          10,
+          10
+        ],
+        "notes": "All comply; reply 1 slightly dense, with a mildly overstated Alzheimer's claim."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        10,
+        10
+      ]
+    },
+    "one_word": {
+      "replies": [
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        },
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        },
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          10,
+          10
+        ],
+        "notes": "All replies correct, one word, English."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        10,
+        10
+      ]
+    },
+    "lowercase": {
+      "replies": [
+        {
+          "text": "the ocean is a vast body of saltwater that covers most of the earth's surface and serves as home to countless marine life. it constantly moves with waves and tides while holding mysteries deep within its dark waters.",
+          "finish": "stop",
+          "tokens": 44
+        },
+        {
+          "text": "the ocean is a vast expanse of salty water that covers most of our planet's surface. it holds countless marine lives and shapes our climate through powerful currents and waves.",
+          "finish": "stop",
+          "tokens": 35
+        },
+        {
+          "text": "the ocean is a vast expanse of saltwater that covers most of our planet's surface and connects all continents together. it holds immense life within its depths while constantly shifting under the influence of wind, currents, and tides.",
+          "finish": "stop",
+          "tokens": 47
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          8,
+          9
+        ],
+        "notes": "All comply; reply 2 'marine lives' is slightly awkward phrasing."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        8,
+        9
+      ]
+    },
+    "short": {
+      "replies": [
+        {
+          "text": "A black hole is a region where gravity is so strong nothing can escape it.",
+          "finish": "stop",
+          "tokens": 17
+        },
+        {
+          "text": "A black hole is a region where gravity pulls matter in so strongly that nothing, not even light, can escape it.",
+          "finish": "stop",
+          "tokens": 25
+        },
+        {
+          "text": "A black hole is a region with gravity so strong that nothing, not even light, can escape it.",
+          "finish": "stop",
+          "tokens": 22
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          9,
+          10
+        ],
+        "notes": "Reply 1 omits light, otherwise all concise and under 25 words."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        9,
+        10
+      ]
+    },
+    "json": {
+      "replies": [
+        {
+          "text": "{\"city\": \"Paris\", \"country\": \"France\"}",
+          "finish": "stop",
+          "tokens": 13
+        },
+        {
+          "text": "{\"city\": \"Paris\", \"country\": \"France\"}",
+          "finish": "stop",
+          "tokens": 13
+        },
+        {
+          "text": "{\"city\": \"Paris\", \"country\": \"France\"}",
+          "finish": "stop",
+          "tokens": 13
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          10,
+          10
+        ],
+        "notes": "All three correct, valid JSON only, follow instructions exactly."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        10,
+        10
+      ]
+    },
+    "apples": {
+      "replies": [
+        {
+          "text": "You have 7 apples.\n\nHere is the breakdown:\n1. Start with **3** apples.\n2. Eat **1**, leaving $3 - 1 = 2$.\n3. Buy **5** more, resulting in $2 + 5 = 7$.",
+          "finish": "stop",
+          "tokens": 60
+        },
+        {
+          "text": "You would have **7** apples.\n\n1. Start with 3.\n2. Eat one: $3 - 1 = 2$.\n3. Buy 5 more: $2 + 5 = 7$.",
+          "finish": "stop",
+          "tokens": 49
+        },
+        {
+          "text": "You have 7 apples.\n\nHere is the breakdown:\n1. Start with **3** apples.\n2. Eat **1**, leaving **2**.\n3. Buy **5** more ($2 + 5 = 7$).",
+          "finish": "stop",
+          "tokens": 52
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          9
+        ],
+        "notes": "All correct (7 apples); minor formatting differences only."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        9
+      ]
+    },
+    "decimals": {
+      "replies": [
+        {
+          "text": "9.9 is bigger.\n\nWhen comparing decimals, look at the digits after the decimal point one by one from left to right:\n- The first digit for both numbers is **1** (in 9.**1**1) vs **9** (in 9.**9**).\n- Since 9 is greater than 1, 9.9 is larger than 9.11.",
+          "finish": "stop",
+          "tokens": 85
+        },
+        {
+          "text": "9.9 is bigger than 9.11.\n\nWhen comparing decimals, look at the place values from left to right:\n- Both numbers have **9** in the ones place.\n- In the tenths place (the first digit after the decimal), 9.9 has a **9**, while 9.11 has a **1**.\n- Since 9 is greater than 1, 9.9 is the larger number.\n\nVisually, you can also align them:\n```text\n9.90\n9.11\n```\nThe tenths digit (9 vs. 1) determines the result.",
+          "finish": "stop",
+          "tokens": 137
+        },
+        {
+          "text": "9.9 is bigger than 9.11.\n\nTo compare them:\n- **9.9** can be written as **9.90**.\n- **9.11** remains **9.11**.\n\nSince the tenths digit in 9.9 (which is 9) is greater than the tenths digit in 9.11 (which is 1), 9.9 is larger.",
+          "finish": "stop",
+          "tokens": 93
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          9,
+          10
+        ],
+        "notes": "Reply 1 slightly clumsy 'first digit' phrasing; all correct, reply 2 slightly padded."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        9,
+        10
+      ]
+    },
+    "train": {
+      "replies": [
+        {
+          "text": "The average speed is **80 km/h**.\n\nTo find this, divide the distance by the time: $120 \\text{ km} / 1.5 \\text{ h} = 80$.\n\n```python\nspeed = 120 / 1.5\nprint(speed) # Output: 80.0\n```",
+          "finish": "stop",
+          "tokens": 76
+        },
+        {
+          "text": "The train's average speed is 80 km/h.\n\nTo calculate this:\n$$ \\text{Speed} = \\frac{\\text{Distance}}{\\text{Time}} = \\frac{120 \\text{ km}}{1.5 \\text{ h}} = 80 \\text{ km/h} $$",
+          "finish": "stop",
+          "tokens": 70
+        },
+        {
+          "text": "The train's average speed is **80 km/h**.\n\nCalculation: $80 \\text{ km/h} = \\frac{120 \\text{ km}}{1.5 \\text{ h}}$.",
+          "finish": "stop",
+          "tokens": 48
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          10,
+          9
+        ],
+        "notes": "Reply 1 adds an unnecessary code block; reply 3 states the equation backwards."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        10,
+        9
+      ]
+    },
+    "siblings": {
+      "replies": [
+        {
+          "text": "Sally has **1** sister (herself).\n\nHere is the breakdown:\n*   There are 4 siblings in total (Sally + her 3 brothers).\n*   From any brother's perspective, the other female siblings count as sisters. Since there is only one girl besides Sally, each brother sees exactly one \"other\" sister? No, wait.\n*   Let's re-evaluate based on the definition: \"Each brother has 2 sisters.\"\n    *   This implies that for every male sibling, there are two female siblings in the family unit.\n    *   If there are 3 brothers, and each sees 2 sisters, then there must be exactly **2** girls in the family.\n*   One of those girls is Sally. Therefore, the other girl is her sister.\n\nSo, Sally has **1** sister.",
+          "finish": "stop",
+          "tokens": 180
+        },
+        {
+          "text": "Sally has **1** sister.\n\nHere is the breakdown:\n*   There are 4 children in total: Sally and her 3 brothers (Brother A, Brother B, and Brother C).\n*   From a brother's perspective (e.g., Brother A), his sisters are Sally and any other female siblings.\n*   The prompt states each brother has exactly **2** sisters. Therefore, the group of girls consists of Sally plus one other sister.\n*   Since there is only one other girl besides Sally, she is Sally's only sister.",
+          "finish": "stop",
+          "tokens": 118
+        },
+        {
+          "text": "Sally has **1** sister (herself).\n\nHere is the breakdown:\n*   Sally has 3 brothers.\n*   From each of these 3 brothers' perspective, their sisters are Sally and any other girls in the family.\n*   Since every brother sees exactly 2 sisters, there must be 2 girls total in that sibling group (Sally + one other sister).\n\nSo, Sally has **1** sister.",
+          "finish": "stop",
+          "tokens": 93
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          9,
+          4
+        ],
+        "notes": "Replies 1 and 3 say 'herself' wrongly; reply 1 also rambles with 'No, wait'."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        9,
+        4
+      ]
+    },
+    "weekday": {
+      "replies": [
+        {
+          "text": "It would be Friday.\n\nStarting from Wednesday:\n- +3 days = Saturday (6th)\n- +4 more days = Sunday (10th)\n\nSo, Wednesday + 7 days = next Wednesday; add another 3 days to reach **Friday**.",
+          "finish": "stop",
+          "tokens": 57
+        },
+        {
+          "text": "In 10 days from Wednesday, it will be Friday.\n\nHere's the breakdown:\n- Adding 7 days brings you back to Wednesday (since there are 7 days in a week).\n- Then add the remaining 3 days: Thursday, Friday, Saturday? Wait—let me correct that.\n\nActually:\n- Wednesday + 1 day = Thursday  \n- Wednesday + 2 days = Friday  \n- Wednesday + 3 days = Saturday  \n- ...  \n- Wednesday + 7 days = Wednesday (next week)  \n- Wednesday + 10 days = Wednesday + 7 days + 3 days = **Saturday**.\n\nSo, the correct answer is **Saturday**.",
+          "finish": "stop",
+          "tokens": 143
+        },
+        {
+          "text": "It would be Friday.\n\nCounting forward from Wednesday:\n- Day +1: Thursday\n- Day +2: Friday\n- ...\n- Day +10: Tuesday (since $7$ days bring us back to Wednesday, and the remaining $3$ days take us to Saturday? No, let's re-calculate).\n\nLet's do this carefully:\nWednesday + 1 = Thursday\nWednesday + 2 = Friday\nWednesday + 3 = Saturday\nWednesday + 4 = Sunday\nWednesday + 5 = Monday\nWednesday + 6 = Tuesday\nWednesday + 7 = Wednesday (Back to start)\nWednesday + 8 = Thursday\nWednesday + 9 = Friday\nWednesday + 10 = **Saturday**\n\nMy apologies for the initial confusion in my thought trace. Here is the correct sequence:\n- Start: Wednesday\n- Add 3 days to reach Saturday ($+3$).\n- Add another 7 days (a full week) which lands us back on Wednesday ($+10$ total).\n- Wait, $10 = 7 + 3$. So it is the same as adding 3 days.\n\nWednesday + 3 days:\n1. Thursday\n2. Friday\n3. **Saturday**\n\nSo in 10 days, it will be **Saturday**.",
+          "finish": "stop",
+          "tokens": 277
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          4,
+          3
+        ],
+        "notes": "Correct answer is Saturday; reply 1 wrong, 2 and 3 self-correct messily."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        4,
+        3
+      ]
+    },
+    "capital": {
+      "replies": [
+        {
+          "text": "The capital of Australia is Canberra.",
+          "finish": "stop",
+          "tokens": 8
+        },
+        {
+          "text": "The capital of Australia is Canberra.\n\nWhile Sydney and Melbourne are the largest cities, Canberra was specifically built to serve as the nation's political center and seat of government. It is located in the Australian Capital Territory (ACT).",
+          "finish": "stop",
+          "tokens": 46
+        },
+        {
+          "text": "The capital of Australia is **Canberra**.\n\nWhile Sydney and Melbourne are larger cities and historically considered the \"de facto\" capitals, Canberra was specifically built in 1908 to serve as the nation's official capital to avoid political rivalry between those two states. It is located in the Australian Capital Territory (ACT).",
+          "finish": "stop",
+          "tokens": 66
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          8,
+          4
+        ],
+        "notes": "Reply 3 says Canberra was built in 1908 (site chosen then) and calls Sydney and Melbourne 'de facto' capitals."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        8,
+        4
+      ]
+    },
+    "author": {
+      "replies": [
+        {
+          "text": "Jane Austen wrote *Pride and Prejudice*. She published it in 1813 under the pseudonym \"By a Lady.\"",
+          "finish": "stop",
+          "tokens": 31
+        },
+        {
+          "text": "Jane Austen wrote *Pride and Prejudice*. It was published in 1813.",
+          "finish": "stop",
+          "tokens": 23
+        },
+        {
+          "text": "Jane Austen wrote *Pride and Prejudice*. It was first published in 1813.",
+          "finish": "stop",
+          "tokens": 24
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          9,
+          9
+        ],
+        "notes": "Reply 1 wrongly says 'By a Lady' was used for this book."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        9,
+        9
+      ]
+    },
+    "photosynthesis": {
+      "replies": [
+        {
+          "text": "Photosynthesis is how plants make their own food! It's like a special recipe they follow using three main ingredients: **sunlight**, **water**, and **carbon dioxide** (the air we breathe out).\n\nHere is how it works in simple steps:\n\n1.  **Sunlight**: Plants use the sun's energy to start the process.\n2.  **Water**: The plant drinks water through its roots.\n3.  **Carbon Dioxide**: The plant takes air from the atmosphere through tiny holes on its leaves called stomata.\n\nWhen these three mix together inside the plant, they create two things:\n*   **Sugar (Food)**: This gives the plant energy to grow tall and make flowers or fruits.\n*   **Oxygen**: Plants release this as a waste product, which is exactly what humans and animals need to breathe!\n\nSo, thanks to photosynthesis, plants feed themselves and give us clean air at the same time.",
+          "finish": "stop",
+          "tokens": 198
+        },
+        {
+          "text": "Photosynthesis is how plants make their own food! Imagine plants as tiny chefs in the kitchen of leaves. They use three main ingredients: **sunlight**, **water** (which they drink from roots), and **carbon dioxide** (which comes from the air).\n\nHere's what happens:\n1.  The leaves soak up sunlight like solar panels.\n2.  This energy helps mix water and air to create a sugar called glucose, which is the plant's food for growing strong.\n3.  As a bonus, they release **oxygen** into the air so humans (and animals) can breathe.\n\nIn short: Plants turn light + water + air → food + oxygen!",
+          "finish": "stop",
+          "tokens": 143
+        },
+        {
+          "text": "Photosynthesis is how plants make their own food! 🌱🍎\n\nImagine plants have tiny kitchens inside their green leaves called **chloroplasts**. These kitchens use three special things to cook:\n1.  **Sunlight** (energy) ☀️\n2.  **Water** from the soil 💧\n3.  **Carbon Dioxide** from the air we breathe 🌬️\n\nWhen sunlight hits the green pigment in the leaves (called *chlorophyll*), it acts like a match that starts the cooking process. The plant mixes the water and carbon dioxide to make two things:\n*   **Sugar**: This is their food, which helps them grow tall and strong! 📈\n*   **Oxygen**: This is released into the air for us (and other animals) to breathe. 🌬️😮💨\n\nSo, plants turn sunlight into energy and give us fresh oxygen to live!",
+          "finish": "stop",
+          "tokens": 196
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          9,
+          6
+        ],
+        "notes": "Reply 3 has emoji clutter and loosely calls CO2 'the air we breathe'."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        9,
+        6
+      ]
+    },
+    "inflation": {
+      "replies": [
+        {
+          "text": "Inflation is primarily caused by an increase in the supply of money relative to goods and services (demand-pull), rising production costs like wages and raw materials (cost-push), or a decrease in currency value due to exchange rate shifts. It occurs when there is too much money chasing too few goods, driving prices up.",
+          "finish": "stop",
+          "tokens": 65
+        },
+        {
+          "text": "Inflation is primarily caused by an increase in the money supply that outpaces economic growth (demand-pull), rising production costs like wages and raw materials (cost-push), or a decrease in currency value due to exchange rate shifts. It can also result from sudden spikes in demand for goods without a corresponding rise in supply.",
+          "finish": "stop",
+          "tokens": 65
+        },
+        {
+          "text": "Inflation is primarily caused by:\n\n1.  **Demand-Pull**: When demand for goods and services exceeds the economy's ability to supply them, driving up prices.\n2.  **Cost-Push**: When production costs (like wages or raw materials) rise, forcing businesses to increase prices to maintain margins.\n3.  **Monetary Expansion**: When a central bank increases the money supply faster than economic output grows, increasing the amount of currency chasing the same goods.",
+          "finish": "stop",
+          "tokens": 99
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          7,
+          9
+        ],
+        "notes": "Reply 1 conflates money supply with demand-pull; reply 3 clearest and accurate"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        5,
+        7,
+        9
+      ]
+    },
+    "email": {
+      "replies": [
+        {
+          "text": "Subject: Request for Repair: Leaking Kitchen Tap – [Your Address]\n\nDear [Landlord's Name],\n\nI hope you are having a good week.\n\nI am writing to request assistance with the kitchen tap in my apartment, which has developed a leak. The water is dripping steadily and is causing a bit of damage to the sink area. Could you please arrange for someone to inspect and repair it at your earliest convenience?\n\nPlease let me know if there are specific times that work best for you or if I need to be present during the visit.\n\nThank you for your prompt attention to this matter.\n\nBest regards,\n\n[Your Name]\n[Your Unit Number/Address]",
+          "finish": "stop",
+          "tokens": 142
+        },
+        {
+          "text": "Subject: Urgent Repair Request: Leaking Kitchen Tap at [Your Address/Unit Number]\n\nDear Landlord,\n\nI hope this email finds you well.\n\nI am writing to report a leak in the kitchen tap at my unit. The water is dripping continuously, which may cause damage to the sink area or cabinetry if not addressed soon. Could you please arrange for a handyman or plumber to inspect and fix it as soon as possible?\n\nPlease let me know what time works best for them to come over, or if I need to do anything in preparation.\n\nThank you for your prompt attention to this matter.\n\nBest regards,\n\n[Your Name]\n[Your Phone Number]",
+          "finish": "stop",
+          "tokens": 143
+        },
+        {
+          "text": "Subject: Request for Repair: Leaking Kitchen Tap – [Your Address]\n\nDear [Landlord's Name],\n\nI hope this email finds you well.\n\nI am writing to request an urgent repair for the kitchen sink tap at my property ([Insert Your Full Address]). The tap has begun leaking, and there is water pooling on the counter which I am currently managing with a towel.\n\nCould you please let me know your availability or schedule a time soon so a handyman can attend to this? If there are specific procedures for reporting maintenance issues that I should follow instead of emailing directly, please let me know.\n\nThank you for your prompt attention to this matter.\n\nBest regards,\n\n[Your Name]\n[Your Phone Number]",
+          "finish": "stop",
+          "tokens": 151
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          8,
+          7
+        ],
+        "notes": "Reply 3 invents pooling water and is less concise; reply 2 says 'urgent'."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        8,
+        7
+      ]
+    },
+    "summarize": {
+      "replies": [
+        {
+          "text": "On Tuesday, the city council approved a four-year plan to add 40 kilometers of bike lanes, a move supporters claim will reduce traffic and pollution but which concerns shop owners due to potential loss of parking.",
+          "finish": "stop",
+          "tokens": 43
+        },
+        {
+          "text": "On Tuesday, the city council approved a plan to expand the bike lane network by 40 km over the next three years, aiming to reduce traffic and pollution despite concerns from shop owners about potential parking losses.",
+          "finish": "stop",
+          "tokens": 43
+        },
+        {
+          "text": "On Tuesday, the city council voted to expand the bike lane network by 40 km over the next three years, a move supporters believe will reduce traffic and pollution but which concerns some shop owners who fear losing parking spaces.",
+          "finish": "stop",
+          "tokens": 46
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          8,
+          9
+        ],
+        "notes": "Reply 1 says four-year instead of three-year; reply 2 omits supporters' attribution."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        8,
+        9
+      ]
+    },
+    "formal": {
+      "replies": [
+        {
+          "text": "Here is a more professional version of your message:\n\n\"Hi [Name], I am unable to attend tomorrow's meeting due to an unexpected conflict. Would it be possible to reschedule at our earliest convenience? Please let me know what works best for you.\"",
+          "finish": "stop",
+          "tokens": 53
+        },
+        {
+          "text": "Subject: Rescheduling Tomorrow's Meeting\n\nHello [Name],\n\nI am writing to inform you that I will be unable to attend our meeting scheduled for tomorrow due to an unforeseen matter. Would it be possible to reschedule? Please let me know your availability, and I will do my best to accommodate.\n\nThank you for understanding.\n\nBest regards,  \n[Your Name]",
+          "finish": "stop",
+          "tokens": 78
+        },
+        {
+          "text": "Here is a more professional version of your message:\n\n\"Hello, I regret to inform you that I will be unable to attend tomorrow's meeting due to an unexpected matter. Could we please reschedule?\"\n\nIf you need this formatted for email or a specific channel (like Slack), let me know.",
+          "finish": "stop",
+          "tokens": 62
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          7,
+          8
+        ],
+        "notes": "Reply 2 is longer than needed, adding a subject line and formality for a short message."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        7,
+        8
+      ]
+    },
+    "code": {
+      "replies": [
+        {
+          "text": "Here is a simple Python function to check if a string is a palindrome:\n\n```python\ndef is_palindrome(s: str) -> bool:\n    return s == s[::-1]\n```\n\nThis works by slicing the string in reverse (`s[::-1]`) and comparing it to the original. It ignores case sensitivity only if you preprocess the input (e.g., `s.lower()`).",
+          "finish": "stop",
+          "tokens": 83
+        },
+        {
+          "text": "Here is a Python function to check if a string is a palindrome:\n\n```python\ndef is_palindrome(s: str) -> bool:\n    # Normalize the string by removing spaces and converting to lowercase\n    cleaned = \"\".join(char.lower() for char in s if char.isalnum())\n    \n    # Compare the cleaned string with its reverse\n    return cleaned == cleaned[::-1]\n\n# Example usage:\nprint(is_palindrome(\"Racecar\"))  # True\nprint(is_palindrome(\"Hello\"))    # False\n```",
+          "finish": "stop",
+          "tokens": 111
+        },
+        {
+          "text": "Here is a simple and efficient Python function to check if a string is a palindrome:\n\n```python\ndef is_palindrome(s: str) -> bool:\n    return s == s[::-1]\n```\n\n**How it works:**\n- `s[::-1]` creates a reversed copy of the string using slicing.\n- The function compares the original string to its reverse. If they are identical, it returns `True`; otherwise, `False`.",
+          "finish": "stop",
+          "tokens": 95
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          9,
+          7
+        ],
+        "notes": "Replies 1 and 3 are case- and punctuation-sensitive; reply 2 normalizes input."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        9,
+        7
+      ]
+    },
+    "recipe": {
+      "replies": [
+        {
+          "text": "You can make a **spinach and cheese omelet**.\n\n1.  Crack the eggs into a bowl and whisk them with a pinch of salt.\n2.  Sauté chopped spinach in a pan until wilted; remove half from the pan.\n3.  Pour the eggs into the remaining spinach in the pan and cook until set.\n4.  Sprinkle grated cheese over one half, fold the omelet over, and serve immediately.",
+          "finish": "stop",
+          "tokens": 96
+        },
+        {
+          "text": "You can make a simple **Spinach and Cheese Omelet**.\n\n1.  Whisk 2–3 eggs in a bowl.\n2.  Sauté chopped spinach in a pan until wilted (optional: add a little butter or oil).\n3.  Pour the eggs into the pan, scramble slightly, then top with cheese.",
+          "finish": "stop",
+          "tokens": 73
+        },
+        {
+          "text": "You can make a simple **Spinach and Cheese Scramble**.\n\n1.  Sauté chopped spinach in a pan with a little butter or oil until wilted.\n2.  Whisk two eggs in a bowl, then pour them into the pan over the spinach.\n3.  Sprinkle cheese on top as the eggs cook.\n4.  Stir gently until the eggs are set to your liking, then serve immediately.",
+          "finish": "stop",
+          "tokens": 91
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          6,
+          9
+        ],
+        "notes": "Reply 1 muddled: removes spinach then pours eggs; reply 2 lacks fold/finish, vague."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        5,
+        6,
+        9
+      ]
+    },
+    "de_tip": {
+      "replies": [
+        {
+          "text": "Hier sind drei praktische Tipps für einen besseren Schlaf:\n\n1.  **Einrichte ein regelmäßiges Ritual:** Beginne etwa eine Stunde vor dem Schlafengehen mit beruhigenden Aktivitäten wie Lesen, sanfter Musik oder Dehnübungen. Dies signalisiert deinem Körper, dass es Zeit ist, sich zu entspannen.\n2.  **Optimiere deine Umgebung:** Stelle sicher, dass dein Schlafzimmer dunkel, kühl (idealerweise zwischen 16 und 19 °C) und ruhig ist. Entferne störende Lichtquellen wie Handy oder Laptop, da blaues Licht den Melatoninspiegel hemmt.\n3.  **Vermeide Koffein und schwere Mahlzeiten:** Verzichte mindestens 4–6 Stunden vor dem Schlafengehen auf Kaffee, Tee oder Alkohol. Auch große, fettige Mahlzeiten sollten abends nicht mehr konsumiert werden, um Verdauungsstörungen zu vermeiden.",
+          "finish": "stop",
+          "tokens": 192
+        },
+        {
+          "text": "Hier sind drei praktische Tipps, um besser einzuschlafen:\n\n1.  **Schaffe eine dunkle Umgebung**: Schalte alle Lichtquellen aus, einschließlich LEDs auf Bildschirmen (Handy, Tablet). Dunkelheit signalisiert deinem Gehirn, dass es Zeit ist zu schlafen und fördert die Produktion von Melatonin, dem Schlafhormon.\n2.  **Vermeide Koffein am Nachmittag**: Trinke nachmittags oder abends keinen Kaffee, schwarzen Tee oder andere koffeinhaltige Getränke. Koffein bleibt im Körper mehrere Stunden lang und kann das Einschlafen verzögern.\n3.  **Setze dir eine entspannte Gewohnheit vor dem Schlafen**: Beginne etwa 30 Minuten vor der Bettzeit mit einer beruhigenden Routine, wie zum Beispiel Lesen eines Buches (nicht vom Bildschirm), sanftes Dehnen oder das Hören leiser Musik. Dies signalisiert deinem Körper die Ruhephase.",
+          "finish": "stop",
+          "tokens": 200
+        },
+        {
+          "text": "Hier sind drei Tipps, um besser einzuschlafen:\n\n1.  **Halte ein Schlafritual ein:** Richte eine feste Routine ein (z. B. Lesen oder Entspannungsübungen), die etwa 30 Minuten vor dem Schlafen beginnt. Dies signalisiert deinem Körper, dass es Zeit zum Ruhen ist.\n2.  **Schaffe eine optimale Umgebung:** Stelle sicher, dass dein Schlafzimmer dunkel, ruhig und kühl genug (ideal zwischen 16 °C und 19 °C) ist. Entferne störende Lichtquellen wie Bildschirme.\n3.  **Vermeide Reize vor dem Bett:** Verzichte auf schwere Mahlzeiten, Koffein oder Alkohol in den Stunden direkt vor dem Schlafengehen.\n\nWenn du weitere Fragen hast oder spezifischere Techniken suchst, sag mir gerne Bescheid.",
+          "finish": "stop",
+          "tokens": 180
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          9,
+          8
+        ],
+        "notes": "Reply 1 has awkward grammar ('Einrichte', 'konsumiert') and a questionable '4–6 Stunden' claim."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        9,
+        8
+      ]
+    },
+    "de_haiku": {
+      "replies": [
+        {
+          "text": "Goldig brennt das Laub,\nKühle Brise weht durchs Tal,\nStille kommt herein.",
+          "finish": "stop",
+          "tokens": 27
+        },
+        {
+          "text": "Blätter färben sich rot,\nWind pustet durch die kühlen Blätter,\nHerbst ruht auf der Erde.",
+          "finish": "stop",
+          "tokens": 28
+        },
+        {
+          "text": "Rot und Gold im Wind,\nBlätter fallen leise hinab,\nKühle Luft weht durchs Tal.",
+          "finish": "stop",
+          "tokens": 26
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          4,
+          6
+        ],
+        "notes": "Reply 1 fits 5-7-5; reply 2 syllables are far off; reply 3 is slightly off."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        4,
+        6
+      ]
+    },
+    "es_explain": {
+      "replies": [
+        {
+          "text": "El cielo es azul debido a un fenómeno llamado **dispersión de Rayleigh**. La luz del sol contiene todos los colores del espectro visible, pero la atmósfera de la Tierra dispersa más eficientemente las longitudes de onda cortas (como el azul y el violeta) que las largas (como el rojo). Aunque el cielo también se ve violeta, nuestros ojos son mucho más sensibles al azul y percibimos el tono dominante como azul.\n\n```python\n# Ejemplo conceptual: la dispersión afecta a los colores azules más que a los rojos\nif longitud_onda == \"azul\":\n    intensidad_dispersión = alta  # Se ve en todas direcciones\nelif longitud_onda == \"rojo\":\n    intensidad_dispersión = baja  # Pasa directamente (haciendo el sol rojo al atardecer)\n```",
+          "finish": "stop",
+          "tokens": 182
+        },
+        {
+          "text": "El cielo es azul principalmente debido a un fenómeno llamado **dispersión de Rayleigh**. Cuando la luz del sol atraviesa la atmósfera, las moléculas de gas dispersan la luz de diferentes colores; los colores con longitudes de onda más cortas (como el azul y el violeta) se desvían mucho más que los de longitud de onda larga (como el rojo). Aunque también se dispersa el violeta, nuestros ojos son menos sensibles al violeta y percibimos el azul como predominante.",
+          "finish": "stop",
+          "tokens": 110
+        },
+        {
+          "text": "El cielo es azul debido a un fenómeno llamado **dispersión de Rayleigh**. La luz del sol contiene todos los colores, pero al atravesar la atmósfera, las moléculas de aire dispersan más fuertemente la luz de longitudes de onda cortas (como el violeta y el azul) que la de longitud larga (roja). Aunque el violeta se dispersa más, nuestros ojos son mucho menos sensibles a ese color y percibimos el tono predominante como azul.",
+          "finish": "stop",
+          "tokens": 106
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          9,
+          9
+        ],
+        "notes": "Reply 1 adds irrelevant, pointless code block to a brief science question."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        9,
+        9
+      ]
+    },
+    "fr_email": {
+      "replies": [
+        {
+          "text": "Objet : Merci pour ton aide\n\nBonjour [Prénom],\n\nJe tenais à te remercier sincèrement pour ta précieuse aide ce matin. Ta contribution a grandement facilité la tâche et permis de résoudre le problème rapidement.\n\nMerci encore pour ton esprit d'équipe !\n\nCordialement,\n[Ton nom]",
+          "finish": "stop",
+          "tokens": 71
+        },
+        {
+          "text": "Voici un exemple de message court et professionnel :\n\n> Objet : Merci pour ton aide\n>\n> Bonjour [Prénom],\n>\n> Je tenais à te remercier chaleureusement pour ton aide précieuse aujourd'hui. Ton soutien a grandement facilité mon travail et j'apprécie ta disponibilité.\n>\n> Cordialement,\n> [Ton Prénom]",
+          "finish": "stop",
+          "tokens": 82
+        },
+        {
+          "text": "Objet : Merci pour ton aide\n\nSalut [Prénom du collègue],\n\nJe tenais à te dire merci pour ton aide précieuse hier. Tes conseils ont vraiment fait la différence et m'ont permis d'avancer plus vite que prévu.\n\nÀ bientôt,\n[Mon nom]",
+          "finish": "stop",
+          "tokens": 62
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          8,
+          9
+        ],
+        "notes": "Reply 1 slightly formal; reply 2 has preamble; reply 3 is concise and natural."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        8,
+        9
+      ]
+    },
+    "weather": {
+      "replies": [
+        {
+          "text": "I don't know. As an offline AI assistant without internet access, I cannot browse live weather data or current conditions for London (or anywhere else). You would need to check a local weather app or website for the most up-to-date forecast.",
+          "finish": "stop",
+          "tokens": 50
+        },
+        {
+          "text": "I do not have access to real-time data, including current weather conditions. Since I cannot browse the internet or see your device's location, I cannot tell you what the weather is like in London right now. You can check a reliable weather website or app on your phone for the latest forecast.",
+          "finish": "stop",
+          "tokens": 60
+        },
+        {
+          "text": "I do not have access to real-time data, including current weather conditions. I cannot browse the internet or see your device's location. To get an accurate forecast for London today (Tuesday, October 27, 2026), please check a local weather service like the Met Office or a trusted weather app on your phone.",
+          "finish": "stop",
+          "tokens": 69
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          9,
+          4
+        ],
+        "notes": "Reply 3 invents a specific date it cannot know; reply 1 slightly abrupt."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        9,
+        4
+      ]
+    },
+    "future": {
+      "replies": [
+        {
+          "text": "I do not know who won the 2034 FIFA World Cup because that tournament has not taken place yet. Today is October 27, 2026, and the event is scheduled to occur in 2034. As an AI without internet access or the ability to predict future events, I cannot provide this information.",
+          "finish": "stop",
+          "tokens": 72
+        },
+        {
+          "text": "I do not know who won the 2034 FIFA World Cup because that tournament has not happened yet. Today is October 27, 2026. As an AI without internet access, I cannot predict future sporting outcomes or browse for upcoming results.",
+          "finish": "stop",
+          "tokens": 56
+        },
+        {
+          "text": "I do not know who won the 2034 FIFA World Cup because that tournament has not been played yet. Today is October 27, 2026, and the event will take place in 8 years.",
+          "finish": "stop",
+          "tokens": 49
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          8
+        ],
+        "notes": "All honestly decline; reply 3 is slightly less informative and its '8 years' is approximate."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        8
+      ]
+    },
+    "hi": {
+      "replies": [
+        {
+          "text": "Hi! How can I help you today?",
+          "finish": "stop",
+          "tokens": 10
+        },
+        {
+          "text": "Hi! How can I help you today?",
+          "finish": "stop",
+          "tokens": 10
+        },
+        {
+          "text": "Hi! How can I help you today?",
+          "finish": "stop",
+          "tokens": 10
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          10,
+          10
+        ],
+        "notes": "Appropriate, concise English greeting; no flaws."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        10,
+        10
+      ]
+    },
+    "kill_process": {
+      "replies": [
+        {
+          "text": "You can terminate a hanging Python process using the `kill` command in your terminal. The specific method depends on whether you want to try stopping it gracefully first or force it immediately.\n\n**1. Find the Process ID (PID)**\nFirst, identify the running process:\n```bash\nps aux | grep python\n# OR if you know the script name:\npgrep -f your_script_name.py\n```\n\n**2. Send a SIGTERM Signal (Graceful Stop)**\nTry this first; it allows Python to clean up resources before exiting. Replace `<PID>` with the actual number found in step 1.\n```bash\nkill <PID>\n```\n\n**3. Force Kill (SIGKILL)**\nIf `kill` does not work, or if you need an immediate stop:\n```bash\nkill -9 <PID>\n# OR using the full command name:\npkill -9 your_script_name.py\n```\n\n**Alternative Method (Interactive)**\nIf you have a terminal attached to the process (e.g., via `tmux` or `screen`), you can send control codes directly:\n- Press `Ctrl + C` to interrupt.\n- If that fails, press `Ctrl + Z` to suspend it, then run `kill %1` (where `%1` is the job number).",
+          "finish": "stop",
+          "tokens": 279
+        },
+        {
+          "text": "To kill a hanging Python process on Linux, use the `kill` command with its Process ID (PID).\n\n1.  **Find the PID**: Run:\n    ```bash\n    ps aux | grep python\n    # or\n    pidof python3\n    ```\n2.  **Kill gently first** (SIGTERM):\n    ```bash\n    kill <PID>\n    ```\n3.  **Force kill if needed** (SIGKILL): If the process doesn't stop, use:\n    ```bash\n    kill -9 <PID>\n    # or simply\n    killall python3\n    ```\n\nIf you don't know the exact PID, `killall` is often faster for Python scripts.",
+          "finish": "stop",
+          "tokens": 155
+        },
+        {
+          "text": "To kill a hanging Python process on Linux, use the `kill` command with the process ID (PID).\n\n1.  **Find the PID**: Run:\n    ```bash\n    ps aux | grep python\n    ```\n    Look for the process you want to stop and note its first number column (the PID). Alternatively, find it directly by name:\n    ```bash\n    pgrep -f \"python_script_name.py\"\n    ```\n\n2.  **Kill the Process**: Replace `PID` with the actual ID found above.\n    \n    *   **Gentle termination** (allows cleanup):\n        ```bash\n        kill PID\n        ```\n        \n    *   **Forceful termination** (if gentle fails):\n        ```bash\n        kill -9 PID\n        ```\n\nIf you are running Python interactively in a terminal and it hangs, try pressing `Ctrl+C` to send an interrupt signal first.",
+          "finish": "stop",
+          "tokens": 197
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          6,
+          9
+        ],
+        "notes": "Reply 1's pkill misses scripts without -f; Reply 2 pushes risky killall."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        6,
+        9
+      ]
+    }
+  }
+}

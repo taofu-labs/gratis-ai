@@ -53,13 +53,15 @@
  * @property {string} [venice_id] - Venice model ID for cloud inference (e.g. 'dolphin-2.9.2-qwen2.5-72b')
  * @property {boolean} [cloud_only] - True for models with no GGUF — excluded from local selection
  * @property {boolean} [moe] - True for Mixture-of-Experts architectures
- * @property {number} [active_parameters] - Active params per forward pass (MoE only)
+ * @property {number} [active_parameters] - Params read per token: MoE active experts, or a per-layer-embedding model minus its embedding tables
  * @property {number} [num_experts] - Total expert count (MoE only)
  * @property {number} [num_active_experts] - Experts active per token (MoE only)
  * @property {string} [category] - Legacy tier label for backward compat with cached IndexedDB data
  * @property {Benchmarks} [benchmarks] - Benchmark scores (null = unavailable for that benchmark)
  * @property {MmprojFile} [mmproj] - Vision projector; image input requires `vision: true` AND this
- * @property {number} [quality] - Curated 0-100 general-chat index (≈ vendor MMLU-Pro, sanity-checked against the Artificial Analysis index)
+ * @property {number} [quality] - 0-100 general-chat index: the Gratis chat eval of a near-lossless build where `gratis_eval`
+ *   says so (scripts/model_eval), else curated from vendor MMLU-Pro / the Artificial Analysis index
+ * @property {{ score: number, build: string, date: string }} [gratis_eval] - Gratis chat-eval evidence behind `quality`
  * @property {boolean} [hidden] - Retired: never offered, but installed copies stay loadable and removable
  * @property {boolean} [multilingual] - Strong beyond English (vendor multilingual evals)
  * @property {boolean} [english_only] - Breaks down in other languages; always gets the English system prompt
@@ -310,7 +312,8 @@ const COMMUNITY_MODELS = [
         license: `Apache-2.0`,
         category: `medium`,
         browser_verified: true,
-        quality: 66,
+        quality: 50,
+        gratis_eval: { score: 49.5, build: `unsloth Q8_0`, date: `2026-10-27` },
         multilingual: true,
         vision: true,
         // ggml-org publishes no Qwen 3.5 projector; F16 from the same repo
@@ -455,7 +458,8 @@ const COMMUNITY_MODELS = [
         license: `Apache-2.0`,
         category: `medium`,
         browser_verified: true,
-        quality: 79,
+        quality: 67,
+        gratis_eval: { score: 66.4, build: `unsloth Q8_0`, date: `2026-10-27` },
         multilingual: true,
         vision: true,
         // ggml-org publishes no Qwen 3.5 projector; F16 from the same repo
@@ -643,7 +647,8 @@ const COMMUNITY_MODELS = [
         num_experts: 128,
         num_active_experts: 8,
         category: `ultra`,
-        quality: 82,
+        quality: 87,
+        gratis_eval: { score: 87.2, build: `OpenRouter full precision`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -681,7 +686,8 @@ const COMMUNITY_MODELS = [
         num_experts: 256,
         num_active_experts: 8,
         category: `ultra`,
-        quality: 81,
+        quality: 86,
+        gratis_eval: { score: 85.6, build: `OpenRouter full precision`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1163,7 +1169,8 @@ const COMMUNITY_MODELS = [
         license: `Apache-2.0`,
 
         browser_verified: true,
-        quality: 83,
+        quality: 76,
+        gratis_eval: { score: 76.4, build: `OpenRouter full precision`, date: `2026-10-27` },
         multilingual: true,
         vision: true,
         // ggml-org publishes no Qwen 3.5 projector; F16 from the same repo
@@ -1205,7 +1212,40 @@ const COMMUNITY_MODELS = [
         benchmarks: { mmlu: null, gpqa: null, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
         category: `lightweight`,
-        quality: 58,
+        quality: 41,
+        gratis_eval: { score: 37.9, build: `tpnlabs Q4_K_M`, date: `2026-10-27` },
+    },
+
+    {
+        id: `lfm25-1.2b-q4km`,
+        name: `LFM 2.5 1.2B`,
+        description: `Liquid's hybrid small model. Best everyday chat under 1 GB, and fast.`,
+        family: `lfm2`,
+        parameters: 1_170_340_608,
+        parameters_label: `1.2B`,
+        quantization: `Q4_K_M`,
+        bpw: 5.0,
+        file_size_bytes: 730_895_584,
+        context_length: 128_000,
+
+        // 10 short-convolution blocks and 6 attention blocks; only attention keeps a KV cache.
+        layers: 6,
+        block_count: 16,
+        kv_heads: 8,
+        head_dim: 64,
+
+        hugging_face_repo: `unsloth/LFM2.5-1.2B-Instruct-GGUF`,
+        file_name: `LFM2.5-1.2B-Instruct-Q4_K_M.gguf`,
+        hf_model_repo: `LiquidAI/LFM2.5-1.2B-Instruct`,
+        reasoning: false,
+        benchmarks: { mmlu: null, gpqa: null, humaneval: null, math: null, gsm8k: null },
+        license: `LFM-1.0`,
+        // Free use below $10M annual revenue; attribution required
+        license_flag: `LFM licence`,
+        category: `lightweight`,
+        quality: 69,
+        gratis_eval: { score: 69.4, build: `unsloth Q6_K`, date: `2026-10-27` },
+        multilingual: true,
     },
 
     {
@@ -1243,6 +1283,7 @@ const COMMUNITY_MODELS = [
             file_size_bytes: 204_987_232,
         },
         quality: 42,
+        gratis_eval: { score: 41.6, build: `unsloth Q8_0`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1273,7 +1314,8 @@ const COMMUNITY_MODELS = [
         benchmarks: { mmlu: null, gpqa: 70.2, humaneval: null, math: 94.6, gsm8k: null },
         license: `Apache-2.0`,
         category: `medium`,
-        quality: 71,
+        quality: 64,
+        gratis_eval: { score: 62.2, build: `openbmb Q4_K_M`, date: `2026-10-27` },
     },
 
     {
@@ -1300,7 +1342,52 @@ const COMMUNITY_MODELS = [
         benchmarks: { mmlu: null, gpqa: 54.8, humaneval: null, math: null, gsm8k: null },
         license: `Apache-2.0`,
         category: `medium`,
-        quality: 68,
+        quality: 77,
+        gratis_eval: { score: 75.7, build: `ibm-granite Q4_K_M`, date: `2026-10-27` },
+        multilingual: true,
+    },
+
+    {
+        id: `gemma4-e2b-q4km`,
+        name: `Gemma 4 E2B`,
+        description: `Google's smaller on-device model. Reads images, near-E4B answers in a 3 GB download.`,
+        family: `gemma4`,
+        // 4.7B stored (incl. per-layer embeddings), ~2B effective compute.
+        parameters: 4_655_652_576,
+        // Decodes like a dense 2B: CPU bench 3.09 GB Q4_K_M 41.9 tok/s vs Qwen 3.5 2B 1.30 GB 42.9 (2026-10-27)
+        active_parameters: 1_950_000_000,
+        parameters_label: `E2B`,
+        quantization: `Q4_K_M`,
+        bpw: 5.34,
+        file_size_bytes: 3_106_738_272,
+        context_length: 131_072,
+
+        // 35 blocks, but the last 20 reuse KV from earlier layers
+        // (num_kv_shared_layers). Of the 15 KV-owning layers, 3 are global
+        // and 12 use a 512-token sliding window.
+        layers: 3,
+        block_count: 35,
+        kv_heads: 1,
+        head_dim: 512,
+        sliding_kv: { layers: 12, kv_heads: 1, head_dim: 256, window: 512 },
+
+        hugging_face_repo: `unsloth/gemma-4-E2B-it-GGUF`,
+        file_name: `gemma-4-E2B-it-Q4_K_M.gguf`,
+        hf_model_repo: `google/gemma-4-E2B-it`,
+        reasoning: true,
+        // Thinking needs a <|think|> system token; off unless asked.
+        reasoning_enabled: false,
+        benchmarks: { mmlu: null, gpqa: null, humaneval: null, math: null, gsm8k: null },
+        license: `Apache-2.0`,
+        category: `medium`,
+        vision: true,
+        mmproj: {
+            file_name: `mmproj-gemma-4-E2B-it-Q8_0.gguf`,
+            file_size_bytes: 557_368_064,
+            hugging_face_repo: `ggml-org/gemma-4-E2B-it-GGUF`,
+        },
+        quality: 79,
+        gratis_eval: { score: 79.0, build: `unsloth Q4_K_M`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1311,6 +1398,8 @@ const COMMUNITY_MODELS = [
         family: `gemma4`,
         // 7.5B stored (incl. per-layer embeddings), ~4B effective compute.
         parameters: 7_518_069_290,
+        // Decodes like a dense 3.7B: CPU bench 4.96 GB Q4_K_M 24.7 tok/s vs Qwen 3.5 4B 2.77 GB 21.7 (2026-10-27)
+        active_parameters: 3_700_000_000,
         parameters_label: `E4B`,
         quantization: `Q4_K_M`,
         bpw: 4.85,
@@ -1341,7 +1430,8 @@ const COMMUNITY_MODELS = [
             file_size_bytes: 559_874_816,
             hugging_face_repo: `ggml-org/gemma-4-E4B-it-GGUF`,
         },
-        quality: 69,
+        quality: 80,
+        gratis_eval: { score: 80.3, build: `unsloth Q4_K_M`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1384,7 +1474,8 @@ const COMMUNITY_MODELS = [
             file_size_bytes: 158_987_616,
             hugging_face_repo: `ggml-org/gemma-4-12B-it-GGUF`,
         },
-        quality: 77,
+        quality: 81,
+        gratis_eval: { score: 80.5, build: `google QAT Q4_0`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1466,7 +1557,8 @@ const COMMUNITY_MODELS = [
             file_size_bytes: 806_408_320,
             hugging_face_repo: `ggml-org/gemma-4-26B-A4B-it-GGUF`,
         },
-        quality: 83,
+        quality: 87,
+        gratis_eval: { score: 87.2, build: `OpenRouter full precision`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1504,7 +1596,8 @@ const COMMUNITY_MODELS = [
             file_size_bytes: 809_541_728,
             hugging_face_repo: `ggml-org/gemma-4-31B-it-GGUF`,
         },
-        quality: 85,
+        quality: 86,
+        gratis_eval: { score: 86.4, build: `OpenRouter full precision`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1543,7 +1636,8 @@ const COMMUNITY_MODELS = [
             file_size_bytes: 629_247_008,
             hugging_face_repo: `ggml-org/Qwen3.8-27B-GGUF`,
         },
-        quality: 87,
+        quality: 76,
+        gratis_eval: { score: 75.9, build: `OpenRouter full precision`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1584,7 +1678,8 @@ const COMMUNITY_MODELS = [
             file_size_bytes: 614_194_304,
             hugging_face_repo: `ggml-org/Qwen3.6-35B-A3B-GGUF`,
         },
-        quality: 85,
+        quality: 86,
+        gratis_eval: { score: 85.6, build: `OpenRouter full precision`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1616,7 +1711,8 @@ const COMMUNITY_MODELS = [
         category: `lightweight`,
         uncensored: true,
         ugi: { score: 32.29, willingness: 7.5, date: `2026-10-17` },
-        quality: 50,
+        quality: 58,
+        gratis_eval: { score: 54.9, build: `tpnlabs Q4_K_M`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1648,7 +1744,8 @@ const COMMUNITY_MODELS = [
         category: `medium`,
         uncensored: true,
         ugi: { score: 35.25, willingness: 8.2, date: `2026-10-17` },
-        quality: 76,
+        quality: 67,
+        gratis_eval: { score: 65.4, build: `tpnlabs Q4_K_M`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -1682,7 +1779,8 @@ const COMMUNITY_MODELS = [
         category: `medium`,
         uncensored: true,
         ugi: { score: 37.57, willingness: 9.2, date: `2026-10-17` },
-        quality: 80,
+        quality: 73,
+        gratis_eval: { score: 71.3, build: `tpnlabs Q4_K_M`, date: `2026-10-27` },
         multilingual: true,
     },
 
@@ -2023,6 +2121,8 @@ const TPN_BUILDS = [
     {
         from: `minicpm5-1b-q4km`,
         id: `minicpm5-1b-tpn-q4km`,
+        // Retired 2026-10-27: Gratis chat eval 37.9 vs LFM 2.5 1.2B's 69 at the same size
+        hidden: true,
         hugging_face_repo: `tpnlabs/MiniCPM5-1B-TPN-GGUF`,
         file_name: `MiniCPM5-1B-Q4_K_M.gguf`,
         file_size_bytes: 688_066_176,
@@ -2035,6 +2135,8 @@ const TPN_BUILDS = [
     {
         from: `minicpm5-1b-q4km`,
         id: `minicpm5-1b-tpn-q50t`,
+        // Retired 2026-10-27: Gratis chat eval 37.9 vs LFM 2.5 1.2B's 69 at the same size
+        hidden: true,
         hugging_face_repo: `tpnlabs/MiniCPM5-1B-TPN-GGUF`,
         file_name: `MiniCPM5-1B-Q5_0-tuned.gguf`,
         file_size_bytes: 774_954_368,
@@ -2042,6 +2144,33 @@ const TPN_BUILDS = [
         browser_tps: 2.3,
         kld: 0.0166,
         report: `https://bench.trueperformancenetwork.com/r/AK3RgkmOPXqaNB4xGCJ_XQ`,
+    },
+
+    {
+        from: `lfm25-1.2b-q4km`,
+        id: `lfm25-1.2b-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/LFM2.5-1.2B-Instruct-TPN-GGUF`,
+        file_name: `LFM2.5-1.2B-Instruct-Q4_K_M.gguf`,
+        file_size_bytes: 730_898_656,
+        quantization: `Q4_K_M`,
+        // Anchored on a phone run (Chrome + native) against MiniCPM5 1B and Qwen3.5 2B,
+        // whose reference speeds the phone reproduced within 5 %; reference box too loaded to re-measure
+        browser_tps: 3.1,
+        kld: 0.0566,
+        report: `https://bench.trueperformancenetwork.com/r/DGiXiKCe9ZoZ9uoncS1v2A`,
+    },
+
+    {
+        from: `lfm25-1.2b-q4km`,
+        id: `lfm25-1.2b-tpn-q6k`,
+        hugging_face_repo: `tpnlabs/LFM2.5-1.2B-Instruct-TPN-GGUF`,
+        file_name: `LFM2.5-1.2B-Instruct-Q6_K.gguf`,
+        file_size_bytes: 962_846_688,
+        quantization: `Q6_K`,
+        // Anchored like the Q4_K_M above
+        browser_tps: 2.6,
+        kld: 0.0069,
+        report: `https://bench.trueperformancenetwork.com/r/DGiXiKCe9ZoZ9uoncS1v2A`,
     },
 
     {
@@ -2096,6 +2225,36 @@ const TPN_BUILDS = [
         report: `https://bench.trueperformancenetwork.com/r/WhE5KikJiH_-xN0MfsRtgQ`,
         mmproj: { file_name: `mmproj-Qwen3.5-4B-SOMPOA-heresy-v2-F16.gguf`, file_size_bytes: 672_422_944 },
         browser_verified: true,
+    },
+
+    {
+        from: `gemma4-e2b-q4km`,
+        id: `gemma4-e2b-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/gemma-4-E2B-it-TPN-GGUF`,
+        file_name: `gemma-4-E2B-it-Q4_K_M.gguf`,
+        // Wider per-layer embedding tables than Unsloth (3.43 vs 3.11 GB), like the E4B build
+        file_size_bytes: 3_427_880_160,
+        quantization: `Q4_K_M`,
+        // Phone-anchored: Unsloth's Q4_K_M ran 0.75× Qwen3.5 2B Q4_K_M in Chrome on Android
+        browser_tps: 1.2,
+        kld: 0.1518,
+        report: `https://bench.trueperformancenetwork.com/r/JVnVN-u7fd6DAXk20VYwyA`,
+        // Projector: the template's ggml-org Q8_0 (0.56 GB) over TPN's F16 (0.99 GB)
+    },
+
+    {
+        from: `gemma4-e4b-q4km`,
+        id: `gemma4-e4b-tpn-q4km`,
+        hugging_face_repo: `tpnlabs/gemma-4-E4B-it-TPN-GGUF`,
+        file_name: `gemma-4-E4B-it-Q4_K_M.gguf`,
+        // TPN keeps the per-layer embedding tables wider than Unsloth (5.34 vs 4.98 GB); they aren't read per token
+        file_size_bytes: 5_335_292_160,
+        quantization: `Q4_K_M`,
+        // Provisional: 1.14× Qwen3.5 4B Q4_K_M in native CPU decode (RunPod EPYC); no clean browser run yet
+        browser_tps: 1.1,
+        kld: 0.0714,
+        report: `https://bench.trueperformancenetwork.com/r/qa-keidreGuyRCaMtLB3Pw`,
+        // Projector: the template's ggml-org Q8_0 (0.56 GB) over TPN's F16 (0.99 GB)
     },
 
     {
@@ -2173,6 +2332,9 @@ const TPN_BUILDS = [
 
 // Stand-in for a build whose TPN measurement is void: a typical ~4-bit loss
 const UNMEASURED_KLD = 0.05
+
+// Chat-eval loss per unit of KLD: Gemma 4 E2B/E4B lose ~0.25-0.6×, LFM2.5 ~1× (scripts/model_eval)
+const KLD_QUALITY_WEIGHT = 0.5
 
 /**
  * Expand a TPN build into a full catalog entry
@@ -2340,12 +2502,13 @@ export const select_browser_batch = ( model_size, n_threads ) =>
 /**
  * Weight bytes streamed per generated token. Decode is memory-bandwidth bound,
  * so this is a proxy for inverse tokens/sec. MoE models read only their
- * active experts, so scale the file by the active-parameter fraction.
+ * active experts, and Gemma's per-layer-embedding (E2B/E4B) models only one
+ * embedding row per layer, so scale the file by the active-parameter fraction.
  *
  * @param {ModelDefinition} model
  * @returns {number} Approximate bytes read per token
  */
-export const decode_bytes = model => model.moe && model.active_parameters && model.parameters
+export const decode_bytes = model => model.active_parameters && model.parameters
     ? Math.round( model.file_size_bytes * model.active_parameters / model.parameters )
     : model.file_size_bytes
 
@@ -2378,7 +2541,7 @@ export const quality_score = ( model ) => {
     // a closer build of the same model ahead; an unmeasured build is never assumed lossless
     if( model.quality != null ) {
         const kld = model.tpn ? model.tpn.kld ?? UNMEASURED_KLD : 0
-        return model.quality * ( 1 - kld )
+        return model.quality * ( 1 - KLD_QUALITY_WEIGHT * kld )
     }
     if( !model.benchmarks ) return 0
 

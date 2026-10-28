@@ -50,6 +50,9 @@ const Pre = styled.pre`
     overflow-x: auto;
     background: none;
 
+    /* Prose small models fence off: wrap it, phones can't side-scroll a paragraph */
+    ${ ( { $wrap } ) => $wrap && `white-space: pre-wrap; overflow-wrap: anywhere;` }
+
     code {
         background: none;
         padding: 0;
@@ -62,6 +65,9 @@ const Pre = styled.pre`
         border-radius: ${ ( { theme } ) => `0 0 ${ theme.border_radius.md } ${ theme.border_radius.md }` };
     }
 `
+
+// Fences without a real language are usually prose, not code
+const PROSE_LANGUAGES = [ null, `text`, `txt`, `plaintext`, `markdown`, `md` ]
 
 /**
  * Pick the language from rehype-highlight's `language-xxx` class
@@ -106,7 +112,7 @@ export default function CodeBlock( { children, node: _node, ...props } ) {
             </CopyButton>
         </Header>
 
-        <Pre ref={ pre_ref } { ...props }>
+        <Pre ref={ pre_ref } $wrap={ PROSE_LANGUAGES.includes( language ) } { ...props }>
             { children }
         </Pre>
 

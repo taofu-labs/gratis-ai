@@ -1,0 +1,43 @@
+aa_index	name	slug	release	ifbench	gpqa	hle
+13.3	Qwen3.5 9B (Non-reasoning)	qwen3-5-9b-non-reasoning	2026-03-02	0.378231292517007	0.786	0.094
+13.1	Qwen3.5 4B (Reasoning)	qwen3-5-4b	2026-03-02	0.519727891156463	0.771	0.099
+12.7	Granite 4.2 30B	granite-4-2-30b	2026-08-25		0.644	0.112
+12.5	MiniCPM5-2B	minicpm5-2b	2026-09-07		0.702	0.089
+11.2	Qwen3.5 9B (Reasoning)	qwen3-5-9b	2026-03-02	0.66734693877551	0.806	0.149
+11.1	Granite 4.2 8B	granite-4-2-8b	2026-08-25		0.631	0.097
+10.8	Qwen3.5 4B (Non-reasoning)	qwen3-5-4b-non-reasoning	2026-03-02	0.33265306122449	0.712	0.08
+9.1	Granite 4.2 3B	granite-4-2-3b	2026-08-25		0.559	0.066
+8.9	Gemma 4 E4B (Reasoning)	gemma-4-e4b	2026-04-03	0.442176870748299	0.576	0.038
+8.8	MiniCPM5-1B (Reasoning)	minicpm5-1b	2026-05-25	0.493197278911565	0.278	0.065
+8.7	MiniCPM5-1B (Non-reasoning)	minicpm5-1b-non-reasoning	2026-05-25	0.351700680272109	0.269	0.045
+8.4	LFM2.5-2.6B	lfm2-5-2-6b	2026-08-04		0.558	0.062
+7.8	Gemma 4 E2B (Reasoning)	gemma-4-e2b	2026-04-02	0.380272108843537	0.433	0.048
+7.5	Gemma 4 E4B (Non-reasoning)	gemma-4-e4b-non-reasoning	2026-04-03	0.405442176870748	0.549	0.048
+7.2	LFM2.5-8B-A1B	lfm2-5-8b-a1b	2026-05-28	0.556462585034014	0.513	0.069
+6.9	Qwen3.5 2B (Reasoning)	qwen3-5-2b	2026-03-02	0.314965986394558	0.456	0.026
+6.5	Gemma 4 E2B (Non-reasoning)	gemma-4-e2b-non-reasoning	2026-04-02	0.336054421768707	0.405	0.047
+6.3	Phi-4 Mini Instruct	phi-4-mini	2024-02-26	0.210884353741497	0.331	0.044
+6.2	Qwen3.5 2B (Non-reasoning)	qwen3-5-2b-non-reasoning	2026-03-02	0.291156462585034	0.438	0.05
+6.1	Qwen3.5 0.8B (Reasoning)	qwen3-5-0-8b	2026-03-02	0.214965986394558	0.111	0.011
+5.9	LFM2 24B A2B	lfm2-24b-a2b	2026-02-25	0.458503401360544	0.474	0.042
+5.8	Gemma 3n E4B Instruct Preview (May '25)	gemma-3n-e4b-preview-0520	2025-05-20		0.278	0.048
+5.7	MiniCPM-V 4.6 1.3B	minicpm-v4-6-1-3b	2026-05-11	0.26734693877551	0.305	0.051
+5.5	Ministral 3 8B	ministral-3-8b	2025-12-02	0.291156462585034	0.471	0.043
+5.4	LFM 40B	lfm-40b	2024-09-30		0.327	0.049
+5.4	Qwen3.5 0.8B (Non-reasoning)	qwen3-5-0-8b-non-reasoning	2026-03-02	0.215646258503401	0.236	0.051
+5.3	Exaone 4.0 1.2B (Reasoning)	exaone-4-0-1-2b-reasoning	2025-07-15	0.229931972789116	0.515	0.06
+5.2	Exaone 4.0 1.2B (Non-reasoning)	exaone-4-0-1-2b	2025-07-15	0.253061224489796	0.424	0.057
+5.2	LFM2 2.6B	lfm2-2-6b	2025-09-23	0.195238095238095	0.306	0.055
+5.2	LFM2.5-1.2B-Instruct	lfm2-5-1-2b-instruct	2026-01-05	0.438095238095238	0.326	0.067
+5.2	LFM2.5-1.2B-Thinking	lfm2-5-1-2b-thinking	2026-01-20	0.418367346938776	0.339	0.062
+5.2	Qwen3 1.7B (Reasoning)	qwen3-1.7b-instruct-reasoning	2025-04-28	0.268707482993197	0.356	0.046
+4.9	LFM2 8B A1B	lfm2-8b-a1b	2025-10-07	0.262585034013605	0.344	0.049
+4.9	Qwen3 1.7B (Non-reasoning)	qwen3-1.7b-instruct	2025-04-28	0.210884353741497	0.283	0.053
+4.8	Gemma 3n E2B Instruct	gemma-3n-e2b	2025-06-26	0.220408163265306	0.229	0.042
+4.8	Gemma 3n E4B Instruct	gemma-3n-e4b	2025-06-26	0.27891156462585	0.296	0.045
+4.8	LFM2 1.2B	lfm2-1-2b	2025-07-10	0.219727891156463	0.228	0.056
+4.8	LFM2.5-VL-1.6B	lfm2-5-vl-1-6b	2026-01-05	0.331292517006803	0.289	0.051
+4.8	Llama 3.2 Instruct 1B	llama-3-2-instruct-1b	2024-09-25	0.227891156462585	0.196	0.055
+4.8	Ministral 3 3B	ministral-3-3b	2025-12-02	0.268027210884354	0.358	0.054
+4.8	Qwen3 0.6B (Non-reasoning)	qwen3-0.6b-instruct	2025-04-28	0.219047619047619	0.231	0.049
+4.8	Qwen3 0.6B (Reasoning)	qwen3-0.6b-instruct-reasoning	2025-04-28	0.233333333333333	0.239	0.056

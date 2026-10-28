@@ -488,3 +488,11 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Hybrid (Qwen 3.5): each draft warm rolls back to the checkpoint at the last user-turn start; still ends ~4 new tokens. Expected, not a bug.
 - `max_tokens: 0` is not "read only": llama-server still samples ≥1 token. Use 1.
 - System prompt for warm-ups and requests: `build_system_prompt` (utils/system_prompt.js) with the UI language. It carries today's date, so a warm-up before midnight misses once after it — harmless.
+
+- Model eval: Node fetch (undici) aborts after 300 s headers timeout; big GGUFs on CPU run <1 tok/s → 600-token replies take >15 min. eval.mjs uses a no-timeout undici Agent
+- RunPod eval: `ghcr.io/ggml-org/llama.cpp:server-cuda` with `--model-url` starts in router mode with NO model ("model name is missing") yet /health says ok → curl the GGUF in the entrypoint, then `llama-server -m`. Shared account: only delete pod ids we logged (scratchpad runpod/mine.log); generate on pod, judge after deleting it
+- RunPod CPU bench: `ghcr.io/ggml-org/llama.cpp:full` tools need `LD_LIBRARY_PATH=/app` (else libllama-bench-impl.so missing, silent empty results)
+- Composer on phones (2026-10-27): text beside 4 buttons wrapped every ~2 words on a 375 pt iPhone → ≤30rem the InputRow wraps (text full width, buttons below). Check composer changes at 375 px with long text.
+- Code fences without a language (or text/md) wrap: small models fence prose. Replies use the full column on phones (only user bubbles cap at 85%)
+- Chat page needs a loaded model to show messages: in dev, seed IndexedDB then `setState` the llm_store module at its exact `?t=` URL (performance entries), else Vite gives a second instance
+- Playwright on Linux adds --no-sandbox unless `chromiumSandbox: true`; repo convention `chromiumSandbox: !process.env.CI` (container forbids --no-sandbox)

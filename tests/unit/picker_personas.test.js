@@ -40,6 +40,12 @@ const profile_for = name => {
     return build_device_profile( capabilities, estimate_max_model_bytes( capabilities ) )
 }
 
+// A synthetic build: one real model's shape, with the quality and speed under test
+const variant = ( id, quality, browser_tps ) => {
+    const base = MODEL_CATALOG.find( m => m.id === `qwen35-2b-tpn-q4km` )
+    return { ...base, id, quality, browser_tps, tpn: undefined }
+}
+
 afterEach( () => vi.unstubAllGlobals() )
 
 describe( `picker personas`, () => {
@@ -184,27 +190,26 @@ describe( `picker personas`, () => {
         } ) )
 
         expect( matrix ).toEqual( {
-            cheap_android: [ `qwen35-0.8b-tpn-q5km`, `minicpm5-1b-tpn-q4km`, `minicpm5-1b-tpn-q50t`, `qwen35-0.8b-tpn-q5km` ],
-            iphone: [ `qwen35-0.8b-tpn-q5km`, `minicpm5-1b-tpn-q4km`, `minicpm5-1b-tpn-q50t`, `qwen35-0.8b-tpn-q5km` ],
-            windows_laptop: [ `qwen35-0.8b-tpn-q5km`, `qwen35-4b-tpn-q4km`, `qwen35-4b-tpn-q4km`, `qwen35-4b-tpn-q4km` ],
-            macbook_desktop: [ `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs`, `qwen35-9b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs` ],
+            cheap_android: [ `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q6k`, `qwen35-0.8b-tpn-q5km` ],
+            iphone: [ `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q6k`, `qwen35-0.8b-tpn-q5km` ],
+            windows_laptop: [ `lfm25-1.2b-tpn-q4km`, `lfm25-1.2b-tpn-q4km`, `gemma4-e2b-tpn-q4km`, `gemma4-e2b-tpn-q4km` ],
+            macbook_desktop: [ `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs`, `gemma4-26b-a4b-tpn-iq4xs` ],
         } )
     } )
 
     test( `balanced takes a smarter model over a faster one while replies stay usable`, () => {
-        const laptop = profile_for( `windows_laptop` )
-        const { pick } = select_for_preferences( MODEL_CATALOG, laptop )
-        const speed = estimate_reply_speed( pick, laptop )
+        const models = [ variant( `quick`, 50, 8 ), variant( `smart`, 70, 2 ) ]
+        const device = { ...profile_for( `windows_laptop` ), speed_ratio: 1 }
+        const { pick } = select_for_preferences( models, device )
+        const speed = estimate_reply_speed( pick, device )
 
-        // The 4B over the 2B: slower, but well above the 1.5 tok/s floor
-        expect( pick.id ).toBe( `qwen35-4b-tpn-q4km` )
+        // Slower, but above the 1.5 tok/s floor
+        expect( pick.id ).toBe( `smart` )
         expect( speed ).toBeGreaterThanOrEqual( 1.5 )
         expect( speed_band( speed ) ).toBe( `slow` )
     } )
 
     test( `a near-miss that outscores a qualifying step-up does not hide it`, () => {
-        const base = MODEL_CATALOG.find( m => m.id === `minicpm5-1b-tpn-q4km` )
-        const variant = ( id, quality, browser_tps ) => ( { ...base, id, quality, browser_tps, tpn: undefined } )
         const models = [ variant( `pick`, 60, 8 ), variant( `near_miss`, 67, 2.4 ), variant( `smarter`, 68, 1 ) ]
         const device = { ...profile_for( `windows_laptop` ), speed_ratio: 1 }
 
@@ -227,10 +232,11 @@ describe( `picker personas`, () => {
             expect( estimate_reply_speed( step_up, device ) ).toBeGreaterThanOrEqual( 1 )
         }
 
-        // 2B stays the pick (4B is under 1.5 tok/s there), 4B is offered as the step-up
-        expect( select_for_preferences( MODEL_CATALOG, slow_laptop ) ).toMatchObject( {
-            pick: { id: `qwen35-2b-tpn-q4km` },
-            step_up: { id: `qwen35-4b-tpn-q4km` },
+        // Under the 1.5 tok/s floor but above 1: not the pick, offered as the step-up
+        const models = [ variant( `pick`, 60, 8 ), variant( `smarter`, 70, 1.2 ) ]
+        expect( select_for_preferences( models, { ...slow_laptop, speed_ratio: 1 } ) ).toMatchObject( {
+            pick: { id: `pick` },
+            step_up: { id: `smarter` },
         } )
     } )
 

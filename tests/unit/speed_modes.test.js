@@ -27,17 +27,17 @@ describe( `speed modes`, () => {
 
     test( `balanced merges into an end of the scale when it lands on the same model`, () => {
         const device = laptop()
-        const better = select_for_preferences( MODEL_CATALOG, device, { priority: `better` } ).pick
+        const faster = select_for_preferences( MODEL_CATALOG, device, { priority: `faster` } ).pick
         const balanced = select_for_preferences( MODEL_CATALOG, device, { priority: `balanced` } ).pick
         const priorities = select_mode_models( MODEL_CATALOG, device ).map( ( { priority } ) => priority )
 
-        // On this laptop Smarter and Balanced are both the 4B: one gauge, not two
-        expect( balanced.id ).toBe( better.id )
+        // On this laptop Faster and Balanced are both LFM2.5 1.2B: one gauge, not two
+        expect( balanced.id ).toBe( faster.id )
         expect( priorities ).toEqual( [ `better`, `faster` ] )
     } )
 
     test( `a single possible model offers no modes to choose between`, () => {
-        const only = MODEL_CATALOG.find( m => m.id === `minicpm5-1b-tpn-q4km` )
+        const only = MODEL_CATALOG.find( m => m.id === `lfm25-1.2b-tpn-q4km` )
         expect( select_mode_models( [ only ], laptop() ) ).toHaveLength( 1 )
     } )
 

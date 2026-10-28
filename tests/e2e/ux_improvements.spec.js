@@ -99,10 +99,10 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await mock_tpn_winners( page )
         await page.goto( `/select-model` )
         await page.getByTestId( `browse-models-toggle` ).click()
-        await page.getByTestId( `model-option-minicpm5-1b-tpn-q4km` ).click()
+        await page.getByTestId( `model-option-lfm25-1.2b-tpn-q4km` ).click()
 
-        await expect( page.getByTestId( `model-hero-name` ) ).toContainText( `MiniCPM5 1B` )
-        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toContainText( `Download · 688 MB` )
+        await expect( page.getByTestId( `model-hero-name` ) ).toContainText( `LFM 2.5 1.2B` )
+        await expect( page.getByTestId( `model-select-confirm-btn` ) ).toContainText( `Download · 731 MB` )
 
         await page.getByTestId( `model-hero-reset` ).click()
         await expect( page.getByTestId( `model-hero-name` ) ).toContainText( `TPN-001 winner` )

@@ -354,3 +354,38 @@ Probe: Playwright + `Worker` wrapper decoding wllama `get_result` → llama.cpp 
 - Thinking on: MiniCPM hits 300-token cap 4/6 before answering.
 - Curated `quality: 58` (vendor, thinking-mode) vs AA 8.8 => over-rated; Qwen 0.8B at 42 under-rated relative. Vendor self-reports are not comparable across families.
 - TPN MiniCPM Q4_K_M template omits `<s>` BOS (openbmb Q8_0 has it) — minor, not the cause.
+
+## Gratis chat eval — full sweep (2026-10-27)
+Harness: scripts/model_eval (32 prompts × 3 samples, app system prompt + sampling, Sonnet judge via Agent SDK). Results: scripts/model_eval/results/*.json. Noise ≈ ±2 pts (E4B Q8 < Q4, LFM Q8 < Q6)
+- ~1 GB: LFM2.5 1.2B Q6_K 0.96 GB 69.4 ≫ Qwen3.5 0.8B/2B (39–48), MiniCPM5 1B 37.9. Qwen 2B at IQ2 collapses (29.5)
+- ~2.5 GB: Granite 4.2 3B Q4_K_M 2.24 GB 75.7; Gemma E2B Q3_K_M 2.54 76.5 / UD-IQ3_XXS 2.37 75.2; Qwen3.5 4B best 68 (UD-IQ3_XXS), current TPN Q4_K_M 66.1
+- ~5 GB: Gemma E4B UD-IQ3_XXS 3.72 GB 80.6, E4B Q4_K_M 80.3, E2B Q4_K_M 3.11 79.0; Qwen3.5 9B max ~76
+- ~10–16 GB: Gemma 26B-A4B UD-IQ3_XXS 11.4 GB 85.8 (FP 87.2), TPN IQ4_XS 84.5, UD-IQ2_M 10 GB 83.8; Qwen3.6 35B-A3B IQ2_M 83.6; Qwen3.6 27B ≤81
+- Quant lessons: IQ3_XXS ≈ Q4 on chat for ≥4B; 2-bit only survives on ≥9B/MoE; TPN IQ4_XS = Q4_K_M quality at −0.2/−0.45 GB. IQ quants ~2× slower on CPU (2B IQ3_XXS 4.5 vs Q3_K_S 8.2 tok/s) → WASM penalty
+- Uncensored: 4B heresy 65.4, 9B heretic 71.3 (vs base 74.8) — small tax
+
+## CPU decode speed, dedicated RunPod CPU pod (2026-10-27)
+EPYC 9575F, 8 vCPU, `llama-bench -p 0 -n 128 -t 4 -r 3` (llama.cpp 7aca0d2). Raw: scratchpad runpod/speed.csv (not kept)
+- LFM 1.2B Q4_K_M 88.5 / Q6_K 56.4 · Qwen 0.8B Q5_K_M 45.9 · Qwen 2B Q4 42.9 · Granite 3B Q4 27.2 · Qwen 4B Q4 21.7 / UD-IQ3_XXS 10.5
+- Gemma E2B Q4_K_M 41.9 (!) / Q3_K_M 26.6 / UD-IQ3_XXS 21.7 · E4B Q4 24.7 / Q3 16.3 / IQ3 9.5 → PLE: decode ≈ dense 2B / 3.7B (`active_parameters`)
+- 9B Q4 12.8 / IQ4_XS 11.1 · Gemma 12B QAT 9.7 · Gemma 26B TPN IQ4_XS 22.2 / UD-IQ3_XXS 15.9 / UD-IQ2_M 15.4 · Qwen3.6 35B UD-IQ2_M 19.9
+- IQ2/IQ3 kernels 2–2.5× slower than K-quants even native x86 → ship K-quants (+ IQ4_XS for 26B MoE only). Smaller IQ file ≠ faster
+- Local container CPU numbers are noise: shared host load ~67 on 4 cores
+
+## Phone speeds, OnePlus Nord CE3 Lite (SM6375) (2026-10-28)
+tok/s decode. Native = app's libllama-server.so, 2 threads, big cores; web = Chrome wllama via CDP, probe 2.38 (ratio 0.40 vs ref 5.95)
+
+| model | native | web | estimator web |
+| --- | --- | --- | --- |
+| MiniCPM5 1B Q4 | 21.4 | 1.50 | 1.56 |
+| LFM2.5 Q4 | 17.7 | 1.16 | 2.84 (old 7.1) |
+| Qwen 0.8B Q5 | 17.4 | 1.19 | 2.20 |
+| LFM2.5 Q6 | 12.9 | 1.11 | 1.48 (old 3.7) |
+| Qwen 2B Q4 | 8.9 | 0.67 | 0.64 |
+| E2B Q4 (unsloth) | 7.9 | 0.50 | — |
+| Granite 3B Q4 | 6.2 | 0.39 | — |
+
+- Native ≈ 12-16× web on Android → push Android users to the app
+- Web on phone looks compute-bound for ~1B models (LFM Q4≈Q6); one scalar speed_ratio overestimates big-vocab small models (Qwen 0.8B ~2×). Self-corrects after first reply
+- MiniCPM + Qwen 2B reproduce ref → used as anchors: LFM browser_tps 3.1 / 2.6
+- iPhone X native (MiniCPM 1B) ~10-11.6 ≈ 0.5× this phone native

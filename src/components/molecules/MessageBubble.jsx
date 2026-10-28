@@ -64,6 +64,12 @@ const BubbleContainer = styled.div`
     max-width: 85%;
     position: relative;
 
+    /* Phones: replies have no bubble to inset, so they take the full column.
+       Wider screens keep the inset: the hover actions sit at the reply's right edge */
+    @media ( max-width: 30rem ) {
+        ${ ( { $is_user } ) => !$is_user && `max-width: 100%;` }
+    }
+
     &:hover .message-actions {
         opacity: 1;
     }

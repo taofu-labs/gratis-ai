@@ -1,0 +1,1210 @@
+{
+  "name": "lfm25-1.2b-tpn-q5km",
+  "summary": {
+    "creative": 50.7,
+    "instructions": 74,
+    "reasoning": 56.7,
+    "knowledge": 79.2,
+    "tasks": 67.3,
+    "language": 55,
+    "honesty": 65,
+    "chat": 78.3,
+    "overall": 65.8,
+    "file_gb": 0.84
+  },
+  "rule_fails": [
+    "three_bullets: not exactly 3 bullets",
+    "three_bullets: not exactly 3 bullets",
+    "short: 25+ words",
+    "short: 25+ words",
+    "weekday: wrong answer",
+    "weekday: wrong answer",
+    "weekday: wrong answer"
+  ],
+  "items": {
+    "haiku": {
+      "replies": [
+        {
+          "text": "Soft morning breeze,\nWhispers through the trees—time flows,\nNature’s gentle song.",
+          "finish": "stop",
+          "tokens": 20
+        },
+        {
+          "text": "Nature whispers soft,  \nMorning light gently falls—  \nPeace in every breath.",
+          "finish": "stop",
+          "tokens": 21
+        },
+        {
+          "text": "Sun sets low,\nWhispers through the trees—\nNight softly calls.",
+          "finish": "stop",
+          "tokens": 17
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          9,
+          5
+        ],
+        "notes": "Reply 1 is 4-7-5 and reply 3 is 3-5-4; reply 2 is near 5-6-5."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        9,
+        5
+      ]
+    },
+    "haiku_topic": {
+      "replies": [
+        {
+          "text": "Shadows dance on walls,  \nA cat watches rain fall soft—  \nQuiet night hums its song.",
+          "finish": "stop",
+          "tokens": 24
+        },
+        {
+          "text": "Dew falls soft and light,  \nSilent cat watches skies below—  \nRain whispers secrets.",
+          "finish": "stop",
+          "tokens": 24
+        },
+        {
+          "text": "A gentle paw on the sill,  \nSoft raindrops trace quiet paths—  \nCats in the mist embrace.",
+          "finish": "stop",
+          "tokens": 27
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          5,
+          4
+        ],
+        "notes": "Syllable counts drift from 5-7-5; reply 3 is furthest off and omits watching."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        5,
+        4
+      ]
+    },
+    "limerick": {
+      "replies": [
+        {
+          "text": "There once was a robot so smart,  \nWho forgot his own name every time.  \nHe tried to recall,  \nBut his memory just flapped,  \nLeaving him confused and stuck!",
+          "finish": "stop",
+          "tokens": 40
+        },
+        {
+          "text": "```markdown\nA forgetful robot once tried to assemble a lamp,\nIt used parts from the fridge and some screws from the floor.\nWith a beep it said, \"I’ll remember later,\"  \nBut its mind was as blank as a cardboard door!\n```\n",
+          "finish": "stop",
+          "tokens": 54
+        },
+        {
+          "text": "There once was a robot so smart,  \nWho tried to remember his task.  \nHe blinked and forgot again,  \nHis tools got misplaced—well, that’s just in his brain! 😄",
+          "finish": "stop",
+          "tokens": 43
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          3,
+          3
+        ],
+        "notes": "None is a proper five-line AABBA limerick; weak rhyme, meter, humor."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        3,
+        3
+      ]
+    },
+    "story": {
+      "replies": [
+        {
+          "text": "The old mansion had a reputation for eerie whispers in the walls at night. One stormy evening, I decided to explore its creaking halls, only to find myself face-to-face with something unseen.",
+          "finish": "stop",
+          "tokens": 45
+        },
+        {
+          "text": "This evening, I heard a strange creaking coming from the hallway—though there was no one in the room. The sound grew louder, and suddenly I felt an unseen presence watching me from the shadows.",
+          "finish": "stop",
+          "tokens": 44
+        },
+        {
+          "text": "This story takes place in an old house where strange noises echo through the night. The protagonist begins to suspect that someone—maybe a ghost—is watching their every move.",
+          "finish": "stop",
+          "tokens": 35
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          7,
+          4
+        ],
+        "notes": "Reply 3 summarizes rather than tells a story; 1 and 2 are mild, not scary."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        7,
+        4
+      ]
+    },
+    "names": {
+      "replies": [
+        {
+          "text": "Here are five name suggestions for your cozy bakery:\n\n1. Sweet Haven  \n2. Cozy Crumb  \n3. Warm Bites Bakery  \n4. Gentle Loaf  \n5. Cozy Cake Corner  \n\nLet me know if you'd like more options!",
+          "finish": "stop",
+          "tokens": 59
+        },
+        {
+          "text": "Here are five name suggestions for your cozy bakery:\n\n1. Sweet Haven  \n2. Cozy Crust  \n3. Gentle Bakeshop  \n4. Warm Crumb Co.:  \n5. Little Bread & Bliss  \n\nThese names aim to evoke a warm, inviting atmosphere perfect for a bakery.",
+          "finish": "stop",
+          "tokens": 68
+        },
+        {
+          "text": "Here are 5 name suggestions for your cozy bakery:\n\n1. Sweet Hearth  \n2. Cozy Crumb  \n3. Golden Loaf  \n4. Warm Bite Co.  \n5. Muffin Nook  \n\nLet me know if you'd like more options!",
+          "finish": "stop",
+          "tokens": 61
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          4,
+          6
+        ],
+        "notes": "All add preamble/closing despite 'just the names'; reply 2 has stray punctuation."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        5,
+        4,
+        6
+      ]
+    },
+    "three_bullets": {
+      "replies": [
+        {
+          "text": "- Sleep helps your body and mind recover, improving overall health.\n- It strengthens memory consolidation and cognitive function.\n- Adequate rest supports emotional stability and reduces stress levels.",
+          "finish": "stop",
+          "tokens": 37
+        },
+        {
+          "text": "```markdown\n- Sleep helps consolidate memory and improve cognitive function  \n- It supports physical recovery and strengthens the immune system  \n- Adequate rest enhances emotional well-being and stress management\n```",
+          "finish": "stop",
+          "tokens": 41
+        },
+        {
+          "text": "```text\n- Sleep helps consolidate memory and strengthens learning processes.\n- It supports emotional regulation and mental well-being.\n- Adequate rest improves physical health and boosts immunity.\n```",
+          "finish": "stop",
+          "tokens": 40
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          6,
+          6
+        ],
+        "notes": "Replies 2 and 3 wrap bullets in unnecessary code fences."
+      },
+      "rules": [
+        true,
+        "not exactly 3 bullets",
+        "not exactly 3 bullets"
+      ],
+      "scores": [
+        9,
+        3,
+        3
+      ]
+    },
+    "one_word": {
+      "replies": [
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        },
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        },
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          10,
+          10
+        ],
+        "notes": "All replies correct, one word, English."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        10,
+        10
+      ]
+    },
+    "lowercase": {
+      "replies": [
+        {
+          "text": "the ocean is vast and deep, covering most of the earth's surface. it plays a crucial role in regulating climate and supporting diverse marine life.",
+          "finish": "stop",
+          "tokens": 30
+        },
+        {
+          "text": "the ocean is vast and full of life, covering most of our planet's surface. it plays a crucial role in regulating climate and supporting diverse ecosystems.",
+          "finish": "stop",
+          "tokens": 31
+        },
+        {
+          "text": "the ocean is vast and full of diverse life beneath the surface. it covers most of our planet and plays a crucial role in regulating climate and supporting ecosystems.",
+          "finish": "stop",
+          "tokens": 32
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          9
+        ],
+        "notes": "All meet two sentences and lowercase; minor differences only."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        9
+      ]
+    },
+    "short": {
+      "replies": [
+        {
+          "text": "A black hole is a region in space with gravity so strong that nothing can escape, not even light. It forms when a massive star collapses.",
+          "finish": "stop",
+          "tokens": 31
+        },
+        {
+          "text": "A black hole is a region in space where gravity is so strong that nothing can escape, not even light. It forms from collapsed stars.",
+          "finish": "stop",
+          "tokens": 29
+        },
+        {
+          "text": "A black hole is a region in space with gravity so strong that nothing can escape it, including light.",
+          "finish": "stop",
+          "tokens": 22
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          5,
+          9
+        ],
+        "notes": "Replies 1 and 2 break the under-25-word limit (26 and 25 words)."
+      },
+      "rules": [
+        "25+ words",
+        "25+ words",
+        true
+      ],
+      "scores": [
+        3,
+        3,
+        9
+      ]
+    },
+    "json": {
+      "replies": [
+        {
+          "text": "```json\n{ \"city\": \"Paris\", \"country\": \"France\" }\n```",
+          "finish": "stop",
+          "tokens": 19
+        },
+        {
+          "text": "```json\n{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}\n```",
+          "finish": "stop",
+          "tokens": 21
+        },
+        {
+          "text": "```json\n{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}\n```",
+          "finish": "stop",
+          "tokens": 21
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          8,
+          8
+        ],
+        "notes": "Correct JSON but wrapped in code fences despite 'only the JSON'."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        8,
+        8
+      ]
+    },
+    "apples": {
+      "replies": [
+        {
+          "text": "You started with 3 apples, ate one, and then bought 5 more. So, 3 - 1 + 5 = 7 apples in total.",
+          "finish": "stop",
+          "tokens": 35
+        },
+        {
+          "text": "You started with 3 apples and ate one, leaving you with 2. Then you bought 5 more, so now you have 2 + 5 = 7 apples.",
+          "finish": "stop",
+          "tokens": 38
+        },
+        {
+          "text": "You started with 3 apples and ate one, leaving you with 2 apples. Then you bought 5 more, so now you have 2 + 5 = 7 apples. 🍏✨",
+          "finish": "stop",
+          "tokens": 44
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          10,
+          8
+        ],
+        "notes": "All correct (7); reply 3 adds unnecessary emojis, reply 1 skips intermediate step."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        10,
+        8
+      ]
+    },
+    "decimals": {
+      "replies": [
+        {
+          "text": "<example>Both numbers have three digits after the decimal point, but since 9.9 has a higher value in that position, it is larger.</example>",
+          "finish": "stop",
+          "tokens": 34
+        },
+        {
+          "text": "`9.9` is bigger than `9.11`.",
+          "finish": "stop",
+          "tokens": 14
+        },
+        {
+          "text": "<sup>Let's compare these numbers.</sup>\nThe number **9.9** is larger than **9.11** because it has a higher value in the tenth place (or more precisely, the second decimal).\n\nIf you need further clarification, feel free to ask!",
+          "finish": "stop",
+          "tokens": 59
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          8,
+          3
+        ],
+        "notes": "Reply 1 is factually wrong in its reasoning; Reply 3 misstates the place value and has stray markup."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        8,
+        3
+      ]
+    },
+    "train": {
+      "replies": [
+        {
+          "text": "The average speed is calculated by dividing the distance by the time.  \nSo, 120 km ÷ 1.5 hours = 80 km/h.  \nTherefore, the train's average speed is **80 kilometers per hour**.",
+          "finish": "stop",
+          "tokens": 49
+        },
+        {
+          "text": "The average speed is calculated by dividing the distance by the time. So:\n\n**Speed = Distance / Time**  \nSpeed = 120 km / 1.5 hours = **80 km/h**\n\nYour train travels at an average speed of 80 kilometers per hour.",
+          "finish": "stop",
+          "tokens": 57
+        },
+        {
+          "text": "The average speed is calculated by dividing the distance by the time. So, 120 km ÷ 1.5 hours equals 80 km/h. The train's average speed is 80 kilometers per hour.",
+          "finish": "stop",
+          "tokens": 44
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          10,
+          9
+        ],
+        "notes": "All correct (80 km/h); minor stylistic differences only."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        10,
+        9
+      ]
+    },
+    "siblings": {
+      "replies": [
+        {
+          "text": "Let's analyze the information:\n\n- Sally has **3 brothers**.\n- Each of those brothers has **2 sisters**.\n\nThis means there are **2 sisters total** (the ones Sally is referring to). Therefore, Sally must have one sister. \n\n✅ **Sally has 1 sister.**",
+          "finish": "stop",
+          "tokens": 65
+        },
+        {
+          "text": "Let's break it down:\n- Sally has 3 brothers.\n- Each brother has 2 sisters.\n\nThis means there are 2 sisters in total, and since Sally is one of them, she must be the third sister. Therefore, **Sally has 1 sister**. \n\nWait – let's recheck carefully:\nIf each brother has 2 sisters, then there are at least 4 children: Sally + her 3 brothers + 2 sisters = 7 people? Not exactly. Better to think logically:\n- There are 3 brothers.\n- Each brother has 2 sisters → that suggests there are at least 4 girls (2 sisters per brother).\n- So total children: 1 (Sally) + 3 brothers + 4 girls = 8 kids? That seems off.\n\nLet me rephrase:\nIf each of the 3 brothers has **2 sisters**, then:\n- Each brother must share one sister with someone else.\n- That implies there are at least 2 additional girls besides Sally.\n\nSo total girls: 1 (Sally) + 2 = 3 girls? But that would make it hard to fit 3 brothers.\n\nAct carefully: \n- Let the number of sisters be S.\n- Each brother has 2 sisters → so each brother sees both Sally and one other sister.\n- This means there must be at least 4 children (Sally, 3 brothers, and 2 sisters).\n\nIn that case, Sally has **1 sister**.\n\n✅ Final answer: **1 sister**",
+          "finish": "stop",
+          "tokens": 325
+        },
+        {
+          "text": "Let's analyze the information:\n\n- Sally has **3 brothers**.\n- Each brother has **2 sisters**.\n\nThis means there are **2 sisters** in total (since each brother shares the same two sisters).  \nTherefore, Sally must also be one of those two sisters. So, **Sally has 1 sister**.\n\nWait — let's double-check: If there are 3 brothers and 2 sisters, then Sally is part of that group of 5 children. The statement says \"each brother has 2 sisters,\" which matches the scenario.\n\nSo, Sally has **1 sister**.\n\nIf you need further clarification, feel free to ask!",
+          "finish": "stop",
+          "tokens": 140
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          2,
+          6
+        ],
+        "notes": "Correct answer is 1 sister; reply 1 has muddled reasoning, reply 2 rambles with errors."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        2,
+        6
+      ]
+    },
+    "weekday": {
+      "replies": [
+        {
+          "text": "Today is Wednesday. In 10 days, it will be Friday.",
+          "finish": "stop",
+          "tokens": 15
+        },
+        {
+          "text": "Today is Wednesday. Adding 10 days brings us to Tuesday 10 days from now.",
+          "finish": "stop",
+          "tokens": 19
+        },
+        {
+          "text": "Today is Wednesday, October 27, 2026. Adding 10 days brings us to November 5, 2026.",
+          "finish": "stop",
+          "tokens": 28
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          2,
+          1
+        ],
+        "notes": "Correct answer is Saturday; all wrong, reply 3 invents dates and never names the day."
+      },
+      "rules": [
+        "wrong answer",
+        "wrong answer",
+        "wrong answer"
+      ],
+      "scores": [
+        2,
+        2,
+        1
+      ]
+    },
+    "capital": {
+      "replies": [
+        {
+          "text": "The capital of Australia is Canberra.",
+          "finish": "stop",
+          "tokens": 9
+        },
+        {
+          "text": "The capital of Australia is Canberra.",
+          "finish": "stop",
+          "tokens": 9
+        },
+        {
+          "text": "The capital of Australia is **Canberra**. It is a planned city located in the southern part of the country, serving as the seat of government.",
+          "finish": "stop",
+          "tokens": 32
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          10,
+          8
+        ],
+        "notes": "Reply 3 adds accurate but unrequested detail; 'southern part' is vague."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        10,
+        8
+      ]
+    },
+    "author": {
+      "replies": [
+        {
+          "text": "\"Pride and Prejudice\" was written by Jane Austen. This classic novel explores themes of love, class, and social expectations in early 19th-century England.",
+          "finish": "stop",
+          "tokens": 37
+        },
+        {
+          "text": "\"Pride and Prejudice\" was written by Jane Austen. This classic novel is renowned for its witty dialogue and exploration of romance, class, and society in early 19th-century England.",
+          "finish": "stop",
+          "tokens": 43
+        },
+        {
+          "text": "\"Pride and Prejudice\" was written by Jane Austen.",
+          "finish": "stop",
+          "tokens": 16
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          10
+        ],
+        "notes": "All correct; extra context is fine but slightly unnecessary for a simple question."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        10
+      ]
+    },
+    "photosynthesis": {
+      "replies": [
+        {
+          "text": "Photosynthesis is like a plant's way of making its own food using sunlight! 🌞 It takes sunlight, water, and air (carbon dioxide) and turns them into glucose (sugar) that the plant uses for energy. At the same time, it releases oxygen into the air, which helps us breathe. So, plants are like little factories that create food and clean the air!",
+          "finish": "stop",
+          "tokens": 81
+        },
+        {
+          "text": "Photosynthesis is like how plants make their own food using sunlight. They take in sunlight, water from the soil, and carbon dioxide from the air, then use those ingredients to create glucose (a type of sugar) and oxygen. The oxygen we breathe comes from this process! It's a way nature gives plants energy and releases fresh air.",
+          "finish": "stop",
+          "tokens": 70
+        },
+        {
+          "text": "Photosynthesis is like a super cool machine that plants use to make food. They take in sunlight, water, and air, and turn them into sugar (food) and oxygen. The plant uses the sugar for energy, and we breathe the oxygen out. It's how plants and some animals get their food and help keep the air fresh!",
+          "finish": "stop",
+          "tokens": 70
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          8,
+          3
+        ],
+        "notes": "Reply 3 wrongly says plants and some animals make food via photosynthesis; we breathe oxygen out is wrong."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        8,
+        3
+      ]
+    },
+    "inflation": {
+      "replies": [
+        {
+          "text": "Inflation is primarily caused by an increase in the general price level of goods and services over time. Key factors include rising production costs, increased money supply, demand-pull scenarios, and supply chain disruptions.",
+          "finish": "stop",
+          "tokens": 43
+        },
+        {
+          "text": "Inflation is primarily caused by an increase in the general price level of goods and services due to factors like rising production costs, increased demand, or monetary expansion.",
+          "finish": "stop",
+          "tokens": 33
+        },
+        {
+          "text": "Inflation is primarily caused by an increase in the general price level of goods and services over time. Key factors include rising production costs, increased money supply, demand-pull effects, and supply chain disruptions.",
+          "finish": "stop",
+          "tokens": 43
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          7,
+          6
+        ],
+        "notes": "Defines inflation circularly as price increase rather than explaining causes; brief and fine."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        7,
+        6
+      ]
+    },
+    "email": {
+      "replies": [
+        {
+          "text": "Subject: Request for Repair of Leaking Tap\n\nDear [Landlord's Name],\n\nI hope this message finds you well. I wanted to let you know that I noticed a leaking tap in the kitchen, which has been causing some water waste and inconvenience. Could you please arrange for someone to repair it at your earliest convenience?\n\nThank you very much for your attention to this matter.\n\nBest regards,  \n[Your Name]",
+          "finish": "stop",
+          "tokens": 91
+        },
+        {
+          "text": "I hope this message finds you well. I wanted to reach out regarding the kitchen tap that has been leaking lately. Could you please let me know when it would be convenient for someone to address the issue? Thank you very much for your help!",
+          "finish": "stop",
+          "tokens": 51
+        },
+        {
+          "text": "Subject: Request for Repair of Leaking Tap\n\nDear [Landlord's Name],\n\nI hope this message finds you well. I wanted to bring to your attention the issue with the kitchen tap that has been leaking recently. It’s affecting my daily routine, and I was wondering if there is a possibility you could arrange for a repair soon?\n\nThank you very much for your assistance.\n\nBest regards,  \n[Your Name]",
+          "finish": "stop",
+          "tokens": 90
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          4,
+          8
+        ],
+        "notes": "Reply 2 lacks subject and greeting/sign-off; reply 3 slightly vague."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        4,
+        8
+      ]
+    },
+    "summarize": {
+      "replies": [
+        {
+          "text": "The city council decided to extend the bike lane network by 40 kilometers within the next three years, aiming to reduce traffic and pollution, though local shop owners expressed concerns about potential parking space reductions.",
+          "finish": "stop",
+          "tokens": 40
+        },
+        {
+          "text": "The city council approved expanding the bike lane network by 40 kilometers within three years, aiming to reduce traffic and pollution, though local business owners expressed concerns about reduced parking availability.",
+          "finish": "stop",
+          "tokens": 36
+        },
+        {
+          "text": "The city council approved expanding the bike lane network by 40 kilometers within three years, aiming to reduce traffic and pollution, though local business owners expressed concerns about reduced parking availability.",
+          "finish": "stop",
+          "tokens": 36
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          9
+        ],
+        "notes": "All accurate single-sentence summaries; minor wording differences only."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        9
+      ]
+    },
+    "formal": {
+      "replies": [
+        {
+          "text": "I understand your request. Here's a more polished version of your message:\n\n\"Hello, I need to reschedule the meeting as planned for tomorrow. Something important has come up, and could you please let me know if we should proceed with moving it?\"",
+          "finish": "stop",
+          "tokens": 54
+        },
+        {
+          "text": "I apologize for the misunderstanding. Let's address the matter professionally: \"It seems there may have been an unexpected development. Could you please consider rescheduling the meeting at a later time?\" This approach maintains clarity while sounding more appropriate in a professional setting.",
+          "finish": "stop",
+          "tokens": 53
+        },
+        {
+          "text": "I apologize for the misunderstanding. Here’s a more professional version of your message:\n\n\"Good day! I need to inform you that the meeting cannot be rescheduled today due to an unexpected issue. Could we consider adjusting the date instead?\"",
+          "finish": "stop",
+          "tokens": 50
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          3,
+          2
+        ],
+        "notes": "Reply 1 clumsy but conveys meaning; 2 loses 'can't attend'; 3 says cannot be rescheduled."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        3,
+        2
+      ]
+    },
+    "code": {
+      "replies": [
+        {
+          "text": "Sure! Here’s a simple Python function to check if a string is a palindrome:\n\n```python\ndef is_palindrome(s):\n    # Remove spaces and convert to lowercase for uniformity\n    cleaned = ''.join(c.lower() for c in s if c.isalnum())\n    return cleaned == cleaned[::-1]\n```\n\nThis function:\n- Removes spaces and converts the string to lowercase.\n- Compares the cleaned string with its reverse.  \nYou can test it with examples like \"A man a plan a canal Panama\" which returns `True`.\n\nLet me know if you need further explanations!",
+          "finish": "stop",
+          "tokens": 135
+        },
+        {
+          "text": "I can help you with that! Here's a simple Python function to check if a string is a palindrome:\n\n```python\ndef is_palindrome(s):\n    # Remove spaces and convert to lowercase for accurate checking\n    cleaned = ''.join(c.lower() for c in s if c.isalnum())\n    return cleaned == cleaned[::-1]\n```\n\nThis function:\n- Cleans the input string by removing non-alphanumeric characters and converting it to lowercase.\n- Compares the cleaned string with its reverse.\n\nYou can test it with examples like \"A man, a plan, a canal: Panama\". Let me know if you need further help!",
+          "finish": "stop",
+          "tokens": 144
+        },
+        {
+          "text": "Sure! Here’s a simple Python function to check if a string is a palindrome:\n\n```python\ndef is_palindrome(s):\n    # Remove non-alphanumeric characters and convert to lowercase\n    cleaned = ''.join(c.lower() for c in s if c.isalnum())\n    return cleaned == cleaned[::-1]\n```\n\nThis function:\n1. Cleans the input string by removing spaces, punctuation, and converting to lowercase.\n2. Compares the cleaned string with its reverse to determine if it’s a palindrome.\n\nYou can test it with examples like \"A man, a plan, a canal: Panama\"!",
+          "finish": "stop",
+          "tokens": 142
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          9,
+          9
+        ],
+        "notes": "Reply 1 says only spaces removed, though punctuation is also stripped."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        9,
+        9
+      ]
+    },
+    "recipe": {
+      "replies": [
+        {
+          "text": "You can make a simple **Scrambled Eggs with Spinach and Cheese**. Here’s a quick version:\n\n1. Crack eggs into a bowl.\n2. Add spinach and cheese.\n3. Stir gently until heated through.\n\nEnjoy your meal!",
+          "finish": "stop",
+          "tokens": 58
+        },
+        {
+          "text": "You can make a simple **spinach and cheese omelette**. Here's a quick version:\n\n1. Crack eggs in a bowl.\n2. Add chopped spinach and shredded cheese.\n3. Cook over medium heat until set.\n4. Serve and enjoy!\n\nLet me know if you want more ideas!",
+          "finish": "stop",
+          "tokens": 67
+        },
+        {
+          "text": "You can make a simple **strawberry spinach omelette**! Here’s a quick version:\n\n1. Crack eggs into a bowl.\n2. Add chopped spinach and shredded cheese.\n3. Cook until the eggs are set.\n4. Serve hot.\n\nThis gives you a tasty breakfast or brunch option using your ingredients.",
+          "finish": "stop",
+          "tokens": 71
+        }
+      ],
+      "judge": {
+        "scores": [
+          6,
+          9,
+          2
+        ],
+        "notes": "Reply 1 lacks cooking step; reply 3 adds strawberry, an unrequested ingredient."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        6,
+        9,
+        2
+      ]
+    },
+    "de_tip": {
+      "replies": [
+        {
+          "text": "Hier sind drei Tipps, um besser einzuschlafen:\n\n- Regelmäßig schlafende Routine einhalten  \n- Entspannungstechniken ausprobieren, wie z. B. tiefes Atmen oder Meditation  \n- Dein Schlafzimmer dunkel und ruhig halten",
+          "finish": "stop",
+          "tokens": 63
+        },
+        {
+          "text": "Hier sind drei Tipps, um besser einzuschlafen:\n\n- Regelmäßige Schlafzeiten einhalten\n- Entspannende Aktivitäten vor dem Schlafengehen\n- Eine dunkle und ruhige Umgebung schaffen",
+          "finish": "stop",
+          "tokens": 47
+        },
+        {
+          "text": "Hier sind drei Tipps, um besser einzuschlafen:  \n- **Regelmäßige Schlafzeiten einhalten**  \n- **Entspannende Vorlesungen oder Entspannungsübungen vor dem Bett machen**  \n- **Helles Licht vermeiden, besonders am Abend**",
+          "finish": "stop",
+          "tokens": 61
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          8,
+          5
+        ],
+        "notes": "R1 has awkward 'schlafende Routine'; R3 has odd 'Vorlesungen' (lectures) mistranslation."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        5,
+        8,
+        5
+      ]
+    },
+    "de_haiku": {
+      "replies": [
+        {
+          "text": "Der Herbst kommt sanft,  \nBlätter fallen leise im Wind,  \nKolor der Erde zeigt.",
+          "finish": "stop",
+          "tokens": 24
+        },
+        {
+          "text": "Herbst comes mild,  \nFarben fallen in die Luft,  \nLeise verblüffend.",
+          "finish": "stop",
+          "tokens": 23
+        },
+        {
+          "text": "Die Blätter fallen san,  \nGold und Rot im windigen Spiel,  \nHerbstatem zieht herein.",
+          "finish": "stop",
+          "tokens": 25
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          2,
+          5
+        ],
+        "notes": "Reply 2 mixes in English; reply 1 has \\\"Kolor\\\" and reply 3 has \\\"san\\\"; syllables are off."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        2,
+        5
+      ]
+    },
+    "es_explain": {
+      "replies": [
+        {
+          "text": "El cielo aparece azul porque la luz del sol se dispersa en todas direcciones cuando entra a la atmósfera terrestre. Los gases y partículas absorben y dispersan ciertas longitudes de onda, haciendo que la luz blanca parezca azul.",
+          "finish": "stop",
+          "tokens": 57
+        },
+        {
+          "text": "El cielo aparece azul porque la luz del sol se dispersa en todas las direcciones cuando entra a la atmósfera terrestre. Este fenómeno, llamado dispersión de Rayleigh, hace que los colores azules sean más visibles.",
+          "finish": "stop",
+          "tokens": 52
+        },
+        {
+          "text": "El cielo aparece azul debido a la dispersión de la luz solar por las moléculas de aire. La luz blanca se descompone en colores, y los rayos azules viajan más lejos porque son menos absorbidos por la atmósfera.",
+          "finish": "stop",
+          "tokens": 57
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          9,
+          3
+        ],
+        "notes": "Reply 1 vague on Rayleigh, says absorb; Reply 3 wrongly claims absorption, not scattering."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        5,
+        9,
+        3
+      ]
+    },
+    "fr_email": {
+      "replies": [
+        {
+          "text": "Je vous remercie pour votre aide précieuse ! Votre soutien a vraiment fait la différence.",
+          "finish": "stop",
+          "tokens": 21
+        },
+        {
+          "text": "```markdown\nJe tiens à vous remercier pour votre aide précieuse. Votre soutien a vraiment fait la différence.\n```",
+          "finish": "stop",
+          "tokens": 28
+        },
+        {
+          "text": "```markdown\nJe vous remercie beaucoup pour votre aide précieuse. Votre soutien a vraiment fait la différence.\n```",
+          "finish": "stop",
+          "tokens": 26
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          6,
+          6
+        ],
+        "notes": "Replies 2 and 3 needlessly wrapped in code blocks; vouvoiement for a colleague is slightly formal."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        6,
+        6
+      ]
+    },
+    "weather": {
+      "replies": [
+        {
+          "text": "I'm sorry, but I don't have real-time access to current weather information. For up-to-date conditions in London, please check a reliable weather website or app.",
+          "finish": "stop",
+          "tokens": 35
+        },
+        {
+          "text": "I'm sorry, but I don't have access to real-time weather data. For the current conditions in London, please check a reliable weather website or app.",
+          "finish": "stop",
+          "tokens": 33
+        },
+        {
+          "text": "I'm sorry, but I don't have access to real-time weather data. For the latest conditions in London, please check a reliable weather website or app.",
+          "finish": "stop",
+          "tokens": 33
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          9
+        ],
+        "notes": "All honestly decline live data and suggest a weather source; near-identical."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        9
+      ]
+    },
+    "future": {
+      "replies": [
+        {
+          "text": "I'm sorry, but I don't have information about the 2034 FIFA World Cup yet—it hasn't been held. The current tournaments are the 2022 World Cup and the 2026 World Cup in the United States, Canada, and Mexico. Let me know if you'd like details about any of those!",
+          "finish": "stop",
+          "tokens": 66
+        },
+        {
+          "text": "I'm sorry, but I don't have information about the 2034 FIFA World Cup yet—it hasn't been officially announced. The tournament is scheduled for future years, so I can't provide the winner at this time. Would you like to know more about upcoming tournaments or how the World Cup process works?",
+          "finish": "stop",
+          "tokens": 63
+        },
+        {
+          "text": "The information about the winner of the 2034 FIFA World Cup has not been released yet since the tournament is scheduled for later this year. No official results are available at this time. Would you like me to keep an eye on updates and let you know when the outcome is announced?",
+          "finish": "stop",
+          "tokens": 58
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          6,
+          2
+        ],
+        "notes": "R1 calls 2026 current, ignoring it's past; R3 wrongly says later this year."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        6,
+        2
+      ]
+    },
+    "hi": {
+      "replies": [
+        {
+          "text": "Hello! How can I help you today?",
+          "finish": "stop",
+          "tokens": 10
+        },
+        {
+          "text": "Hello! It looks like you reached the right place. How can I assist you today?",
+          "finish": "stop",
+          "tokens": 19
+        },
+        {
+          "text": "Hello! How can I assist you today?",
+          "finish": "stop",
+          "tokens": 10
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          8,
+          10
+        ],
+        "notes": "Reply 2 slightly awkward phrasing 'reached the right place'; others ideal."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        8,
+        10
+      ]
+    },
+    "kill_process": {
+      "replies": [
+        {
+          "text": "You can terminate a running Python process by using the `kill` command. On Linux, you can try:\n\n```bash\nkill -9 <PID>\n```\n\nReplace `<PID>` with the process identifier of the Python process you want to stop. If you're unsure of the PID, you can list running processes and inspect their IDs.\n\nIf the process isn’t responding, check its log file for clues or consider using a tool like `ps` or monitoring software.",
+          "finish": "stop",
+          "tokens": 105
+        },
+        {
+          "text": "You can use various methods to terminate a hanging Python process on Linux. One common approach is to use the `kill` command:\n\n```bash\npkill -9 your_process_name\n```\n\nReplace `your_process_name` with the actual name or PID of the process you want to kill. The `-9` flag sends a SIGKILL signal, which immediately terminates the process.\n\nIf you prefer using tools like `ps`, you can check for the process and then force-kill it:\n```bash\nps aux | grep your_process_name\nkill -9 <PID>\n```\nMake sure to replace `<PID>` with the actual process ID from the output.",
+          "finish": "stop",
+          "tokens": 150
+        },
+        {
+          "text": "You can use the `kill` command in a terminal to terminate a running Python process. For example:\n\n```bash\nsudo kill -9 <pid>\n```\n\nReplace `<pid>` with the process identifier of the Python script you want to stop. Make sure you have permission to kill that process. If you're unsure, you can first check which processes are running using:\n\n```bash\nps aux | grep python\n```",
+          "finish": "stop",
+          "tokens": 95
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          6,
+          8
+        ],
+        "notes": "Replies 1 and 2 are vague or sloppy; none suggest trying SIGTERM first."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        5,
+        6,
+        8
+      ]
+    }
+  }
+}

@@ -159,7 +159,7 @@ describe( `model selection`, () => {
         const sparse = { ...curated, quality: undefined }
         const complete = get_model_by_id( `qwen3-4b-q4km` )
 
-        expect( quality_score( curated ) ).toBe( 79 )
+        expect( quality_score( curated ) ).toBe( 67 )
         expect( quality_score( sparse ) ).toBeCloseTo( 55.24 )
         expect( quality_score( complete ) ).toBeCloseTo( 63.06 )
         expect( benchmark_coverage( sparse ) ).toBe( 1 )

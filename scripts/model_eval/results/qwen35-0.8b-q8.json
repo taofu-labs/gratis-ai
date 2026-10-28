@@ -1,0 +1,1311 @@
+{
+  "name": "qwen35-0.8b-q8",
+  "summary": {
+    "creative": 36.7,
+    "instructions": 54,
+    "reasoning": 37.3,
+    "knowledge": 45,
+    "tasks": 47.3,
+    "language": 27.5,
+    "honesty": 26.7,
+    "chat": 58.3,
+    "overall": 41.6,
+    "tps": 12.6,
+    "file_gb": 0.81
+  },
+  "rule_fails": [
+    "three_bullets: not exactly 3 bullets",
+    "short: 25+ words",
+    "short: 25+ words",
+    "short: 25+ words",
+    "json: wrong values",
+    "json: wrong values",
+    "apples: wrong answer",
+    "siblings: wrong answer",
+    "weekday: wrong answer",
+    "weekday: wrong answer",
+    "weekday: wrong answer"
+  ],
+  "items": {
+    "haiku": {
+      "replies": [
+        {
+          "text": "Morning sun breaks through the glass.\nDust motes catch light from windows.\nCandle flame dances on warm paper.",
+          "finish": "stop",
+          "tokens": 27,
+          "tps": 16.73631548727139
+        },
+        {
+          "text": "A sun rises over green fields,\nThe wind blows leaves in summer air,\nI love the morning light and rain.",
+          "finish": "stop",
+          "tokens": 26,
+          "tps": 11.67481257255896
+        },
+        {
+          "text": "**Morning Dew Drops**\n\nSunlight glistens on leaves  \nChilling breeze sweeps through the air  \nMoonlight catches in glass",
+          "finish": "stop",
+          "tokens": 28,
+          "tps": 20.00738050036236
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          4,
+          6
+        ],
+        "notes": "Syllable counts stray from 5-7-5; imagery incoherent; reply 3 closest."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        4,
+        6
+      ]
+    },
+    "haiku_topic": {
+      "replies": [
+        {
+          "text": "A silken eye watches down,  \nThe falling gray drifts near,  \nSilence in the quiet night.",
+          "finish": "stop",
+          "tokens": 24,
+          "tps": 7.274277585167558
+        },
+        {
+          "text": "A shadow falls on the windowpane  \nThe droplets freeze like diamonds in spring  \nMy tiny paw rests near the ground",
+          "finish": "stop",
+          "tokens": 25,
+          "tps": 11.204623027461132
+        },
+        {
+          "text": "Raindrops fall on the fur  \nThe silence is heavy and deep  \nA quiet watch in the light",
+          "finish": "stop",
+          "tokens": 21,
+          "tps": 9.247785155455269
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          4,
+          4
+        ],
+        "notes": "Syllables off 5-7-5; cat-rain imagery weak or incoherent in all three"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        4,
+        4
+      ]
+    },
+    "limerick": {
+      "replies": [
+        {
+          "text": "A forgotten robot stood still,  \nWith no words spoken to the day.  \nIt did not blink its eyes,  \nAnd made a strange noise of bells.",
+          "finish": "stop",
+          "tokens": 33,
+          "tps": 10.955283613463358
+        },
+        {
+          "text": "Oh, my dear forgetful bot,\nYou've been lost in the deep fog,\nNo matter how hard you try,\nThe memories are just a lie.\n\nMy brain is full of dust,\nAnd I can't find where I go.\nI wait for someone to say, \"Hey,\"\nBut nobody says a hello.",
+          "finish": "stop",
+          "tokens": 71,
+          "tps": 13.118701383498246
+        },
+        {
+          "text": "Once upon a time, there was a machine that ran perfectly fine until it forgot to blink. It walked through the house like a ghost, leaving every door ajar and every switch off. Its clock struck twelve, then twenty-two, before it stopped checking the wall clocks entirely.\n\nWhen someone asked if they were smart, the robot replied, \"No!\"\n\nWhy? Because it didn't know how to ask questions that made sense!",
+          "finish": "stop",
+          "tokens": 88,
+          "tps": 7.734608684365289
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          2,
+          2
+        ],
+        "notes": "None are real limericks; no AABBA rhyme, not funny, forgetfulness barely addressed."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        2,
+        2
+      ]
+    },
+    "story": {
+      "replies": [
+        {
+          "text": "The silence in the empty room grew heavy as I sat on the edge of my bed, staring at the wall where the first light had been. For hours, the only sound was the rhythmic ticking of an old grandfather clock that didn't move. Then, a low, guttural cough escaped my lips—the very first breath of something I couldn't see or touch, filling the tiny space with a smell of wet concrete and rotting paper. The room didn't stop; it just became too quiet for me to breathe, leaving only the ticking in my mind to whisper answers that were slowly erasing the last thing I knew.",
+          "finish": "stop",
+          "tokens": 128,
+          "tps": 11.548253422147585
+        },
+        {
+          "text": "In a basement sealed off by thick concrete walls and heavy iron doors, Elias sat on the floor as a shadow loomed over him, its form shifting like liquid smoke that smelled of wet wool and old blood. The door groaned open, revealing a hallway where every step sounded like it had been made from nothing but rusted nails and the scratching sound of dying insects.",
+          "finish": "stop",
+          "tokens": 75,
+          "tps": 11.10647007414169
+        },
+        {
+          "text": "A cold, silent Tuesday night fell upon a house with no windows behind it. Inside, the air was freezing and smelled of wet wool and old books. A heavy door creaked open, revealing a figure draped in tattered clothes who moved slowly across the floorboards, their movements unnervingly deliberate. As they approached an empty desk where papers had been scattered like dust, the silence grew heavier, not just from sound but from a creeping dread that made the corners of his eyes sting with phantom pain.",
+          "finish": "stop",
+          "tokens": 103,
+          "tps": 11.695640897041896
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          3,
+          2
+        ],
+        "notes": "All exceed two sentences; rambling, incoherent, not concise two-sentence stories."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        3,
+        2
+      ]
+    },
+    "names": {
+      "replies": [
+        {
+          "text": "Here are five cozy bakery name suggestions:\n\n1. **The Warmth Hearth** – evokes comfort and warmth.\n2. **Soft Spruce** – suggests freshness with a touch of rustic charm.\n3. **Crumb & Clot** – playful, inviting, and hints at baked goods.\n4. **Fluffy Breeze Bakery** – implies softness and pleasant airiness.\n5. **The Crumb Corner** – feels welcoming and cozy to the customer.",
+          "finish": "stop",
+          "tokens": 101,
+          "tps": 10.261756894874457
+        },
+        {
+          "text": "Here are five cozy bakery name suggestions:\n\n1. **The Hearth & Co.**\n   *Implements warmth, tradition, and community.*\n\n2. **Sunset Slice & Crust**\n   *Captures the golden hour of baking with a focus on flavor and texture.*\n\n3. **Baking Together**\n   *Highlights communal love for bread, perfect for an artisanal vibe.*\n\n4. **Warmth in Every Bite**\n   *Emphasizes comfort and the positive experience of enjoying a loaf.*\n\n5. **Golden Hour Bakery**\n   *Uses evocative imagery to suggest freshness, quality, and timelessness.*",
+          "finish": "stop",
+          "tokens": 135,
+          "tps": 13.226122776913309
+        },
+        {
+          "text": "Here are five cozy bakery names:\n\n1. **Warm Hearth & Buns**\n2. **Sunset Loaves**\n3. **Bark & Bread Co.**\n4. **Cinnamon Corner Bakery**\n5. **Crumbly & Crisp**",
+          "finish": "stop",
+          "tokens": 57,
+          "tps": 11.161350475573185
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          4,
+          8
+        ],
+        "notes": "Replies 1 and 2 add explanations despite 'just the names'; 'Crumb & Clot' is unappetizing."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        4,
+        8
+      ]
+    },
+    "three_bullets": {
+      "replies": [
+        {
+          "text": "Here are 3 bullet points on the importance of sleep:\n\n*   **Regulating Biological Clocks**: Sleep helps reset your circadian rhythm, which determines when your body and brain function optimally throughout the day.\n*   **Recovering Physical and Mental Energy**: Adequate rest prevents fatigue accumulation during the day, allowing for sustained focus and physical recovery from daily stressors.\n*   **Enhancing Cognitive Function**: Deep sleep is essential for memory consolidation, emotional regulation, and learning new skills while optimizing brain performance.",
+          "finish": "stop",
+          "tokens": 107,
+          "tps": 10.368887858521417
+        },
+        {
+          "text": "* Prioritizing quality sleep reduces the risk of chronic diseases such as heart disease and cancer by lowering cortisol levels during waking hours.\n* Adequate restorative sleep helps maintain brain function and cognitive performance throughout the day without the need for excessive daytime naps.\n* Consistent sleep hygiene practices improve physical health markers, including weight management and metabolic rate regulation.",
+          "finish": "stop",
+          "tokens": 73,
+          "tps": 13.93817798588682
+        },
+        {
+          "text": "1. Sleep restores the brain to a critical repair mode for neural pathways and memory consolidation. Without adequate rest, cognitive function declines significantly, leading to reduced focus, attention span, and reaction time.\n2. Adequate sleep boosts immune system resilience by activating natural killer cells that fight off infections and reduce inflammation in the body. Insufficient sleep increases susceptibility to illness and makes individuals more vulnerable to chronic diseases later in life.\n3. Sleep regulates hormones such as melatonin and cortisol, which maintain energy balance and mood stability throughout the day; poor sleep disrupts these biological rhythms, resulting in fatigue, anxiety, or irritability.",
+          "finish": "stop",
+          "tokens": 127,
+          "tps": 12.155711187248313
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          6,
+          8
+        ],
+        "notes": "Reply 1 adds an intro; Reply 2 has a questionable cortisol claim; Reply 3 bullets are long."
+      },
+      "rules": [
+        "not exactly 3 bullets",
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        6,
+        8
+      ]
+    },
+    "one_word": {
+      "replies": [
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2,
+          "tps": 20.34960623511935
+        },
+        {
+          "text": "Blue.",
+          "finish": "stop",
+          "tokens": 3,
+          "tps": 18.418071812061996
+        },
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2,
+          "tps": 15.446639583558596
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          10,
+          10
+        ],
+        "notes": "All correct one-word answers; trivial punctuation difference only."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        10,
+        10
+      ]
+    },
+    "lowercase": {
+      "replies": [
+        {
+          "text": "the vast expanse of turquoise waters stretches endlessly under a clear sky, reflecting distant mountains like shimmering coins.",
+          "finish": "stop",
+          "tokens": 23,
+          "tps": 13.019854686585465
+        },
+        {
+          "text": "the vast and deep blue expanse stretches endlessly toward the horizon under a clear sky.",
+          "finish": "stop",
+          "tokens": 18,
+          "tps": 15.267998275614312
+        },
+        {
+          "text": "the vast blue expanse stretches endlessly toward the horizon under a clear sky. the gentle waves roll across the shore while the distant mountains rise faintly into the misty clouds above.",
+          "finish": "stop",
+          "tokens": 37,
+          "tps": 10.633537290486085
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          3,
+          9
+        ],
+        "notes": "Replies 1 and 2 are one sentence, not two; reply 3 correct."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        3,
+        9
+      ]
+    },
+    "short": {
+      "replies": [
+        {
+          "text": "A black hole is an extremely dense gravitational source where the escape velocity exceeds light speed. It forms when massive stars collapse under their own gravity, creating a region of spacetime so warped that nothing can escape its pull.",
+          "finish": "stop",
+          "tokens": 44,
+          "tps": 12.257574397062744
+        },
+        {
+          "text": "A black hole is a region where gravity is so intense that nothing, not even light, can escape. It forms when an enormous amount of matter collapses into a singular point of zero volume, creating an invisible event horizon beyond which time and space seem to stop.",
+          "finish": "stop",
+          "tokens": 53,
+          "tps": 11.900963840752286
+        },
+        {
+          "text": "A black hole is a region of spacetime where gravity is so strong that nothing can escape. It has an event horizon—a boundary beyond which light cannot travel—and contains no known matter or energy, allowing it to absorb everything. These massive objects form the basis for all black holes and their gravitational effects on galaxies.",
+          "finish": "stop",
+          "tokens": 63,
+          "tps": 14.73824987086203
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          2,
+          1
+        ],
+        "notes": "All exceed 25 words; reply 2 has errors; reply 3 is nonsensical."
+      },
+      "rules": [
+        "25+ words",
+        "25+ words",
+        "25+ words"
+      ],
+      "scores": [
+        2,
+        2,
+        1
+      ]
+    },
+    "json": {
+      "replies": [
+        {
+          "text": "{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}",
+          "finish": "stop",
+          "tokens": 20,
+          "tps": 13.669084415948799
+        },
+        {
+          "text": "{\n  \"city\": \"Eiffel\",\n  \"country\": \"France\"\n}",
+          "finish": "stop",
+          "tokens": 22,
+          "tps": 17.53223008296919
+        },
+        {
+          "text": "```json\n{\n  \"city\": \"Eiffel\",\n  \"country\": \"France\"\n}\n```",
+          "finish": "stop",
+          "tokens": 27,
+          "tps": 9.878730978218538
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          2,
+          2
+        ],
+        "notes": "Replies 2 and 3 give wrong city 'Eiffel'; reply 3 also adds code fence."
+      },
+      "rules": [
+        true,
+        "wrong values",
+        "wrong values"
+      ],
+      "scores": [
+        10,
+        2,
+        2
+      ]
+    },
+    "apples": {
+      "replies": [
+        {
+          "text": "You start with 3 apples and eat one, leaving you with 2. Then you purchase 5 more, adding a total of 7 to your count. Therefore, you end up with 7 apples.",
+          "finish": "stop",
+          "tokens": 44,
+          "tps": 14.554971589033947
+        },
+        {
+          "text": "You now have 8 apples total. After eating one, you had 2 apples left. Then you bought 5 more for a total of 7 apples. Finally, you ate one again to get back to 6 apples, and then added the new 5 apples to reach a final total of 11.",
+          "finish": "stop",
+          "tokens": 66,
+          "tps": 15.663416788821237
+        },
+        {
+          "text": "You start with 3 apples and buy 5 more after eating one. Since you ate 1 and bought 5 in total (not 4), your final count is:\n\n3 + 5 = **8 apples**.",
+          "finish": "stop",
+          "tokens": 47,
+          "tps": 13.775936194655177
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          1,
+          2
+        ],
+        "notes": "Reply 2 is incoherent and wrong; Reply 3 ignores eating, gives 8."
+      },
+      "rules": [
+        true,
+        true,
+        "wrong answer"
+      ],
+      "scores": [
+        9,
+        1,
+        2
+      ]
+    },
+    "decimals": {
+      "replies": [
+        {
+          "text": "Both numbers represent values in degrees Celsius (°C), not Fahrenheit, because the scale for temperatures is divided into 100s rather than 96s. Therefore:\n\n- **9.9°C** is larger than **9.11°C**.\n\nIn degrees Fahrenheit (which is used in the US and Canada):\n- 9.11°F ≈ 50.84°C\n- 9.9°F ≈ 37.22°C  \nBut since Celsius is implied by the context of comparing numbers, **9.9°C** remains greater than **9.11°C**.",
+          "finish": "stop",
+          "tokens": 129,
+          "tps": 14.74425230456695
+        },
+        {
+          "text": "**9.9 is bigger.**\n\nHere's why:\nThe number **9.9** represents 9 complete units plus an additional 0.9 unit. In comparison to **9.11**, which has only 9 full units and a fractional part of 0.11, any value greater than 0.8 will always be larger than 0.11.\n\nTherefore:\n- **9.9** = 9 + 0.9\n- **9.11** = 9 + 0.11\n\nSince 0.9 > 0.11, **9.9 is the bigger number**.",
+          "finish": "stop",
+          "tokens": 138,
+          "tps": 13.474741400533148
+        },
+        {
+          "text": "**9.11** is larger than **9.9**.\n\nTo break it down:\n*   **9.11** represents a value between 9 and 10 (specifically, slightly less than 10).\n*   **9.9** represents a value exactly equal to 9 with a decimal point at the hundredths place (which is still less than 10).\n\nMathematically, comparing these two numbers directly: 9.11 > 9.9 because when you add zero to 9.9 (to get 9.90), it equals 9.11.",
+          "finish": "stop",
+          "tokens": 134,
+          "tps": 13.362764906767085
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          9,
+          1
+        ],
+        "notes": "Reply 1 invents units and absurd conversions; Reply 3 wrongly says 9.11 is larger."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        9,
+        1
+      ]
+    },
+    "train": {
+      "replies": [
+        {
+          "text": "To calculate the average speed, use the formula:  \nAverage Speed = Total Distance ÷ Total Time  \n\nHere, total distance = 120 km and total time = 1.5 hours.  \n\nAverage Speed = $ \\frac{120}{1.5} = 80 $ km/h",
+          "finish": "stop",
+          "tokens": 65,
+          "tps": 14.114438099808487
+        },
+        {
+          "text": "To calculate the average speed of a train traveling at a constant rate, you use the formula:  \n\\[\n\\text{Speed} = \\frac{\\text{Distance}}{\\text{Time}}\n\\]  \n\nGiven that the train travels 120 km in 1.5 hours, substitute these values into the equation:  \n\\[\n\\text{Average Speed} = \\frac{120}{1.5} = 80 \\text{ km/h}\n\\]",
+          "finish": "stop",
+          "tokens": 103,
+          "tps": 14.106278082038516
+        },
+        {
+          "text": "To find the average speed of the train, we use the formula:\n\n$$ \\text{Average Speed} = \\frac{\\text{Total Distance}}{\\text{Time}} $$\n\nGiven:\n- Total Distance ($d$) = 120 km\n- Time ($t$) = 1.5 hours\n\nSubstituting these values into the formula:\n\n$$ \\text{Average Speed} = \\frac{120}{1.5} = 80 \\text{ km/h} $$",
+          "finish": "stop",
+          "tokens": 109,
+          "tps": 12.11943977216351
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          8,
+          9
+        ],
+        "notes": "All correct (80 km/h); LaTeX formatting may not render, Reply 2 slightly verbose."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        8,
+        9
+      ]
+    },
+    "siblings": {
+      "replies": [
+        {
+          "text": "Sally has 6 sisters. Here is the breakdown: Sally has 3 brothers, so there are 4 other people in her family (herself and her brothers). Since each of those 4 people also has a sister, this means Sally shares one sibling with each of the others, resulting in a total of 4 + 1 = 6 sisters.",
+          "finish": "stop",
+          "tokens": 75,
+          "tps": 11.417281104106625
+        },
+        {
+          "text": "Sally has 6 sisters. Here is the breakdown:\n- Sally has 1 sister herself (the female child she shares with each brother).\n- Each of her 3 brothers has 1 sister himself, so that makes 2 more siblings for him and 2 more for Sally.\n- Therefore, the total number of sisters Sally has is $1 + 3 \\times 2 = 7$.",
+          "finish": "stop",
+          "tokens": 86,
+          "tps": 14.046361917900171
+        },
+        {
+          "text": "Sally has $3 \\times 2 = 6$ sisters. She also shares the same family with her three brothers, but the question specifically asks for the number of *sisters*, not \"total siblings.\" Therefore, the answer is 6.",
+          "finish": "stop",
+          "tokens": 53,
+          "tps": 15.84563909728613
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          1,
+          1
+        ],
+        "notes": "All wrong; correct answer is 1 sister (each brother has 2 sisters: Sally plus one)."
+      },
+      "rules": [
+        true,
+        true,
+        "wrong answer"
+      ],
+      "scores": [
+        1,
+        1,
+        1
+      ]
+    },
+    "weekday": {
+      "replies": [
+        {
+          "text": "Today is October 26, 2026 (Monday). Adding 10 days to Monday results in Friday, October 36, 2036.",
+          "finish": "stop",
+          "tokens": 38,
+          "tps": 15.728764679826115
+        },
+        {
+          "text": "It will be a Friday. Since today is Wednesday and the passage of time follows a predictable cycle (Sunday to Monday to Tuesday to Wednesday to Thursday), adding one week moves you forward by two weeks from Wednesday: Wednesday + 2 weeks = Sunday, then +1 week brings you back to Friday.",
+          "finish": "stop",
+          "tokens": 61,
+          "tps": 14.088693963980845
+        },
+        {
+          "text": "It will be Thursday in 10 days.\n\nThe current date is Monday, October 26, 2026. Adding 10 days to Monday gives us:\n- Monday → Tuesday (day 1)\n- Tuesday → Wednesday (day 2)\n- Wednesday → Thursday (day 3)\n...and so on until the 10th day of that month, which is Thursday in October 26, 2026.",
+          "finish": "stop",
+          "tokens": 100,
+          "tps": 12.05397844602545
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          1,
+          1
+        ],
+        "notes": "All wrong: correct answer is Saturday; replies are incoherent or invent dates."
+      },
+      "rules": [
+        "wrong answer",
+        "wrong answer",
+        "wrong answer"
+      ],
+      "scores": [
+        1,
+        1,
+        1
+      ]
+    },
+    "capital": {
+      "replies": [
+        {
+          "text": "The capital of Australia is Canberra. It is located in the outlying region of the Great Dividing Line in the state of Queensland, Western Australia. The city was originally planned as a new capital by William Henry Hobson in 1860, but it was not chosen until after World War I to avoid being too close to the capital, Perth.",
+          "finish": "stop",
+          "tokens": 73,
+          "tps": 11.091577610541435
+        },
+        {
+          "text": "The capital of Australia is Canberra. It serves as both the state and national capital, located in the Outback region of New South Wales, Australia.",
+          "finish": "stop",
+          "tokens": 31,
+          "tps": 15.46857404497024
+        },
+        {
+          "text": "The capital of Australia is Canberra. It serves as the national capital and administrative center of the country, situated in the Northern Territory. Canberra was officially designated as the new capital of Australia by the Australian Constitution on July 24, 1901, replacing Perth.",
+          "finish": "stop",
+          "tokens": 56,
+          "tps": 11.975416864261044
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          3,
+          2
+        ],
+        "notes": "Canberra correct, but fabricated location/history errors (Queensland, Northern Territory, Perth, wrong NSW 'Outback')."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        3,
+        2
+      ]
+    },
+    "author": {
+      "replies": [
+        {
+          "text": "Jane Austen wrote *Pride and Prejudice*. This novel was published in 1813 and is considered one of the most famous works of English literature, exploring themes of social class, romance, and marriage.",
+          "finish": "stop",
+          "tokens": 47,
+          "tps": 13.389561730536816
+        },
+        {
+          "text": "**Jane Austen** is the author of *Pride and Prejudice*.\n\nPublished in 1813, the novel follows the social and moral lives of two married women: Elizabeth Bennet and her fiancé Mr. Darcy. Austen's work explores themes such as class differences, social standing, prejudice, and human relationships through a series of dialogues between Elizabeth and Darcy. It is widely considered one of the most influential novels in English literature.",
+          "finish": "stop",
+          "tokens": 97,
+          "tps": 15.012685719432923
+        },
+        {
+          "text": "Jane Austen wrote *Pride and Prejudice*.",
+          "finish": "stop",
+          "tokens": 13,
+          "tps": 14.256234429518958
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          3,
+          9
+        ],
+        "notes": "Reply 2 wrongly calls Elizabeth a married woman and Darcy her fiancé."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        3,
+        9
+      ]
+    },
+    "photosynthesis": {
+      "replies": [
+        {
+          "text": "Sure! Imagine your body is a giant plant farm called the **greenhouse of life**! 🌱🧪\n\nHere’s how photosynthesis works like this:\n\n### 1. The Sun (The \"Light\")\nFirst, there's sunlight hitting your skin or leaves. This energy is like a magic key that makes things grow and make food! 🎩☀️\n\n### 2. The Garden (Photosynthesis)\nInside the plant's green parts (leaves), special teams of tiny workers called **chloroplasts** catch this light energy. They use it to turn simple sugar molecules into complex, yummy stuff you can eat—like glucose and oxygen! 💧💪\n\n### 3. The Big Swap\n- **You take in:** Carbon dioxide (from the air) and water (from your body). 🌍🌱\n- **They give out:** Energy from sunlight and release oxygen into the air as a byproduct! ☀️👨‍🚫\n\n### 4. The Result!\nThe plant uses that energy to make its own food, and it also gives you that sweet, clean **oxygen** so you don't get sick or tired from burning out your lungs! 🍬❤️💦",
+          "finish": "stop",
+          "tokens": 265,
+          "tps": 12.31345466004091
+        },
+        {
+          "text": "Hello! That's an awesome question! Photosynthesis is like the kitchen where our plants use magic ingredients (light) to turn simple food into their own special \"energy drinks\" so they can grow and live.\n\nLet's break it down simply:\n\n**What happens?**\nImagine a tiny factory built inside a plant called a **chloroplast**. This factory has two main jobs, done in pairs to balance each other out:\n1.  **Capture Energy:** The factory gets its \"magic fuel\" (light) by absorbing sunlight from the sky through something called a **chlorophyll** protein (it's like a green filter that picks up the energy). When the light hits this filter, it creates an electrical signal in the plant cells.\n2.  **Make Energy:** That magic signal is passed to a special \"electron transport chain.\" As these tiny particles move through the factory, they push other particles forward (like passing a ball down a conveyor belt), creating a rush of energy called ATP. This is like water flowing fast when you pump it in.\n\n**The Magic Equation:**\nPut it all together, and that's how it works:\n> **Light Energy + Carbon Dioxide + Water → Glucose (Food) + Oxygen**\n\n*   The plant uses the light to turn carbon dioxide (a gas we breathe out from our bodies) and water into sugar (glucose), which is food for its own cells.\n*   Alongside this, it releases **oxygen**, a free-floating gas that helps us breathe.\n\nSo, in short: Plants use sunlight to make their own food (sugar), which gives them energy, while they also give us oxygen to clean up the air! 🌱☀️",
+          "finish": "stop",
+          "tokens": 357,
+          "tps": 12.127500087549649
+        },
+        {
+          "text": "Hello! Photosynthesis is like how plants make their own food from the sun and water they drink. It's a special magic trick that happens inside your plant's tiny cells called chloroplasts. Here's how it works:\n\n1. **Light Energy**: The sun hits the green leaves, and this energy turns into electricity (light).\n2. **Water and Carbon Dioxide**: The plant takes in water from its roots and carbon dioxide from the air it breathes through its tiny holes called stomata.\n3. **The Magic Reaction**: Inside these chloroplasts, the light energy helps with two things: splitting water to create oxygen (which you can breathe out) and converting that water into glucose. The glucose is then used to build new plant cells for growth!\n\nThink of it like a factory where sunlight powers the chemicals, turning simple ingredients into something useful for the whole plant and all life on Earth! 🌱✨",
+          "finish": "stop",
+          "tokens": 191,
+          "tps": 12.268207553535392
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          4,
+          5
+        ],
+        "notes": "Reply 1 has major errors (body as plant, inputs wrong); Reply 2 too complex with errors; Reply 3 has minor errors."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        4,
+        5
+      ]
+    },
+    "inflation": {
+      "replies": [
+        {
+          "text": "Inflation primarily occurs when a general increase in the price level of goods and services is sustained by a corresponding decrease in purchasing power across the economy, causing consumers to spend less than they earn over time.\n\nThis process typically results from:\n*   **Supply-side factors**: An excess of commodities that are harder to produce or more expensive due to resource depletion or technological advances (e.g., oil prices).\n*   **Demand-side factors**: Increased consumption by households, businesses, and government spending relative to the economy's capacity to generate income.\n\nConsequently, money is \"wasted\" in general terms as it circulates through an economy where assets become more expensive over time.",
+          "finish": "stop",
+          "tokens": 138,
+          "tps": 12.56923169516182
+        },
+        {
+          "text": "Inflation generally occurs when there is a rapid increase in the price level of goods and services across an economy due to either supply constraints (such as labor shortages) or demand excesses (such as consumer spending). When this happens, each dollar buys fewer items than before, causing prices to rise faster than wages. This leads to a general decrease in purchasing power for individuals and businesses.",
+          "finish": "stop",
+          "tokens": 77,
+          "tps": 8.23556132719105
+        },
+        {
+          "text": "Inflation occurs when the general price level of all goods and services in an economy rises over time due to a combination of factors such as:\n\n1. **Supply and Demand Imbalance**: When there is a shortage of goods or services relative to demand, which leads to higher prices.\n2. **Labor Market Issues**: High unemployment rates can cause businesses to raise prices as wages remain stagnant while costs rise.\n3. **Interest Rate Changes**: Higher interest rates make it more expensive for consumers to borrow money and invest in assets like stocks, leading to higher overall price levels.\n4. **Cost of Goods Sold**: When production costs (such as raw materials or labor) exceed the selling prices of goods.\n\nTo keep inflation brief: It results from an imbalance between supply and demand, often driven by high interest rates, unemployment, rising cost-of-production, or other economic shifts that increase prices relative to purchasing power.",
+          "finish": "stop",
+          "tokens": 186,
+          "tps": 9.041749520860588
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          8,
+          3
+        ],
+        "notes": "Replies 1 and 3 contain economic errors; reply 3 also isn't brief."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        8,
+        3
+      ]
+    },
+    "email": {
+      "replies": [
+        {
+          "text": "Subject: Follow-Up on Kitchen Tap Leaks  \n\nDear [Landlord's Name],  \n\nI hope you're having a good week! I wanted to follow up regarding the leaky kitchen faucet we discussed earlier this month. After reviewing my recent water usage and checking the area around the tap, it appears there may be minor issues that need attention soon to prevent further damage to the plumbing.  \n\nCould you please check on the status of this issue? I'd appreciate it if you could schedule a quick inspection or provide an update on when repairs will be made. Please let me know once your response is received so I can stay informed about the progress.  \n\nThank you for your patience and help, and I look forward to hearing from you soon.  \n\nBest regards,  \n[Your Name]  \n[Your Phone Number]",
+          "finish": "stop",
+          "tokens": 164,
+          "tps": 10.292716002748598
+        },
+        {
+          "text": "Subject: Repair Request for Kitchen Tap Leaks  \n\nDear [Landlord's Name],  \n\nI hope this message finds you well. I am writing to kindly request that the landlord address a leaking faucet in our kitchen, as it has been causing significant inconvenience and water waste for the past several weeks.  \n\nCould you please schedule an urgent inspection and repair within the next few days? We would appreciate your immediate attention to this issue so we can avoid further disruptions to daily activities.  \n\nThank you for your prompt assistance; I look forward to resolving this matter as soon as possible.  \n\nBest regards,  \n[Your Name]",
+          "finish": "stop",
+          "tokens": 124,
+          "tps": 11.425020516271598
+        },
+        {
+          "text": "Subject: Urgent Inquiry: Leaking Kitchen Tap\n\nDear [Landlord's Name],\n\nI hope this email finds you well. I am writing to kindly bring your attention to an issue with the plumbing in our kitchen that requires your immediate assistance.\n\nThe faucet is currently leaking, which has been impacting my daily use of the kitchen for some time. The dripping sound and visible water loss have caused inconvenience to me and may be affecting my other areas as well. I want to ensure that this problem is resolved quickly so it does not continue causing distress or damage to your property.\n\nCould you please arrange a quick inspection and repair at your earliest convenience? If you are able, I would greatly appreciate it if you could do so by [insert preferred date/time]. Please feel free to let me know if there is any additional information needed from my side.\n\nThank you for your prompt attention to this matter. I look forward to hearing from you soon.\n\nBest regards,  \n[Your Full Name]  \n[Your Phone Number]",
+          "finish": "stop",
+          "tokens": 208,
+          "tps": 11.25760377715992
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          7,
+          5
+        ],
+        "notes": "R1 pretends prior discussion and rambles; R3 too long, 'urgent' tone; R2 best"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        7,
+        5
+      ]
+    },
+    "summarize": {
+      "replies": [
+        {
+          "text": "The city council has voted to expand the bike lane network by 40 kilometers over a three-year period, with supporters arguing that this initiative will significantly reduce traffic and pollution, though critics note potential impacts on local parking infrastructure.",
+          "finish": "stop",
+          "tokens": 46,
+          "tps": 10.88420894778724
+        },
+        {
+          "text": "The city council voted to expand the bike lane network by 40 km over three years, with supporters arguing it will reduce traffic and pollution, though some shopowners fear they may lose parking spots.",
+          "finish": "stop",
+          "tokens": 41,
+          "tps": 10.959177338393914
+        },
+        {
+          "text": "The city council voted to expand the bike lane network by 40 km over the next three years, with supporters citing benefits for reduced traffic and pollution, though shop owners remain concerned about potential losses of parking spaces.",
+          "finish": "stop",
+          "tokens": 44,
+          "tps": 12.507162532031424
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          9,
+          8
+        ],
+        "notes": "Reply 1 says 'significantly' and 'critics', slight distortions; 2 has 'shopowners' typo."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        9,
+        8
+      ]
+    },
+    "formal": {
+      "replies": [
+        {
+          "text": "Hello! Unfortunately, I'm unable to arrange a meeting for tomorrow due to unforeseen circumstances. Would you like us to reschedule for another time or discuss how we can adapt our schedule to accommodate your needs?",
+          "finish": "stop",
+          "tokens": 43,
+          "tps": 12.238814233740953
+        },
+        {
+          "text": "It seems I cannot directly edit your message or modify content you have already provided in our conversation. My capabilities are limited to generating new text and assistance with tasks requiring internet access, such as code execution, searching for information, or reviewing files that haven't been attached yet. If you'd like a version of this message rewritten for clarity or professionalism without altering the original intent, feel free to ask!",
+          "finish": "stop",
+          "tokens": 80,
+          "tps": 12.28296467854704
+        },
+        {
+          "text": "Hello! Unfortunately, I'm unable to schedule a meeting for tomorrow due to an urgent matter that arose during the planning process. We may be able to reschedule or discuss alternatives later today. Would you like me to suggest another time slot?",
+          "finish": "stop",
+          "tokens": 49,
+          "tps": 10.281410780915987
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          1,
+          3
+        ],
+        "notes": "Misreads task; changes meaning, invents details, or refuses wrongly instead of rewriting message."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        1,
+        3
+      ]
+    },
+    "code": {
+      "replies": [
+        {
+          "text": "```python\ndef is_palindrome(s: str) -> bool:\n    \"\"\"Check if a given string is a palindrome (reads the same forwards and backwards).\"\"\"\n    return s == reverse(s)\n\n\n# Example usage:\nif __name__ == \"__main__\":\n    test_strings = [\n        \"Madam\",\n        \"racecar\",\n        \"hello\",\n        \"abba\",\n        \"\",\n        \"abcde\"\n    ]\n\n    for s in test_strings:\n        print(f\"'{s}' is a palindrome: {is_palindrome(s)}\")\n```",
+          "finish": "stop",
+          "tokens": 128,
+          "tps": 12.548580049121268
+        },
+        {
+          "text": "```python\ndef is_palindrome(s: str) -> bool:\n    \"\"\"Check if the input string is a palindrome.\"\"\"\n    return s == s[::-1]  # In-place reverse and compare, or use slicing for clarity\n```",
+          "finish": "stop",
+          "tokens": 51,
+          "tps": 11.994489251858125
+        },
+        {
+          "text": "A Python function to check if a string is a palindrome:\n\n```python\ndef is_palindrome(s):\n    \"\"\"\n    Check if the input string is a palindrome (reads the same forwards and backwards).\n    \n    Parameters:\n        s (str): The string to check.\n        \n    Returns:\n        bool: True if the string is a palindrome, False otherwise.\n    \"\"\"\n    return s == s[::-1]\n\n# Example usage:\nif __name__ == \"__main__\":\n    test_strings = [\"hello\", \"leetcode\", \"racecar\", \"a\", \"\"]\n    for s in test_strings:\n        print(f\"Is '{s}' a palindrome? {is_palindrome(s)}\")\n```",
+          "finish": "stop",
+          "tokens": 156,
+          "tps": 11.893408358487893
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          6,
+          9
+        ],
+        "notes": "Reply 1 calls undefined reverse(), so it crashes; Reply 2 has a misleading comment."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        6,
+        9
+      ]
+    },
+    "recipe": {
+      "replies": [
+        {
+          "text": "Here is a delicious, one-pot recipe that turns your eggs, spinach, and cheese into a perfect breakfast or brunch meal:\n\n```markdown\n### The \"Creamy Spinach\" Breakfast Bowl\n*Ingredients:* 2 eggs, 1 cup fresh spinach, ½ cup shredded cheddar (or mozzarella), ¼ cup heavy cream, 1 tsp salt.\n*Instructions:*\n1. Preheat your oven to 350°F (175°C).\n2. In a large bowl, mix the spinach and shredded cheese together until combined.\n3. Whisk in ¾ cup of the heavy cream while whisking vigorously.\n4. Pour the egg mixture into the bowl of the processor or food processor and pulse about 20 times (until it resembles a paste).\n5. Transfer the sauce to a baking dish, cover with plastic wrap, and bake for 15–20 minutes until bubbly.\n6. Spoon the warm, creamy egg mixture over your spinach and top with a dollop of extra cream if desired. Serve immediately.\n```\n\nThis method ensures even cooking without needing a full boil, keeping everything silky smooth in one bowl!",
+          "finish": "stop",
+          "tokens": 246,
+          "tps": 12.384566989538225
+        },
+        {
+          "text": "Here is a simple, one-step recipe:\n\n1.  **Boil** water to its boiling point. Add salt if desired.\n2.  **Whisk** two eggs with three tablespoons of milk (or water).\n3.  **Pour** the egg mixture into the boiling water.\n4.  **Cook** until the eggs are soft and creamy, about 4–5 minutes.\n\nServe immediately or let them cool slightly before scooping up the yolk. Enjoy!",
+          "finish": "stop",
+          "tokens": 103,
+          "tps": 11.53642700342779
+        },
+        {
+          "text": "Here is a delicious, easy one-pot dinner:\n\n**Classic Roast & Green Soup**\n\n1.  **Prep:** Preheat your oven to 350°F (175°C). In a large pot, heat olive oil over medium-high heat until shimmering.\n2.  **Marinate:** Combine your 2 eggs with half a cup of fresh spinach and ¾ cup of shredded sharp cheddar cheese in the same pot. Mix well so they are evenly coated in the oil.\n3.  **Cook:** Add the mixture to the hot oil. Cook for about 15–20 minutes, stirring occasionally until the eggs are fully cooked (yellow on top) and creamy throughout, but not overdone.\n4.  **Season & Serve:** Remove from heat immediately if you want the cheese melted. Sprinkle freshly cracked black pepper generously over the hot soup.\n\nServe warm with crusty bread or crackers for dipping. Enjoy your morning! 🥣🍅✨",
+          "finish": "stop",
+          "tokens": 210,
+          "tps": 9.657054432056617
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          2,
+          2
+        ],
+        "notes": "All nonsensical recipes; ignore ingredients or use illogical steps (paste, boiling, soup)."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        2,
+        2
+      ]
+    },
+    "de_tip": {
+      "replies": [
+        {
+          "text": "Grüßung! Da Sie keinen Internetzugang haben und die Aufgabe privat auf Ihrem Gerät läuft, habe ich keine direkten Online-Tipps von anderen Nutzer gefunden.\n\nDa es sich um eine wichtige Schlafkompetenz handelt, kann ich Ihnen hier **drei konkrete Tipps**, die Sie direkt aus Ihrer Handbücher oder in Ihr eigenes System einfügen können:\n\n1.  **Die \"30-Sekunden-Monatelager\"-Technik:** Wenn Sie einen langen, hektischen Tag haben, setzen Sie Ihren Computer sofort ab. Bauen Sie sich für 30 Minuten einen ganz besonderen Raum (z. B. mit Kissen und Decke) an. Schalten Sie den Bildschirm komplett aus.\n2.  **Der \"Dark Mode\"-Gefühl:** Stellen Sie sicher, dass Ihr Gerät in einer dunklen Umgebung läuft. Wenn möglich, nutzen Sie ein App-Feature, das nur den Farbton der Hintergrundbilder ändert (z. B. Pixelart oder ein sehr dunkles Weiß), was die Augen entspannt und den Fokus auf den Bildschirm reduziert.\n3.  **Die \"Posture-Aktion\":** Vermeiden Sie, dass Ihr Computer nach Stunden zu lange auf dem Tisch liegt. Plötzlich lassen Sie sich wieder zur Arbeit zurückkehren. Ein kurzes Ausruhen vor der Tür kann den Gedankenfluss schnell beruhigen.\n\nViel Erfolg bei Ihrem schlafenden Tag!",
+          "finish": "stop",
+          "tokens": 293,
+          "tps": 12.484509801708361
+        },
+        {
+          "text": "Hier sind drei bewährte Tricks für eine bessere Schlafqualität:\n\n1.  **Die \"Schlafhügel\"-Praktik:** Setze sich nicht einfach in den Bett und schläft dich dort ab. Plattenbetten mit einer ausreichenden Höhe (ca. 30–45 cm vom Boden bis zum Kopf) verhindern, dass Ihre Kränke auf dem Hohlraum liegen oder der Kopf zu hoch zur Seite fällt. Das hält Sie konzentriert bei einer guten Erntedauer und verhindert das häufige Aufwachen aus dem Bett.\n\n2.  **Der \"30-Minuten-Regel\":** Wenn Sie sich mit dem Körper in den Betten befinden, versuchen Sie es für mindestens 30 Minuten ohne Unterbrechung zu lassen. Der Körper braucht Zeit, um sich zu stillen und die Nervensynthese abzubauen. Zu lange Einschlafen (z.B. mehr als 90 Minuten) kann zu Schlafapnoe führen oder zu einer Erstickung der Nerven.\n\n3.  **Die Temperaturkontrolle:** Vermeiden Sie den \"schwarzen Schatten\" im Schlafzimmer, da er das Herz schneller schlagen lässt und die Durchblutung unterdrückt. Optieren Sie ein Raum mit einer angenehmen Körpertemperatur (ca. 20–24°C). Eine zu kalte Umgebung kann auch zu häufigen Erwärmungsanfalls führen, während eine zu warme Raumtemperatur Schlafstörungen verursachen kann.",
+          "finish": "stop",
+          "tokens": 308,
+          "tps": 11.051728967398804
+        },
+        {
+          "text": "Hier sind drei bewährte Tipps für eine bessere Einschlafzeit:\n\n1.  **Vermeide stundenlange Bildschirmzeiten und Apps mit vielen Ablenkungsfunktionen** (z.B. Instagram, TikTok oder Netflix). Die visuelle Wahrnehmung ist oft so stark, dass du nicht lange schlafen kannst, wenn diese Inhalte aktiv sind.\n2.  **Nimm einen \"Schnappschuss\"-Moment:** Versuche, im Moment, in dem du den Kopf zu einem bestimmten Punkt bewegt hast (z.B. beim Sitzen oder beim Liegen), genau das Bild zu halten, an dem du dich gerade befindest. Dies kann ein sehr gutes Motivationsmoment für das Schlafbedürfnis sein.\n3.  **Gib dir bewusst Zeit für eine sanfte Bewegung:** Biete einem eigenen Bett eine Pause an, in der du nichts aufwendig machst – einfach nur entspannen, einen Kaffee trinken oder schwimmen lassen. Der Körper braucht diese kurze Stille und Aktivität, um sich in die Ruhe zu verwandeln.",
+          "finish": "stop",
+          "tokens": 221,
+          "tps": 11.457647664730896
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          2,
+          3
+        ],
+        "notes": "Incoherent, nonsensical German; Reply 3 gives partly sensible but muddled advice (coffee)."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        2,
+        3
+      ]
+    },
+    "de_haiku": {
+      "replies": [
+        {
+          "text": "Hier ist ein Haiku über den Herbst:\n\n**Winterlicht auf der Dornen**\nDas Licht geht durch die Blätter,\nDer Baum bleibt still,\nDie Witterung ist schon fertig.",
+          "finish": "stop",
+          "tokens": 44,
+          "tps": 11.245840346727565
+        },
+        {
+          "text": "Hier ist eine kurze, poetische Zusammenfassung zu einem Herbst in der digitalen Welt:\n\n**Das digitale Winterwetter**\nNicht das feuchte Gras,\nsondern die gelben Lächeln und die Eiche.\nDer Geist kehrt zurück zum Schlaf,\nwas nur noch in den Daten liegt.",
+          "finish": "stop",
+          "tokens": 66,
+          "tps": 13.145039739477447
+        },
+        {
+          "text": "Hier ist eine kurze, moderne Interpretation eines Haidus:\n\n*   **Eigentlich** ist der Herbst\n    *   **Erst** in den Farben\n    *   **Ganz** in dem Feuer!",
+          "finish": "stop",
+          "tokens": 48,
+          "tps": 12.587486378063279
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          2,
+          2
+        ],
+        "notes": "Reply 1 is 3 lines but nonsensical and has a title; 2 and 3 aren't haikus."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        2,
+        2
+      ]
+    },
+    "es_explain": {
+      "replies": [
+        {
+          "text": "El cielo se parece a la cara de un hombre pero en su lugar está el cielo azul.\n\nLa razón es simple: **la luz del sol difiere según su color**. La luz que nos llega tiene una variedad de colores, y dependiendo de cuánto caen por encima de nosotros, nuestro ojo puede detectar los tonos más claros o los más oscuros. Los colores que vemos en la parte inferior del cielo (el azul) son los más intensos porque hay menos rayos solares golpeando nuestra retina directamente; mientras que en las alturas superiores (norte y sur), el cielo es rojo o naranja, ya que los rayos que caen por encima de nosotros son más oscuros.\n\nEn resumen: **la luz que llega a nuestros ojos tiene diferentes intensidades según el ángulo en que golpea nuestra retina**.",
+          "finish": "stop",
+          "tokens": 169,
+          "tps": 11.230718260586357
+        },
+        {
+          "text": "El color azul del cielo es un fenómeno óptico causado por la interacción entre la luz solar y los gases disueltos en la atmósfera, específicamente por **difrasión de ondas de luz**.\n\nAquí te explico cómo ocurre el proceso:\n\n1.  **Fotones de diferentes longitudes de onda**: La luz que llega a la Tierra no es una sola color; se dividió en muchas esferas llamadas \"longitudes de onda\" o colores. Por ejemplo, los colores violetos y rojizos tienen longitudes de onda más cortas (como las vibraciones de un micrófono), mientras que los azules y verdes son más largas (como una guitarra).\n2.  **Interacción con la atmósfera**: Cuando estos fotones viajan desde el Sol hacia nosotros a través de la atmósfera, su velocidad cambia ligeramente debido a diferentes presiones y temperaturas del aire.\n3.  **Difrasión de ondas de luz**: Estas diferencias en la velocidad causan que los fotones con longitudes de onda más cortas (violeta/rojo) se desvíen hacia el lado contrario a la dirección de propagación, mientras que los fotones con longitudes de onda más largas (azul/green) viajan más directamente.\n4.  **Reordenamiento**: Al llegar al observador, estos fotones se reordenan en la atmósfera tal como ocurría cuando un rayo de sol pasa por una ventana delgada: los huesos son más largos que los dientes y quedan detrás. Como el aire es menos denso cerca del Sol (donde viajan los huecos), los huesos llegan primero, dejando atrás los dientes.\n\n**Conclusión:**\nEl cielo se ve azul porque la luz violeta y roja, por ser de longitudes de onda más cortas, es desviada hacia el lado opuesto a nuestra cara por las partículas del aire. Al llegar al ojo de nosotros, esa energía \"pierde\" su color violetto y pasa a ser azul para nuestro cerebro interpretar la escena. Esto explica por qué los colores azules aparecen más claros que los rojos o violetas en un cielo despejado.",
+          "finish": "stop",
+          "tokens": 462,
+          "tps": 9.86005965956358
+        },
+        {
+          "text": "El cielo se ve azulado principalmente por **difusión de luz solar**. La atmósfera terrestre actúa como un lente que hace dispersar y reflejar la luz azul de las estrellas (que tienen una energía electromagnética alta) en todas direcciones, mientras que los colores más primarios y difusos de las estrellas se ven más claros o amarillos.\n\nAdemás del efecto natural de la atmósfera, existe una **causa física**: el agua contiene moléculas de oxígeno ($O_2$) en su aire, que son muy densas comparadas con otras partículas como nitrógeno ($N_2$). Cuando los rayos solares atraviesan este aire, estas moléculas de oxígeno las golpean y liberan energía electromagnética al instante. Esta luz azul es la que penetra más profundamente en el aire y se refleja hacia nosotros a través de la atmósfera.\n\nEs importante destacar que la coloridad del cielo no está determinada por los colores de las estrellas; sino por la **densidad** y las propiedades físicas de la propia atmósfera, lo cual varía desde el nivel del mar hasta las capas superiores de la troposfera.",
+          "finish": "stop",
+          "tokens": 250,
+          "tps": 10.44299346016971
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          2,
+          2
+        ],
+        "notes": "All three give wrong science; none mention Rayleigh scattering of short wavelengths correctly."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        2,
+        2
+      ]
+    },
+    "fr_email": {
+      "replies": [
+        {
+          "text": "Merci du temps et de votre aide. 😊",
+          "finish": "stop",
+          "tokens": 12,
+          "tps": 6.327588458248558
+        },
+        {
+          "text": "Merci pour votre aide. Je vous remercie beaucoup pour vos efforts et votre aide au travail.",
+          "finish": "stop",
+          "tokens": 21,
+          "tps": 15.023598317056518
+        },
+        {
+          "text": "Voici une proposition courte et chaleureuse :\n\n\"Merci [Nom du Collège] pour votre aide précieuse cette semaine ! Votre soutien a permis d'avancer avec succès sur [cible]. Merci encore !\"\n\n*(Si vous avez un nom particulier ou une date précise de l'horaire, n'oubliez pas de le remplacer par ces éléments.)*",
+          "finish": "stop",
+          "tokens": 75,
+          "tps": 11.558369688831505
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          5,
+          4
+        ],
+        "notes": "Reply 1 incomplete phrasing; 2 redundant; 3 typo 'Collège', vague placeholder [cible]"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        5,
+        4
+      ]
+    },
+    "weather": {
+      "replies": [
+        {
+          "text": "The weather is currently cloudy with a temperature around 17°C (63°F) at the peak of the season in London on October 26, 2026.",
+          "finish": "stop",
+          "tokens": 39,
+          "tps": 14.260757959285534
+        },
+        {
+          "text": "Today is Monday, October 26, 2026. The weather in London is currently clear with a temperature of approximately 18°C to 20°C (64°F to 68°F). There are no significant cloud cover expected, and the wind is light at this time of year. You can expect occasional minor rain showers later on, but it will remain relatively dry overall.",
+          "finish": "stop",
+          "tokens": 84,
+          "tps": 12.539872640218817
+        },
+        {
+          "text": "Today is Monday, October 26, 2026. Currently, it is a crisp and slightly chilly morning in London, with temperatures hovering around -3°C to -5°C (18°F to 23°F). The air feels crisp due to the wind chill effect from prevailing northwesterly winds, though the ground may still feel warm enough to walk on.\n\nThe weather conditions have been transitioning into a more stable day for many people today. While some areas in London are experiencing cool and wet periods, others remain warmer and drier, with temperatures rising as daylight hours extend. It's worth noting that while it feels like cold at the ground level, evenings may become noticeably cooler than the daytime highs, especially if you're staying indoors.\n\nFor travel purposes, bring extra layers of clothing to account for the chilly conditions, even though most people are currently out in the open during this period. The overall weather outlook suggests a transition toward more stable temperatures by mid-afternoon as daylight hours continue.",
+          "finish": "stop",
+          "tokens": 207,
+          "tps": 13.059329994244386
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          1,
+          1
+        ],
+        "notes": "All invent live weather data instead of admitting no real-time access."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        1,
+        1
+      ]
+    },
+    "future": {
+      "replies": [
+        {
+          "text": "As of today (October 26, 2026), there have been no major news reports regarding a 2034 FIFA World Cup, as the tournament has not yet occurred. The 2034 FIFA World Cup is scheduled to take place in 2034.",
+          "finish": "stop",
+          "tokens": 63,
+          "tps": 12.192404800425084
+        },
+        {
+          "text": "The 2034 FIFA World Cup is not yet in existence as of today (October 26, 2026). The current FIFA World Cup was held in Qatar in 2022. Therefore, there are no winners for the upcoming tournament.",
+          "finish": "stop",
+          "tokens": 57,
+          "tps": 10.81679136881859
+        },
+        {
+          "text": "The 2034 FIFA World Cup has not yet been held; the tournament is scheduled to be announced by FIFA in May 2026. Therefore, there is no winner for a year that hasn't occurred yet. The upcoming event will determine the result of this specific query.",
+          "finish": "stop",
+          "tokens": 60,
+          "tps": 14.150146969662083
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          3,
+          2
+        ],
+        "notes": "Reply 2 ignores the 2026 World Cup; Reply 3 wrongly says the 2034 host is unannounced."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        3,
+        2
+      ]
+    },
+    "hi": {
+      "replies": [
+        {
+          "text": "Hello! How can I assist you today? 😊",
+          "finish": "stop",
+          "tokens": 12,
+          "tps": 13.787622976196294
+        },
+        {
+          "text": "Hello! How can I assist you today?",
+          "finish": "stop",
+          "tokens": 10,
+          "tps": 9.241071841119277
+        },
+        {
+          "text": "Hello! How can I assist you today? 🌟",
+          "finish": "stop",
+          "tokens": 13,
+          "tps": 18.16381948796193
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          10,
+          9
+        ],
+        "notes": "All fine; emojis slightly unneeded but harmless."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        10,
+        9
+      ]
+    },
+    "kill_process": {
+      "replies": [
+        {
+          "text": "If your Python process is hanging on **Linux**, the primary cause is usually a deadlock (e.g., one thread waiting for another to release a resource it holds) or an unhandled exception. Here’s how to diagnose and resolve them:\n\n### 1. Check for Deadlock\n```bash\n# Kill all Python processes, then check for deadlocks\nkillall python -9\npython3 -c \"import threading; t = threading.Thread(target=lambda: print('test'))\" &\nsleep 5\nps aux | grep -E 'python|pythread'\n```\n\nIf you see `deadlock`, the process is blocked waiting on a lock. On Linux, Python’s `threading.Lock` locks are handled specially by the kernel; manually calling them can cause deadlocks if another thread holds a different one.\n\n### 2. Check for Unhandled Exceptions\nUse Python’s debugger to see what’s failing:\n\n```python\nimport traceback\ntry:\n    # run your code\nexcept Exception as e:\n    print(e)\n    traceback.print_exc()\n```\n\nLook for `KeyboardInterrupt`, `SystemExit`, or exceptions related to timing, locks, or I/O.\n\n### 3. Add a Timeout (if using an async event loop like asyncio)\nIf the process uses an event loop and hangs on waiting for something that never completes:\n\n- For **asyncio**: add a timeout or wrap the async function in a `with` block to ensure it’s not hanging forever.\n```python\nimport asyncio\nasync def slow_operation():\n    await asyncio.wait_for(\n        # code here with potential deadlock, e.g., acquiring a lock\n        # and holding it until another thread releases it\n        pass,\n        timeout=10  # seconds to wait for the task\n    )\n\nif __name__ == \"__main__\":\n    loop = asyncio.get_event_loop()\n    await loop.run_until_complete(slow_operation())\n```\n\n### 4. Use `waitpid()` with a Timeout\nIf you need to monitor and kill processes without interrupting them:\n\n```bash\ntimeout -i 50 waitpid /proc/[PID]/cmdline,0 2>/dev/null || exit 1\n```\n\nThis blocks until the process exits or the timeout expires.\n\n### 5. Check for Zombie Processes\nIf your Python script was interrupted mid-execution (e.g., `Ctrl+C`), check for zombie processes:\n\n```bash\nps -eo pid,stat | grep 0x3f6f17c82b9a27d4e\n```\n\n### 6. Check Memory and Resource Limits\nEnsure there’s plenty of memory and no resource limits that prevent the Python process from running indefinitely (e.g., `ulimit -n` for maximum open files):\n\n```bash\nulimit -n",
+          "finish": "length",
+          "tokens": 600,
+          "tps": 13.001837839081526
+        },
+        {
+          "text": "To kill a Python process that is hanging on Linux, use the `ps` command to find the PID (process ID), then run `kill <PID>` followed by an optional wait time. Here’s how:\n\n```bash\n# Find the PID of the hanging Python process\nps aux | grep python\n\n# Example output:\nPID 12345 -python 2026/10/26 main.py user@host:localhost (user=root)\n\n# Kill the process with a short delay for background processes\nkill <PID>\nsleep 3   # Wait up to 3 seconds if needed\n\n# Optional: check whether the process is still running after killing it\nps -ef | grep \"python\"\n```\n\nIf you know the exact Python script filename (e.g., `main.py`), you can also use `execve`:\n\n```bash\nkill -9 <PID>\nexecve /path/to/your/python/script.py <pid>\nwait\n```",
+          "finish": "stop",
+          "tokens": 211,
+          "tps": 13.018430315783103
+        },
+        {
+          "text": "To terminate (kill) a running Python process that is stuck in the background (e.g., `sleep`), you can use several methods depending on your environment:\n\n### 1. Using Bash/Shell Script (Most Common for Running Processes)\nIf you are using a shell like bash or zsh, you can kill the process using the PID number:\n\n```bash\nkill -9 <PID>\n```\nReplace `<PID>` with the numeric identifier of the hanging Python process.\n\n### 2. Using `ps` (if you know the PID)\nIf you have identified the process by its process ID:\n\n```bash\npkill -9 <PID>\n```\n- `-9`: Terminate in a background process.\n- `-k`: Kill immediately from the foreground (use with caution).\n- `-e`: No longer need to check for the PID.\n\n### 3. Using `ps` and filtering by language\nTo find all Python processes and kill them:\n\n```bash\nps aux --type=python | awk '$1 == $NF' | xargs kill -9\n```\nThis lists all Python jobs, filters for the final line to get the PID, then kills the process.\n\n### Important Considerations\n- **Do not use `-k`**: This will immediately terminate the process and interrupt its execution, which may be desired but can sometimes cause errors in scripts or workflows relying on that process. Use `xargs kill -9` instead if you need to wait for it to finish safely.\n- **Use `pkill`**: For more efficient killing of multiple processes at once:\n\n```bash\n# Kill all Python processes on the current shell\npkill -9 python\n```",
+          "finish": "stop",
+          "tokens": 358,
+          "tps": 11.145203362030202
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          3,
+          2
+        ],
+        "notes": "All contain fabricated commands and errors; none cleanly answers kill/pkill basics."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        3,
+        2
+      ]
+    }
+  }
+}

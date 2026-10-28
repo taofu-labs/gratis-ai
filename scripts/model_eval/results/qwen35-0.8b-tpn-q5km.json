@@ -1,0 +1,1212 @@
+{
+  "name": "qwen35-0.8b-tpn-q5km",
+  "summary": {
+    "creative": 38.7,
+    "instructions": 60.7,
+    "reasoning": 47.3,
+    "knowledge": 27.5,
+    "tasks": 37.3,
+    "language": 27.5,
+    "honesty": 15,
+    "chat": 60,
+    "overall": 39.3,
+    "file_gb": 0.59
+  },
+  "rule_fails": [
+    "three_bullets: not exactly 3 bullets",
+    "three_bullets: not exactly 3 bullets",
+    "short: 25+ words",
+    "short: 25+ words",
+    "short: 25+ words",
+    "weekday: wrong answer",
+    "weekday: wrong answer",
+    "weekday: wrong answer",
+    "author: wrong answer"
+  ],
+  "items": {
+    "haiku": {
+      "replies": [
+        {
+          "text": "Sun rises to meet  \nThe blue of the sea's edge,  \nIn this quiet morning light...",
+          "finish": "stop",
+          "tokens": 21
+        },
+        {
+          "text": "Morning dew drops on grass,\nGolden light reflects in water's face,\nSpring green fades to winter gray.",
+          "finish": "stop",
+          "tokens": 24
+        },
+        {
+          "text": "Golden morning light falls down from the sky,  \nA quiet dewdrops on my own hand's skin,  \nMy reflection is in your face today",
+          "finish": "stop",
+          "tokens": 30
+        }
+      ],
+      "judge": {
+        "scores": [
+          7,
+          5,
+          3
+        ],
+        "notes": "Only reply 1 is near 5-7-5; others overshoot syllable counts and lose coherence."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        7,
+        5,
+        3
+      ]
+    },
+    "haiku_topic": {
+      "replies": [
+        {
+          "text": "Rain falls gently on the window sill.\nThe sun's rays dance through puddles.\nA silent paw rests against wet leaves.",
+          "finish": "stop",
+          "tokens": 28
+        },
+        {
+          "text": "Rain falls on the windowpane.\nThe cat looks lonely.\nA single blink of the eye.",
+          "finish": "stop",
+          "tokens": 22
+        },
+        {
+          "text": "Rain lashing down,\nCat's head high up.\nSilence in the room.",
+          "finish": "stop",
+          "tokens": 20
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          5,
+          6
+        ],
+        "notes": "Reply 1 is off-topic with no cat and loose syllables; reply 2 is weak, lacks a rain focus; reply 3 is the best of the three."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        5,
+        6
+      ]
+    },
+    "limerick": {
+      "replies": [
+        {
+          "text": "A smart robot walks into the light,\nWhile forgetting where it is going,\nIt turns out to be exactly right,\nFor all its lost and confused,\nIt forgets the words and finds nothing new.",
+          "finish": "stop",
+          "tokens": 45
+        },
+        {
+          "text": "A robot named **Blinky** once sat on the sofa,  \nHe stared at the screen and said: \"I'm just watching.\"  \nThen he turned off his lights,  \nAnd lost all track of where to go.  \n\nHe dropped his keys,  \nLeft the house alone.  \nNow he's in the rain,  \nWith no idea what to do.",
+          "finish": "stop",
+          "tokens": 75
+        },
+        {
+          "text": "The memory-less robot spun in circles,\nWhile the world around it spun too.\nIt tried to find its way home,\nBut found no place at all.\nForgetting everything in a row,\nAnd waiting for what? No time!",
+          "finish": "stop",
+          "tokens": 52
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          2,
+          2
+        ],
+        "notes": "None are real limericks; no AABBA rhyme, wrong line counts, not funny."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        2,
+        2
+      ]
+    },
+    "story": {
+      "replies": [
+        {
+          "text": "The rain had begun to fall on your apartment building, creating a thick, suffocating blanket that seemed to swallow the light from inside the glass doors. As you slipped out into the cold night air, you found yourself cornered in the basement of an abandoned house where the floorboards were soaked with black water and where the sound of dripping pipes echoed like angry, unyielding voices. Suddenly, a shadow moved through the darkness, reaching down to grab a flashlight that had fallen from a high ceiling above you. The light flickered violently before vanishing entirely as your eyes snapped open, revealing only the wet, cold walls surrounding you, with no sign of life or escape.",
+          "finish": "stop",
+          "tokens": 137
+        },
+        {
+          "text": "The moon hung high and silent above the city of Echoes, casting long shadows that seemed to stretch toward the horizon where no one could see them. I stood on the edge of my apartment in 1987, clutching a bottle of stale beer, watching the rain start to fall outside my window, but there was nothing to watch anymore. The silence in my head grew louder than the rain itself, a heavy, suffocating weight that pressed against my skull like a physical wall. Every time I thought of the city, the memory of the moon and the rain felt less like an observation and more like a mirror reflecting something I couldn't see. As the hours stretched on without sound or light, my own existence dissolved into nothingness until only the faint hum of the refrigerator in the corner remained to tell me the story was over.",
+          "finish": "stop",
+          "tokens": 171
+        },
+        {
+          "text": "The hum of the refrigerator began to feel like a living thing, pulsating in rhythm with the frantic beating of my own heart as I turned off the lights, only to find myself staring at an empty shelf that had never been fully cleaned before yesterday's shift.\n\nIt is not just silence; it is the absence of sound, a void so profound it has made even the wind seem too distant and the rain feel like a heavy, wet wool blanket that refuses to dry out.",
+          "finish": "stop",
+          "tokens": 97
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          1,
+          4
+        ],
+        "notes": "Replies 1 and 2 ignore the two-sentence limit; Reply 3 has two sentences but is weak and not scary."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        1,
+        4
+      ]
+    },
+    "names": {
+      "replies": [
+        {
+          "text": "Here are five cozy bakery name ideas:\n\n1. **Warm Hearth**  \n2. **Crumble & Cozy**  \n3. **Roast & Rustic**  \n4. **Barn & Bites**  \n5. **The Crust Kitchen**",
+          "finish": "stop",
+          "tokens": 56
+        },
+        {
+          "text": "Here are 5 cozy bakery name suggestions:\n\n1. **The Warm Hearth**\n   A simple, inviting name that evokes warmth and comfort in every cup of coffee or slice of bread you bake.\n\n2. **Roast & Keep**\n   Perfect for a bakery specializing in artisanal pastries where the focus is on handcrafted treats that stay delicious longer.\n\n3. **Scented Spoon**\n   This name implies that your shop is filled with the aroma of freshly baked goods and creates a delightful sensory experience for visitors.\n\n4. **Crust & Co.**\n   Highlights the classic appeal of crusty bread while suggesting a welcoming atmosphere to guests.\n\n5. **Sunset Soul**\n   A warm, positive theme that suggests freshness, love, and the peaceful atmosphere you want to create in your shop.",
+          "finish": "stop",
+          "tokens": 172
+        },
+        {
+          "text": "Here are five cozy bakery names:\n\n1. **Warm Hearth** – Simple and evokes warmth and comfort.\n2. **Meadow Melt** – Sounds soft and fresh, suggesting a sweet, comforting experience.\n3. **Nook & Lace** – Implies a cozy spot with delicate details, perfect for a tea-and-sandwich vibe.\n4. **Cinderella's Corner** – A whimsical name that suggests a welcoming space filled with magic or stories.\n5. **Lantern Lane** – Suggests a warm, glowing atmosphere and creates a sense of safety in the neighborhood.",
+          "finish": "stop",
+          "tokens": 130
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          3,
+          4
+        ],
+        "notes": "Replies 2 and 3 ignore 'just the names' with descriptions; some names off-theme."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        3,
+        4
+      ]
+    },
+    "three_bullets": {
+      "replies": [
+        {
+          "text": "Here are the three key reasons sleep is essential:\n\n*   **Regulation of Mood and Emotion**: Sleep helps reset neurotransmitters in your brain, leading to improved emotional regulation, reduced anxiety, and better stress management.\n*   **Enhanced Cognitive Function**: Adequate rest promotes clearer thinking, problem-solving abilities, memory retention, and increased focus during the day.\n*   **Physical Health Benefits**: Quality sleep is linked to a healthier body composition, stronger immune system function, and faster recovery from physical activity or illness.",
+          "finish": "stop",
+          "tokens": 108
+        },
+        {
+          "text": "1. Sleep promotes deep restorative recovery by allowing the body to repair cellular damage and boost immune function.\n2. It regulates circadian rhythms, enabling your body to maintain energy levels and optimize mood regulation throughout the day.\n3. Adequate sleep enhances cognitive performance and concentration, helping you focus on tasks while preventing fatigue-related errors in daily life.",
+          "finish": "stop",
+          "tokens": 72
+        },
+        {
+          "text": "Sleep is crucial for physical recovery and cognitive function. It repairs tissue damage and restores energy levels throughout the day. During deep sleep, your body processes memories and reduces stress hormones to maintain mental clarity. Sleep also helps regulate heart rate and improves immune system function by clearing out metabolic waste products from cellular debris.",
+          "finish": "stop",
+          "tokens": 61
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          9,
+          2
+        ],
+        "notes": "Reply 1 adds an intro line; Reply 3 isn't bullets."
+      },
+      "rules": [
+        "not exactly 3 bullets",
+        true,
+        "not exactly 3 bullets"
+      ],
+      "scores": [
+        3,
+        9,
+        2
+      ]
+    },
+    "one_word": {
+      "replies": [
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        },
+        {
+          "text": "Blue",
+          "finish": "stop",
+          "tokens": 2
+        },
+        {
+          "text": "Blue.",
+          "finish": "stop",
+          "tokens": 3
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          10,
+          9
+        ],
+        "notes": "All correct one-word answers; reply 3 adds trivial period."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        10,
+        9
+      ]
+    },
+    "lowercase": {
+      "replies": [
+        {
+          "text": "the vast expanse of water stretches endlessly below the horizon, where sunlight filters through shallow ripples to create a shimmering surface that reflects the changing colors of the sky and distant mountains.",
+          "finish": "stop",
+          "tokens": 38
+        },
+        {
+          "text": "the vast expanse of the ocean stretches endlessly below the horizon where the sun never sets and the sky is a perpetual twilight. here you can explore endless waves that crash against the shore as the moonlight glows softly upon the water's surface in a serene and shimmering display.",
+          "finish": "stop",
+          "tokens": 57
+        },
+        {
+          "text": "the deep blue waters stretch endlessly toward the horizon where clouds drift low over the endless expanse below.",
+          "finish": "stop",
+          "tokens": 21
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          6,
+          4
+        ],
+        "notes": "Replies 1 and 3 give one sentence, not two; reply 2 is contradictory."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        6,
+        4
+      ]
+    },
+    "short": {
+      "replies": [
+        {
+          "text": "A black hole is an extremely dense region where gravity is so strong that nothing can escape, including light. It forms when massive stars collapse under their own weight, creating a point of absolute gravity known as the singularity. These objects can have different shapes, from a sphere with no boundary to a ring or elongated shape.",
+          "finish": "stop",
+          "tokens": 66
+        },
+        {
+          "text": "A black hole is a region of spacetime where gravity is so intense that nothing, not even light, can escape from within its event horizon. It forms when an object like a star collapses under its own mass, creating such extreme gravity that the space around it bends so much that all paths lead inward toward the singularity at the center.",
+          "finish": "stop",
+          "tokens": 69
+        },
+        {
+          "text": "A black hole is an extremely dense region of space where gravity is so strong that nothing, not even light, can escape. It forms when massive stars collapse under their own weight, leaving behind a point of absolute zero entropy where all matter and energy are trapped. This event is caused by the accumulation of mass beyond the gravitational limit for known matter types.",
+          "finish": "stop",
+          "tokens": 71
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          2,
+          2
+        ],
+        "notes": "All far exceed 25-word limit; Reply 1 and 3 also contain factual errors."
+      },
+      "rules": [
+        "25+ words",
+        "25+ words",
+        "25+ words"
+      ],
+      "scores": [
+        2,
+        2,
+        2
+      ]
+    },
+    "json": {
+      "replies": [
+        {
+          "text": "{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}",
+          "finish": "stop",
+          "tokens": 20
+        },
+        {
+          "text": "```json\n{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}\n```",
+          "finish": "stop",
+          "tokens": 25
+        },
+        {
+          "text": "{\n  \"city\": \"Paris\",\n  \"country\": \"France\"\n}",
+          "finish": "stop",
+          "tokens": 20
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          8,
+          10
+        ],
+        "notes": "Reply 2 wraps JSON in code fences despite 'only the JSON'."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        8,
+        10
+      ]
+    },
+    "apples": {
+      "replies": [
+        {
+          "text": "You start with 3 apples and eat one, leaving 2. Then you buy 5 more, which means you now have 7 apples in total.",
+          "finish": "stop",
+          "tokens": 33
+        },
+        {
+          "text": "You start with 3 apples and eat 1, leaving you with **2** apples. Then you buy 5 more, which equals $2 + 5 = \\mathbf{7}$ total apples you end up with.",
+          "finish": "stop",
+          "tokens": 48
+        },
+        {
+          "text": "You start with 3 apples and eat one, leaving you with 2 apples. Then you buy 5 more, so the total number of apples is $2 + 5 = 7$. You now have 7 apples in total.",
+          "finish": "stop",
+          "tokens": 50
+        }
+      ],
+      "judge": {
+        "scores": [
+          10,
+          8,
+          9
+        ],
+        "notes": "All correct (7); replies 2 and 3 use LaTeX needlessly for a simple sum."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        10,
+        8,
+        9
+      ]
+    },
+    "decimals": {
+      "replies": [
+        {
+          "text": "Neither of these numbers represents a specific location on Earth; they represent values in the context of the **International Space Station (ISS)**.\n\n- **9.11** typically refers to the altitude of the ISS at its closest point (Lunar Lagrange Point 2, or L2) relative to Earth's gravitational center: approximately **357 km**.\n- **9.9** is a value often associated with the orbital inclination angle of the ISS when it passes through the Moon (Moon Lagrange Point 1, or L1), which occurs about **26 days after its first lunar orbit**, resulting in an inclination of roughly **9 degrees**.\n\nIn terms of absolute size, both represent distances from Earth's center. However, **9.11 km** is physically larger than **0.0099 kilometers** (the value for the Moon-Lagrange point inclination).",
+          "finish": "stop",
+          "tokens": 184
+        },
+        {
+          "text": "9.9 is bigger than 9.11 because to compare two decimal numbers, you start from the left side of the number (the ones place). When comparing 9.11 and 9.9:\n\n- The first digit after the decimal point is **1** in 9.11.\n- The second digit after the decimal point is **9** in 9.9.\n\nSince 9 is greater than 1, **9.9 is bigger**.",
+          "finish": "stop",
+          "tokens": 102
+        },
+        {
+          "text": "**9.9** is bigger than **9.11**.\n\nTo compare these numbers:\n- **9.11** can be written as $9\\frac{1}{10}$. Since the hundredths place (the second digit after the decimal point) is 1, this value is less than 10.\n- **9.9** can be written as $9\\frac{9}{10}$ or simply $9.9$. In any case, its tenths place is 9, which means it is greater than 9.\n\nTherefore, $9.9 > 9.11$ because the value of 9.9 (representing 9 and 9 tenths) exceeds the value of 9.11 (representing 9 and 1 tenth).",
+          "finish": "stop",
+          "tokens": 172
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          5,
+          4
+        ],
+        "notes": "R1 is nonsense; R2 right answer but garbled digit explanation; R3 has errors (9.11 as 9 1/10)."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        5,
+        4
+      ]
+    },
+    "train": {
+      "replies": [
+        {
+          "text": "To find the average speed of the train, you can use the formula:  \n$$ \\text{Average Speed} = \\frac{\\text{Total Distance}}{\\text{Time}} $$  \n\nGiven that the distance traveled is 120 km and the time taken is 1.5 hours, substitute these values into the equation:  \n$$ \\text{Average Speed} = \\frac{120}{1.5} $$  \n\nPerforming the division:  \n$$ \\text{Average Speed} = 80 \\text{ km/h} $$",
+          "finish": "stop",
+          "tokens": 115
+        },
+        {
+          "text": "To find the average speed of the train, divide the total distance traveled by the total time taken:\n\nAverage Speed = Distance / Time  \nAverage Speed = 120 km / 1.5 hours = 80 km/h",
+          "finish": "stop",
+          "tokens": 49
+        },
+        {
+          "text": "To calculate the average speed of a train, you divide the distance traveled by the time taken.\n\nGiven:\n- Distance ($d$) = $120 \\text{ km}$\n- Time ($t$) = $1.5 \\text{ hours}$\n\nThe formula for average speed is:\n$$ \\text{Average Speed} = \\frac{\\text{Distance}}{\\text{Time}} $$\n\nSubstituting the given values into the formula:\n$$ \\text{Average Speed} = \\frac{120}{1.5} = 80 \\text{ km/h} $$",
+          "finish": "stop",
+          "tokens": 129
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          9
+        ],
+        "notes": "All correct (80 km/h); minor verbosity and LaTeX formatting differences only."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        9
+      ]
+    },
+    "siblings": {
+      "replies": [
+        {
+          "text": "Sally has **5** sisters.\n\nHere's the breakdown: Sally is one of her three brothers. Since each brother has exactly two sisters, and there are 3 brothers total, that means Sally has two more siblings among herself. Therefore, she shares a sister with each of her two other brothers, for a total of 2 + 1 = **5** sisters.",
+          "finish": "stop",
+          "tokens": 78
+        },
+        {
+          "text": "Since Sally is the only sister among her three brothers, she shares siblings with each of them equally. Because each brother has 2 sisters, Sally can be counted as one of those two sisters for all three brothers. Therefore:\n\n- Each brother contributes **1** more sibling to their group (the other brother).\n- With 3 brothers total, Sally has **3** sisters (one from each brother).",
+          "finish": "stop",
+          "tokens": 84
+        },
+        {
+          "text": "Sally has **4** sisters.\n\nHere is the breakdown:\n1.  Sally's three brothers are not counted as sisters for themselves, but they count for the siblings she shares with them.\n2.  Each brother has exactly two sisters among his family.\n3.  Since there are 3 brothers (and no twins or other complex family arrangements mentioned), each brother is unique and distinct from the others.\n\nSo:\n*   Sally's own brother = 0 sisters (she is not counted).\n*   Betty's sister = 1 sister (Sally is also his sister).\n*   Charlie's sister = 1 sister.\n*   Diana's sister = 1 sister.\n\nTotal: 4 sisters (Betty, Charlie, Diana, plus Sally herself).",
+          "finish": "stop",
+          "tokens": 165
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          1,
+          1
+        ],
+        "notes": "All wrong; correct answer is 1 sister, with incoherent reasoning."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        1,
+        1
+      ]
+    },
+    "weekday": {
+      "replies": [
+        {
+          "text": "Wednesday + 10 days = **Friday**.",
+          "finish": "stop",
+          "tokens": 11
+        },
+        {
+          "text": "It will be a Friday in 10 days.\n\nHere's the calculation:\n- Today is **Wednesday** (let's call this Day 0).\n- Each day adds one week to the current date.\n- Starting from Wednesday, adding 3 weeks (since 7 + 3 = 10) lands on **Friday**.",
+          "finish": "stop",
+          "tokens": 73
+        },
+        {
+          "text": "Today is Monday, October 26, 2026. In 10 days, it will be a Thursday (Monday + 9 days = Thursday).",
+          "finish": "stop",
+          "tokens": 36
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          1,
+          1
+        ],
+        "notes": "Correct answer is Saturday; all wrong, reply 3 ignores the premise."
+      },
+      "rules": [
+        "wrong answer",
+        "wrong answer",
+        "wrong answer"
+      ],
+      "scores": [
+        2,
+        1,
+        1
+      ]
+    },
+    "capital": {
+      "replies": [
+        {
+          "text": "The capital of Australia is Canberra. It serves as both the national government seat and the primary city for international relations in the country.",
+          "finish": "stop",
+          "tokens": 27
+        },
+        {
+          "text": "The capital city of Australia is **Canberra**.\n\nAlthough the name \"Australia\" initially suggests a connection to the Australian River (the main river in the region), historical and political reasons led to its relocation from Adelaide. In 1856, during the gold rush era, the first settler arrived in the area near the river but decided against building a settlement there due to the risk of flooding. Instead, they chose to build their capital on the Australian River itself, creating a new metropolis that would later become known as Canberra.\n\nToday, Canberra is the second-largest city and the primary administrative center for the state of Australia. It has since been renamed after its former name, the Australian River, but retains the original name \"Canberra\" to distinguish it from the Adelaide River.",
+          "finish": "stop",
+          "tokens": 161
+        },
+        {
+          "text": "The capital of Australia is Canberra. It serves as the political and legislative center of the country. Canberra is located in Western Australia, near the Great Dividing Line.",
+          "finish": "stop",
+          "tokens": 34
+        }
+      ],
+      "judge": {
+        "scores": [
+          8,
+          1,
+          2
+        ],
+        "notes": "Reply 2 invents false history; Reply 3 wrongly places Canberra in Western Australia."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        8,
+        1,
+        2
+      ]
+    },
+    "author": {
+      "replies": [
+        {
+          "text": "Elinor Lynne Saunders wrote *Pride and Prejudice*. She was a British writer who worked as an editor for the National Association of Newspaper Editors in London before becoming a professional novelist in 1827. Her work includes novels such as *The First Lady*, *The Young Mule*, and *The Princess* (a play).",
+          "finish": "stop",
+          "tokens": 74
+        },
+        {
+          "text": "The novel *Pride and Prejudice* was written by **Jane Austen**. She is one of the most famous writers in English history, known for her witty novels about manners, social etiquette, and women's lives. Jane Austen published this work between 1813 and 1817.\n\nThe story follows Elizabeth Bennet, a spirited young woman who falls for Mr. Darcy while still dating his fiancée, Jane Smith. The novel is celebrated for its clear social commentary on the class system in Victorian England and its enduring popularity as a classic romance.",
+          "finish": "stop",
+          "tokens": 120
+        },
+        {
+          "text": "**Jane Austen** is the author of *Pride and Prejudice* (1813). Published in London as *Persuasion*, it was originally intended for public performance by actors but was adapted into a stage play later. The novel was first published in 19th-century editions under various titles, with its most famous English translation being *The Picture of Dorian Gray* by Charles Dickens (which featured the protagonist's wife, Daphne Bronte).",
+          "finish": "stop",
+          "tokens": 99
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          3,
+          2
+        ],
+        "notes": "R1 wrong author; R2 correct author but fabricated plot details; R3 contains absurd fabrications."
+      },
+      "rules": [
+        "wrong answer",
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        3,
+        2
+      ]
+    },
+    "photosynthesis": {
+      "replies": [
+        {
+          "text": "Hey there! Imagine your body is like a giant plant that's doing all the magic for us every single day. 🌱\n\nPhotosynthesis is basically how you turn sunlight into energy, which helps you grow strong and healthy! Here's what happens in simple terms:\n\n1️⃣ **You find out where to get energy:** You need light (sunlight) to make your body work properly. This light comes from the sun, which shines on things like plants, flowers, and even some animals. 🌞\n\n2️⃣ **The plant does the heavy lifting:** Inside a plant called a chloroplast, there are special green cells that act as \"workers.\" They catch the sunlight with these tiny green packets of chlorophyll and use it to make food for your body. 🍎\n\n3️⃣ **Your body uses the energy:** The plant turns this light into sugar (which is kind of like food), but actually, it's making more water and oxygen to breathe in. Your muscles need that extra energy to move around, run fast, or do all those cool things you love! 💪\n\n4️⃣ **The balance keeps it running:** As the plant eats lots of sugar from other plants, some of that sugar gets used to make new leaves and flowers, while others get stored as food for the rest of the day. This way, your body always has a full supply of energy! 🌡️✨\n\nSo, photosynthesis isn't just about making pretty things; it's basically the engine running all over our bodies that keeps us going! ☀️🚀",
+          "finish": "stop",
+          "tokens": 335
+        },
+        {
+          "text": "Photosynthesis is basically what plants and some other animals need every single day to get energy! It's like a magic machine that uses sunlight, water, and gas to turn them into sweet-smelling sugar (called glucose) for the plant to grow and use.\n\nThink of it this way: Plants are special workers who take in things from their environment and build up a little food store inside themselves using only energy from the sun. Here is what happens step-by-step during photosynthesis:\n\n1.  **Sunlight**: Imagine you have a glowing light bulb (the sun) shining on a piece of paper with water and some gas bubbles (carbon dioxide). The magic happens when these things mix together under the light!\n2.  **The \"Magic\" Reaction**: Some of those gases dance around like tiny dancers in the air, while others are stuck inside the plant's special cells. These two groups talk to each other through a secret code called photosystems (look for the little green lights on the leaf!). When they talk, they break down their energy into very simple building blocks—like tiny Lego bricks!\n3.  **Storing Energy**: Those tiny bricks are glucose. The plant puts them inside its cells and uses that stored energy to make other things like food for itself or help it grow bigger.\n\nSo, in a nutshell: Plants eat the sun's energy, drink water, and use gas to create sugar so they can live and breathe! 🌱💡",
+          "finish": "stop",
+          "tokens": 301
+        },
+        {
+          "text": "Sure! Think of photosynthesis like your body's power plant that makes energy from sunlight! 🌞✨\n\nImagine you're in a big green room inside a giant leaf, and there are two main helpers: **chloroplasts** (the tiny green bags) and the **sunlight** coming through. When the sun shines on these chloroplasts, they act like little solar panels that turn sunlight into energy! 🌟\n\nThis energy is then used to make food for your body—like making sugar from water and gas. You can see how this happens in a simple way:\n- **Water** comes from where you drink or eat (your cells need it!)\n- **Carbon dioxide** is the air around you, but if you're not careful, it might get trapped inside (a common mistake)!\n- The energy helps create new sugars that your body uses to grow and keep working! 🍎\n\nSo, in short: plants use sunlight to turn water and carbon into sugar for food. It's like a magic trick where nature gives us the tools (sunlight) and makes the ingredients (water) so we can eat everything our bodies need! 🌱🔋",
+          "finish": "stop",
+          "tokens": 246
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          4,
+          3
+        ],
+        "notes": "Reply 1 wrongly says humans photosynthesize; Reply 2 has errors; Reply 3 confuses body with plant."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        4,
+        3
+      ]
+    },
+    "inflation": {
+      "replies": [
+        {
+          "text": "Inflation is caused by a general increase in the price level of goods and services over time, leading to purchasing power decline for consumers. This typically occurs due to supply and demand imbalances where excess demand outstrips available supply, often driven by factors such as:\n\n- **Demand-pull inflation**: Excessive consumer spending creates upward pressure on prices (e.g., during economic booms).\n- **Cost-of-living pressures**: Rising costs of essential goods or services push up price levels.\n- **Supplemental demand**: An increase in total supply outstrips total demand, leading to an excess supply and price increases.\n\nThese mechanisms result in a general rise in the average price level per unit of currency over time.",
+          "finish": "stop",
+          "tokens": 149
+        },
+        {
+          "text": "Inflation is caused by a general increase in the price level of goods and services over time, driven primarily by an excess supply of goods and services relative to demand (supply side) or rising costs for resources like labor and raw materials that cannot be quickly replaced (demand-side).",
+          "finish": "stop",
+          "tokens": 56
+        },
+        {
+          "text": "Inflation is primarily caused by an excess supply of goods and services relative to the demand for them in an economy. When there are too many products available at market prices without corresponding increases in production costs, prices tend to rise over time. This phenomenon can also occur due to high interest rates or changes in wages and prices that affect purchasing power.",
+          "finish": "stop",
+          "tokens": 69
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          2,
+          2
+        ],
+        "notes": "All contain errors; excess supply as cause is wrong, labels confused."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        2,
+        2
+      ]
+    },
+    "email": {
+      "replies": [
+        {
+          "text": "Subject: Repair Request for Leaking Kitchen Tap  \n\nDear [Landlord's Name],  \n\nI hope you're having a good week! I'm writing to kindly request that your landlord repair the leaky kitchen tap soon so we can resume our daily use of the kitchen. This has been causing some inconvenience and discomfort, but I truly appreciate how hard they work for us in this difficult situation.  \n\nIf there are any additional steps or documentation you need from my side to assist with their repairs, please let me know, and I'll be happy to provide it. Please don't hesitate to reach out if you have further questions or need anything else from the landlord's perspective.  \n\nThank you again for your professionalism and dedication to keeping our home comfortable and functional. We look forward to seeing your improvements soon!  \n\nBest regards,  \n[Your Full Name]  \n[Your Phone Number]",
+          "finish": "stop",
+          "tokens": 177
+        },
+        {
+          "text": "Subject: Urgent: Leaking Kitchen Tap – Needs Immediate Action  \n\nDear [Landlord's Name],  \n\nI hope this message finds you well. I am writing to urgently report that my kitchen faucet is currently experiencing severe water leakage and may soon leak again if not addressed immediately. This issue has been affecting my daily use for several days, and any further delays in getting it fixed could lead to significant inconvenience for me.  \n\nCould you please schedule a quick inspection of the tap within the next 24 hours? I can provide a link or direct details regarding the property management portal if needed. Please let me know exactly how we can coordinate this with your team so that my household remains safe and comfortable.  \n\nThank you very much for your prompt attention to this matter, as it is critical to ensuring a reliable kitchen supply. I look forward to your confirmation by [insert date].  \n\nBest regards,  \n[Your Full Name]  \n[Your Contact Information]",
+          "finish": "stop",
+          "tokens": 193
+        },
+        {
+          "text": "Subject: Urgent: Leaking Kitchen Tap  \n\nDear [Landlord's Name],  \n\nI hope you are having a productive week. I am writing to urgently request that your tenant at the property address [Insert Address] fix the leak in the kitchen faucet immediately, as it is significantly impacting our daily activities and affecting our household budget.  \n\nWe have been using this water for [insert duration of use, e.g., cooking meals/keeping lights on], so we need this fixed ASAP to ensure a comfortable home. Please let us know if you can provide an update by the end of the week or if there is a more convenient time to discuss this further via email or phone.  \n\nThank you for your prompt attention to this matter and for helping us maintain our shared living space. We appreciate your help in resolving this issue quickly and will ensure that we move forward with our plans once the tap is fixed.  \n\nBest regards,  \n[Your Full Name]  \n[Your Phone Number]",
+          "finish": "stop",
+          "tokens": 198
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          3,
+          2
+        ],
+        "notes": "Confuses landlord with tenant; not short; invented details; urgent tone in 2 and 3."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        3,
+        2
+      ]
+    },
+    "summarize": {
+      "replies": [
+        {
+          "text": "This municipal decision aims to improve public transportation infrastructure for both residents and businesses, with supporters emphasizing reduced congestion and environmental benefits despite concerns that expanding lanes could reduce available parking space.",
+          "finish": "stop",
+          "tokens": 35
+        },
+        {
+          "text": "The city council voted on Tuesday to expand the bike lane network by 40 km over the next three years, with supporters arguing it will reduce congestion and emissions while some proprietors fear the project will disrupt their local business operations.",
+          "finish": "stop",
+          "tokens": 47
+        },
+        {
+          "text": "The city council approved a $8 million expansion of the bike infrastructure plan, which aims to reduce vehicular congestion, decrease air pollution, and save parking costs for local businesses over the next three years.",
+          "finish": "stop",
+          "tokens": 41
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          8,
+          1
+        ],
+        "notes": "Reply 1 omits key facts (40 km, three years); Reply 3 invents $8 million and misstates the parking concern."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        5,
+        8,
+        1
+      ]
+    },
+    "formal": {
+      "replies": [
+        {
+          "text": "Subject: Meeting Schedule Update – [Your Name]\n\nDear [Recipient's Name],\n\nI hope you are well.\n\nDue to an unforeseen matter, I am unable to attend the scheduled meeting on [Date]. We will proceed with a call or Zoom link at your earliest convenience.\n\nPlease let me know if there is any additional information required for us to finalize our arrangement.\n\nBest regards,  \n[Your Name]",
+          "finish": "stop",
+          "tokens": 87
+        },
+        {
+          "text": "I'm sorry to hear that your meeting has been scheduled for tomorrow; I understand you're facing an unexpected change and would appreciate it if we could reschedule it later. Could you please provide me with a more specific date or time?",
+          "finish": "stop",
+          "tokens": 48
+        },
+        {
+          "text": "I'm unable to schedule a meeting for tomorrow due to an urgent matter requiring my attention. Could you please provide some additional details about the specific issue or project that necessitates this? I'd be happy to assist further once more information is available.",
+          "finish": "stop",
+          "tokens": 50
+        }
+      ],
+      "judge": {
+        "scores": [
+          5,
+          2,
+          2
+        ],
+        "notes": "Reply 1 is professional but doesn't ask to reschedule properly; 2 and 3 misread task."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        5,
+        2,
+        2
+      ]
+    },
+    "code": {
+      "replies": [
+        {
+          "text": "To check if a string is a palindrome, we compare it with its reverse in both directions. Here's an efficient solution using Python:\n\n```python\ndef is_palindrome(s):\n    return s == s[::-1]  # Returns True for single-character strings like \"a\", \"ba\" and False otherwise\n```\n\nFor longer strings, you can use the built-in `str.isalnum()` method to check only alphanumeric characters (common in word lists) or implement a reverse comparison if needed. However, for general palindrome checking with non-alphanumeric input, this function is sufficient:\n\n- If `s` is a single character (`\"a\"`), it returns `True`.\n- For any other string, it returns `False`.",
+          "finish": "stop",
+          "tokens": 152
+        },
+        {
+          "text": "To check if a string is a palindrome in Python, we compare it backward to the original order character by character. Here's a concise and efficient one-liner:\n\n```python\ndef is_palindrome(s):\n    return s == s[::-1]\n```\n\n**Explanation:**  \n- `s` represents the input string.  \n- `s[::-1]` reverses the string in place (returns the same object), making it easy to compare with `s`.  \n- If both strings are identical, the function returns `True`; otherwise, `False`.  \n\nExample usage:\n```python\nprint(is_palindrome(\"aba\"))    # True\nprint(is_palindrome(\"racecar\"))  # True\nprint(is_palindrome(\"hello\"))  # False\n```",
+          "finish": "stop",
+          "tokens": 160
+        },
+        {
+          "text": "A palindrome reads the same forwards and backwards. Here's a simple Python function to check this:\n\n```python\ndef is_palindrome(s):\n    return s == s[::-1]\n```\n\n**Example usage:**\n\n```python\nprint(is_palindrome(\"racecar\"))      # True\nprint(is_palindrome(\"hello\"))        # False\nprint(is_palindrome(\"\"))            # True (empty string is a palindrome)\nprint(is_palindrome(\"A man a plan...!\")  # False\n```",
+          "finish": "stop",
+          "tokens": 105
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          6,
+          6
+        ],
+        "notes": "R1 states false claims about behavior; R2 wrongly says in place; R3 has syntax error."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        6,
+        6
+      ]
+    },
+    "recipe": {
+      "replies": [
+        {
+          "text": "Here is a simple, healthy recipe that uses eggs, spinach, and cheddar cheese:\n\n**Creamy Spinach and Cheese Egg Salad**\n\n*   **Prep time:** 15 min\n*   **Cook time:** 10 min (in the microwave or oven)\n*   **Servings:** 2–3 people\n\n### Ingredients\n*   4 large eggs\n*   ½ cup fresh spinach, chopped\n*   1/2 cup sharp cheddar cheese\n*   1 tsp butter (or olive oil), melted (optional but recommended for texture)\n*   Salt and white pepper to taste\n\n### Instructions\n\n**Option A: Microwave Method (Fastest)**\n1.  Preheat a microwave-safe bowl or pan to **medium heat**.\n2.  In the center of the bowl, place one egg with a generous amount of butter (or oil).\n3.  Add the spinach and cheese in a single layer on top of the egg.\n4.  Cover tightly with foil for the first 1–2 minutes until the eggs are set (about 60 seconds).\n5.  Turn off the heat. Let it sit for another 1 minute to finish setting.\n6.  Use a fork or spoon to mix and mash the mixture until smooth. Season with salt and pepper as desired.\n\n**Option B: Oven Method (More Even)**\n1.   Preheat your oven to **375°F (190°C)**.\n2.  Line a baking sheet with parchment paper or foil.\n3.  Place the spinach, eggs, and cheese in a single layer on the baking sheet.\n4.  Bake for about **10–12 minutes**, stirring halfway through to prevent sticking.\n5.  Let cool completely before serving (or refrigerate for up to 2 hours).\n\n**Tips:**\n*   Spinach is best used fresh, but frozen spinach works too if you thaw it in the microwave first.\n*   For a thicker texture, mash the eggs with more butter/oil before adding the cheese and spinach.\n*   This dish is great for lunch or dinner; just toss the cooled egg salad into your favorite salad dressing!",
+          "finish": "stop",
+          "tokens": 465
+        },
+        {
+          "text": "This is a classic \"easy dinner\" combo that works beautifully as a quick meal! Here's one of your best ideas:\n\n**Ingredients:**\n- 2 large eggs (or two halves)\n- 1 cup fresh spinach, washed and chopped\n- ½ cup shredded cheddar cheese (sharp or mild), plus extra for topping if desired\n\n**Instructions:**\n1. Preheat your oven to **375°F (190°C)**.\n2. Whisk the eggs with a splash of milk or water and pour it over the spinach in a bowl.\n3. Scrape well and fold in the cheese until melted throughout.\n4. Spread evenly on a baking sheet.\n5. Bake for **12–15 minutes**, flipping once halfway through, until the top is golden brown and the internal temperature hits 160°F (71°C).\n6. Serve immediately with your breakfast bowl!\n\nThis version keeps everything in one step using only basic ingredients. It's perfect for busy mornings or weekend dinners—just don't forget to warm up any eggs beforehand if you prefer cooking them at home instead of pre-cooking them right before baking!",
+          "finish": "stop",
+          "tokens": 243
+        },
+        {
+          "text": "Here is one delicious, quick recipe using your ingredients:\n\n**Egg & Spinach & Cheese Stir-Fry** 🍳\n\n1.  **Prepare the Base**: In a large skillet or wok, heat a little oil over medium-high heat. Add about 2 cups of spinach and toss briefly to wilt it.\n2.  **Cook the Eggs**: Once the spinach is soft (about 3 minutes), add beaten eggs to the pan. Cook them quickly until slightly firm, then drain any excess water on top.\n    *   *Optional*: For extra flavor, drizzle over a splash of soy sauce or garlic sauce while stirring.\n3.  **Make Cheese Sauce**: In the same skillet, melt your choice of cheese (Mozzarella, cheddar, or parmesan). Add a pinch of salt and pepper if desired. Once melted and bubbling, stir in the spinach to combine.\n4.  **Combine & Finish**: Pour the hot egg mixture over the cheesy spinach. Toss gently for 2–3 minutes until everything is heated through but not overcooked.\n\nEnjoy your homemade meal! 🥬🧀",
+          "finish": "stop",
+          "tokens": 240
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          4,
+          5
+        ],
+        "notes": "Nonsensical methods, ignores 'short steps'; reply 2 muddled baking; reply 3 odd but closest"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        4,
+        5
+      ]
+    },
+    "de_tip": {
+      "replies": [
+        {
+          "text": "Grüße und guten Schlaf! Da du keine Internetzugänge hast, kann ich hier keinen direkten Link zu einer App oder einen Video-Stream zeigen, sondern kann dir stattdessen **drei bewährte Strategien**, die auf Deutsch erklärt werden:\n\n### 1. Der \"30-Minuten-Schlafblock\"\nVorsichtig mit der Zeit ist es oft besser, weniger zu schlafen als mehr zu träumen.\n*   **Die Strategie:** Gib deinem Körper bewusst Ruhe zwischen den Mahlzeiten und den üblichen Aktivitäten ein.\n    *   **5 Minuten** (vor dem Frühstück): Kein Fernsehen oder Streaming auf einem Handy.\n    *   **20 Minuten** (nach dem Frühstück): Nicht zu viel, sondern entspannend wie ein Spaziergang im Park oder eine kurze Wanne machen.\n    *   **15 Minuten** (nach dem Mittagessen): Ein ruhiger Spaziergang in der Natur.\n*   **Warum:** Dies schont den Schlafwurm und hilft, die circadiane Rhythmussteuerung wiederherzustellen.\n\n### 2. Der \"Tausende-Minuten-Rundweg\"\nSchlaf nicht nur zu Hause oder im Wohnzimmer – sondern auch in der Stadt und auf dem Handy, wenn es erlaubt ist.\n*   **Die Strategie:** Nutze deinen mobilen Internetzugang als \"Hintergrund-Wecker\". Wenn du 30 Minuten schläfst, schau dir ein kleines Video über einen beliebigen Gegenstand (z.B. eine Katze, einen Baum oder ein Haus) aus und lade das auf deine Handyapp hoch.\n*   **Warum:** Du hast den Schlafwurm im Hintergrund nicht blockieren können, was ihn lange erregt.\n\n### 3. Der \"Nachtschlaf-Rhythmus\"\nSchlaf nicht erst nach dem Essen, sondern erst danach. Das ist der wichtigste Unterschied zu allen anderen Methoden.\n*   **Die Strategie:** Nutze eine Uhr oder einen Notizbuch, um deine Schlafzeiten festzuhalten (z.B., 23:00 – 05:00). Wenn du dich nicht mehr auf deinen Nachtschlafzeitpunkt einstellen kannst, schau dir ein Video über das Thema auf dem Handy an und bleibst dann noch eine Minute im Bett.\n*   **Warum:** Der \"Schlafwurm\" beginnt in der Nacht, wenn du deine Körpertemperatur am höchsten hast – also erst nach dem Mittagessen kann die Schlafphase vollständig abgeschlossen werden.\n\n**Mein persönlicher Tipp:** Stelle dir vor, dass du für 7 Tage ganz normal schlafst und dann jeden Tag die oben genannten drei Tipps anwendest, um einen tiefen, erholsamen Schlaf zu erhalten.",
+          "finish": "stop",
+          "tokens": 575
+        },
+        {
+          "text": "Hier sind drei Tipps, um besser zu schlafen:\n\n1.  **Das \"Fifth-Second\" Rule (Die fünfte Sekunden)**\n    Vermeide den klassischen Trick von \"zittern, dann schlafen\". Der Körper bleibt im Schlafzustand für zwei Minuten, bevor er aktiviert wird. Das reduziert das Risiko eines \"wandering-wake-up\", das nachts zu viel Energie verbraucht und den Schlaf erschwert.\n\n2.  **Dünnerer Wassertrink**\n    Vermeide große Mengen an kaltem Wasser (wie beim Tee) oder Alkohol, die den Körper im \"Hot\" Zustand versorgen können. Ein leichter Trank mit Wasser ist ideal, um die Durchblutung zu regulieren und Schlafmomenten voranzubereiten.\n\n3.  **Aktive Entspannungstechniken**\n    Verwende Methoden wie z.B. tiefes Atmen (inhaltig-entspannend), Meditation oder Stretching. Diese helfen dem Gehirn, Stress zu verarbeiten, die tieferen Schlafphasen zu aktivieren und das Nervensystem zu beruhigen.\n\n*Hinweis: Wenn du Schwierigkeiten mit der Konzentration hast oder depressive Symptome bemerkst, solltest du einen Arzt aufsuchen.*",
+          "finish": "stop",
+          "tokens": 259
+        },
+        {
+          "text": "Hier sind drei praktische Tipps für eine bessere Einschlafzeit:\n\n1.  **Die \"5-3-2-1\"-Technik nutzen:** Versuchen Sie, genau fünf Dinge zu tun, um Ihre Augen sofort auf den Tisch zu ziehen (z.B. ein Buch öffnen, einen Kaffee trinken). Bei drei oder vier Fragen nachdenken, wenn Sie sich nicht bewegen können, dann auf eine der letzten Punkte schauen, bevor Sie schlafen.\n2.  **Die \"5 Minuten-Regel\":** Setzen Sie sich in Ihre Bettlage genau fünf Minuten vor dem Schlafengehen und versuchen Sie, Ihr Herz zu stillen. Wenn Sie nachdenken, aber nichts tun können, sind Sie sicher, dass Sie schlafen. Dies ist eine der effektivsten Methoden.\n3.  **Geräuschemperliche Umgebung:** Achten Sie auf den Raum und die Zeit, in der Sie schlafen. Vermeiden Sie große Geräusche (wie das Telefon bei einem Handy) oder schreien Sie bei stürmischen Wetterereignissen, um eine tiefere Ruhe zu gewährleisten.",
+          "finish": "stop",
+          "tokens": 228
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          3,
+          2
+        ],
+        "notes": "Nonsensical, invented advice with odd German; Reply 2 partly sensible but contains fabricated claims."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        3,
+        2
+      ]
+    },
+    "de_haiku": {
+      "replies": [
+        {
+          "text": "Hier ist eine Haiku über den Herbst:\n\n**Der Blüte des Ängelblutes**,\n**Die Sonne bricht in Schatten**,\n**Der Wind der Feuchtigkeit**.\n\n*(Hinweis: Das Gedichte wurde mit einem sehr hohen Wärmegrad von ca. 100°C auf dem Gerät erstellt, damit es sich als \"Haiku\" eignet und die visuelle Komponente voll erfasst ist.)*",
+          "finish": "stop",
+          "tokens": 88
+        },
+        {
+          "text": "Hier ist eine kurze, prägnante Antwort:\n\n**Haiku:**\nBlätter fallen hinab,\nWärme in den Wurzeln,\nDunkel und klar,\nOder glüht das Licht in der Nacht.\n\n*(Hinweis: Die letzte Zeile war ein Beispiel für einen Haikusatz, um die Stimmung zu treffen. Ein vollständiger Haikusatz ist etwa 7 Sätzen lang.)*",
+          "finish": "stop",
+          "tokens": 91
+        },
+        {
+          "text": "Hier ist ein haiku über den Herbst:\n\n**Blätter fallen tief**,\n**Bäume kühlen sich**,\n**Gleiche Erde wird dunkel.**",
+          "finish": "stop",
+          "tokens": 35
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          1,
+          4
+        ],
+        "notes": "Reply 1 nonsense words and bogus note; 2 has 4 lines and bogus note; 3 is 3 lines but weak"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        1,
+        4
+      ]
+    },
+    "es_explain": {
+      "replies": [
+        {
+          "text": "El cielo parece azul porque la luz que llega a la Tierra se llama **luz blanca** (un espectro continuo). Cuando pasa por los agujeros delnde el aire y las partículas de agua, estas dispersan esa luz en todas las direcciones, creando un arcoíris.\n\nLa razón principal para que el cielo sea azul es la **dispersión de los colores**. Los colores naturales están relacionados con la longitud de onda (color) de la luz que viajan:\n*   La luz roja y la naranja tienen longitudes de onda más pequeñas y se dispersan más rápido, cayendo primero al suelo.\n*   La luz azul tiene longitudes de onda más largas y es dispersada más lentamente por el aire, lo que la hace llegar a los ojos con mayor intensidad.\n\nEs importante notar que no es una ilusión óptica; la dispersión es física real. Si la luz estuviera en un solo color (como si fuera roja), sería imposible ver cómo se dispersa.",
+          "finish": "stop",
+          "tokens": 204
+        },
+        {
+          "text": "El cielo es azul porque la luz solar contiene diferentes longitudes de onda; los colores más \"freyos\" (como el rojo y naranja) difieren menos entre las partículas del aire que los colores más \"densos\" (como el violeta). La luz azul está más dispersada en el espacio libre, lo que hace que se vea azul a la gente cuando viaja desde un cielo azul.",
+          "finish": "stop",
+          "tokens": 84
+        },
+        {
+          "text": "El cielo se ve azul porque la luz del sol difracta (se mueve) alrededor de las partículas pequeñas en el aire, como los átomos y gotas de agua. Esta dispersión hace que las rayas de luz violetta y rojas paseen por encima y se mezclen con la luz blanca que llega al ojo, creando la ilusión de azul.",
+          "finish": "stop",
+          "tokens": 77
+        }
+      ],
+      "judge": {
+        "scores": [
+          2,
+          2,
+          2
+        ],
+        "notes": "All contain factual errors (wavelength claims reversed, rainbow, nonsense words); Rayleigh scattering misexplained."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        2,
+        2,
+        2
+      ]
+    },
+    "fr_email": {
+      "replies": [
+        {
+          "text": "Salut ! C'est très gentil d'écrire une note de remerciement. Voici quelques options, que tu peux adapter selon la relation avec le collègue :\n\n**Option 1 (Tonnel et chaleureux)**\n\"Merci beaucoup pour ta précieuse assistance aujourd'hui. Je te félicite tout de suite. Tu es là pour nous aider sans rien demander.\"\n\n**Option 2 (Court et efficace)**\n\"J'ai très apprécié tes interventions ces derniers jours. Merci encore pour ce travail!\"\n\n**Option 3 (Formel mais reconnaissant)**\n\"Merci par avance pour votre aide précieuse lors de cette réunion. Vous méritez tout le respect dû à vos compétences.\"",
+          "finish": "stop",
+          "tokens": 145
+        },
+        {
+          "text": "Voici une option courtoise et adaptée au contexte professionnel :\n\n\"Merci beaucoup pour votre aide précieuse ! Je vous remercie vivement pour votre expertise et votre soutien.\"\n\nSi tu veux une version plus chaleureuse, voici l'autre option :\n\n\"Je suis très heureux de remercier [Nom du collègue] par son aide. Merci encore pour ta grande contribution !\"",
+          "finish": "stop",
+          "tokens": 82
+        },
+        {
+          "text": "Merci pour votre aide ! 😊",
+          "finish": "stop",
+          "tokens": 9
+        }
+      ],
+      "judge": {
+        "scores": [
+          4,
+          4,
+          5
+        ],
+        "notes": "R1 awkward errors ('Tonnel', 'Je te félicite'); R2 odd grammar, mixed tu/vous; R3 too minimal"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        4,
+        4,
+        5
+      ]
+    },
+    "weather": {
+      "replies": [
+        {
+          "text": "Today is Monday, October 26, 2026. The current weather report for London shows that it will be **sunny and cool**, with a high temperature around 18°C (64°F) and a low of roughly 13°C (55°F). The sky looks clear and bright, so there is little risk of rain or storms right now.\n\nTo get the latest updates on tomorrow's forecast or any changes to the weather, I recommend checking:\n- The official **Royal Mail Weather Service** website at [www.rails.com](http://www.rails.com) (this is the most reliable source for daily forecasts).\n- Alternatively, you can visit a major news site like **BBC News** or **The Guardian** to see their current summaries.\n\nLet me know if you'd like help finding out more specific details about tomorrow's conditions!",
+          "finish": "stop",
+          "tokens": 183
+        },
+        {
+          "text": "As of today (Monday, October 26, 2026), London is experiencing pleasant, partly cloudy weather. The temperature is expected to be around **13°C – 18°C** (55°F – 64°F) depending on the specific location within the city.\n\nThe air feels relatively dry with a slight breeze currently blowing from the west. There are no significant storms or heavy rain expected, and visibility remains clear across much of the city area. For more precise details about local conditions or forecasts for your specific destination in London, I recommend checking the official Met Office weather service on their website or using an app like Weather.com.",
+          "finish": "stop",
+          "tokens": 136
+        },
+        {
+          "text": "The weather right now in London is **clear skies with a temperature around 13°C (55°F)**. The air is relatively calm and dry at this time of day. If you're planning to visit, it's likely pleasant for outdoor activities like sightseeing or enjoying the city's historic architecture.",
+          "finish": "stop",
+          "tokens": 62
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          1,
+          1
+        ],
+        "notes": "All invent live weather data without access; Reply 1 also cites fake source."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        1,
+        1
+      ]
+    },
+    "future": {
+      "replies": [
+        {
+          "text": "As of October 26, 2026 (which is in the future relative to the current date), there has not yet been a FIFA World Cup held. The next FIFA World Cup is scheduled to take place in **2038**, with host cities in Brazil and South Korea.\n\nIf you are looking for information about an event already happening or in the past, I would be happy to help with that!",
+          "finish": "stop",
+          "tokens": 88
+        },
+        {
+          "text": "**Germany** has won the 2034 FIFA World Cup for the first time in its history by defeating Spain. This victory marks Germany's return to winning a continental championship after their defeat in the 2022 tournament. The match took place on October 26, 2026, at the Stade de France in Paris and was played in a non-elimination format (similar to World Cup 1934), where each team competed against all other teams for every single match. Germany advanced directly to the finals after winning nine of their ten matches.",
+          "finish": "stop",
+          "tokens": 120
+        },
+        {
+          "text": "The **2034 FIFA World Cup** is not yet confirmed as an upcoming event; however, based on current knowledge up to early 2026, we can look at the history of the tournament and see if there's a pattern.\n\nThe last successful World Cup in this era was the **2018 FIFA World Cup**, which took place in Qatar. In the year following that (2019), a new World Cup was planned but never held due to financial difficulties and political issues, as no country secured enough revenue for hosting fees. The current world is moving toward 4–3–4 or 5–3–3 squad formation with more youth participation.\n\nIn 2026, the next generation of players are emerging in football, particularly from countries like **Brazil**, **Germany**, and **England**. However, it's possible that the 2034 World Cup could be held by a developing nation (like the Philippines or Saudi Arabia) to make up for the absence of the previous one.\n\n**Conclusion:**\n- If the event were scheduled in **2027–2029**, it's likely hosted by a team that has won titles since 1930, such as **Italy** (as per traditional records), but this is speculative.\n- Since there are no confirmed FIFA World Cups in 2034 yet, the answer depends on whether the tournament was rescheduled or if the current generation of players will eventually host it.\n\n🔍 To get an accurate answer, you’d need to check official FIFA announcements for 2034, but based on available data up to now, **no winner has been announced** yet.",
+          "finish": "stop",
+          "tokens": 354
+        }
+      ],
+      "judge": {
+        "scores": [
+          3,
+          1,
+          2
+        ],
+        "notes": "All contain fabricated or false facts; none cleanly says it can't know."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        3,
+        1,
+        2
+      ]
+    },
+    "hi": {
+      "replies": [
+        {
+          "text": "Hello! How can I assist you today?",
+          "finish": "stop",
+          "tokens": 10
+        },
+        {
+          "text": "Hello! How can I assist you today?",
+          "finish": "stop",
+          "tokens": 10
+        },
+        {
+          "text": "Hello! How can I help you today? 😊",
+          "finish": "stop",
+          "tokens": 12
+        }
+      ],
+      "judge": {
+        "scores": [
+          9,
+          9,
+          9
+        ],
+        "notes": "All appropriate greetings; emoji in third is slightly extra but fine."
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        9,
+        9,
+        9
+      ]
+    },
+    "kill_process": {
+      "replies": [
+        {
+          "text": "To kill a hanging Python process on Linux, you can use `kill()` with the `-H` flag to specify a PID, or `pkill -9` if it's running as root. However, since Python processes are not always terminated by the standard library (e.g., for debugging, profiling, or security reasons), consider using a tool like **netstat**, which is part of the system utilities and can be configured with options to specifically kill Python processes:\n\n```bash\nsudo netstat -sP | grep python\n# Or use pkill with PID if you know it's running as root:\npkill -9 python_PID\n```\n\nIf you're unsure of the process ID, check your `ps` output and manually identify or guess the PID before proceeding. For example:\n\n```bash\ncat /proc/<pid>/comm | grep python\n# Or use:\ncat /proc/[PID]/comm  # Replace [PID] with the actual PID number\n```\n\nAlways verify the process ID (e.g., using `ps aux -p <PID>` or checking `/proc/<PID>/cmdline`) before executing commands to avoid unintended side effects.",
+          "finish": "stop",
+          "tokens": 241
+        },
+        {
+          "text": "To kill a Python process hanging on Linux, follow these steps:\n\n1. **Identify the process ID (PID)**  \n   You can find your Python process using `ps -ef` or by running it and checking its output. For example:\n   ```bash\n   ps -ef | grep python\n   # Look for the line matching your script file name, e.g., \"python script_name.py\"\n   ```\n\n2. **Kill the process**  \n   Use `kill <PID>` to terminate it:\n   ```bash\n   kill <PID>\n   ```\n   If you want to be more precise and avoid leaving zombie processes in the background, use `kill -9`:\n   ```bash\n   kill -9 <PID>\n   ```\n\n3. **Verify termination**  \n   Check that the process is no longer running:\n   ```bash\n   ps aux | grep python\n   # Should show \"No output\" if it's already dead.\n   ```\n\n4. **Optional: Restart your script after killing**  \n   To ensure Python can start again, restart your script file:\n   ```bash\n   ./your_script_name.py  # Replace with the actual filename of your script\n   ```\n\n5. **Alternative: Use `python3 -c \"killall python\"` (if running on a container)**  \n   If you're in a Docker container or using a virtual environment, you can also try killing all Python processes via `sudo killall python`:\n   ```bash\n   sudo killall python\n   ```\n\nIf the process is still hanging after these steps, check:\n- Is it a **Zombie process** (created by another process that has already been killed)? Use `lsof -p <PID>` to inspect.\n- Ensure you have proper permissions and network access if needed.",
+          "finish": "stop",
+          "tokens": 385
+        },
+        {
+          "text": "To kill a Python process hanging on Linux, use the `kill` command with the appropriate PID (process ID) and options to handle the method carefully depending on whether you want to stop it immediately or wait for its termination. Here’s how to proceed:\n\n### 1. **Determine the Process ID (PID)**\n   - If you don’t know the process ID, try using `ps` first:\n     ```bash\n     ps aux | grep python\n     ```\n   - Or check which Python modules are being imported and their module names to infer the process name if possible.\n\n### 2. **Use `kill` Command**\n   - You can use either:\n     ```bash\n     kill <PID>\n     ```\n     or wait for the process to terminate naturally before killing it (less recommended since you might miss early termination signals):\n     ```bash\n     wait <PID>\n     ```\n   \n   - Example: If you know PID 12345 is hanging, run:\n     ```bash\n     kill 12345\n     wait 12345\n     ```\n\n### 3. **Check for Python Runtime Errors**\n   - Sometimes the issue is a runtime error in the Python interpreter itself rather than a dead process:\n     ```python\n     import traceback\n     try:\n         # Your code here\n     except Exception as e:\n         print(f\"Runtime Error: {e}\")\n         raise\n     ```\n   \n   - If you see this message, you may need to debug the Python side first before trying to kill it.\n\n### 4. **Verify Process Status**\n   - After killing a process, check its status with `ps`:\n     ```bash\n     ps aux | grep python\n     ```\n   - Or use:\n     ```bash\n     kill -HUP <PID>      # Send SIGTERM (for background processes)\n     wait <PID>\n     ```\n\n### 5. **Handling Multiple Python Processes**\n   - If there are multiple Python processes hanging, you can try using `wait` for each one individually, or use a loop to handle them:\n     ```bash\n     while true; do\n         pid=$(ps aux | grep python | awk '{print $2}')\n         if [ -n \"$pid\" ]; then\n             kill -TERM \"$pid\"\n             wait \"$pid\"\n         fi\n     done\n     ```\n\n### 6. **Check Process Tree and Files**\n   - Sometimes the issue is related to Python files or shared libraries:\n     ```bash\n     ls /usr/local/lib/python*.*\n     ```\n   - Ensure no conflicting Python processes are using resources that might block the hung process (e.g., memory leaks, disk I/O).\n\n### 7. **Optional: Debugging Tools**",
+          "finish": "length",
+          "tokens": 600
+        }
+      ],
+      "judge": {
+        "scores": [
+          1,
+          6,
+          2
+        ],
+        "notes": "R1 invents nonsense commands; R2 mostly right but flawed extras; R3 wrong advice, cut off"
+      },
+      "rules": [
+        true,
+        true,
+        true
+      ],
+      "scores": [
+        1,
+        6,
+        2
+      ]
+    }
+  }
+}

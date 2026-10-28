@@ -18,7 +18,7 @@
         const runtime = wllama()
         const root = await navigator.storage.getDirectory()
         const handle = await root.getFileHandle( query.model, { create: true } )
-        const response = await fetch( `/models/${ query.model }` )
+        const response = await fetch( `${ query.base || `/models/` }${ query.model }` )
         await response.body.pipeTo( await handle.createWritable() )
 
         try {

@@ -9,6 +9,9 @@
  * Usage: xvfb-run -a node scripts/bench/speed_table.mjs <models_dir> [rounds]
  * <models_dir> holds <catalog id>.gguf files (the TPN builds). Needs network for the probe header.
  * Env:   BENCH_ONLY  substring filter on catalog ids
+ *        BENCH_CDP   bench a remote browser instead, e.g. Android Chrome via
+ *                    `adb forward tcp:9222 localabstract:chrome_devtools_remote` + `adb reverse tcp:4330 tcp:4330`
+ *        BENCH_MODEL_BASE  where pages fetch models (default `/models/`; a phone can serve its own copies)
  */
 import { spawn } from 'node:child_process'
 import { mkdtempSync, readdirSync, rmSync } from 'node:fs'
@@ -37,7 +40,9 @@ await new Promise( done => setTimeout( done, 500 ) )
 
 // A persistent profile: incognito contexts cap OPFS far below a 6 GB model
 const profile_dir = mkdtempSync( resolve( tmpdir(), `speed-table-` ) )
-const browser = await chromium.launchPersistentContext( profile_dir, { headless: false, args: [ `--unlimited-storage` ] } )
+// A remote browser is someone's real profile: open and close pages only, never the browser
+const remote = process.env.BENCH_CDP && await chromium.connectOverCDP( process.env.BENCH_CDP )
+const browser = remote ? remote.contexts()[ 0 ] : await chromium.launchPersistentContext( profile_dir, { headless: false, chromiumSandbox: !process.env.CI, args: [ `--unlimited-storage` ] } )
 const probes = []
 const relative = {}
 const median = values => [ ...values ].sort( ( a, b ) => a - b )[ Math.floor( values.length / 2 ) ]
@@ -45,7 +50,8 @@ const median = values => [ ...values ].sort( ( a, b ) => a - b )[ Math.floor( va
 // Fresh, visible page per cell: background tabs are throttled
 const cell = async query => {
     const page = await browser.newPage()
-    await page.goto( `http://localhost:${ port }/speed_table.html?${ new URLSearchParams( query ) }` )
+    const base = process.env.BENCH_MODEL_BASE ? { base: process.env.BENCH_MODEL_BASE } : {}
+    await page.goto( `http://localhost:${ port }/speed_table.html?${ new URLSearchParams( { ...query, ...base } ) }` )
     await page.waitForFunction( () => window.__result, null, { timeout: 1_800_000, polling: 1000 } )
     const result = await page.evaluate( () => window.__result )
     await page.close()
@@ -73,7 +79,7 @@ try {
         }
     }
 } finally {
-    await browser.close()
+    await ( remote || browser ).close()
     rmSync( profile_dir, { recursive: true, force: true } )
     server.kill()
 }

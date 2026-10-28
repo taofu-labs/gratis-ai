@@ -312,6 +312,14 @@ const InputRow = styled.div`
     align-items: flex-end;
     flex: 1;
     min-width: 0;
+
+    /* Phones: four buttons beside the text left ~2 words per line, so the
+       text (or voice status) takes the full width and the buttons go below */
+    @media ( max-width: 30rem ) {
+        flex-wrap: wrap;
+        > :first-child { flex-basis: 100%; }
+        > ${ ButtonRow } { margin-left: auto; }
+    }
 `
 
 

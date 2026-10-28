@@ -13,3 +13,7 @@ Every store upload needs a new `package.json` version (build = major·10000 + mi
 Check prod: `curl -sI <url>` must show COOP `same-origin` + COEP `require-corp`; then load it headful and
 confirm `crossOriginIsolated`, the Memory64 probe, and a real SmolLM2 download + chat (no console errors).
 Hugging Face rejects `*.workers.dev` referrers, so `index.html` must keep `<meta name="referrer" content="no-referrer">`.
+
+## RunPod (eval GPUs, shared account — other services live here)
+- REST `https://rest.runpod.io/v1/pods`, Bearer `RUNPOD_API_KEY` (.env.local). Proxy `https://<pod>-8080.proxy.runpod.net`
+- Our pods are named `gratis-eval-*`; never touch other pods. Budget cap given 2026-10-27: $100
