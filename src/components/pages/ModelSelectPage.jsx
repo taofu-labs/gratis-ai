@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { log } from 'mentie'
 import toast from 'react-hot-toast'
-import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, List, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, List, Trash2, Image, ImageOff, ShieldCheck, MessageCircleQuestion } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_device_speed_probe from '../../hooks/use_device_speed_probe'
 import use_model_manager from '../../hooks/use_model_manager'
@@ -15,8 +15,9 @@ import Button from '../atoms/Button'
 import LanguageSelector from '../molecules/LanguageSelector'
 import SettingsModal from '../molecules/SettingsModal'
 import ModelHero from '../molecules/ModelHero'
-import SpeedModePicker, { ModelToggles } from '../molecules/ModelPreferences'
-import { read_speed_mode, write_speed_mode } from '../../utils/speed_mode'
+import WizardQuestion, { WizardSummary } from '../molecules/ModelWizard'
+import SpeedGauge from '../atoms/SpeedGauge'
+import { read_speed_mode, read_wizard_answers, write_speed_mode, write_wizard_answers } from '../../utils/speed_mode'
 import ModelBrowser from '../molecules/ModelBrowser'
 import {
     build_device_profile,
@@ -53,7 +54,9 @@ import {
 import { EVENTS, storage_key } from '../../utils/branding'
 import { format_download_duration, get_speed_estimate } from '../../utils/network_speed'
 
+// Positioned, so the corner actions scroll away with the page instead of floating over it
 const Container = styled.div`
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -70,7 +73,7 @@ const Container = styled.div`
 `
 
 const PageActions = styled.div`
-    position: fixed;
+    position: absolute;
     top: ${ ( { theme } ) => theme.spacing.md };
     right: ${ ( { theme } ) => theme.spacing.md };
     z-index: 10;
@@ -80,7 +83,7 @@ const PageActions = styled.div`
 `
 
 const BackActions = styled.div`
-    position: fixed;
+    position: absolute;
     top: ${ ( { theme } ) => theme.spacing.md };
     left: ${ ( { theme } ) => theme.spacing.md };
     z-index: 10;
@@ -413,8 +416,18 @@ export default function ModelSelectPage() {
 
     // `?need=vision` arrives from "this model can't read images" prompts
     const needs_vision = search_params.get( `need` ) === `vision`
-    // Reply speed is shared with the chat's gauge, so it starts from the last choice
-    const [ preferences, set_preferences ] = useState( () => ( { ...DEFAULT_PREFERENCES, priority: read_speed_mode(), vision: needs_vision } ) )
+    // Reply speed is shared with the chat's gauge, so it starts from the last choice;
+    // the other answers come from the last finished wizard
+    const [ preferences, set_preferences ] = useState( () => ( {
+        ...DEFAULT_PREFERENCES,
+        ...read_wizard_answers(),
+        priority: read_speed_mode(),
+        ...needs_vision && { vision: true },
+    } ) )
+
+    // The wizard's open question (index), or null for the recommendation. It
+    // opens until finished once; a `?need=vision` link already answered it.
+    const [ question, set_question ] = useState( () => needs_vision || read_wizard_answers() ? null : 0 )
     const [ browse_open, set_browse_open ] = useState( false )
     const [ settings_open, set_settings_open ] = useState( false )
 
@@ -492,6 +505,21 @@ export default function ModelSelectPage() {
     const catalog_rows = useMemo( () => describe_models( MODEL_CATALOG.filter( m => !m.hidden ), device ), [ device ] )
     const retired_rows = useMemo( () => describe_models( MODEL_CATALOG.filter( m => m.hidden ), device ), [ device ] )
     const winner_rows = useMemo( () => describe_models( picks.winners, device ), [ picks.winners, device ] )
+
+    // ── The wizard: photos → topics → speed, in plain words ──
+
+    // Speed is only a question when this device has more than one real choice
+    const questions = [ `photos`, `topics`, ...mode_models.length > 1 || deciding ? [ `speed` ] : [] ]
+
+    const finish_wizard = () => {
+        write_wizard_answers( preferences )
+        set_question( null )
+    }
+
+    // Answering the last question lands here, once the answer has applied
+    useEffect( () => {
+        if( question !== null && question >= questions.length ) finish_wizard()
+    }, [ question, questions.length ] )
 
     // ── Selection: custom > explicit choice > recommendation ──
 
@@ -611,6 +639,58 @@ export default function ModelSelectPage() {
         return changes.length ? t( `change_vs_default`, { changes: changes.join( `, ` ) } ) : null
 
     }
+
+    // What an answer would mean here: the model it leads to, as size and speed
+    const facts_of = model => model
+        ? t( `wizard_facts`, { size: format_file_size( model_download_bytes( model ) ), speed: t( `speed_${ band_of( model ) }` ) } )
+        : t( `wizard_unavailable`, { device: device_name } )
+    const pick_with = patch => select_picker_models( { winners: tpn_models, device, preferences: { ...preferences, ...patch } } ).pick
+    const option_for = ( key, patch, icon ) => {
+        const model = !deciding && pick_with( patch )
+        return {
+            key,
+            patch,
+            icon,
+            title: t( `wizard_${ key }` ),
+            body: t( `wizard_${ key }_body` ),
+            facts: !deciding && facts_of( model ),
+            active: Object.entries( patch ).every( ( [ field, value ] ) => preferences[ field ] === value ),
+            disabled: !deciding && !model,
+        }
+    }
+
+    const wizard = {
+        photos: [
+            option_for( `photos_no`, { vision: false }, <ImageOff size={ 20 } /> ),
+            option_for( `photos_yes`, { vision: true }, <Image size={ 20 } /> ),
+        ],
+        topics: [
+            option_for( `topics_careful`, { fewer_refusals: false }, <ShieldCheck size={ 20 } /> ),
+            option_for( `topics_free`, { fewer_refusals: true }, <MessageCircleQuestion size={ 20 } /> ),
+        ],
+        // Slow → fast, each with the model it would download here
+        speed: ( deciding ? [ `better`, `balanced`, `faster` ].map( priority => ( { priority } ) ) : mode_models ).map( ( { priority, model } ) => ( {
+            key: `speed_${ priority }`,
+            patch: { priority },
+            icon: <SpeedGauge mode={ priority } size={ 20 } />,
+            title: t( `wizard_speed_${ priority }` ),
+            body: t( `wizard_speed_${ priority }_body` ),
+            facts: model && facts_of( model ),
+            active: active_mode === priority,
+        } ) ),
+    }
+
+    // One tap answers and moves on
+    const answer = ( id, key ) => {
+        update_preferences( wizard[ id ].find( option => option.key === key ).patch )
+        set_question( index => index + 1 )
+    }
+
+    const answer_labels = [
+        { id: `photos`, label: t( preferences.vision ? `wizard_photos_yes_short` : `wizard_photos_no_short` ) },
+        { id: `topics`, label: t( preferences.fewer_refusals ? `wizard_topics_free_short` : `wizard_topics_careful_short` ) },
+        ...questions.includes( `speed` ) ? [ { id: `speed`, label: t( `wizard_speed_${ active_mode }` ) } ] : [],
+    ]
 
     const action_label = !active_model ? t( 'select_model_to_continue' )
         : active_is_cached ? t( 'start_chatting' )
@@ -808,131 +888,141 @@ export default function ModelSelectPage() {
                 </ModelList>
             </Section> }
 
-            { /* ── Low free RAM warning (Electron only) ── */ }
-            { low_memory && <LowMemoryWarning>
-                <AlertTriangle size={ 16 } />
-                <span>{ t( 'low_memory_warning', {
-                    free: format_file_size( free_bytes ),
-                    needed: format_file_size( model_needs ),
-                } ) }</span>
-            </LowMemoryWarning> }
-
-            { /* ── The recommendation ── */ }
-            <Section ref={ hero_ref }>
-                <ModelHero
-                    loading={ deciding && !custom_model && !selected_model }
-                    model={ active_model }
-                    kind={ hero_kind }
-                    reason={ active_fit && fit_sentence( active_fit ) }
-                    band={ active_model && band_of( active_model ) }
-                    tokens_per_second={ active_model && estimate_decode_speed( active_model, device ) }
-                    photos={ has_image_input( active_model ) }
-                    download_text={ active_model && download_text( active_model ) }
-                    cached={ active_is_cached }
-                    action_label={ action_label }
-                    disabled={ !active_model || !active_fit?.fits }
-                    on_confirm={ handle_download }
-                    change={ describe_change() }
-                    fallback={ hero_kind === `recommended` || hero_kind === `winner` ? picks.fallback : null }
-                    on_fallback={ () => choose_model( picks.fallback.id ) }
-                    step_up={ hero_kind === `recommended` ? picks.step_up : null }
-                    step_up_tps={ picks.step_up && estimate_decode_speed( picks.step_up, device ) }
-                    on_step_up={ () => choose_model( picks.step_up.id ) }
-                    on_reset={ hero_kind === `choice` || hero_kind === `custom` ? reset_choice : null }
-                >
-                    { empty_state }
-                    { active_model && !active_fit.fits && ram_budget }
-                    { active_uses_external_file && <OptionMeta>
-                        { t( 'large_model_external_storage' ) }
-                    </OptionMeta> }
-                    { action_error && <CustomModelStatus $error data-testid="model-action-error">
-                        <AlertTriangle size={ 12 } /> { action_error }
-                    </CustomModelStatus> }
-                </ModelHero>
-            </Section>
-
-            { /* ── Reply speed: the same gauges as the chat, always in view ── */ }
-            <Section>
-                <SpeedModePicker
-                    active={ active_mode }
-                    available={ mode_models.map( ( { priority } ) => priority ) }
-                    on_change={ update_preferences }
+            { /* ── The wizard: one plain question at a time ── */ }
+            { question !== null && question < questions.length && <Section>
+                <WizardQuestion
+                    id={ questions[ question ] }
+                    index={ question }
+                    total={ questions.length }
+                    title={ t( `wizard_${ questions[ question ] }_title` ) }
+                    hint={ t( `wizard_${ questions[ question ] }_hint`, { device: device_name } ) }
+                    options={ wizard[ questions[ question ] ] }
+                    on_pick={ key => answer( questions[ question ], key ) }
+                    on_back={ question > 0 ? () => set_question( question - 1 ) : null }
+                    on_skip={ finish_wizard }
                 />
-            </Section>
+            </Section> }
 
-            { /* ── Photos and uncensored: always in view, they change what fits ── */ }
-            <Section>
-                <ModelToggles preferences={ preferences } on_change={ update_preferences } />
-            </Section>
+            { question === null && <>
 
-            { /* ── Expert view: the whole catalog ── */ }
-            <Section>
-                <Disclosure
-                    type="button"
-                    aria-expanded={ browse_open }
-                    data-testid="browse-models-toggle"
-                    onClick={ () => set_browse_open( !browse_open ) }
-                >
-                    <List size={ 16 } />
-                    { t( 'browse_all' ) }
-                    { browse_open ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
-                </Disclosure>
+                { /* ── Low free RAM warning (Electron only) ── */ }
+                { low_memory && <LowMemoryWarning>
+                    <AlertTriangle size={ 16 } />
+                    <span>{ t( 'low_memory_warning', {
+                        free: format_file_size( free_bytes ),
+                        needed: format_file_size( model_needs ),
+                    } ) }</span>
+                </LowMemoryWarning> }
 
-                { browse_open && <ModelBrowser
-                    rows={ catalog_rows }
-                    retired_rows={ retired_rows }
-                    winner_rows={ winner_rows }
-                    recommended_id={ recommendation?.id }
-                    selected_id={ custom_model ? null : active_model?.id }
-                    on_select={ choose_model }
-                    is_cached={ is_cached }
-                    fit_reason={ fit => fit_reason( fit ) || ( fit_level( fit, device ) === `tight` ? t( `reason_tight` ) : null ) }
-                >
-                    { tpn_error && <Quiet data-testid="tpn-models-error">
-                        { t( 'tpn_fallback_unreachable' ) }
-                        <InlineActionButton type="button" onClick={ load_tpn_models }>
-                            { t( 'retry_tpn_winners' ) }
-                        </InlineActionButton>
-                    </Quiet> }
-
-                    { ram_budget }
-
-                    { /* Custom HuggingFace model input */ }
-                    <CustomModelSection>
-                        <CustomModelLabel htmlFor="custom-model-url">
-                            <Link size={ 14 } />
-                            { t( 'custom_hf_model' ) }
-                        </CustomModelLabel>
-
-                        <CustomModelRow onSubmit={ handle_custom_load }>
-                            <CustomModelInput
-                                id="custom-model-url"
-                                data-testid="custom-model-input"
-                                type="text"
-                                placeholder="hf.co/org/repo:Q4_K_M"
-                                value={ custom_url }
-                                onChange={ ( e ) => set_custom_url( e.target.value ) }
-                                disabled={ custom_loading }
-                            />
-                            <LoadButton
-                                data-testid="custom-model-load-btn"
-                                type="submit"
-                                disabled={ custom_loading || !custom_url.trim() }
-                            >
-                                { custom_loading ? t( 'common:loading' ) : t( 'common:load' ) }
-                            </LoadButton>
-                        </CustomModelRow>
-
-                        { custom_loading && <CustomModelStatus>
-                            <Spinner size={ 12 } /> { t( 'common:resolving' ) }
+                { /* ── The recommendation ── */ }
+                <Section ref={ hero_ref }>
+                    <ModelHero
+                        loading={ deciding && !custom_model && !selected_model }
+                        model={ active_model }
+                        kind={ hero_kind }
+                        reason={ active_fit && fit_sentence( active_fit ) }
+                        band={ active_model && band_of( active_model ) }
+                        tokens_per_second={ active_model && estimate_decode_speed( active_model, device ) }
+                        photos={ has_image_input( active_model ) }
+                        download_text={ active_model && download_text( active_model ) }
+                        cached={ active_is_cached }
+                        action_label={ action_label }
+                        disabled={ !active_model || !active_fit?.fits }
+                        on_confirm={ handle_download }
+                        change={ describe_change() }
+                        fallback={ hero_kind === `recommended` || hero_kind === `winner` ? picks.fallback : null }
+                        on_fallback={ () => choose_model( picks.fallback.id ) }
+                        step_up={ hero_kind === `recommended` ? picks.step_up : null }
+                        step_up_tps={ picks.step_up && estimate_decode_speed( picks.step_up, device ) }
+                        on_step_up={ () => choose_model( picks.step_up.id ) }
+                        on_reset={ hero_kind === `choice` || hero_kind === `custom` ? reset_choice : null }
+                    >
+                        { empty_state }
+                        { active_model && !active_fit.fits && ram_budget }
+                        { active_uses_external_file && <OptionMeta>
+                            { t( 'large_model_external_storage' ) }
+                        </OptionMeta> }
+                        { action_error && <CustomModelStatus $error data-testid="model-action-error">
+                            <AlertTriangle size={ 12 } /> { action_error }
                         </CustomModelStatus> }
+                    </ModelHero>
+                </Section>
 
-                        { custom_error && <CustomModelStatus $error data-testid="custom-model-error">
-                            <AlertTriangle size={ 12 } /> { custom_error }
-                        </CustomModelStatus> }
-                    </CustomModelSection>
-                </ModelBrowser> }
-            </Section>
+                { /* ── The answers behind it, each one tap from its question ── */ }
+                <Section>
+                    <WizardSummary answers={ answer_labels } on_edit={ id => set_question( questions.indexOf( id ) ) } />
+                </Section>
+
+                { /* ── Expert view: the whole catalog ── */ }
+                <Section>
+                    <Disclosure
+                        type="button"
+                        aria-expanded={ browse_open }
+                        data-testid="browse-models-toggle"
+                        onClick={ () => set_browse_open( !browse_open ) }
+                    >
+                        <List size={ 16 } />
+                        { t( 'browse_all' ) }
+                        { browse_open ? <ChevronUp size={ 14 } /> : <ChevronDown size={ 14 } /> }
+                    </Disclosure>
+
+                    { browse_open && <ModelBrowser
+                        rows={ catalog_rows }
+                        retired_rows={ retired_rows }
+                        winner_rows={ winner_rows }
+                        recommended_id={ recommendation?.id }
+                        selected_id={ custom_model ? null : active_model?.id }
+                        on_select={ choose_model }
+                        is_cached={ is_cached }
+                        fit_reason={ fit => fit_reason( fit ) || ( fit_level( fit, device ) === `tight` ? t( `reason_tight` ) : null ) }
+                    >
+                        { tpn_error && <Quiet data-testid="tpn-models-error">
+                            { t( 'tpn_fallback_unreachable' ) }
+                            <InlineActionButton type="button" onClick={ load_tpn_models }>
+                                { t( 'retry_tpn_winners' ) }
+                            </InlineActionButton>
+                        </Quiet> }
+
+                        { ram_budget }
+
+                        { /* Custom HuggingFace model input */ }
+                        <CustomModelSection>
+                            <CustomModelLabel htmlFor="custom-model-url">
+                                <Link size={ 14 } />
+                                { t( 'custom_hf_model' ) }
+                            </CustomModelLabel>
+
+                            <CustomModelRow onSubmit={ handle_custom_load }>
+                                <CustomModelInput
+                                    id="custom-model-url"
+                                    data-testid="custom-model-input"
+                                    type="text"
+                                    placeholder="hf.co/org/repo:Q4_K_M"
+                                    value={ custom_url }
+                                    onChange={ ( e ) => set_custom_url( e.target.value ) }
+                                    disabled={ custom_loading }
+                                />
+                                <LoadButton
+                                    data-testid="custom-model-load-btn"
+                                    type="submit"
+                                    disabled={ custom_loading || !custom_url.trim() }
+                                >
+                                    { custom_loading ? t( 'common:loading' ) : t( 'common:load' ) }
+                                </LoadButton>
+                            </CustomModelRow>
+
+                            { custom_loading && <CustomModelStatus>
+                                <Spinner size={ 12 } /> { t( 'common:resolving' ) }
+                            </CustomModelStatus> }
+
+                            { custom_error && <CustomModelStatus $error data-testid="custom-model-error">
+                                <AlertTriangle size={ 12 } /> { custom_error }
+                            </CustomModelStatus> }
+                        </CustomModelSection>
+                    </ModelBrowser> }
+                </Section>
+
+            </> }
 
         </Column>
 

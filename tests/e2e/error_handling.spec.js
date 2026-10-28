@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { skip_model_wizard } from '../helpers/download_model'
 
 // Tests error handling and recovery scenarios.
 // These tests do NOT require model downloads — they test UI error states.
@@ -53,6 +54,8 @@ test.describe( `Error Handling`, () => {
 
         await page.goto( `/select-model` )
         await expect( page.getByText( `Pick a model` ) ).toBeVisible()
+        await expect( page.getByTestId( `model-wizard` ) ).toBeVisible()
+        await skip_model_wizard( page )
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible()
 
     } )

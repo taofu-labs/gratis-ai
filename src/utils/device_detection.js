@@ -440,9 +440,13 @@ export const supports_browser_ram_override = () =>
     && !window.electronAPI?.native_inference
     && detect_wasm_capabilities().memory64
 
+// Soft memory shares lean ~20% generous: a smarter model is worth a tighter
+// fit. Hard limits (runtime ceilings, the measured WASM grant) never stretch.
+const MEMORY_LENIENCY = 1.2
+
 // The mobile apps run native kernels but share the phone's RAM with the OS
-const NATIVE_MOBILE_RAM_SHARE = 0.45
-const NATIVE_MOBILE_FREE_SHARE = 0.7
+const NATIVE_MOBILE_RAM_SHARE = 0.45 * MEMORY_LENIENCY
+const NATIVE_MOBILE_FREE_SHARE = 0.7 * MEMORY_LENIENCY
 
 /**
  * Estimate the largest GGUF model (in bytes) the runtime can load.
@@ -491,18 +495,18 @@ export const estimate_max_model_bytes = ( capabilities ) => {
         // 65% keeps recommendations safe for 8 GB machines under real load.
         if( gpu.unified_memory > 0 || gpu.metal ) {
             const unified = gpu.unified_memory || total
-            return Math.floor( unified * 0.65 )
+            return Math.floor( unified * 0.65 * MEMORY_LENIENCY )
         }
 
         // Discrete GPU: use the larger of VRAM or 60% system RAM
         // This handles partial offloading where layers spill to system RAM
         if( gpu.vram_total > 0 ) {
-            return Math.floor( Math.max( gpu.vram_total, total * 0.6 ) )
+            return Math.floor( Math.max( gpu.vram_total, total * 0.6 * MEMORY_LENIENCY ) )
         }
 
         // CPU-only: 60% of system RAM — leaves headroom for the OS,
         // Electron overhead, and other apps running on a typical laptop
-        return Math.floor( total * 0.6 )
+        return Math.floor( total * 0.6 * MEMORY_LENIENCY )
 
     }
 
@@ -519,12 +523,12 @@ export const estimate_max_model_bytes = ( capabilities ) => {
     // recreate the old ~2 GiB practical ceiling.
     const ram_override = has_memory64 ? read_browser_ram_override() : null
     const device_mem = ram_override || capabilities?.memory?.device_memory || 4
-    // Declared RAM is exact rather than privacy-rounded. Reserve 40% for the
+    // Declared RAM is exact rather than privacy-rounded. Reserve ~30% for the
     // OS, browser, and transient allocations while allowing 8 GB-class GGUFs
     // on 16 GB machines.
     const device_percentage = ram_override ? 60 : has_memory64 ? 70 : 60
     const device_cap = Math.max(
-        device_mem * 1_000_000_000 * device_percentage / 100,
+        device_mem * 1_000_000_000 * device_percentage / 100 * MEMORY_LENIENCY,
         has_memory64 ? BROWSER_AUTOMATIC_MODEL_CEILING_BYTES : 0,
     )
 
@@ -641,7 +645,7 @@ const learned_bandwidth = ( runtime, guess ) =>
 
 // Phones get killed by the OS long before a desktop tab would: cap automatic
 // picks at half the reported RAM, or a safe guess when the browser hides it.
-const MOBILE_RAM_SHARE = 0.5
+const MOBILE_RAM_SHARE = 0.5 * MEMORY_LENIENCY
 
 const MOBILE_UNKNOWN_RAM_BYTES = 2_400_000_000
 
@@ -699,7 +703,7 @@ export const build_device_profile = ( capabilities, max_bytes ) => {
     const mobile_cap = reported_ram ? reported_ram * 1_000_000_000 * MOBILE_RAM_SHARE : MOBILE_UNKNOWN_RAM_BYTES
     const automatic_bytes = Math.min(
         max_bytes,
-        ram_override || trusted_ram ? max_bytes : BROWSER_AUTOMATIC_MODEL_CEILING_BYTES,
+        ram_override || trusted_ram ? max_bytes : BROWSER_AUTOMATIC_MODEL_CEILING_BYTES * MEMORY_LENIENCY,
         mobile && !ram_override ? mobile_cap : Infinity,
     )
 

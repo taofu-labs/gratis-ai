@@ -46,10 +46,12 @@ const has_active_browser_work = async () => {
 }
 
 // A new document is required for changed COOP/COEP headers to take effect.
-// The initial install has no controller, so first-time visitors do not reload.
-if( navigator.serviceWorker?.controller ) {
+// A first visit's own install claims the page too: that takeover is not an
+// update, so only later ones reload (a first visit may stay open for hours).
+if( navigator.serviceWorker ) {
 
     let is_reloading = false
+    let awaiting_first_claim = !navigator.serviceWorker.controller
 
     const reload_when_idle = async () => {
         if( is_reloading ) return
@@ -65,7 +67,22 @@ if( navigator.serviceWorker?.controller ) {
         reload_for_update()
     }
 
-    navigator.serviceWorker.addEventListener( `controllerchange`, reload_when_idle )
+    navigator.serviceWorker.addEventListener( `controllerchange`, () => {
+        if( awaiting_first_claim ) {
+            awaiting_first_claim = false
+            return
+        }
+        reload_when_idle()
+    } )
+
+    // While an update waits, this page's lazily loaded chunks are gone from the
+    // server. A failed one means the old version can't go on: move to the new one.
+    window.addEventListener( `vite:preloadError`, event => {
+        if( !use_app_update_store.getState().update_ready || is_reloading ) return
+        event.preventDefault()
+        is_reloading = true
+        reload_for_update()
+    } )
 
 }
 

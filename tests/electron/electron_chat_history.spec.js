@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { skip_model_wizard } from '../helpers/download_model'
 import fs from 'fs'
 import { MODELS, TEST_PROMPT } from '../fixtures/test_models'
 import { launch_electron, preload_model, send_message } from '../helpers/electron_helpers'
@@ -31,6 +32,7 @@ test.describe( `Electron Chat History Persistence`, () => {
         await page.getByTestId( `get-started-btn` ).click()
 
         await expect( page ).toHaveURL( /\/select-model/ )
+        await skip_model_wizard( page )
         await page.getByTestId( `model-select-confirm-btn` ).click()
 
         // Wait for chat

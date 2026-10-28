@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.51.0] - 2026-10-28
+
+### Added
+- Guided model wizard: three plain questions (photos? how careful? smarter or quicker?), each answer showing its download size and speed on this device; "Not sure? Pick for me" skips ahead; answers are remembered and editable from the recommendation
+
+### Changed
+- Memory estimates lean ~20% more generous, so devices get smarter models (e.g. a 6 GB phone app can run Granite 3B); hard runtime limits are unchanged
+
+### Fixed
+- App updates also reach a first visit left open (e.g. a long model download), still waiting until you stop typing, generating or downloading
+- An update waiting in a busy tab no longer breaks features that load on demand: the app moves to the new version instead
+- Model picker: corner buttons no longer float over the content while scrolling
+
 ## [0.50.0] - 2026-10-28
 
 ### Added

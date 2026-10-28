@@ -47,6 +47,20 @@ export async function download_model_via_ui( page, model, opts = {} ) {
 }
 
 /**
+ * Answer the model wizard with "pick for me", landing on the recommendation.
+ * A wizard finished before (or a `?need=` link) opens there directly.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function skip_model_wizard( page ) {
+
+    const skip = page.getByTestId( `wizard-skip` )
+    const hero = page.getByTestId( `model-hero` ).or( page.getByTestId( `model-hero-loading` ) )
+    await expect( skip.or( hero ).first() ).toBeVisible( { timeout: 15_000 } )
+    if( await skip.isVisible() ) await skip.click()
+
+}
+
+/**
  * Select a specific model on the model select page.
  *
  * The recommendation may already be the target. Otherwise open "Browse all
@@ -58,6 +72,7 @@ export async function download_model_via_ui( page, model, opts = {} ) {
 export async function select_model_on_page( page, model ) {
 
     // Wait for the recommendation to settle before inspecting
+    await skip_model_wizard( page )
     await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeVisible( { timeout: 15_000 } )
 
     const hero_name = page.getByTestId( `model-hero-name` )

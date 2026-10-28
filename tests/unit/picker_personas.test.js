@@ -75,7 +75,7 @@ describe( `picker personas`, () => {
         expect( profile( { device_memory: 32 } ) ).toMatchObject( { ram_gb: 32, budget_bytes: 15_000_000_000, automatic_bytes: 15_000_000_000 } )
 
         // Exactly 8 may be a clamp: stay conservative
-        expect( profile( { device_memory: 8 } ) ).toMatchObject( { ram_gb: null, automatic_bytes: 5_600_000_000 } )
+        expect( profile( { device_memory: 8 } ) ).toMatchObject( { ram_gb: null, automatic_bytes: 6_720_000_000 } )
 
         // The runtime granted less than the RAM suggests: practice wins
         expect( profile( { device_memory: 32, wasm_grant_bytes: 9_000_000_000 } ) ).toMatchObject( { budget_bytes: 9_000_000_000, automatic_bytes: 9_000_000_000 } )
@@ -85,13 +85,23 @@ describe( `picker personas`, () => {
         const android = profile_for( `cheap_android` )
         const iphone = profile_for( `iphone` )
 
-        expect( android ).toMatchObject( { kind: `phone`, mobile: true, ram_gb: 4, automatic_bytes: 2_000_000_000 } )
+        expect( android ).toMatchObject( { kind: `phone`, mobile: true, ram_gb: 4, automatic_bytes: 2_400_000_000 } )
         expect( iphone ).toMatchObject( { kind: `iphone`, mobile: true, ram_gb: null, ceiling_bytes: 3_400_000_000 } )
 
         for( const device of [ android, iphone ] ) {
             const { pick } = select_for_preferences( MODEL_CATALOG, device )
             expect( runtime_memory( pick ) ).toBeLessThanOrEqual( device.automatic_bytes )
         }
+    } )
+
+    test( `memory leans generous: a 6 GB phone app can hold a 3B model for smarter answers`, () => {
+        vi.stubGlobal( `navigator`, { userAgent: ANDROID_UA, maxTouchPoints: 5 } )
+        const capabilities = { runtime: `electron`, platform: `android`, gpu: {}, memory: { total_bytes: 6_000_000_000, free_bytes: 4_000_000_000 } }
+        const phone = build_device_profile( capabilities, estimate_max_model_bytes( capabilities ) )
+        const { pick } = select_for_preferences( MODEL_CATALOG, phone, { priority: `better` } )
+
+        expect( pick.id ).toBe( `granite42-3b-tpn-q4km` )
+        expect( runtime_memory( pick ) ).toBeGreaterThan( 6_000_000_000 * 0.45 )
     } )
 
     test( `the 32 GB MacBook desktop app gets a large model that a browser cannot run`, () => {

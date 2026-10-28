@@ -41,7 +41,14 @@ const mock_tpn_winners = async ( page, { file_size = 420_000_000 } = {} ) => {
 
 }
 
+// Picker detail tests start where a finished wizard lands: the recommendation
+const finish_wizard_before = page => page.addInitScript( () => {
+    localStorage.setItem( `gratis:settings:model_wizard_answers`, JSON.stringify( { vision: false, fewer_refusals: false } ) )
+} )
+
 test.describe( `UX Improvements - Progressive Disclosure`, () => {
+
+    test.beforeEach( async ( { page } ) => finish_wizard_before( page ) )
 
     // ── Welcome Page ──────────────────────────────────────────────────
 
@@ -124,7 +131,7 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         page.once( `dialog`, dialog => dialog.accept() )
         await page.getByTestId( `model-select-ram-override` ).selectOption( `16` )
 
-        await expect( page.getByTestId( `browser-ram-budget` ) ).toContainText( `9.6 GB` )
+        await expect( page.getByTestId( `browser-ram-budget` ) ).toContainText( `11.5 GB` )
         await expect( winner_row ).toBeEnabled()
         await winner_row.click()
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
@@ -355,6 +362,8 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
 } )
 
 test.describe( `UX Improvements - Mobile & Touch`, () => {
+
+    test.beforeEach( async ( { page } ) => finish_wizard_before( page ) )
 
     test.use( { viewport: { width: 375, height: 667 } } )
 

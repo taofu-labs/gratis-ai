@@ -28,16 +28,17 @@ afterEach( () => store.clear() )
 
 describe( `browser RAM override`, () => {
 
-    test( `uses the automatic ceiling without an override`, () => {
-        expect( estimate_max_model_bytes( browser( true ) ) ).toBe( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
+    test( `uses 70 percent of reported RAM, leaning 20% generous, without an override`, () => {
+        expect( estimate_max_model_bytes( browser( true ) ) ).toBe( 6_720_000_000 )
+        expect( estimate_max_model_bytes( browser( true, 4 ) ) ).toBe( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
     } )
 
-    test( `uses 60 percent of declared RAM`, () => {
+    test( `uses 60 percent of declared RAM, leaning 20% generous`, () => {
         set_browser_ram_override( 16 )
         expect( read_browser_ram_override() ).toBe( 16 )
-        expect( estimate_max_model_bytes( browser( true ) ) ).toBe( 9_600_000_000 )
+        expect( estimate_max_model_bytes( browser( true ) ) ).toBe( 11_520_000_000 )
 
-        set_browser_ram_override( 24 )
+        set_browser_ram_override( 20 )
         expect( estimate_max_model_bytes( browser( true ) ) ).toBe( 14_400_000_000 )
     } )
 
@@ -82,7 +83,7 @@ describe( `browser RAM override`, () => {
         try {
             expect( set_browser_ram_override( 32 ) ).toBe( false )
             expect( read_browser_ram_override() ).toBeNull()
-            expect( estimate_max_model_bytes( browser( true ) ) ).toBe( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES )
+            expect( estimate_max_model_bytes( browser( true ) ) ).toBe( 6_720_000_000 )
         } finally {
             vi.stubGlobal( `localStorage`, memory_storage )
         }

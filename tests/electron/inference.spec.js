@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { skip_model_wizard } from '../helpers/download_model'
 import { MODELS, TEST_PROMPT, LONG_PROMPT } from '../fixtures/test_models'
 import { launch_electron, preload_model, send_message } from '../helpers/electron_helpers'
 import { wait_for_inference } from '../helpers/wait_for_inference'
@@ -37,6 +38,7 @@ test.describe( `Electron Inference`, () => {
         // Model select — confirm the auto-recommended model
         await expect( page ).toHaveURL( /\/select-model/ )
         await expect( page.getByText( `Pick a model` ) ).toBeVisible()
+        await skip_model_wizard( page )
         await page.getByTestId( `model-select-confirm-btn` ).click()
 
         // Download — wait for it to complete (Electron downloads to filesystem)

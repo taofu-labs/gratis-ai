@@ -118,8 +118,9 @@ describe( `model selection`, () => {
         }
         const automatic_budget = estimate_max_model_bytes( reported_eight_gb )
 
-        expect( automatic_budget ).toBe( 5_600_000_000 )
-        expect( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES ).toBe( automatic_budget )
+        // 70% of the reported 8 GB, leaning 20% generous
+        expect( automatic_budget ).toBe( 6_720_000_000 )
+        expect( BROWSER_AUTOMATIC_MODEL_CEILING_BYTES ).toBe( 5_600_000_000 )
         expect( MEMORY64_MODEL_CEILING_BYTES ).toBe( 15_000_000_000 )
         expect( WASM32_MODEL_CEILING_BYTES ).toBe( 3_400_000_000 )
     } )

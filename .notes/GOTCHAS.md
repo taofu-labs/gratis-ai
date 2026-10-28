@@ -500,3 +500,13 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 
 ## Phone wireless adb port moves
 - Re-enabling Wireless debugging picks a new random port (5555 → refused). Find it with a quick TCP scan of 30000–50000 on 192.168.2.114, then `adb connect ip:port` (2026-10-28: 42395). mDNS discovery returns nothing in the container
+
+## PWA updates: verify with two real builds (2026-10-28)
+- `vite preview` precomputes its file list → can't swap builds under it. Verify updates with a tiny node static server that switches root dist_a → dist_b (COOP/COEP headers, 404 for missing `/assets/*`), then `registration.update()`. Script: scratchpad `zz_pwa_update.mjs` (session-only); rebuild B with a bumped `package.json` version (index.html revision carries it)
+- First visit: the install's own `clientsClaim` fires `controllerchange` → skipped once (`awaiting_first_claim`); later ones reload when idle. Busy = /download, attachments, focused non-empty input, generating/loading
+- Old hashed chunks 404 after a deploy: `vite:preloadError` while `update_ready` → reload into the new version
+
+## Model wizard (2026-10-28)
+- Wizard answers persist in `model_wizard_answers` (vision, fewer_refusals) + `speed_mode`. Stored answers or `?need=vision` → page opens on the recommendation. e2e: `skip_model_wizard()` helper, or seed the key in an init script (ux_improvements does)
+- Phone Chrome speed probe is noisy: ratio 0.40 (2026-10-28 am) vs 1.20 (pm) on the same OnePlus → wizard/hero speeds on phone Chrome can read ~3× optimistic until a real reply recalibrates
+- Release APK sideloaded on the OnePlus: `./gradlew assembleRelease` (upload key from .secrets) installs over it with `adb install -r` (keeps models); its WebView isn't debuggable → drive with screencap + `input tap` (screenshot px × 1.2 = device px)

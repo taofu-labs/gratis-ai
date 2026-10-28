@@ -2,6 +2,7 @@
  * Speed mode persistence and the once-per-session speed tip.
  *
  * - Mode: the user's last Smarter / Balanced / Faster choice, shared by the picker and chat
+ * - Wizard answers: photos / uncensored, so a finished wizard opens on its result
  * - Tip: at most one inline "switch model?" offer per session; never again once disabled
  */
 import { storage_key } from './branding'
@@ -9,6 +10,7 @@ import { DEFAULT_PREFERENCES, SPEED_MODES } from './model_catalog'
 
 const MODE_KEY = storage_key( `speed_mode` )
 const TIP_KEY = storage_key( `speed_tip_message` )
+const WIZARD_KEY = storage_key( `model_wizard_answers` )
 
 // Replies slower than this get a "faster model?" offer, faster than FAST a "smarter model?" one
 export const SLOW_TIP_SPEED = 2.5
@@ -34,6 +36,19 @@ export const read_speed_mode = () => {
 
 /** @param {'better'|'balanced'|'faster'} mode */
 export const write_speed_mode = mode => safely( () => localStorage.setItem( MODE_KEY, mode ) )
+
+/**
+ * The model wizard's last finished answers, or null before it was ever finished
+ * @returns {{ vision: boolean, fewer_refusals: boolean }|null}
+ */
+export const read_wizard_answers = () => safely( () => {
+    const { vision, fewer_refusals } = JSON.parse( localStorage.getItem( WIZARD_KEY ) )
+    return { vision: !!vision, fewer_refusals: !!fewer_refusals }
+}, null )
+
+/** @param {{ vision: boolean, fewer_refusals: boolean }} answers */
+export const write_wizard_answers = ( { vision, fewer_refusals } ) =>
+    safely( () => localStorage.setItem( WIZARD_KEY, JSON.stringify( { vision, fewer_refusals } ) ) )
 
 /**
  * The one message this session's tip belongs to. Null until a tip shows;

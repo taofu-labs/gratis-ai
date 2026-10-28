@@ -25,42 +25,69 @@ test.describe( `Vision Models — Model Select Page`, () => {
         await expect( page.getByText( `Pick a model` ) ).toBeVisible()
     } )
 
-    test( `the photo switch recommends a model that understands images`, async ( { page } ) => {
+    test( `a first visit walks a non-techie through photos, care and speed`, async ( { page } ) => {
 
         await inject_high_memory( page )
         await page.goto( `/select-model` )
-        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible( { timeout: 15_000 } )
 
-        const photos = page.getByTestId( `need-photos-switch` )
-        await photos.click()
+        const wizard = page.getByTestId( `model-wizard` )
+        await expect( wizard ).toHaveAttribute( `data-question`, `photos` )
+        await expect( wizard ).toContainText( `Question 1 of` )
+        await expect( page.getByTestId( `wizard-back` ) ).toHaveCount( 0 )
 
-        await expect( photos ).toHaveAttribute( `aria-checked`, `true` )
+        // Every answer says what it means here: a download size and a speed
+        await expect( page.getByTestId( `wizard-photos-photos_yes` ) ).toContainText( /download ·/ )
+        await page.getByTestId( `wizard-photos-photos_yes` ).click()
+
+        await expect( wizard ).toHaveAttribute( `data-question`, `topics` )
+        await page.getByTestId( `wizard-back` ).click()
+        await expect( wizard ).toHaveAttribute( `data-question`, `photos` )
+        await expect( page.getByTestId( `wizard-photos-photos_yes` ) ).toHaveAttribute( `aria-pressed`, `true` )
+        await page.getByTestId( `wizard-photos-photos_yes` ).click()
+        await page.getByTestId( `wizard-topics-topics_careful` ).click()
+
+        // Speed is asked only when this device has a real choice
+        const speed = page.locator( `[data-testid^="wizard-speed-"]` )
+        if( await speed.count() ) await speed.last().click()
+
         await expect( page.getByTestId( `model-hero-photos` ) ).toContainText( `Understands photos` )
         await expect( page.getByTestId( `model-select-confirm-btn` ) ).toBeEnabled()
+        await expect( page.getByTestId( `wizard-edit-photos` ) ).toContainText( `Photos too` )
+
+        // Finished once: the next visit opens on the recommendation
+        await page.reload()
+        await expect( page.getByTestId( `model-hero-photos` ) ).toContainText( `Understands photos` )
+        await expect( page.getByTestId( `model-wizard` ) ).toHaveCount( 0 )
     } )
 
-    test( `the uncensored switch is in view and changes the recommendation`, async ( { page } ) => {
+    test( `changing the care answer from the summary changes the recommendation`, async ( { page } ) => {
 
         await inject_high_memory( page )
         await page.goto( `/select-model` )
+        await page.getByTestId( `wizard-skip` ).click()
+
         const name = page.getByTestId( `model-hero-name` )
         await expect( name ).toBeVisible( { timeout: 15_000 } )
         const standard = await name.textContent()
 
-        const uncensored = page.getByTestId( `fewer-refusals-switch` )
-        await uncensored.click()
-
-        await expect( uncensored ).toHaveAttribute( `aria-checked`, `true` )
+        await page.getByTestId( `wizard-edit-topics` ).click()
         await expect( page.getByText( `modified to refuse less` ) ).toBeVisible()
+        await page.getByTestId( `wizard-topics-topics_free` ).click()
+
+        const speed = page.locator( `[data-testid^="wizard-speed-"]` )
+        if( await speed.count() ) await page.getByTestId( `wizard-skip` ).click()
+
+        await expect( page.getByTestId( `wizard-edit-topics` ) ).toContainText( `Answers freely` )
         await expect( name ).not.toHaveText( standard )
     } )
 
-    test( `?need=vision opens the picker with photos required`, async ( { page } ) => {
+    test( `?need=vision skips the wizard with photos required`, async ( { page } ) => {
 
         await inject_high_memory( page )
         await page.goto( `/select-model?need=vision` )
 
-        await expect( page.getByTestId( `need-photos-switch` ) ).toHaveAttribute( `aria-checked`, `true` )
+        await expect( page.getByTestId( `model-wizard` ) ).toHaveCount( 0 )
+        await expect( page.getByTestId( `wizard-edit-photos` ) ).toContainText( `Photos too` )
         await expect( page.getByTestId( `model-hero-photos` ) ).toContainText( `Understands photos` )
     } )
 
@@ -68,6 +95,7 @@ test.describe( `Vision Models — Model Select Page`, () => {
 
         await inject_high_memory( page )
         await page.goto( `/select-model` )
+        await page.getByTestId( `wizard-skip` ).click()
         await page.getByTestId( `browse-models-toggle` ).click()
         await page.getByTestId( `filter-photos` ).click()
 
@@ -108,6 +136,7 @@ test.describe( `Vision Models — Model Select Page`, () => {
         } )
 
         await page.goto( `/select-model` )
+        await page.getByTestId( `wizard-skip` ).click()
 
         await expect( page.getByText( `Pick a model` ) ).toBeVisible()
         await expect( page.getByTestId( `no-fitting-local-model` ) ).toBeVisible()

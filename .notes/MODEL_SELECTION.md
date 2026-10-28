@@ -122,6 +122,12 @@ Source: [llama.cpp discussion #406][5]
 
 ## 3. What Fits Where — Memory Budget Tables
 
+> **App budgets (2026-10-28):** `MEMORY_LENIENCY = 1.2` multiplies every *soft* share in
+> `device_detection.js` (browser 70%/60% of RAM, phone 0.45 total / 0.7 free / 0.5 browser,
+> desktop 0.6 / 0.65 unified, browser automatic ceiling 5.6 GB → 6.72 GB). Hard limits stay:
+> Memory64 15 GB, wasm32 3.4 GB, measured WASM grant, receipt ceiling 5.6 GB. Human call:
+> better models beat ~20% memory headroom.
+
 ### Model file sizes (GiB) by parameter count and quantization
 
 | Quant | 0.5B | 1B | 1.5B | 3B | 7B | 8B | 13B | 14B | 27B | 32B | 70B |
