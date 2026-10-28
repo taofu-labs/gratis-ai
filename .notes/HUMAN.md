@@ -86,3 +86,4 @@ Only `dolphin-mistral-24b-venice` has a persona. "You are Gratis… / You are Do
 - Gratis eval: LFM2.5 1.2B (69) crushes every other ≤1 GB model (Qwen 0.8B 42, MiniCPM5 1B 38). Being added as the ~1 GB pick + TPN build ordered
 - Licence = LFM Open License v1.0: free commercial use only while the *licensee's* annual revenue < $10M; attribution required. Earlier research rejected LFM 8B/24B for this cap
 - Decide: is TPN/Gratis under the cap (or is Gratis non-commercial)? If not OK → drop `lfm25-*` rows; fallback ~1 GB pick = Qwen3 1.7B decensored TPN (55) or Qwen 2B TPN (48)
+- **Resolved 2026-10-28:** human accepts the LFM licence → keep `lfm25-*` rows

@@ -497,3 +497,6 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Chat page needs a loaded model to show messages: in dev, seed IndexedDB then `setState` the llm_store module at its exact `?t=` URL (performance entries), else Vite gives a second instance
 - Playwright on Linux adds --no-sandbox unless `chromiumSandbox: true`; repo convention `chromiumSandbox: !process.env.CI` (container forbids --no-sandbox)
 - Picker before vs after the speed probe can differ: unprobed browsers use the bandwidth model (Windows laptop: E2B ~3.6 tok/s → balanced = E2B); after the probe, browser_tps × ratio (~1.2 on the i3 ref) → balanced falls back to LFM. Pinned matrix = unprobed
+
+## Phone wireless adb port moves
+- Re-enabling Wireless debugging picks a new random port (5555 → refused). Find it with a quick TCP scan of 30000–50000 on 192.168.2.114, then `adb connect ip:port` (2026-10-28: 42395). mDNS discovery returns nothing in the container
