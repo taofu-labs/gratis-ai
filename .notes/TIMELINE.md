@@ -595,3 +595,4 @@
 - 2026-10-28 — LFM licence accepted by human (keep lfm25 rows); phone adb back on :42395
 - 2026-10-28 — v0.51.0: guided model wizard replaces speed segments + switches; MEMORY_LENIENCY 1.2 on soft memory shares (human: "prefer better models over ~20% lower memory"); PWA update reaches first visits + preloadError recovery
 - 2026-10-28 — 0.51.0 deployed: web (gratis.trueperformancenetwork.com, verified), Electron v0.51.0 release, Play internal 5100, TestFlight 5100
+- 2026-10-28: 0.51.1, WASM grant probe timeout ⇒ unmeasured (was capping budget ~4 GB on a 16 GiB device)

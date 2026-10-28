@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.51.1] - 2026-10-28
+
+### Fixed
+- Browser model budget no longer collapses to ~2-4 GB on slower or busy machines: a memory probe that runs out of time now counts as unmeasured, not as the device's limit
+
 ## [0.51.0] - 2026-10-28
 
 ### Added

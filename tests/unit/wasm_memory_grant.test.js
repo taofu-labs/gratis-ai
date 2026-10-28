@@ -36,7 +36,7 @@ describe( `WASM memory grant probe`, () => {
 
     } )
 
-    test( `stops at its time budget when an engine grows slowly`, async () => {
+    test( `a slow engine reads as unmeasured, not as a small grant`, async () => {
 
         let now = 0
         vi.stubGlobal( `performance`, { now: () => now } )
@@ -61,8 +61,8 @@ describe( `WASM memory grant probe`, () => {
 
         const { probe_wasm_memory_grant } = await import( `../../src/utils/device_detection.js` )
 
-        // Two 300 ms steps pass the 500 ms budget: about 2 GB, not 15
-        expect( probe_wasm_memory_grant() ).toBeLessThan( 3_000_000_000 )
+        // Two 300 ms steps pass the 500 ms budget: no cap, rather than a false 2 GB one
+        expect( probe_wasm_memory_grant() ).toBeNull()
 
     } )
 

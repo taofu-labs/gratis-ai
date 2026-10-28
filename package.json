@@ -1,6 +1,6 @@
 {
     "name": "gratisai",
-    "version": "0.51.0",
+    "version": "0.51.1",
     "description": "Privacy-first, offline-capable local LLM chat application",
     "repository": {
         "type": "git",

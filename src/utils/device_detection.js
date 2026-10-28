@@ -199,7 +199,7 @@ export const BROWSER_AUTOMATIC_MODEL_CEILING_BYTES = 5_600_000_000
  * throwaway memory 1 GB at a time up to the model ceiling. Pages are never
  * touched, so no RAM is used, but engine, address-space and OS commit limits
  * all surface as a failed grow. Milliseconds in Chrome and WebKit; measured once per tab.
- * @returns {number|null} Granted bytes, or null without Memory64
+ * @returns {number|null} Granted bytes, or null without Memory64 or when out of time
  */
 let cached_wasm_grant
 
@@ -216,7 +216,12 @@ export const probe_wasm_memory_grant = () => {
     try {
         const memory = new WebAssembly.Memory( { address: `i64`, initial: 1n, maximum: 262_144n, shared: true } )
         const step = BigInt( Math.floor( 1_000_000_000 / 65_536 ) )
-        while( granted < MEMORY64_MODEL_CEILING_BYTES && performance.now() < deadline ) {
+        while( granted < MEMORY64_MODEL_CEILING_BYTES ) {
+
+            // Out of time is not a refusal: a slow or busy page load would read
+            // as a ~4 GB device. Unmeasured leaves the budget to the other signals
+            if( performance.now() >= deadline ) return cached_wasm_grant = null
+
             memory.grow( step )
             granted = Number( memory.buffer.byteLength )
         }

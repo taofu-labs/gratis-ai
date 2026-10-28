@@ -427,7 +427,7 @@ TPN (and likely other converters) write `block_count = layers + 1`, `nextn_predi
 - WebKit `File.stream()` can throw "The I/O read operation failed" on big files (bug 272600); hash via `slice().arrayBuffer()` chunks.
 
 ## WebKit / Safari (2026-10-24)
-- Playwright WebKit (UA Safari 27.2) reports Memory64 + JSPI → takes the Memory64 path. Non-shared `WebAssembly.Memory.grow` COPIES the buffer in WebKit (0.5–1 s per GB, growing) → `probe_wasm_memory_grant` froze the page. Shared memory grows in 0 ms; probe now uses shared + 500 ms budget.
+- Playwright WebKit (UA Safari 27.2) reports Memory64 + JSPI → takes the Memory64 path. Non-shared `WebAssembly.Memory.grow` COPIES the buffer in WebKit (0.5–1 s per GB, growing) → `probe_wasm_memory_grant` froze the page. Shared memory grows in 0 ms; probe now uses shared + 500 ms budget. Deadline hit ⇒ returns null (unmeasured), NEVER the partial grant: partial read as a 2–12 GB 'limit' on 16 GB+ machines (headless here: 12 GB unthrottled, 2 GB at 60× CPU throttle) → user saw '4 GB' on a 16 GiB device.
 - `@huggingface/hub` XetBlob download crashes the WebKit tab within seconds. `can_use_xet()` disables Xet for any WebKit UA (AppleWebKit without Chrome/Chromium/Edg/OPR, incl. iOS CriOS/FxiOS).
 - Playwright WebKit *ephemeral* contexts have no OPFS ("UnknownError ... transient reason"); use `launchPersistentContext` for real download tests. Scripts: scratchpad `wk/` (wk3.mjs full flow, dl.mjs). Install: `npx playwright install webkit && sudo npx playwright install-deps webkit`.
 
