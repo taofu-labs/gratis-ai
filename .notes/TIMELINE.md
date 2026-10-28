@@ -597,3 +597,4 @@
 - 2026-10-28 — 0.51.0 deployed: web (gratis.trueperformancenetwork.com, verified), Electron v0.51.0 release, Play internal 5100, TestFlight 5100
 - 2026-10-28: 0.51.1, WASM grant probe timeout ⇒ unmeasured (was capping budget ~4 GB on a 16 GiB device)
 - 2026-10-28: 0.52.0, grant probe moved to a worker, re-measured per model-screen visit behind an 'Inspecting your device' card (user asked: ≤10 s indicator fine every visit)
+- 2026-10-28 20:50 — v0.53.0: wllama64 1.2.0 (RunPod 4090 WebGPU OK), desktop n_threads_batch 2×, Firefox CPU-only. Web/Electron/Play internal/TestFlight 5300 deployed. Pod 7j3cp6yxmlsxhf deleted.
