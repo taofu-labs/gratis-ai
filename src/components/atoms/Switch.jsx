@@ -31,6 +31,7 @@ const Track = styled.span`
         height: 1rem;
         border-radius: 50%;
         background: #FFFFFF;
+        box-shadow: 0 0 0 1px rgba( 19, 21, 23, 0.6 );
         transition: left 0.16s;
     }
 

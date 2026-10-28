@@ -214,7 +214,7 @@ const ErrorAction = styled.button`
     white-space: nowrap;
     transition: color 0.16s;
 
-    &:hover { color: ${ ( { theme } ) => theme.colors.accent_hover }; }
+    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
 // ── Component ───────────────────────────────────────────────────────

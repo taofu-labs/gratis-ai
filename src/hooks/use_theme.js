@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { dark_theme, light_theme } from '../styles/theme'
 
 const dark_query = typeof window !== `undefined` && window.matchMedia?.( `( prefers-color-scheme: dark )` )
@@ -34,7 +35,12 @@ export default function use_theme() {
         }
         meta.setAttribute( `content`, theme.colors.background )
 
-    }, [ theme ] )
+        // Native status bar icons: Capacitor resolves DEFAULT once, so re-apply on every switch
+        if( Capacitor.isNativePlatform() ) {
+            SystemBars.setStyle( { style: is_dark ? SystemBarsStyle.Dark : SystemBarsStyle.Light } ).catch( () => {} )
+        }
+
+    }, [ theme, is_dark ] )
 
     return { theme }
 

@@ -49,7 +49,7 @@ export default defineConfig( ( { mode } ) => {
                     ],
                 },
                 workbox: {
-                    globPatterns: [ `**/*.{js,css,html,wasm,woff2}` ],
+                    globPatterns: [ `**/*.{js,css,html,wasm,woff2,png}` ],
                     // Exclude large ONNX Runtime WASM binaries from precaching — they're loaded on demand
                     globIgnores: [ `**/*ort-wasm*.wasm` ],
                     // The self-hosted wasm32 fallback is ~16 MiB.

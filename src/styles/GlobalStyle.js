@@ -111,7 +111,7 @@ const GlobalStyle = createGlobalStyle`
     :focus-visible {
         outline: 2px solid transparent;
         outline-offset: 2px;
-        box-shadow: 0 0 0 1px ${ ( { theme } ) => theme.colors.accent }, 0 0 0 5px ${ ( { theme } ) => theme.colors.focus_halo };
+        box-shadow: 0 0 0 2px ${ ( { theme } ) => theme.colors.accent_text }, 0 0 0 5px ${ ( { theme } ) => theme.colors.focus_halo };
     }
 
     :focus:not( :focus-visible ) {

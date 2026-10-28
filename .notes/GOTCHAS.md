@@ -530,7 +530,8 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 ## Brand assets are generated, not drawn (2026-10-28)
 - Wordmark: `brand_paths.js` = potrace of the reference logo PNG, split into letters / bunny outline / body so dark
   mode can recolour only the letters. Retrace with `potrace -a 0 --flat` on 4×-downsampled masks.
-- Sprites (`public/sprites/*.png`): reference sheets keyed + snapped to a 7-colour palette; mid-grey pixels must snap
+- Sprites (`src/assets/sprites/*.png`, imported so Electron `file://` + PWA precache work — never `/absolute` public paths): reference sheets keyed + snapped to a 7-colour palette; mid-grey pixels must snap
   by luminance or JPEG edge noise turns green. Burrow frame boxes come from the reference page's `FR` table.
 - `build/icon.png` is the orange tile (Electron/PWA); `build/bunny.png` is the bare glyph `scripts/mobile_icons.py` uses.
+- Capacitor `SystemBars` `DEFAULT` is resolved once natively; `use_theme` re-applies Light/Dark on each switch.
 - Theme follows `prefers-color-scheme` live; e2e must `emulateMedia` to pin one (default is light).

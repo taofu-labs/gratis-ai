@@ -315,7 +315,7 @@ The selector scores every eligible model that fits, then chooses the highest-qua
 | Shapes | `border_radius` | 4px everywhere; `pill` only for switches |
 | Type | Montserrat (headings), Nunito (body), IBM Plex Mono (figures, code) | |
 | Wordmark | `atoms/BrandMark.jsx` + `brand_paths.js` | Traced pixel SVG; letters follow `currentColor`, the bunny stays an ink-outlined white sticker |
-| Bunny | `atoms/Bunny.jsx`, `public/sprites/` | `BunnyBurrow` loops while loading or tracks a `progress` bar; `BunnyEating` for empty states. Static frame under reduced motion; paused offscreen |
+| Bunny | `atoms/Bunny.jsx`, `src/assets/sprites/` | `BunnyBurrow` loops while loading or tracks a `progress` bar; `BunnyEating` for empty states. Static frame under reduced motion; paused offscreen |
 | Icons | `build/icon.png` (Electron, tile), `build/bunny.png` (glyph) | `python3 scripts/mobile_icons.py` rebuilds Android/iOS icons + splash |
 
 ## Architecture

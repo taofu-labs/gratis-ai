@@ -10,8 +10,9 @@ test.describe( `Error Handling`, () => {
 
         await page.goto( `/chat?model=nonexistent-model-xyz` )
 
-        // The toast may render multiple times in StrictMode — use .first()
-        await expect( page.getByText( `Model not found` ).first() ).toBeVisible( { timeout: 5_000 } )
+        // The toast may render multiple times in StrictMode — use .first().
+        // No short timeout: a cold dev server can take >5s to mount the chat page
+        await expect( page.getByText( `Model not found` ).first() ).toBeVisible()
 
     } )
 

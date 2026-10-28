@@ -14,6 +14,9 @@
 
 ### Fixed
 - Desktop download buttons and the update banner used white text on orange (unreadable contrast)
+- Bunny loads in the packaged desktop app and offline; stops at once when reduced motion turns on
+- Readable orange focus ring, outlined switch thumb, and speed-tip links in light mode
+- Android status bar icons follow live theme switches; model menu fits 320px phones
 
 ## [0.53.0] - 2026-10-28
 
