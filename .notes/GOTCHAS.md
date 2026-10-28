@@ -500,7 +500,7 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Picker before vs after the speed probe can differ: unprobed browsers use the bandwidth model (Windows laptop: E2B ~3.6 tok/s → balanced = E2B); after the probe, browser_tps × ratio (~1.2 on the i3 ref) → balanced falls back to LFM. Pinned matrix = unprobed
 
 ## Phone wireless adb port moves
-- Re-enabling Wireless debugging picks a new random port (5555 → refused). Find it with a quick TCP scan of 30000–50000 on 192.168.2.114, then `adb connect ip:port` (2026-10-28: 42395, later 39669). mDNS discovery returns nothing in the container
+- Re-enabling Wireless debugging picks a new random port (5555 → refused). Find it with a quick TCP scan of 30000–50000 on 192.168.2.114, then `adb connect ip:port` (2026-10-28: 42395, later 39669, 39521). mDNS discovery returns nothing in the container
 
 ## PWA updates: verify with two real builds (2026-10-28)
 - `vite preview` precomputes its file list → can't swap builds under it. Verify updates with a tiny node static server that switches root dist_a → dist_b (COOP/COEP headers, 404 for missing `/assets/*`), then `registration.update()`. Script: scratchpad `zz_pwa_update.mjs` (session-only); rebuild B with a bumped `package.json` version (index.html revision carries it)
@@ -523,3 +523,5 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - `cache_ram_mib` defaults to 256 (llama.cpp's 8192 could exhaust the heap; was wllama64#12). Warming on mere chat open is no longer RAM-blocked, only not yet done.
 - Firefox: wllama defaults `n_gpu_layers: 0`, but the app always passes `n_gpu_layers` explicitly, so `webgpu_offload_trusted` returns false for Firefox itself.
 - `@wllama/wllama-compat` is wasm only; JS glue comes from wllama64 (`compatVersion` in its package.json pins the matching compat, 3.8.1 for 1.2.0).
+- Force the wasm32 compat path in Chromium: `page.addInitScript(() => { delete WebAssembly.Suspending })` → app and wllama both take compat (1.2.0 glue + compat 3.8.1 wasm verified: SmolLM2 replies).
+- The iPhone X is shared with other sessions (another tunnel's wllama bench, the native app). Check the screenshot before tapping; never navigate away from someone else's running page.
