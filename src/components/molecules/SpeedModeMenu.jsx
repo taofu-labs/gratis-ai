@@ -18,7 +18,7 @@ const Trigger = styled.button`
     gap: 0.375rem;
     height: 2rem;
     padding: 0 0.75rem 0 0.5rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background-color: ${ ( { theme } ) => theme.colors.surface_hover };
     color: ${ ( { theme } ) => theme.colors.text_secondary };
     font-size: 0.8rem;
@@ -114,7 +114,7 @@ const SpeedPill = styled.span`
     margin-left: 0.375rem;
     font-size: 0.7rem;
     font-weight: 500;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.surface_hover };
     color: ${ ( { theme } ) => theme.colors.text_secondary };
 `

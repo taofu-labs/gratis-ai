@@ -312,7 +312,7 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
 
     // ── Settings Progressive Disclosure ───────────────────────────────
 
-    test( `settings basic tab is clean (dark-only, no temperature/tokens)`, async ( { page } ) => {
+    test( `settings basic tab is clean (no temperature/tokens)`, async ( { page } ) => {
         await page.goto( `/chat` )
         await page.getByTestId( `settings-btn` ).click()
 

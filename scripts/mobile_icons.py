@@ -1,5 +1,5 @@
 """
-Generate the Android and iOS app icons and splash screens from build/icon.png.
+Generate the Android and iOS app icons and splash screens from the pixel bunny (build/bunny.png).
 Usage: python3 scripts/mobile_icons.py
 """
 from pathlib import Path
@@ -8,8 +8,9 @@ from PIL import Image, ImageDraw
 ROOT = Path( __file__ ).resolve().parent.parent
 RES = ROOT / 'mobile/android/app/src/main/res'
 ASSETS = ROOT / 'mobile/ios/App/App/Assets.xcassets'
-BACKGROUND = ( 0x0F, 0x10, 0x11, 255 )
-icon = Image.open( ROOT / 'build/icon.png' ).convert( 'RGBA' )
+BACKGROUND = ( 0xFF, 0x8A, 0x57, 255 )   # brand orange behind the icon
+SPLASH = ( 0xF7, 0xF6, 0xF2, 255 )       # paper, the light theme's page
+icon = Image.open( ROOT / 'build/bunny.png' ).convert( 'RGBA' )
 
 DENSITIES = { 'mdpi': 1, 'hdpi': 1.5, 'xhdpi': 2, 'xxhdpi': 3, 'xxxhdpi': 4 }
 
@@ -44,12 +45,12 @@ square.convert( 'RGB' ).save( ASSETS / 'AppIcon.appiconset/AppIcon-512@2x.png' )
 # Splash: the icon small and centred on the app background, any orientation
 for splash in [ *RES.glob( 'drawable*/splash.png' ), *ASSETS.glob( 'Splash.imageset/*.png' ) ]:
     width, height = Image.open( splash ).size
-    canvas = Image.new( 'RGBA', ( width, height ), BACKGROUND )
+    canvas = Image.new( 'RGBA', ( width, height ), SPLASH )
     inner = min( width, height ) // 4
     canvas.alpha_composite( icon.resize( ( inner, inner ), Image.LANCZOS ), ( ( width - inner ) // 2, ( height - inner ) // 2 ) )
     canvas.convert( 'RGB' ).save( splash )
 
 ( RES / 'values/ic_launcher_background.xml' ).write_text(
-    '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0F1011</color>\n</resources>\n'
+    '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#FF8A57</color>\n</resources>\n'
 )
 print( 'Icons and splash screens written to', RES, 'and', ASSETS )

@@ -39,7 +39,7 @@ const Chip = styled.button`
     min-height: 2rem;
     padding: 0 0.75rem;
     border: 1px solid ${ ( { theme, $on } ) => $on ? theme.colors.accent : theme.colors.border_control };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     font-size: 0.8rem;
     color: ${ ( { theme, $on } ) => $on ? theme.colors.text : theme.colors.text_secondary };
     background: ${ ( { theme, $on } ) => $on ? `${ theme.colors.accent }1f` : `transparent` };
@@ -118,7 +118,7 @@ const RowName = styled.div`
 const Tag = styled.span`
     padding: 0 0.375rem;
     border: 1px solid ${ ( { theme } ) => theme.colors.border_strong };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     font-size: 0.7rem;
     font-weight: 400;
     color: ${ ( { theme } ) => theme.colors.text_secondary };

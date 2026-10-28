@@ -125,7 +125,6 @@ const IconButton = styled.button`
 const Title = styled.h1`
     font-size: clamp( 1.5rem, 1.2rem + 1.5vw, 2rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin: ${ ( { theme } ) => theme.spacing.xl } 0 ${ ( { theme } ) => theme.spacing.lg };
 `
 
@@ -323,7 +322,7 @@ const DeleteButton = styled.button`
 
 const InlineActionButton = styled.button`
     min-height: 2.75rem;
-    color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
     font-size: 0.85rem;
     font-weight: 600;
     text-align: left;
@@ -381,7 +380,7 @@ const StepIndicator = styled.div`
 const StepDot = styled.div`
     width: 8px;
     height: 8px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme, $active, $done } ) => $done || $active ? theme.colors.accent : theme.colors.border };
 `
 

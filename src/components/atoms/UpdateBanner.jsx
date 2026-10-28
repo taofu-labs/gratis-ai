@@ -7,7 +7,7 @@ const Banner = styled.div`
     gap: ${ p => p.theme.spacing.sm };
     padding: ${ p => p.theme.spacing.xs } ${ p => p.theme.spacing.md };
     background: ${ p => p.theme.colors.accent };
-    color: #fff;
+    color: ${ p => p.theme.colors.accent_ink };
     font-size: 0.8125rem;
     line-height: 1.4;
     min-height: 2rem;

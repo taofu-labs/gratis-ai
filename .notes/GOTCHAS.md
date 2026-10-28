@@ -352,7 +352,8 @@ a unit test in `deployment_headers.test.js` guards it. Chrome also force-upgrade
 preload), so a local `*.workers.dev` host-resolver simulation cannot work; verify on the real deployment.
 
 ## Primary buttons: use `atoms/Button`, ink is `accent_ink`
-White on `#FF5A1F` is ~3:1 (fails normal text). Primary fills use `theme.colors.accent_ink` (~6.9:1).
+White on the orange `#FF8A57` is ~2:1 (fails). Fills use `theme.colors.accent_ink` (ink, ~7.9:1); orange
+*text* uses `accent_text`, never `accent`. Never hardcode `#fff` on an accent fill.
 New CTAs should use `atoms/Button` (`$variant="secondary"` for outline, `$sheen` for the next pending
 action) rather than re-declaring pill styles. Its invisible 44px hit area is `::before`; don't add
 `overflow: hidden` to it. Dev runs under StrictMode, so mount effects fire twice: give toasts an `id`.
@@ -525,3 +526,11 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - `@wllama/wllama-compat` is wasm only; JS glue comes from wllama64 (`compatVersion` in its package.json pins the matching compat, 3.8.1 for 1.2.0).
 - Force the wasm32 compat path in Chromium: `page.addInitScript(() => { delete WebAssembly.Suspending })` → app and wllama both take compat (1.2.0 glue + compat 3.8.1 wasm verified: SmolLM2 replies).
 - The iPhone X is shared with other sessions (another tunnel's wllama bench, the native app). Check the screenshot before tapping; never navigate away from someone else's running page.
+
+## Brand assets are generated, not drawn (2026-10-28)
+- Wordmark: `brand_paths.js` = potrace of the reference logo PNG, split into letters / bunny outline / body so dark
+  mode can recolour only the letters. Retrace with `potrace -a 0 --flat` on 4×-downsampled masks.
+- Sprites (`public/sprites/*.png`): reference sheets keyed + snapped to a 7-colour palette; mid-grey pixels must snap
+  by luminance or JPEG edge noise turns green. Burrow frame boxes come from the reference page's `FR` table.
+- `build/icon.png` is the orange tile (Electron/PWA); `build/bunny.png` is the bare glyph `scripts/mobile_icons.py` uses.
+- Theme follows `prefers-color-scheme` live; e2e must `emulateMedia` to pin one (default is light).

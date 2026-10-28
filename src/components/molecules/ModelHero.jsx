@@ -25,7 +25,7 @@ const Eyebrow = styled.h2`
     gap: ${ ( { theme } ) => theme.spacing.xs };
     font-size: 0.85rem;
     font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
 `
 
 const Reason = styled.p`
@@ -74,7 +74,7 @@ const Flag = styled.span`
     margin-left: ${ ( { theme } ) => theme.spacing.xs };
     padding: 0 0.375rem;
     border: 1px solid ${ ( { theme } ) => theme.colors.border_strong };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     font-size: 0.7rem;
     white-space: nowrap;
 `

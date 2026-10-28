@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.54.0] - 2026-10-28
+
+### Changed
+- New look: warm paper light theme and Solarized deep-blue dark theme, following the device setting
+- Orange accent with dark text on buttons (readable contrast), crisp 4px corners, Montserrat + Nunito type
+- Pixel "gratis" wordmark with bunny in the top bar and on the start pages
+- Your messages sit in small white cards; download percentage in large mono figures
+- New pixel-bunny app icons and splash screens on Android, iOS, desktop and the installed web app
+
+### Added
+- Pixel bunny runs along the download bar, pops out of its burrow while a model loads and eats a carrot on empty pages (still frame with reduced motion)
+
+### Fixed
+- Desktop download buttons and the update banner used white text on orange (unreadable contrast)
+
 ## [0.53.0] - 2026-10-28
 
 ### Changed

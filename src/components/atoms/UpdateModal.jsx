@@ -34,9 +34,9 @@ const IconContainer = styled.div`
     justify-content: center;
     width: 3.5rem;
     height: 3.5rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.input_background };
-    color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
     margin: 0 auto ${ ( { theme } ) => theme.spacing.md };
 `
 

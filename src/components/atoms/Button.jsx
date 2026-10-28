@@ -28,7 +28,7 @@ const Button = styled.button`
     gap: 0.375rem;
     min-height: 2rem;
     padding: 0.25rem 0.875rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     font-family: ${ ( { theme } ) => theme.fonts.body };
     font-size: 0.9375rem;
     font-weight: 500;

@@ -78,7 +78,7 @@ const ModelMeta = styled.div`
 const Badge = styled.span`
     font-size: 0.7rem;
     padding: 2px 6px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     margin-left: ${ ( { theme } ) => theme.spacing.xs };
     background: ${ ( { theme } ) => theme.colors.code_background };
     color: ${ ( { theme, $variant } ) =>

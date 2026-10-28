@@ -9,6 +9,8 @@ import DeviceInfo from '../atoms/DeviceInfo'
 import LanguageSelector from '../molecules/LanguageSelector'
 import SettingsModal from '../molecules/SettingsModal'
 import { DISPLAY_NAME, EVENTS } from '../../utils/branding'
+import BrandMark from '../atoms/BrandMark'
+import { BunnyBurrow } from '../atoms/Bunny'
 
 const PageWrapper = styled.div`
     position: relative;
@@ -54,7 +56,6 @@ const Container = styled.div`
 const Title = styled.h1`
     font-size: clamp( 2rem, 1.5rem + 2.5vw, 3rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-bottom: 2rem;
 `
 
@@ -71,16 +72,18 @@ const Tagline = styled.p`
 const ValueProps = styled.div`
     display: flex;
     flex-direction: column;
-    gap: ${ ( { theme } ) => theme.spacing.md };
     margin-bottom: ${ ( { theme } ) => theme.spacing.xl };
     max-width: 380px;
     width: 100%;
 `
 
+// Rows divided by thin rules, like a spec sheet
 const ValueProp = styled.div`
     display: flex;
     align-items: center;
     gap: ${ ( { theme } ) => theme.spacing.md };
+    padding: ${ ( { theme } ) => theme.spacing.sm } 0;
+    border-bottom: 1px solid ${ ( { theme } ) => theme.colors.border };
     text-align: left;
     font-size: 0.95rem;
     color: ${ ( { theme } ) => theme.colors.text_secondary };
@@ -94,9 +97,16 @@ const IconCircle = styled.div`
     width: 40px;
     height: 40px;
     min-width: 40px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.code_background };
     color: ${ ( { theme } ) => theme.colors.text };
+`
+
+// The bunny pops out, runs the width of the intro and digs back in
+const BunnyLane = styled.div`
+    width: 100%;
+    max-width: 380px;
+    border-bottom: 1px solid ${ ( { theme } ) => theme.colors.border_control };
 `
 
 // Step indicator showing the 3-step onboarding
@@ -121,7 +131,7 @@ const StepIndicator = styled.div`
 const StepDot = styled.div`
     width: 8px;
     height: 8px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme, $active } ) => $active ? theme.colors.accent : theme.colors.border };
 `
 
@@ -198,10 +208,12 @@ export default function WelcomePage() {
 
         <Container>
 
-            <Title>{ DISPLAY_NAME }</Title>
+            <Title><BrandMark height="clamp( 2.75rem, 2rem + 3vw, 4.5rem )" title={ DISPLAY_NAME } /></Title>
             <Tagline>
                 { t( 'tagline' ) }
             </Tagline>
+
+            <BunnyLane><BunnyBurrow size={ 52 } /></BunnyLane>
 
             { /* Simple value propositions anyone can understand */ }
             <ValueProps>

@@ -23,7 +23,6 @@ const IconWrapper = styled.div`
 const Title = styled.h1`
     font-size: clamp( 1.2rem, 1rem + 1vw, 1.5rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-bottom: 2rem;
 `
 

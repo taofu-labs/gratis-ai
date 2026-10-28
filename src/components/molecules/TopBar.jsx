@@ -1,9 +1,10 @@
 import styled from 'styled-components'
 import { Settings, PanelLeft, ArrowLeftRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ModelSelector from './ModelSelector'
 import LanguageSelector from './LanguageSelector'
+import BrandMark from '../atoms/BrandMark'
 import use_llm_store from '../../stores/llm_store'
 
 const Bar = styled.header`
@@ -23,6 +24,21 @@ const LeftSection = styled.div`
     gap: ${ ( { theme } ) => theme.spacing.sm };
     flex: 1;
     min-width: 0;
+`
+
+// Wordmark doubles as the home link
+const Home = styled( Link )`
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 ${ ( { theme } ) => theme.spacing.xs };
+    margin-right: ${ ( { theme } ) => theme.spacing.xs };
+    color: ${ ( { theme } ) => theme.colors.text };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+
+    @media ( max-width: ${ ( { theme } ) => theme.breakpoints.mobile } ) {
+        svg { height: 1.25rem; }
+    }
 `
 
 const RightSection = styled.div`
@@ -107,6 +123,9 @@ export default function TopBar( {
             >
                 <PanelLeft size={ 18 } />
             </IconButton> }
+            <Home to="/" aria-label={ t( `common:aria_home` ) }>
+                <BrandMark height="1.625rem" />
+            </Home>
             <ModelSelector
                 cached_models={ cached_models }
                 active_model_id={ active_model_id || loading_model_id }

@@ -94,7 +94,7 @@ const RoundButton = styled.button`
     width: 2rem;
     height: 2rem;
     line-height: 0;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background-color: ${ ( { theme } ) => theme.colors.surface_hover };
     color: ${ ( { theme } ) => theme.colors.text_muted };
     transition: color 0.15s, background 0.15s, opacity 0.15s;
@@ -238,7 +238,7 @@ const ThumbRemove = styled.button`
     justify-content: center;
     width: 1.25rem;
     height: 1.25rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.background };
     color: ${ ( { theme } ) => theme.colors.text };
     opacity: 0.85;
@@ -251,7 +251,7 @@ const AttachmentChip = styled.div`
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.surface_hover };
     font-size: 0.75rem;
     color: ${ ( { theme } ) => theme.colors.text_secondary };
@@ -276,7 +276,7 @@ const RemoveAttachment = styled.button`
     justify-content: center;
     width: 16px;
     height: 16px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     color: ${ ( { theme } ) => theme.colors.text_muted };
     flex-shrink: 0;
     transition: color 0.15s;

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, utilityProcess, session } = require( `electron` )
+const { app, BrowserWindow, ipcMain, utilityProcess, session, nativeTheme } = require( `electron` )
 const { autoUpdater } = require( `electron-updater` )
 const path = require( `path` )
 const fs = require( `fs` )
@@ -401,6 +401,8 @@ const create_window = () => {
         height: 960,
         minWidth: 480,
         minHeight: 600,
+        // Paint the theme's page colour before the renderer arrives (no flash)
+        backgroundColor: nativeTheme.shouldUseDarkColors ? `#002B36` : `#F7F6F2`,
         webPreferences: {
             preload: path.join( __dirname, `../preload/preload.cjs` ),
             contextIsolation: true,

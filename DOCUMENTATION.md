@@ -200,7 +200,7 @@ tests/
 │   ├── settings_with_inference.spec.js
 │   ├── deep_link_with_inference.spec.js
 │   ├── error_handling.spec.js
-│   ├── theme_toggle.spec.js
+│   ├── theme.spec.js
 │   └── ... (existing UI tests)
 └── electron/                   # Electron E2E tests (4 spec files)
     ├── smoke.spec.js
@@ -305,6 +305,18 @@ The selector scores every eligible model that fits, then chooses the highest-qua
 - **Budget-based, not threshold-based**: Instead of hardcoded "if VRAM >= 8 GB then heavy", we calculate the actual memory budget and check which models fit. This naturally adapts to any hardware configuration.
 - **Sparse benchmark restraint**: Once a model publishes any comparable result, missing fields receive a neutral 50 for sorting. One high GPQA result cannot outrank strong five-benchmark coverage by itself, and the UI shows a composite score only when all five real results exist.
 - **Graceful fallback**: If GPU detection fails (e.g., node-llama-cpp not compiled), we fall back to platform heuristics (macOS + arm64 implies Metal) and then to conservative CPU-only estimates.
+
+## Look and brand
+
+| Piece | Where | Notes |
+| --- | --- | --- |
+| Themes | `src/styles/theme.js`, `hooks/use_theme.js` | Follows the OS live. Light: paper `#F7F6F2`, white cards, ink `#131517`. Dark: Solarized `#002B36` / `#073642` |
+| Accent | `accent` / `accent_text` | Orange `#FF8A57` fills with **ink** text (7.9:1); `accent_text` when orange must read as text |
+| Shapes | `border_radius` | 4px everywhere; `pill` only for switches |
+| Type | Montserrat (headings), Nunito (body), IBM Plex Mono (figures, code) | |
+| Wordmark | `atoms/BrandMark.jsx` + `brand_paths.js` | Traced pixel SVG; letters follow `currentColor`, the bunny stays an ink-outlined white sticker |
+| Bunny | `atoms/Bunny.jsx`, `public/sprites/` | `BunnyBurrow` loops while loading or tracks a `progress` bar; `BunnyEating` for empty states. Static frame under reduced motion; paused offscreen |
+| Icons | `build/icon.png` (Electron, tile), `build/bunny.png` (glyph) | `python3 scripts/mobile_icons.py` rebuilds Android/iOS icons + splash |
 
 ## Architecture
 

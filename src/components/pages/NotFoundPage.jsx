@@ -2,6 +2,7 @@ import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { BunnyEating } from '../atoms/Bunny'
 
 const Container = styled.div`
     display: flex;
@@ -14,8 +15,10 @@ const Container = styled.div`
 `
 
 const Code = styled.span`
-    font-size: clamp( 3rem, 2rem + 4vw, 5rem );
-    font-weight: 700;
+    font-family: ${ ( { theme } ) => theme.fonts.mono };
+    font-size: clamp( 2.5rem, 2rem + 3vw, 4rem );
+    font-weight: 500;
+    letter-spacing: -0.03em;
     color: ${ ( { theme } ) => theme.colors.text_muted };
     line-height: 1;
 `
@@ -23,7 +26,6 @@ const Code = styled.span`
 const Title = styled.h1`
     font-size: clamp( 1.2rem, 1rem + 1vw, 1.5rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-top: ${ ( { theme } ) => theme.spacing.md };
     margin-bottom: 2rem;
 `
@@ -59,6 +61,7 @@ export default function NotFoundPage() {
     const { t } = useTranslation( `pages` )
 
     return <Container>
+        <BunnyEating size={ 112 } />
         <Code>404</Code>
         <Title>{ t( `not_found_title` ) }</Title>
         <Description>

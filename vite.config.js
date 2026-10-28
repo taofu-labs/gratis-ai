@@ -39,8 +39,8 @@ export default defineConfig( ( { mode } ) => {
                     name: app_name,
                     short_name: app_name,
                     description: `Run AI locally. Your data never leaves your device.`,
-                    theme_color: `#1a1a2e`,
-                    background_color: `#1a1a2e`,
+                    theme_color: `#F7F6F2`,
+                    background_color: `#F7F6F2`,
                     display: `standalone`,
                     start_url: `/`,
                     icons: [
