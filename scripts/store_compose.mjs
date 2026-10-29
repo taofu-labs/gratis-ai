@@ -16,6 +16,7 @@ const CANVAS = {
     iphone: { width: 1320, height: 2868 },     // App Store 6.9" iPhone
     ipad: { width: 2064, height: 2752 },       // App Store 13" iPad
     android: { width: 1080, height: 2160 },    // Play phone, 2:1
+    mac: { width: 2880, height: 1800 },        // Mac App Store, 16:10
 }
 
 // Page colours from src/styles/theme.js; screen 5 is the dark-mode shot
@@ -35,9 +36,9 @@ ${ fonts }
 html, body { width: ${ width }px; height: ${ height }px; background: ${ colors.page }; overflow: hidden; }
 body { display: flex; flex-direction: column; align-items: center; padding: ${ height * 0.055 }px ${ width * 0.07 }px 0; }
 h1 {
-    font: 600 ${ width * 0.064 }px/1.18 'Montserrat', 'Noto Sans CJK JP', 'Noto Sans CJK SC', sans-serif;
+    font: 600 ${ Math.min( width, height ) * 0.064 }px/1.18 'Montserrat', 'Noto Sans CJK JP', 'Noto Sans CJK SC', sans-serif;
     letter-spacing: -0.01em; color: ${ colors.ink }; text-align: center; text-wrap: balance; word-break: auto-phrase;
-    min-height: ${ height * 0.11 }px; display: flex; align-items: center;
+    min-height: ${ height * ( width > height ? 0.14 : 0.11 ) }px; display: flex; align-items: center;
 }
 .screen {
     margin-top: ${ height * 0.035 }px; width: ${ width * 0.84 }px; flex: 1;

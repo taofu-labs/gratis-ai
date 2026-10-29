@@ -2,7 +2,9 @@
 // categories, age rating, review contact, price, availability, build and screenshots.
 // Idempotent: re-running updates in place and replaces screenshots.
 //
-// Usage: node scripts/store_apple.mjs <screenshots-dir> [--no-screenshots]
+// Usage: node scripts/store_apple.mjs <screenshots-dir> [--no-screenshots] [--platform=IOS|MAC_OS]
+// App-level settings (categories, name, age rating, price, availability) are shared and
+// written by the IOS run; MAC_OS only fills its own version (text, build, screenshots).
 // Reads: store/copy.json, store/apple.json; screenshots from scripts/store_compose.mjs
 
 import { createHash } from 'crypto'
@@ -14,48 +16,55 @@ const SKIP_SHOTS = process.argv.includes( `--no-screenshots` )
 const COPY = JSON.parse( readFileSync( `store/copy.json`, `utf8` ) )
 const SETTINGS = JSON.parse( readFileSync( `store/apple.json`, `utf8` ) )
 const APP = env.ASC_APP_ID
+const PLATFORM = process.argv.find( arg => arg.startsWith( `--platform=` ) )?.split( `=` )[ 1 ] || `IOS`
+const TARGET = SETTINGS.platforms[ PLATFORM ]
 const log = ( ...parts ) => console.log( `•`, ...parts )
 
-// ─── App-level: content rights, categories, name / subtitle / privacy URL ──────
+if( PLATFORM === `IOS` ) {
 
-await api( `/apps/${ APP }`, { method: `PATCH`, body: { type: `apps`, id: APP, attributes: { contentRightsDeclaration: SETTINGS.content_rights } } } )
+    // ─── App-level: content rights, categories, name / subtitle / privacy URL ──────
 
-const [ info ] = await api( `/apps/${ APP }/appInfos` )
-await api( `/appInfos/${ info.id }`, { method: `PATCH`, body: { type: `appInfos`, id: info.id, relationships: {
-    primaryCategory: { data: { type: `appCategories`, id: SETTINGS.primary_category } },
-    secondaryCategory: { data: { type: `appCategories`, id: SETTINGS.secondary_category } },
-} } } )
-log( `categories`, SETTINGS.primary_category, SETTINGS.secondary_category )
+    await api( `/apps/${ APP }`, { method: `PATCH`, body: { type: `apps`, id: APP, attributes: { contentRightsDeclaration: SETTINGS.content_rights } } } )
 
-for( const [ , { apple_locale: locale, apple } ] of Object.entries( COPY ) ) {
-    const attributes = { name: apple.name, subtitle: apple.subtitle, privacyPolicyUrl: SETTINGS.privacy_url }
-    const existing = ( await api( `/appInfos/${ info.id }/appInfoLocalizations?limit=50` ) ).find( item => item.attributes.locale === locale )
-    if( existing ) await api( `/appInfoLocalizations/${ existing.id }`, { method: `PATCH`, body: { type: `appInfoLocalizations`, id: existing.id, attributes } } )
-    else await api( `/appInfoLocalizations`, { method: `POST`, body: { type: `appInfoLocalizations`, attributes: { ...attributes, locale },
-        relationships: { appInfo: { data: { type: `appInfos`, id: info.id } } } } } )
-    log( `app info`, locale )
+    const [ info ] = await api( `/apps/${ APP }/appInfos` )
+    await api( `/appInfos/${ info.id }`, { method: `PATCH`, body: { type: `appInfos`, id: info.id, relationships: {
+        primaryCategory: { data: { type: `appCategories`, id: SETTINGS.primary_category } },
+        secondaryCategory: { data: { type: `appCategories`, id: SETTINGS.secondary_category } },
+    } } } )
+    log( `categories`, SETTINGS.primary_category, SETTINGS.secondary_category )
+
+    for( const [ , { apple_locale: locale, apple } ] of Object.entries( COPY ) ) {
+        const attributes = { name: apple.name, subtitle: apple.subtitle, privacyPolicyUrl: SETTINGS.privacy_url }
+        const existing = ( await api( `/appInfos/${ info.id }/appInfoLocalizations?limit=50` ) ).find( item => item.attributes.locale === locale )
+        if( existing ) await api( `/appInfoLocalizations/${ existing.id }`, { method: `PATCH`, body: { type: `appInfoLocalizations`, id: existing.id, attributes } } )
+        else await api( `/appInfoLocalizations`, { method: `POST`, body: { type: `appInfoLocalizations`, attributes: { ...attributes, locale },
+            relationships: { appInfo: { data: { type: `appInfos`, id: info.id } } } } } )
+        log( `app info`, locale )
+    }
+
+
+    // ─── Age rating ───────────────────────────────────────────────────────────────
+
+    const age = await api( `/appInfos/${ info.id }/ageRatingDeclaration` )
+    await api( `/ageRatingDeclarations/${ age.id }`, { method: `PATCH`, body: { type: `ageRatingDeclarations`, id: age.id, attributes: SETTINGS.age_rating } } )
+    log( `age rating declaration` )
+
 }
-
-
-// ─── Age rating ───────────────────────────────────────────────────────────────
-
-const age = await api( `/appInfos/${ info.id }/ageRatingDeclaration` )
-await api( `/ageRatingDeclarations/${ age.id }`, { method: `PATCH`, body: { type: `ageRatingDeclarations`, id: age.id, attributes: SETTINGS.age_rating } } )
-log( `age rating declaration` )
 
 
 // ─── Version: number, copyright, build, review contact ────────────────────────
 
-const [ version ] = ( await api( `/apps/${ APP }/appStoreVersions?filter[platform]=IOS` ) )
+const [ version ] = ( await api( `/apps/${ APP }/appStoreVersions?filter[platform]=${ PLATFORM }` ) )
     .filter( item => [ `PREPARE_FOR_SUBMISSION`, `DEVELOPER_REJECTED`, `REJECTED`, `METADATA_REJECTED` ].includes( item.attributes.appStoreState ) )
-const [ build ] = await api( `/builds?filter[app]=${ APP }&filter[version]=${ SETTINGS.build }&filter[processingState]=VALID` )
-if( !build ) throw new Error( `Build ${ SETTINGS.build } is not VALID yet` )
+// Mac builds come from the Release Mac App Store workflow; until one is VALID the version just waits
+const [ build ] = TARGET.build ? await api( `/builds?filter[app]=${ APP }&filter[version]=${ TARGET.build }&filter[processingState]=VALID&filter[preReleaseVersion.platform]=${ PLATFORM }` ) : []
+if( TARGET.build && !build ) throw new Error( `Build ${ TARGET.build } is not VALID yet` )
 
 await api( `/appStoreVersions/${ version.id }`, { method: `PATCH`, body: { type: `appStoreVersions`, id: version.id,
-    attributes: { versionString: SETTINGS.version, copyright: SETTINGS.copyright, releaseType: `MANUAL` },
-    relationships: { build: { data: { type: `builds`, id: build.id } } },
+    attributes: { versionString: TARGET.version, copyright: SETTINGS.copyright, releaseType: `MANUAL` },
+    ...( build && { relationships: { build: { data: { type: `builds`, id: build.id } } } } ),
 } } )
-log( `version`, SETTINGS.version, `build`, SETTINGS.build )
+log( PLATFORM, `version`, TARGET.version, `build`, build ? TARGET.build : `none yet` )
 
 const review = await api( `/appStoreVersions/${ version.id }/appStoreReviewDetail` ).catch( () => null )
 const review_attributes = { ...SETTINGS.review, demoAccountRequired: false }
@@ -81,39 +90,43 @@ for( const [ , { apple_locale: locale, apple } ] of Object.entries( COPY ) ) {
 }
 
 
-// ─── Price (free) and availability (everywhere but excluded territories) ──────
+if( PLATFORM === `IOS` ) {
 
-const [ free ] = ( await api( `/apps/${ APP }/appPricePoints?filter[territory]=USA&limit=1` ) ).filter( point => point.attributes.customerPrice === `0.0` )
+    // ─── Price (free) and availability (everywhere but excluded territories) ──────
 
-// The price schedule needs an "included" appPrices entry; send the raw JSON:API document
-const raw = async ( path, document ) => {
-    const response = await fetch( `https://api.appstoreconnect.apple.com${ path.startsWith( `/v2/` ) ? `` : `/v1` }${ path }`, {
-        method: `POST`, headers: { authorization: `Bearer ${ token() }`, 'content-type': `application/json` }, body: JSON.stringify( document ) } )
-    if( !response.ok && response.status !== 409 ) throw new Error( `POST ${ path }: ${ response.status } ${ await response.text() }` )
-    return response.status
+    const [ free ] = ( await api( `/apps/${ APP }/appPricePoints?filter[territory]=USA&limit=1` ) ).filter( point => point.attributes.customerPrice === `0.0` )
+
+    // The price schedule needs an "included" appPrices entry; send the raw JSON:API document
+    const raw = async ( path, document ) => {
+        const response = await fetch( `https://api.appstoreconnect.apple.com${ path.startsWith( `/v2/` ) ? `` : `/v1` }${ path }`, {
+            method: `POST`, headers: { authorization: `Bearer ${ token() }`, 'content-type': `application/json` }, body: JSON.stringify( document ) } )
+        if( !response.ok && response.status !== 409 ) throw new Error( `POST ${ path }: ${ response.status } ${ await response.text() }` )
+        return response.status
+    }
+
+    log( `price`, await raw( `/appPriceSchedules`, {
+        data: { type: `appPriceSchedules`, relationships: {
+            app: { data: { type: `apps`, id: APP } },
+            baseTerritory: { data: { type: `territories`, id: `USA` } },
+            manualPrices: { data: [ { type: `appPrices`, id: `${ '${' }free}` } ] },
+        } },
+        included: [ { type: `appPrices`, id: `${ '${' }free}`, attributes: { startDate: null },
+            relationships: { appPricePoint: { data: { type: `appPricePoints`, id: free.id } } } } ],
+    } ) )
+
+    const territories = await api( `/territories?limit=200` )
+    const availability = territories.map( ( { id } ) => ( { type: `territoryAvailabilities`, id: `${ '${' }${ id }}`,
+        attributes: { available: !SETTINGS.excluded_territories.includes( id ), releaseDate: null, preOrderEnabled: false },
+        relationships: { territory: { data: { type: `territories`, id } } } } ) )
+    log( `availability`, await raw( `/v2/appAvailabilities`, {
+        data: { type: `appAvailabilities`, attributes: { availableInNewTerritories: true }, relationships: {
+            app: { data: { type: `apps`, id: APP } },
+            territoryAvailabilities: { data: availability.map( ( { type, id } ) => ( { type, id } ) ) },
+        } },
+        included: availability,
+    } ), `excluded:`, SETTINGS.excluded_territories.join( `,` ) )
+
 }
-
-log( `price`, await raw( `/appPriceSchedules`, {
-    data: { type: `appPriceSchedules`, relationships: {
-        app: { data: { type: `apps`, id: APP } },
-        baseTerritory: { data: { type: `territories`, id: `USA` } },
-        manualPrices: { data: [ { type: `appPrices`, id: `${ '${' }free}` } ] },
-    } },
-    included: [ { type: `appPrices`, id: `${ '${' }free}`, attributes: { startDate: null },
-        relationships: { appPricePoint: { data: { type: `appPricePoints`, id: free.id } } } } ],
-} ) )
-
-const territories = await api( `/territories?limit=200` )
-const availability = territories.map( ( { id } ) => ( { type: `territoryAvailabilities`, id: `${ '${' }${ id }}`,
-    attributes: { available: !SETTINGS.excluded_territories.includes( id ), releaseDate: null, preOrderEnabled: false },
-    relationships: { territory: { data: { type: `territories`, id } } } } ) )
-log( `availability`, await raw( `/v2/appAvailabilities`, {
-    data: { type: `appAvailabilities`, attributes: { availableInNewTerritories: true }, relationships: {
-        app: { data: { type: `apps`, id: APP } },
-        territoryAvailabilities: { data: availability.map( ( { type, id } ) => ( { type, id } ) ) },
-    } },
-    included: availability,
-} ), `excluded:`, SETTINGS.excluded_territories.join( `,` ) )
 
 
 // ─── Screenshots ──────────────────────────────────────────────────────────────
@@ -140,7 +153,7 @@ const upload_screenshot = async ( set_id, path ) => {
 if( !SKIP_SHOTS ) for( const [ lang, { apple_locale: locale } ] of Object.entries( COPY ) ) {
 
     const localization = version_localizations[ locale ]
-    for( const [ device, display_type ] of Object.entries( SETTINGS.screenshot_types ) ) {
+    for( const [ device, display_type ] of Object.entries( TARGET.screenshot_types ) ) {
 
         const dir = `${ SHOTS }/${ device }/${ lang }`
         const files = readdirSync( dir ).filter( file => file.endsWith( `.png` ) ).sort()
