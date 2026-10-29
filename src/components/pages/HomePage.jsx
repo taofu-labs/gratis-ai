@@ -22,9 +22,11 @@ import { DISPLAY_NAME, EVENTS, storage_key } from '../../utils/branding'
 import { is_model_fit_error } from '../../utils/model_fit_error'
 import BrowserRamOverride from '../atoms/BrowserRamOverride'
 import ModelLoadStage from '../atoms/ModelLoadStage'
+import { BunnyBurrow } from '../atoms/Bunny'
 import { get_model_by_id } from '../../utils/model_catalog'
 import { build_turns } from '../../utils/chat_turns'
 import { build_system_prompt } from '../../utils/system_prompt'
+import BrandMark from '../atoms/BrandMark'
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -82,7 +84,6 @@ const SettingsButton = styled( SidebarToggle )`
 const Title = styled.h1`
     font-size: clamp( 2.5rem, 2rem + 3vw, 4rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-bottom: 2rem;
     letter-spacing: -0.02em;
 `
@@ -95,6 +96,13 @@ const Tagline = styled.p`
 `
 
 // ── Model status ────────────────────────────────────────────────────
+
+// Burrow loop under the input while the model loads
+const LoadLane = styled.div`
+    width: min( 100%, 32rem );
+    margin-top: ${ ( { theme } ) => theme.spacing.md };
+    border-bottom: 1px solid ${ ( { theme } ) => theme.colors.border_control };
+`
 
 const ModelRow = styled.div`
     display: flex;
@@ -150,7 +158,7 @@ const LoadingDot = styled.span`
     display: inline-block;
     width: 8px;
     height: 8px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.accent };
     animation: ${ pulse } 1.5s ease-in-out infinite;
 
@@ -200,13 +208,13 @@ const ErrorAction = styled.button`
     min-height: 2.75rem;
     font-size: 0.85rem;
     font-weight: 500;
-    color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
     text-decoration: underline;
     text-underline-offset: 0.2em;
     white-space: nowrap;
     transition: color 0.16s;
 
-    &:hover { color: ${ ( { theme } ) => theme.colors.accent_hover }; }
+    &:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
 // ── Component ───────────────────────────────────────────────────────
@@ -441,7 +449,7 @@ export default function HomePage() {
 
         <Container>
 
-            <Title>{ DISPLAY_NAME }</Title>
+            <Title><BrandMark height="clamp( 2.75rem, 2rem + 3vw, 4.5rem )" title={ DISPLAY_NAME } /></Title>
             <Tagline>
                 { t( 'tagline' ) }
             </Tagline>
@@ -516,6 +524,7 @@ export default function HomePage() {
 
             </ModelRow>
 
+            { is_loading && <LoadLane><BunnyBurrow size={ 44 } /></LoadLane> }
             { is_loading && <ModelLoadStage /> }
 
             { /* Error banner — only after loading settles, never mid-load */ }

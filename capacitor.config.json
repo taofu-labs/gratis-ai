@@ -9,10 +9,10 @@
         "path": "mobile/ios",
         "contentInset": "always"
     },
-    "backgroundColor": "#0F1011",
+    "backgroundColor": "#F7F6F2",
     "plugins": {
         "SystemBars": {
-            "style": "DARK"
+            "style": "DEFAULT"
         },
         "Keyboard": {
             "resize": "native",

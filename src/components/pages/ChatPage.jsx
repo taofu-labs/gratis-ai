@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import styled, { keyframes } from 'styled-components'
+import styled from 'styled-components'
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import { log } from 'mentie'
 import toast from 'react-hot-toast'
-import { ArrowRight, LoaderCircle } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import AppLayout from '../molecules/AppLayout'
 import MessageList from '../molecules/MessageList'
 import ChatInput from '../molecules/ChatInput'
@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next'
 import Button from '../atoms/Button'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 import { storage_key, EVENTS, DISPLAY_NAME, APP_VERSION } from '../../utils/branding'
+import { BunnyBurrow, BunnyEating } from '../atoms/Bunny'
 
 // How often a streaming reply is written to IndexedDB, so a closed tab keeps it
 const PARTIAL_SAVE_INTERVAL_MS = 2_000
@@ -82,7 +83,6 @@ const WelcomeContent = styled.div`
 const WelcomeTitle = styled.h1`
     font-size: clamp( 1.5rem, 1.2rem + 1vw, 2rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
 `
 
@@ -134,18 +134,10 @@ const LoadingText = styled.p`
     font-size: 0.95rem;
 `
 
-const spin = keyframes`
-    from { transform: rotate( 0deg ); }
-    to { transform: rotate( 360deg ); }
-`
-
-const SpinnerIcon = styled.div`
-    color: ${ ( { theme } ) => theme.colors.accent };
-    animation: ${ spin } 1.2s linear infinite;
-
-    @media ( prefers-reduced-motion: reduce ) {
-        animation: none;
-    }
+const LoadingLane = styled.div`
+    width: min( 100%, 22rem );
+    margin-bottom: ${ ( { theme } ) => theme.spacing.md };
+    border-bottom: 1px solid ${ ( { theme } ) => theme.colors.border_control };
 `
 
 
@@ -1072,7 +1064,7 @@ export default function ChatPage() {
         // An existing conversation stays readable meanwhile; only the input waits.
         if( !has_model && is_loading_model && !has_messages ) {
             return <LoadingContainer data-testid="model-loading">
-                <SpinnerIcon><LoaderCircle size={ 32 } /></SpinnerIcon>
+                <LoadingLane><BunnyBurrow /></LoadingLane>
                 <LoadingText>{ t( 'loading_your_model' ) }</LoadingText>
                 <ModelLoadStage />
             </LoadingContainer>
@@ -1081,6 +1073,7 @@ export default function ChatPage() {
         // No model loaded — show a helpful, actionable CTA
         if( !has_model && !is_loading_model ) {
             return <NoModelContainer>
+                <BunnyEating size={ 88 } />
                 <NoModelTitle>{ t( 'lets_get_you_set_up' ) }</NoModelTitle>
                 <NoModelText>
                     { t( 'no_model_description' ) }

@@ -59,9 +59,9 @@ const IconContainer = styled.div`
     justify-content: center;
     width: 3.5rem;
     height: 3.5rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.input_background };
-    color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
     margin: 0 auto ${ ( { theme } ) => theme.spacing.md };
 `
 
@@ -129,7 +129,7 @@ const ProgressBarTrack = styled.div`
     width: 100%;
     height: 0.5rem;
     background: ${ ( { theme } ) => theme.colors.input_background };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     overflow: hidden;
     margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
 `
@@ -137,7 +137,7 @@ const ProgressBarTrack = styled.div`
 const ProgressBarFill = styled.div`
     height: 100%;
     background: ${ ( { theme } ) => theme.colors.accent };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     transition: width 0.3s ease-out;
     width: ${ ( { $progress } ) => `${ $progress * 100 }%` };
 `

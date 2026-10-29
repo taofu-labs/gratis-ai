@@ -38,6 +38,14 @@ const Dropdown = styled.div`
     margin-top: 4px;
     min-width: 220px;
     max-height: min( 400px, 60vh );
+
+    @media ( max-width: ${ ( { theme } ) => theme.breakpoints.mobile } ) {
+        position: fixed;
+        top: 3.5rem;
+        left: ${ ( { theme } ) => theme.spacing.md };
+        right: ${ ( { theme } ) => theme.spacing.md };
+        min-width: 0;
+    }
     overflow-y: auto;
     background: ${ ( { theme } ) => theme.colors.background };
     border: 1px solid ${ ( { theme } ) => theme.colors.border };

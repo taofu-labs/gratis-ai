@@ -31,11 +31,11 @@ const TextAction = styled.button`
     min-height: 2rem;
     font-size: 0.8rem;
     font-weight: ${ ( { $primary } ) => $primary ? 600 : 400 };
-    color: ${ ( { theme, $primary } ) => $primary ? theme.colors.accent : theme.colors.text_muted };
+    color: ${ ( { theme, $primary } ) => $primary ? theme.colors.accent_text : theme.colors.text_muted };
     text-decoration: underline;
     text-underline-offset: 2px;
     white-space: nowrap;
-    &:hover { color: ${ ( { theme, $primary } ) => $primary ? theme.colors.accent_hover : theme.colors.text }; }
+    &:hover { color: ${ ( { theme, $primary } ) => theme.colors.text }; }
 `
 
 const Dismiss = styled.button`

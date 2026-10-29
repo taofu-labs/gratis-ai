@@ -598,3 +598,4 @@
 - 2026-10-28: 0.51.1, WASM grant probe timeout ⇒ unmeasured (was capping budget ~4 GB on a 16 GiB device)
 - 2026-10-28: 0.52.0, grant probe moved to a worker, re-measured per model-screen visit behind an 'Inspecting your device' card (user asked: ≤10 s indicator fine every visit)
 - 2026-10-28 20:50 — v0.53.0: wllama64 1.2.0 (RunPod 4090 WebGPU OK), desktop n_threads_batch 2×, Firefox CPU-only. Web/Electron/Play internal/TestFlight 5300 deployed. Pod 7j3cp6yxmlsxhf deleted.
+- 2026-10-28 — v0.54.0 bunny redesign (branch design/bunny-revamp): reference site gratis-website-and-app-rework-six-pages.netlify.app → paper/ink/orange light + Solarized dark (prefs), 4px shapes, pixel wordmark + bunny sprites, new native icons. Human asked: copy colours/shapes/bunny, not content.

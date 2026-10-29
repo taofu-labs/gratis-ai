@@ -2,21 +2,7 @@ import { createGlobalStyle } from 'styled-components'
 
 const GlobalStyle = createGlobalStyle`
 
-    @font-face {
-        font-family: 'Space Grotesk';
-        font-style: normal;
-        font-weight: 400 700;
-        font-display: swap;
-        src: url('/fonts/space-grotesk-latin.woff2') format('woff2');
-    }
-
-    @font-face {
-        font-family: 'Instrument Sans';
-        font-style: normal;
-        font-weight: 400 600;
-        font-display: swap;
-        src: url('/fonts/instrument-sans-400-latin.woff2') format('woff2');
-    }
+    /* Montserrat + Nunito come from @fontsource-variable (src/index.jsx) */
 
     @font-face {
         font-family: 'IBM Plex Mono';
@@ -73,8 +59,9 @@ const GlobalStyle = createGlobalStyle`
 
     h1, h2, h3, h4, h5, h6 {
         font-family: ${ ( { theme } ) => theme.fonts.heading };
-        font-weight: 700;
-        letter-spacing: 0;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        text-wrap: balance;
     }
 
     #root {
@@ -124,7 +111,7 @@ const GlobalStyle = createGlobalStyle`
     :focus-visible {
         outline: 2px solid transparent;
         outline-offset: 2px;
-        box-shadow: 0 0 0 1px ${ ( { theme } ) => theme.colors.accent }, 0 0 0 5px ${ ( { theme } ) => theme.colors.focus_halo };
+        box-shadow: 0 0 0 2px ${ ( { theme } ) => theme.colors.accent_text }, 0 0 0 5px ${ ( { theme } ) => theme.colors.focus_halo };
     }
 
     :focus:not( :focus-visible ) {
@@ -148,7 +135,7 @@ const GlobalStyle = createGlobalStyle`
 
     ::-webkit-scrollbar-thumb {
         background: ${ ( { theme } ) => theme.colors.border_control };
-        border-radius: 3px;
+        border-radius: 2px;
     }
 
     ::-webkit-scrollbar-thumb:hover {

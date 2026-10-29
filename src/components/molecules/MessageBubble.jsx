@@ -75,9 +75,12 @@ const BubbleContainer = styled.div`
     }
 `
 
+// Replies sit on the page; your own messages are small white cards
 const Bubble = styled.div`
-    padding: ${ ( { theme } ) => `${ theme.spacing.sm } 0` };
-    background: transparent;
+    padding: ${ ( { theme, $is_user } ) => $is_user ? `${ theme.spacing.sm } ${ theme.spacing.md }` : `${ theme.spacing.sm } 0` };
+    background: ${ ( { theme, $is_user } ) => $is_user ? theme.colors.surface : `transparent` };
+    border: ${ ( { theme, $is_user } ) => $is_user ? `1px solid ${ theme.colors.border }` : `none` };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     line-height: 1.5;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -273,7 +276,7 @@ const DocumentChip = styled.div`
     align-items: center;
     gap: 6px;
     padding: 4px 10px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     border: 1px solid ${ ( { theme } ) => theme.colors.border };
     font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text_secondary };

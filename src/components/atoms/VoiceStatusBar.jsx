@@ -28,7 +28,7 @@ const pulse_dot = keyframes`
 const RecordingDot = styled.div`
     width: 0.5rem;
     height: 0.5rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.pill };
     background: ${ ( { theme } ) => theme.colors.error };
     flex-shrink: 0;
     animation: ${ pulse_dot } 1.2s ease-in-out infinite;
@@ -87,7 +87,7 @@ const spin = keyframes`
 
 const SpinnerIcon = styled( LoaderCircle )`
     flex-shrink: 0;
-    color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
     animation: ${ spin } 1s linear infinite;
 
     @media ( prefers-reduced-motion: reduce ) {

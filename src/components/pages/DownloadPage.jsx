@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { X, CheckCircle, LoaderCircle, RotateCcw } from 'lucide-react'
+import { X, CheckCircle, RotateCcw } from 'lucide-react'
 import { log } from 'mentie'
 import { discard_browser_partial_download, download_model, is_model_cached, is_projector_cached } from '../../utils/model_download'
 import { format_file_size } from '../../utils/model_catalog'
@@ -11,6 +11,7 @@ import { create_download_eta_estimator, format_download_duration } from '../../u
 import use_llm from '../../hooks/use_llm'
 import Button from '../atoms/Button'
 import ModelLoadStage from '../atoms/ModelLoadStage'
+import { BunnyBurrow } from '../atoms/Bunny'
 
 const Container = styled.div`
     display: flex;
@@ -25,7 +26,6 @@ const Container = styled.div`
 const Title = styled.h1`
     font-size: clamp( 1.5rem, 1.2rem + 1.5vw, 2rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-bottom: 2rem;
 `
 
@@ -47,7 +47,7 @@ const ProgressBar = styled.div`
     width: 100%;
     height: 8px;
     background: ${ ( { theme } ) => theme.colors.border_subtle };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     overflow: hidden;
 `
 
@@ -58,7 +58,7 @@ const ProgressFill = styled.div.attrs( ( { $progress } ) => ( {
 } ) )`
     height: 100%;
     background: ${ ( { theme } ) => theme.colors.accent };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     transition: width 0.3s ease;
 `
 
@@ -72,8 +72,11 @@ const ProgressDetails = styled.div`
 `
 
 const PercentText = styled.span`
-    font-weight: 600;
-    font-size: 1.5rem;
+    font-family: ${ ( { theme } ) => theme.fonts.mono };
+    font-weight: 500;
+    font-size: clamp( 2.5rem, 2rem + 2vw, 3.5rem );
+    line-height: 1;
+    letter-spacing: -0.03em;
     color: ${ ( { theme } ) => theme.colors.text };
     margin-bottom: ${ ( { theme } ) => theme.spacing.sm };
     font-variant-numeric: tabular-nums;
@@ -121,7 +124,7 @@ const StepIndicator = styled.div`
 const StepDot = styled.div`
     width: 8px;
     height: 8px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme, $active, $done } ) =>
         $done ? theme.colors.accent
             : $active ? theme.colors.accent
@@ -140,19 +143,12 @@ const fade_in = keyframes`
     to { opacity: 1; transform: scale( 1 ); }
 `
 
-const spin = keyframes`
-    to { transform: rotate( 360deg ); }
-`
-
-const LoadingSpinner = styled.div`
-    display: flex;
-    color: ${ ( { theme } ) => theme.colors.accent };
+// Burrow loop while weights load into memory
+const LoadingLane = styled.div`
+    width: 100%;
+    max-width: 400px;
     margin-bottom: ${ ( { theme } ) => theme.spacing.md };
-    animation: ${ spin } 1s linear infinite;
-
-    @media ( prefers-reduced-motion: reduce ) {
-        animation: none;
-    }
+    border-bottom: 1px solid ${ ( { theme } ) => theme.colors.border_control };
 `
 
 const SuccessIcon = styled.div`
@@ -394,7 +390,7 @@ export default function DownloadPage() {
             </StepIndicator>
             <Title>{ t( 'preparing_your_model' ) }</Title>
             <StatusMessage>{ t( 'preparing_your_model_detail', { name: model.name } ) }</StatusMessage>
-            <LoadingSpinner aria-hidden="true"><LoaderCircle size={ 28 } /></LoadingSpinner>
+            <LoadingLane><BunnyBurrow /></LoadingLane>
             <ModelLoadStage />
         </Container>
     }
@@ -424,6 +420,7 @@ export default function DownloadPage() {
         <PercentText>{ percent }%</PercentText>
 
         <ProgressContainer>
+            <BunnyBurrow progress={ progress.progress } size={ 48 } />
             <ProgressBar data-testid="download-progress-bar">
                 <ProgressFill $progress={ progress.progress } />
             </ProgressBar>

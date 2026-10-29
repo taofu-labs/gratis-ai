@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Apple, Monitor, Terminal, FolderDown } from 'lucide-react'
 import { DISPLAY_NAME, EVENTS } from '../../utils/branding'
+import BrandMark from '../atoms/BrandMark'
 
 const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || `taofu-labs/gratis-ai`
 
@@ -66,7 +67,6 @@ const Container = styled.div`
 const Title = styled.h1`
     font-size: clamp( 2rem, 1.5rem + 2.5vw, 3rem );
     color: ${ ( { theme } ) => theme.colors.text };
-    border-bottom: 3px solid ${ ( { theme } ) => theme.colors.accent };
     margin-bottom: 2rem;
 `
 
@@ -114,7 +114,7 @@ const PlatformIcon = styled.div`
     justify-content: center;
     width: 56px;
     height: 56px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.code_background };
     color: ${ ( { theme } ) => theme.colors.text };
 `
@@ -136,7 +136,7 @@ const DownloadButton = styled.a`
     justify-content: center;
     padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md }` };
     background: ${ ( { theme } ) => theme.colors.accent };
-    color: #fff;
+    color: ${ ( { theme } ) => theme.colors.accent_ink };
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
     font-size: 0.875rem;
     font-weight: 500;
@@ -233,9 +233,9 @@ const ModalIcon = styled.div`
     justify-content: center;
     width: 3.5rem;
     height: 3.5rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme } ) => theme.colors.input_background };
-    color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
     margin: 0 auto ${ ( { theme } ) => theme.spacing.md };
 `
 
@@ -326,7 +326,7 @@ export default function GetAppPage() {
 
     return <Container>
 
-        <Title>{ DISPLAY_NAME }</Title>
+        <Title><BrandMark height="clamp( 2.75rem, 2rem + 3vw, 4.5rem )" title={ DISPLAY_NAME } /></Title>
         <Tagline>
             { t( 'get_app_tagline' ) }
         </Tagline>

@@ -39,8 +39,8 @@ export default defineConfig( ( { mode } ) => {
                     name: app_name,
                     short_name: app_name,
                     description: `Run AI locally. Your data never leaves your device.`,
-                    theme_color: `#1a1a2e`,
-                    background_color: `#1a1a2e`,
+                    theme_color: `#F7F6F2`,
+                    background_color: `#F7F6F2`,
                     display: `standalone`,
                     start_url: `/`,
                     icons: [
@@ -49,7 +49,7 @@ export default defineConfig( ( { mode } ) => {
                     ],
                 },
                 workbox: {
-                    globPatterns: [ `**/*.{js,css,html,wasm,woff2}` ],
+                    globPatterns: [ `**/*.{js,css,html,wasm,woff2,png}` ],
                     // Exclude large ONNX Runtime WASM binaries from precaching — they're loaded on demand
                     globIgnores: [ `**/*ort-wasm*.wasm` ],
                     // The self-hosted wasm32 fallback is ~16 MiB.

@@ -10,7 +10,7 @@ import {
 const Select = styled.select`
     font-size: 0.85rem;
     font-weight: 600;
-    color: ${ ( { theme } ) => theme.colors.accent };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
     background: none;
     border: none;
     padding: 0;

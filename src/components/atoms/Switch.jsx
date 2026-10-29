@@ -18,7 +18,7 @@ const Track = styled.span`
     flex-shrink: 0;
     width: 2.25rem;
     height: 1.25rem;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.pill };
     background: ${ ( { theme, $on } ) => $on ? theme.colors.accent : theme.colors.border_strong };
     transition: background-color 0.16s;
 
@@ -30,7 +30,8 @@ const Track = styled.span`
         width: 1rem;
         height: 1rem;
         border-radius: 50%;
-        background: ${ ( { theme } ) => theme.colors.text };
+        background: #FFFFFF;
+        box-shadow: 0 0 0 1px rgba( 19, 21, 23, 0.6 );
         transition: left 0.16s;
     }
 

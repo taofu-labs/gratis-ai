@@ -39,7 +39,7 @@ const Bar = styled.div`
 const BarStep = styled.span`
     flex: 1;
     height: 3px;
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
     background: ${ ( { theme, $on } ) => $on ? theme.colors.accent : theme.colors.border_strong };
     transition: background-color 0.2s;
 `
@@ -158,7 +158,7 @@ const Chip = styled.button`
     font-size: 0.8rem;
     color: ${ ( { theme } ) => theme.colors.text };
     border: 1px solid ${ ( { theme } ) => theme.colors.border_control };
-    border-radius: ${ ( { theme } ) => theme.border_radius.full };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
 
     &:hover { background: ${ ( { theme } ) => theme.colors.surface_hover }; }
 `
