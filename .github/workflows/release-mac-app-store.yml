@@ -126,7 +126,7 @@ jobs:
         id: verify
         run: |
           APP=$( find release -maxdepth 2 -name 'Gratis.app' -path '*mas*' | head -1 )
-          PKG=$( find release -maxdepth 1 -name '*.pkg' | head -1 )
+          PKG=$( find release -maxdepth 2 -name '*.pkg' -path '*mas*' | head -1 )
           if [ -z "$APP" ] || [ -z "$PKG" ]; then
             echo "::error::No .app / .pkg in release/"
             find release -maxdepth 2
