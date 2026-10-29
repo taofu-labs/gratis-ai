@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { Copy, RefreshCw, Pencil } from 'lucide-react'
+import { Copy, RefreshCw, Pencil, Flag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 
@@ -49,17 +49,22 @@ const ActionButton = styled.button`
     }
 `
 
+// Reports go to a person by email: nothing leaves the device unless the user sends it
+const REPORT_EMAIL = `support@taofu.xyz`
+
 /**
- * Hover action bar for messages (copy, regenerate, edit)
+ * Hover action bar for messages (copy, regenerate, edit, report)
  * @param {Object} props
  * @param {string} props.content - Message text content
  * @param {boolean} props.can_regenerate - Show regenerate button
  * @param {boolean} props.can_edit - Show edit button
  * @param {Function} props.on_regenerate - Regenerate handler
  * @param {Function} props.on_edit - Edit handler
+ * @param {boolean} [props.can_report] - Show "report this answer" (AI replies)
+ * @param {string} [props.model_id] - Model that wrote the reply, for the report
  * @returns {JSX.Element}
  */
-export default function MessageActions( { content, can_regenerate, can_edit, on_regenerate, on_edit } ) {
+export default function MessageActions( { content, can_regenerate, can_edit, on_regenerate, on_edit, can_report, model_id } ) {
 
     const { t } = useTranslation()
 
@@ -70,6 +75,13 @@ export default function MessageActions( { content, can_regenerate, can_edit, on_
         } catch {
             toast.error( t( `failed_to_copy` ) )
         }
+    }
+
+    // A pre-filled email the user reviews and sends themselves (store AI-content policies)
+    const handle_report = () => {
+        const subject = t( `report_subject` )
+        const body = `${ t( `report_body` ) }\n\n— Model: ${ model_id || `unknown` }\n— Answer:\n${ content.slice( 0, 1500 ) }`
+        window.open( `mailto:${ REPORT_EMAIL }?subject=${ encodeURIComponent( subject ) }&body=${ encodeURIComponent( body ) }`, `_blank` )
     }
 
     return <ActionsBar className="message-actions">
@@ -95,6 +107,15 @@ export default function MessageActions( { content, can_regenerate, can_edit, on_
             aria-label={ t( `aria_edit_message` ) }
         >
             <Pencil size={ 14 } />
+        </ActionButton> }
+
+        { can_report && <ActionButton
+            data-testid="message-report-btn"
+            onClick={ handle_report }
+            aria-label={ t( `aria_report_message` ) }
+            title={ t( `aria_report_message` ) }
+        >
+            <Flag size={ 14 } />
         </ActionButton> }
     </ActionsBar>
 

@@ -52,8 +52,10 @@ contextBridge.exposeInMainWorld( `electronAPI`, {
         return () => ipcRenderer.removeListener( `llm:download-progress`, handler )
     },
 
-    // Auto-updater — checks GitHub Releases for new app versions
-    updater: {
+    // Auto-updater — checks GitHub Releases for new app versions.
+    // Absent in Mac App Store builds: the store ships updates, and the
+    // renderer hides its "check for updates" button when this is missing
+    ... process.mas ? {} : { updater: {
 
         check_for_updates: () => ipcRenderer.invoke( `updater:check` ),
         download_update: () => ipcRenderer.invoke( `updater:download` ),
@@ -89,6 +91,6 @@ contextBridge.exposeInMainWorld( `electronAPI`, {
             return () => ipcRenderer.removeListener( `updater:error`, handler )
         },
 
-    },
+    } },
 
 } )

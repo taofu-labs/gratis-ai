@@ -87,3 +87,12 @@ Only `dolphin-mistral-24b-venice` has a persona. "You are Gratis… / You are Do
 - Licence = LFM Open License v1.0: free commercial use only while the *licensee's* annual revenue < $10M; attribution required. Earlier research rejected LFM 8B/24B for this cap
 - Decide: is TPN/Gratis under the cap (or is Gratis non-commercial)? If not OK → drop `lfm25-*` rows; fallback ~1 GB pick = Qwen3 1.7B decensored TPN (55) or Qwen 2B TPN (48)
 - **Resolved 2026-10-28:** human accepts the LFM licence → keep `lfm25-*` rows
+
+## Open: Mac App Store (2026-10-29)
+Created via API (Taofu B.V.): MAC_APP_DISTRIBUTION + MAC_INSTALLER_DISTRIBUTION certs (expire 2027-10-29), profile "Gratis Mac App Store" (MAC_APP_STORE). Keys/p12s in `.secrets/apple/mas_*` — back up `.secrets/` outside the container.
+Human steps, in order:
+1. App Store Connect → Apps → Gratis AI → left sidebar, "+" (Add Platform) → macOS. Without it altool rejects the upload (no macOS app record). Bundle id is already UNIVERSAL, nothing to change in developer.apple.com.
+2. Add 8 repo secrets in taofu-labs/gratis-ai (values: `.secrets/handoff/mas_github_secrets.txt`): MAS_APP_P12_BASE64, MAS_APP_P12_PASSWORD, MAS_INSTALLER_P12_BASE64, MAS_INSTALLER_P12_PASSWORD, MAS_PROVISIONING_PROFILE_BASE64, ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64. Our GH_TOKEN can't write secrets.
+3. Merge the branch, bump package.json version, Actions → "Release Mac App Store" → Run (first try `upload: false` to see signing/verify pass).
+4. Smoke-test on a real Mac before submitting: install the .pkg (`sudo installer -pkg … -target /`) or TestFlight for macOS; check model download, text chat, vision (llama-server under sandbox), Metal. Sandbox issues only show at runtime.
+5. macOS store listing (screenshots 1280×800+, description, privacy URL, category, age rating) — ASC listing is empty for iOS too. Paid Apps agreement still expired (free app unaffected).

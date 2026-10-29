@@ -1688,8 +1688,8 @@ const COMMUNITY_MODELS = [
 
     {
         id: `qwen3-1.7b-decensored-q4km`,
-        name: `Qwen3 1.7B Decensored`,
-        description: `Tiny uncensored model that answers without refusals.`,
+        name: `Qwen3 1.7B Open`,
+        description: `Tiny model that answers more freely.`,
         family: `qwen3`,
         parameters: 1_720_574_976,
         parameters_label: `1.7B`,
@@ -1718,8 +1718,8 @@ const COMMUNITY_MODELS = [
 
     {
         id: `qwen35-4b-heresy-q4km`,
-        name: `Qwen 3.5 4B Heresy`,
-        description: `Uncensored Qwen 3.5 4B that keeps the base model's reasoning.`,
+        name: `Qwen 3.5 4B Open`,
+        description: `Qwen 3.5 4B that answers more freely and keeps the base model's reasoning.`,
         family: `qwen35`,
         parameters: 4_205_751_296,
         parameters_label: `4B`,
@@ -1751,8 +1751,8 @@ const COMMUNITY_MODELS = [
 
     {
         id: `qwen35-9b-heretic-q4km`,
-        name: `Qwen 3.5 9B Heretic`,
-        description: `Uncensored Qwen 3.5 9B with near-zero refusals and minimal quality loss.`,
+        name: `Qwen 3.5 9B Open`,
+        description: `Qwen 3.5 9B that answers more freely, with minimal quality loss.`,
         family: `qwen35`,
         parameters: 8_953_803_264,
         parameters_label: `9B`,
@@ -1786,8 +1786,8 @@ const COMMUNITY_MODELS = [
 
     {
         id: `gemma4-26b-a4b-heretic-q40`,
-        name: `Gemma 4 26B A4B Heretic`,
-        description: `Uncensored Gemma 4 MoE. Large-model knowledge at 4B speed, without refusals.`,
+        name: `Gemma 4 26B A4B Open`,
+        description: `Gemma 4 MoE that answers more freely. Large-model knowledge at 4B speed.`,
         family: `gemma4`,
         parameters: 25_233_142_046,
         parameters_label: `26B`,
@@ -1824,8 +1824,8 @@ const COMMUNITY_MODELS = [
 
     {
         id: `gemma4-31b-heretic-q4km`,
-        name: `Gemma 4 31B Heretic`,
-        description: `Strongest uncensored model in the catalog, with Gemma 4 31B knowledge.`,
+        name: `Gemma 4 31B Open`,
+        description: `Strongest free-answering model in the catalog, with Gemma 4 31B knowledge.`,
         family: `gemma4`,
         parameters: 30_697_345_596,
         parameters_label: `31B`,
@@ -1977,8 +1977,8 @@ const COMMUNITY_MODELS = [
 
     {
         id: `gemma-3-12b-abliterated-cloud`,
-        name: `Gemma 3 12B Abliterated`,
-        description: `Abliterated Gemma 3 — quality without content restrictions.`,
+        name: `Gemma 3 12B Open`,
+        description: `Gemma 3 that answers more freely.`,
         family: `gemma3`,
         parameters: 12_000_000_000,
         parameters_label: `12B`,
@@ -2001,7 +2001,7 @@ const COMMUNITY_MODELS = [
     {
         id: `llama-3.3-70b-venice`,
         name: `Llama 3.3 70B (Venice)`,
-        description: `Meta's flagship 70B model, hosted on Venice for uncensored inference.`,
+        description: `Meta's flagship 70B model, hosted on Venice.`,
         family: `llama3`,
         parameters: 70_000_000_000,
         parameters_label: `70B`,

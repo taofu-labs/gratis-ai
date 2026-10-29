@@ -1,0 +1,151 @@
+# Build the Mac App Store package (arm64, sandboxed) and upload it to App Store Connect.
+# Manual only: Actions → "Release Mac App Store" → Run workflow. The notarised DMG keeps
+# shipping from release-electron.yml; this workflow never touches GitHub Releases.
+#
+# Secrets (values from `node scripts/mac_app_store_signing.js` → .secrets/handoff/mas_github_secrets.txt):
+#   MAS_APP_P12_BASE64 / MAS_APP_P12_PASSWORD            3rd Party Mac Developer Application (signs the .app)
+#   MAS_INSTALLER_P12_BASE64 / MAS_INSTALLER_P12_PASSWORD 3rd Party Mac Developer Installer (signs the .pkg)
+#   MAS_PROVISIONING_PROFILE_BASE64                      "Gratis Mac App Store" profile
+#   ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8_BASE64       App Store Connect API key (altool upload)
+#
+# Each upload needs a new package.json version: build number = major·10000 + minor·100 + patch (as mobile).
+
+name: Release Mac App Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload the .pkg to App Store Connect (off = build + verify only)
+        type: boolean
+        default: true
+
+concurrency:
+  group: release-mac-app-store
+  cancel-in-progress: false
+
+env:
+  ASC_APP_ID: '6827061396'
+  BUNDLE_ID: com.trueperformancenetwork.gratis
+
+jobs:
+  # ── Gate: refuse to spend a macOS runner without the full secret set ──
+  check-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Mac App Store secrets
+        env:
+          MAS_APP_P12_BASE64: ${{ secrets.MAS_APP_P12_BASE64 }}
+          MAS_APP_P12_PASSWORD: ${{ secrets.MAS_APP_P12_PASSWORD }}
+          MAS_INSTALLER_P12_BASE64: ${{ secrets.MAS_INSTALLER_P12_BASE64 }}
+          MAS_INSTALLER_P12_PASSWORD: ${{ secrets.MAS_INSTALLER_P12_PASSWORD }}
+          MAS_PROVISIONING_PROFILE_BASE64: ${{ secrets.MAS_PROVISIONING_PROFILE_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          missing=""
+          for name in MAS_APP_P12_BASE64 MAS_APP_P12_PASSWORD MAS_INSTALLER_P12_BASE64 MAS_INSTALLER_P12_PASSWORD \
+                      MAS_PROVISIONING_PROFILE_BASE64 ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8_BASE64; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Mac App Store secrets missing:$missing. Generate them with 'node scripts/mac_app_store_signing.js' and add them as repository secrets (DOCUMENTATION.md → Mac App Store)."
+            exit 1
+          fi
+
+  build:
+    needs: check-secrets
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Vision sidecar, arm64 only (the MAS build is Apple Silicon only)
+      - name: Fetch llama-server sidecar
+        run: node scripts/fetch_llama_server.js --os mac --arch arm64
+
+      - name: Build Electron app
+        run: npx electron-vite build
+        env:
+          VITE_GITHUB_REPO: ${{ github.repository }}
+
+      # Signing material lands in the runner's temp dir only; electron-builder imports both
+      # .p12 files into a throwaway keychain (CSC_LINK / CSC_INSTALLER_LINK)
+      - name: Decode signing material
+        id: material
+        env:
+          MAS_APP_P12_BASE64: ${{ secrets.MAS_APP_P12_BASE64 }}
+          MAS_INSTALLER_P12_BASE64: ${{ secrets.MAS_INSTALLER_P12_BASE64 }}
+          MAS_PROVISIONING_PROFILE_BASE64: ${{ secrets.MAS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          echo "$MAS_APP_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/mas_app.p12"
+          echo "$MAS_INSTALLER_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/mas_installer.p12"
+          echo "$MAS_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/gratis_mas.provisionprofile"
+          VERSION=$( node -p "require('./package.json').version" )
+          BUILD=$( node -p "const [ a, b, c ] = require('./package.json').version.split( /[.-]/ ).map( Number ); a * 10000 + b * 100 + c" )
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+
+      - name: Package Mac App Store build
+        run: |
+          npx electron-builder --mac mas --arm64 --publish never \
+            -c.mas.provisioningProfile="$RUNNER_TEMP/gratis_mas.provisionprofile" \
+            -c.buildVersion="${{ steps.material.outputs.build }}"
+        env:
+          CSC_LINK: ${{ runner.temp }}/mas_app.p12
+          CSC_KEY_PASSWORD: ${{ secrets.MAS_APP_P12_PASSWORD }}
+          CSC_INSTALLER_LINK: ${{ runner.temp }}/mas_installer.p12
+          CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.MAS_INSTALLER_P12_PASSWORD }}
+
+      # Fail here, not after a 20-minute Apple processing round trip
+      - name: Verify signatures and sandbox
+        id: verify
+        run: |
+          APP=$( find release -maxdepth 2 -name 'Gratis.app' -path '*mas*' | head -1 )
+          PKG=$( find release -maxdepth 1 -name '*.pkg' | head -1 )
+          if [ -z "$APP" ] || [ -z "$PKG" ]; then
+            echo "::error::No .app / .pkg in release/"
+            find release -maxdepth 2
+            exit 1
+          fi
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -d --entitlements - "$APP"
+          codesign -d --entitlements - "$APP/Contents/Resources/llama-server/llama-server"
+          codesign -d --entitlements - "$APP/Contents/Resources/llama-server/llama-server" 2>&1 | grep -q com.apple.security.inherit \
+            || { echo "::error::llama-server is not signed with the inherit entitlements"; exit 1; }
+          pkgutil --check-signature "$PKG"
+          echo "pkg=$PKG" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: gratis-mas-${{ steps.material.outputs.version }}
+          path: ${{ steps.verify.outputs.pkg }}
+          retention-days: 14
+
+      # altool finds the key by id in ~/.appstoreconnect/private_keys
+      - name: Upload to App Store Connect
+        if: inputs.upload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/"AuthKey_$ASC_KEY_ID.p8"
+          xcrun altool --upload-package "${{ steps.verify.outputs.pkg }}" --type macos \
+            --apple-id "$ASC_APP_ID" --bundle-id "$BUNDLE_ID" \
+            --bundle-version "${{ steps.material.outputs.build }}" \
+            --bundle-short-version-string "${{ steps.material.outputs.version }}" \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" --output-format normal
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/mas_*.p12 "$RUNNER_TEMP/gratis_mas.provisionprofile" ~/.appstoreconnect/private_keys/AuthKey_*.p8

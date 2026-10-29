@@ -81,5 +81,8 @@
     "update_app_offline": "オフラインです。更新するにはインターネットに接続してください。",
 
     "speed_tips": "チャットでの速度のヒント",
-    "speed_tips_description": "セッションごとに1回、応答が遅いときは速いモデル、とても速いときは賢いモデルを提案します。"
+    "speed_tips_description": "セッションごとに1回、応答が遅いときは速いモデル、とても速いときは賢いモデルを提案します。",
+    "privacy_link": "プライバシーポリシー",
+    "terms_link": "利用規約",
+    "support_link": "サポート"
 }

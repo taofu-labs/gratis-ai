@@ -1,0 +1,255 @@
+{
+  "en": {
+    "apple_locale": "en-US",
+    "play_locale": "en-US",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "Free & private local AI",
+      "promotional_text": "Chat with open AI models that run entirely on your device. No account, no ads, no tracking. Your conversations stay yours.",
+      "description": "Gratis means free. Gratis AI is an AI assistant that runs on your own device. Ask questions, write, brainstorm, summarize documents or ask about a photo, without sending a single word to a server.\n\nDownload a model once and from then on it works offline. On a plane, in the mountains, or simply when you'd rather keep things to yourself. No sign-up, no subscription, no catch.\n\nPRIVATE BY DESIGN\n• No account, no ads, no tracking\n• Chats, files and photos stay on your device\n• Nothing is sent to a server\n\nSMART SETUP\n• Checks your device on first launch and suggests a model that fits\n• Switch models any time\n• A speed gauge lets you trade speed for smarts\n\nOPEN MODELS\n• Open model families like Qwen, Gemma, LFM and MiniCPM\n• Downloaded once from Hugging Face, then fully offline\n• If you like, choose models that answer more freely\n\nMADE FOR REAL WORK\n• Some models understand photos and screenshots\n• Attach documents such as PDFs\n• On-device voice input\n• Clean markdown and code formatting\n• Chat history with export\n• 11 interface languages\n• Light and dark mode that follow your device\n\nGratis AI is made by Taofu B.V. in the Netherlands. Questions or ideas? Write to support@taofu.xyz.",
+      "keywords": "offline,chatbot,assistant,llm,on-device,chat,qwen,gemma,open model,no account,writing,secure"
+    },
+    "play": {
+      "title": "Gratis AI: Free & private AI",
+      "short_description": "Free, private AI that runs locally on your device. No account, works offline.",
+      "full_description": "Gratis means free. Gratis AI is an AI assistant that runs on your own device. Ask questions, write, brainstorm, summarize documents or ask about a photo, without sending a single word to a server.\n\nDownload a model once and from then on it works offline. On a plane, in the mountains, or simply when you'd rather keep things to yourself. No sign-up, no subscription, no catch.\n\nPRIVATE BY DESIGN\n• No account, no ads, no tracking\n• Chats, files and photos stay on your device\n• Nothing is sent to a server\n\nSMART SETUP\n• Checks your device on first launch and suggests a model that fits\n• Switch models any time\n• A speed gauge lets you trade speed for smarts\n\nOPEN MODELS\n• Open model families like Qwen, Gemma, LFM and MiniCPM\n• Downloaded once from Hugging Face, then fully offline\n• If you like, choose models that answer more freely\n\nMADE FOR REAL WORK\n• Some models understand photos and screenshots\n• Attach documents such as PDFs\n• On-device voice input\n• Clean markdown and code formatting\n• Chat history with export\n• 11 interface languages\n• Light and dark mode that follow your device\n\nGratis AI is made by Taofu B.V. in the Netherlands. Questions or ideas? Write to support@taofu.xyz."
+    },
+    "captions": [
+      "Your AI. Your device. Private.",
+      "Answers on your device, offline",
+      "Picks a model that fits",
+      "One download, then offline",
+      "Light or dark, your call"
+    ]
+  },
+  "de": {
+    "apple_locale": "de-DE",
+    "play_locale": "de-DE",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "Kostenlose, private lokale KI",
+      "promotional_text": "Chatte mit offenen KI-Modellen, die komplett auf deinem Gerät laufen. Kein Konto, keine Werbung, kein Tracking. Deine Gespräche bleiben bei dir.",
+      "description": "Gratis AI ist ein kostenloser KI-Assistent, der direkt auf deinem Gerät läuft. Stell Fragen, schreib Texte, sammle Ideen, fass Dokumente zusammen oder frag nach einem Foto – ohne dass auch nur ein Wort an einen Server geht.\n\nLade ein Modell einmal herunter, danach funktioniert alles offline. Im Flugzeug, in den Bergen oder einfach dann, wenn du Dinge lieber für dich behältst.\n\nPRIVAT VON ANFANG AN\n• Kein Konto, keine Werbung, kein Tracking\n• Chats, Dateien und Fotos bleiben auf deinem Gerät\n• Nichts wird an einen Server gesendet\n\nEINFACHER START\n• Prüft beim ersten Start dein Gerät und schlägt ein passendes Modell vor\n• Modell jederzeit wechseln\n• Mit dem Tempo-Regler wählst du zwischen schnell und schlau\n\nOFFENE MODELLE\n• Offene Modellfamilien wie Qwen, Gemma, LFM und MiniCPM\n• Einmal von Hugging Face geladen, danach komplett offline\n• Auf Wunsch auch Modelle, die freier antworten\n\nFÜR ECHTE AUFGABEN\n• Manche Modelle verstehen Fotos und Screenshots\n• Dokumente wie PDFs anhängen\n• Spracheingabe direkt auf dem Gerät\n• Saubere Darstellung von Markdown und Code\n• Chatverlauf mit Export\n• Oberfläche in 11 Sprachen\n• Heller und dunkler Modus, passend zu deinem Gerät\n\nGratis AI wird von Taofu B.V. in den Niederlanden entwickelt. Fragen oder Ideen? Schreib an support@taofu.xyz.",
+      "keywords": "offline,chatbot,assistent,llm,chat,qwen,gemma,datenschutz,sprachmodell,ohne konto,schreiben"
+    },
+    "play": {
+      "title": "Gratis AI: Kostenlos & privat",
+      "short_description": "Kostenlose, private KI, die lokal auf deinem Gerät läuft. Ohne Konto, offline.",
+      "full_description": "Gratis AI ist ein kostenloser KI-Assistent, der direkt auf deinem Gerät läuft. Stell Fragen, schreib Texte, sammle Ideen, fass Dokumente zusammen oder frag nach einem Foto – ohne dass auch nur ein Wort an einen Server geht.\n\nLade ein Modell einmal herunter, danach funktioniert alles offline. Im Flugzeug, in den Bergen oder einfach dann, wenn du Dinge lieber für dich behältst.\n\nPRIVAT VON ANFANG AN\n• Kein Konto, keine Werbung, kein Tracking\n• Chats, Dateien und Fotos bleiben auf deinem Gerät\n• Nichts wird an einen Server gesendet\n\nEINFACHER START\n• Prüft beim ersten Start dein Gerät und schlägt ein passendes Modell vor\n• Modell jederzeit wechseln\n• Mit dem Tempo-Regler wählst du zwischen schnell und schlau\n\nOFFENE MODELLE\n• Offene Modellfamilien wie Qwen, Gemma, LFM und MiniCPM\n• Einmal von Hugging Face geladen, danach komplett offline\n• Auf Wunsch auch Modelle, die freier antworten\n\nFÜR ECHTE AUFGABEN\n• Manche Modelle verstehen Fotos und Screenshots\n• Dokumente wie PDFs anhängen\n• Spracheingabe direkt auf dem Gerät\n• Saubere Darstellung von Markdown und Code\n• Chatverlauf mit Export\n• Oberfläche in 11 Sprachen\n• Heller und dunkler Modus, passend zu deinem Gerät\n\nGratis AI wird von Taofu B.V. in den Niederlanden entwickelt. Fragen oder Ideen? Schreib an support@taofu.xyz."
+    },
+    "captions": [
+      "Deine KI. Dein Gerät. Privat.",
+      "Antworten auf dem Gerät, offline",
+      "Wählt ein Modell, das passt",
+      "Einmal laden, dann offline",
+      "Hell oder dunkel – wie du magst"
+    ]
+  },
+  "es": {
+    "apple_locale": "es-ES",
+    "play_locale": "es-ES",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "IA local, gratis y privada",
+      "promotional_text": "Chatea con modelos de IA abiertos que funcionan por completo en tu dispositivo. Sin cuenta, sin anuncios, sin rastreo. Tus conversaciones son solo tuyas.",
+      "description": "Gratis AI es un asistente de IA gratuito que funciona en tu propio dispositivo. Haz preguntas, escribe, genera ideas, resume documentos o pregunta sobre una foto, sin enviar ni una palabra a un servidor.\n\nDescarga un modelo una vez y, a partir de ahí, funciona sin conexión. En un avión, en la montaña o simplemente cuando prefieres guardarte las cosas para ti.\n\nPRIVADA DESDE EL DISEÑO\n• Sin cuenta, sin anuncios, sin rastreo\n• Chats, archivos y fotos se quedan en tu dispositivo\n• No se envía nada a ningún servidor\n\nCONFIGURACIÓN INTELIGENTE\n• La primera vez analiza tu dispositivo y te sugiere un modelo adecuado\n• Cambia de modelo cuando quieras\n• Un indicador de velocidad te deja elegir entre rapidez e inteligencia\n\nMODELOS ABIERTOS\n• Familias de modelos abiertos como Qwen, Gemma, LFM y MiniCPM\n• Se descargan una vez desde Hugging Face y luego funcionan sin conexión\n• Si lo prefieres, elige modelos que responden con más libertad\n\nPENSADA PARA EL DÍA A DÍA\n• Algunos modelos entienden fotos y capturas de pantalla\n• Adjunta documentos, como PDF\n• Dictado por voz en el propio dispositivo\n• Respuestas con formato markdown y código\n• Historial de chats con exportación\n• Interfaz en 11 idiomas\n• Modo claro y oscuro que siguen a tu dispositivo\n\nGratis AI está hecha por Taofu B.V. en los Países Bajos. ¿Preguntas o ideas? Escríbenos a support@taofu.xyz.",
+      "keywords": "offline,chatbot,asistente,llm,chat,qwen,gemma,sin conexión,privacidad,sin cuenta,escribir"
+    },
+    "play": {
+      "title": "Gratis AI: IA gratis y privada",
+      "short_description": "IA gratis y privada que funciona en local, en tu dispositivo. Sin cuenta.",
+      "full_description": "Gratis AI es un asistente de IA gratuito que funciona en tu propio dispositivo. Haz preguntas, escribe, genera ideas, resume documentos o pregunta sobre una foto, sin enviar ni una palabra a un servidor.\n\nDescarga un modelo una vez y, a partir de ahí, funciona sin conexión. En un avión, en la montaña o simplemente cuando prefieres guardarte las cosas para ti.\n\nPRIVADA DESDE EL DISEÑO\n• Sin cuenta, sin anuncios, sin rastreo\n• Chats, archivos y fotos se quedan en tu dispositivo\n• No se envía nada a ningún servidor\n\nCONFIGURACIÓN INTELIGENTE\n• La primera vez analiza tu dispositivo y te sugiere un modelo adecuado\n• Cambia de modelo cuando quieras\n• Un indicador de velocidad te deja elegir entre rapidez e inteligencia\n\nMODELOS ABIERTOS\n• Familias de modelos abiertos como Qwen, Gemma, LFM y MiniCPM\n• Se descargan una vez desde Hugging Face y luego funcionan sin conexión\n• Si lo prefieres, elige modelos que responden con más libertad\n\nPENSADA PARA EL DÍA A DÍA\n• Algunos modelos entienden fotos y capturas de pantalla\n• Adjunta documentos, como PDF\n• Dictado por voz en el propio dispositivo\n• Respuestas con formato markdown y código\n• Historial de chats con exportación\n• Interfaz en 11 idiomas\n• Modo claro y oscuro que siguen a tu dispositivo\n\nGratis AI está hecha por Taofu B.V. en los Países Bajos. ¿Preguntas o ideas? Escríbenos a support@taofu.xyz."
+    },
+    "captions": [
+      "Tu IA. Tu dispositivo. Privada.",
+      "Responde en local, sin conexión",
+      "Elige un modelo a tu medida",
+      "Una descarga, luego sin conexión",
+      "Claro u oscuro, tú decides"
+    ]
+  },
+  "fr": {
+    "apple_locale": "fr-FR",
+    "play_locale": "fr-FR",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "IA locale, gratuite et privée",
+      "promotional_text": "Discutez avec des modèles d’IA ouverts qui tournent entièrement sur votre appareil. Sans compte, sans pub, sans pistage. Vos échanges restent chez vous.",
+      "description": "Gratis AI est un assistant IA gratuit qui fonctionne sur votre propre appareil. Posez des questions, rédigez, trouvez des idées, résumez des documents ou interrogez une photo, sans envoyer le moindre mot à un serveur.\n\nTéléchargez un modèle une seule fois : ensuite, tout fonctionne hors ligne. Dans l’avion, en montagne, ou simplement quand vous préférez garder les choses pour vous.\n\nPRIVÉE PAR CONCEPTION\n• Sans compte, sans publicité, sans pistage\n• Conversations, fichiers et photos restent sur votre appareil\n• Rien n’est envoyé à un serveur\n\nDÉMARRAGE MALIN\n• Au premier lancement, l’app analyse votre appareil et suggère un modèle adapté\n• Changez de modèle à tout moment\n• Une jauge de vitesse pour choisir entre rapidité et finesse\n\nMODÈLES OUVERTS\n• Des familles de modèles ouverts comme Qwen, Gemma, LFM et MiniCPM\n• Téléchargés une fois depuis Hugging Face, puis entièrement hors ligne\n• Si vous le souhaitez, des modèles qui répondent plus librement\n\nPENSÉE POUR LE QUOTIDIEN\n• Certains modèles comprennent les photos et captures d’écran\n• Joignez des documents, comme des PDF\n• Saisie vocale sur l’appareil\n• Mise en forme markdown et code\n• Historique des conversations avec export\n• Interface en 11 langues\n• Modes clair et sombre qui suivent votre appareil\n\nGratis AI est conçue par Taofu B.V. aux Pays-Bas. Une question, une idée ? Écrivez à support@taofu.xyz.",
+      "keywords": "hors ligne,chatbot,assistant,llm,chat,qwen,gemma,confidentialité,sans compte,écrire"
+    },
+    "play": {
+      "title": "Gratis AI : IA privée gratuite",
+      "short_description": "IA gratuite et privée, qui tourne en local sur votre appareil. Sans compte.",
+      "full_description": "Gratis AI est un assistant IA gratuit qui fonctionne sur votre propre appareil. Posez des questions, rédigez, trouvez des idées, résumez des documents ou interrogez une photo, sans envoyer le moindre mot à un serveur.\n\nTéléchargez un modèle une seule fois : ensuite, tout fonctionne hors ligne. Dans l’avion, en montagne, ou simplement quand vous préférez garder les choses pour vous.\n\nPRIVÉE PAR CONCEPTION\n• Sans compte, sans publicité, sans pistage\n• Conversations, fichiers et photos restent sur votre appareil\n• Rien n’est envoyé à un serveur\n\nDÉMARRAGE MALIN\n• Au premier lancement, l’app analyse votre appareil et suggère un modèle adapté\n• Changez de modèle à tout moment\n• Une jauge de vitesse pour choisir entre rapidité et finesse\n\nMODÈLES OUVERTS\n• Des familles de modèles ouverts comme Qwen, Gemma, LFM et MiniCPM\n• Téléchargés une fois depuis Hugging Face, puis entièrement hors ligne\n• Si vous le souhaitez, des modèles qui répondent plus librement\n\nPENSÉE POUR LE QUOTIDIEN\n• Certains modèles comprennent les photos et captures d’écran\n• Joignez des documents, comme des PDF\n• Saisie vocale sur l’appareil\n• Mise en forme markdown et code\n• Historique des conversations avec export\n• Interface en 11 langues\n• Modes clair et sombre qui suivent votre appareil\n\nGratis AI est conçue par Taofu B.V. aux Pays-Bas. Une question, une idée ? Écrivez à support@taofu.xyz."
+    },
+    "captions": [
+      "IA privée, sur votre appareil",
+      "Des réponses locales, hors ligne",
+      "Choisit un modèle qui vous va",
+      "Téléchargez, puis hors ligne",
+      "Clair ou sombre, à vous de voir"
+    ]
+  },
+  "it": {
+    "apple_locale": "it",
+    "play_locale": "it-IT",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "IA locale, gratis e privata",
+      "promotional_text": "Chatta con modelli di IA aperti che girano interamente sul tuo dispositivo. Nessun account, niente pubblicità, nessun tracciamento. Le tue chat restano tue.",
+      "description": "Gratis AI è un assistente IA gratuito che funziona sul tuo dispositivo. Fai domande, scrivi, trova idee, riassumi documenti o chiedi qualcosa su una foto, senza inviare nemmeno una parola a un server.\n\nScarica un modello una volta sola e da lì in poi funziona offline. In aereo, in montagna o semplicemente quando preferisci tenere le cose per te.\n\nPRIVATA PER SCELTA\n• Nessun account, niente pubblicità, nessun tracciamento\n• Chat, file e foto restano sul tuo dispositivo\n• Nulla viene inviato a un server\n\nCONFIGURAZIONE INTELLIGENTE\n• Al primo avvio analizza il dispositivo e suggerisce un modello adatto\n• Cambia modello quando vuoi\n• Un indicatore di velocità ti fa scegliere tra rapidità e intelligenza\n\nMODELLI APERTI\n• Famiglie di modelli aperti come Qwen, Gemma, LFM e MiniCPM\n• Scaricati una volta da Hugging Face, poi completamente offline\n• Se preferisci, modelli che rispondono più liberamente\n\nPENSATA PER LE COSE VERE\n• Alcuni modelli capiscono foto e screenshot\n• Allega documenti, come i PDF\n• Dettatura vocale sul dispositivo\n• Risposte formattate in markdown e codice\n• Cronologia delle chat con esportazione\n• Interfaccia in 11 lingue\n• Tema chiaro e scuro che segue il dispositivo\n\nGratis AI è realizzata da Taofu B.V. nei Paesi Bassi. Domande o idee? Scrivi a support@taofu.xyz.",
+      "keywords": "offline,chatbot,assistente,llm,chat,qwen,gemma,privacy,senza account,gratuita,scrivere"
+    },
+    "play": {
+      "title": "Gratis AI: IA gratis e privata",
+      "short_description": "IA gratis e privata che gira in locale sul tuo dispositivo. Senza account.",
+      "full_description": "Gratis AI è un assistente IA gratuito che funziona sul tuo dispositivo. Fai domande, scrivi, trova idee, riassumi documenti o chiedi qualcosa su una foto, senza inviare nemmeno una parola a un server.\n\nScarica un modello una volta sola e da lì in poi funziona offline. In aereo, in montagna o semplicemente quando preferisci tenere le cose per te.\n\nPRIVATA PER SCELTA\n• Nessun account, niente pubblicità, nessun tracciamento\n• Chat, file e foto restano sul tuo dispositivo\n• Nulla viene inviato a un server\n\nCONFIGURAZIONE INTELLIGENTE\n• Al primo avvio analizza il dispositivo e suggerisce un modello adatto\n• Cambia modello quando vuoi\n• Un indicatore di velocità ti fa scegliere tra rapidità e intelligenza\n\nMODELLI APERTI\n• Famiglie di modelli aperti come Qwen, Gemma, LFM e MiniCPM\n• Scaricati una volta da Hugging Face, poi completamente offline\n• Se preferisci, modelli che rispondono più liberamente\n\nPENSATA PER LE COSE VERE\n• Alcuni modelli capiscono foto e screenshot\n• Allega documenti, come i PDF\n• Dettatura vocale sul dispositivo\n• Risposte formattate in markdown e codice\n• Cronologia delle chat con esportazione\n• Interfaccia in 11 lingue\n• Tema chiaro e scuro che segue il dispositivo\n\nGratis AI è realizzata da Taofu B.V. nei Paesi Bassi. Domande o idee? Scrivi a support@taofu.xyz."
+    },
+    "captions": [
+      "La tua IA, privata e locale",
+      "Risposte locali, anche offline",
+      "Sceglie il modello giusto per te",
+      "Un download, poi offline",
+      "Chiaro o scuro, decidi tu"
+    ]
+  },
+  "ja": {
+    "apple_locale": "ja",
+    "play_locale": "ja-JP",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "無料でプライベートなローカルAI",
+      "promotional_text": "オープンなAIモデルが、あなたの端末の中だけで動きます。アカウント不要、広告なし、トラッキングなし。会話はあなたの手元から出ません。",
+      "description": "Gratis AIは、あなたの端末の上で動く無料のAIアシスタントです。質問、文章作成、アイデア出し、資料の要約、写真についての質問まで。サーバーには一文字も送りません。\n\nモデルは一度ダウンロードするだけ。その後はオフラインで使えます。機内でも、山の中でも、人に見せたくないことを考えるときでも。\n\nプライバシー第一\n• アカウント不要、広告なし、トラッキングなし\n• チャット、ファイル、写真は端末の中に残ります\n• サーバーには何も送信しません\n\nかんたんセットアップ\n• 初回起動時に端末をチェックし、合うモデルを提案\n• モデルはいつでも切り替え可能\n• スピードゲージで「速さ」と「賢さ」のバランスを調整\n\nオープンなモデル\n• Qwen、Gemma、LFM、MiniCPMなどのオープンモデル\n• Hugging Faceから一度ダウンロードすれば、あとは完全オフライン\n• お好みで、より自由に答えるモデルも選べます\n\n毎日の作業に\n• 写真やスクリーンショットを理解するモデルも\n• PDFなどのドキュメントを添付\n• 端末内で処理する音声入力\n• Markdownとコードを見やすく表示\n• チャット履歴とエクスポート\n• 11の表示言語\n• 端末に合わせて切り替わるライト／ダークモード\n\nGratis AIはオランダのTaofu B.V.が開発しています。ご質問やご意見は support@taofu.xyz までお寄せください。",
+      "keywords": "オフライン,チャット,アシスタント,LLM,端末内,Qwen,Gemma,文章作成"
+    },
+    "play": {
+      "title": "Gratis AI: 無料・プライベートなAI",
+      "short_description": "無料でプライベート。あなたの端末でローカルに動くAI。アカウント不要。",
+      "full_description": "Gratis AIは、あなたの端末の上で動く無料のAIアシスタントです。質問、文章作成、アイデア出し、資料の要約、写真についての質問まで。サーバーには一文字も送りません。\n\nモデルは一度ダウンロードするだけ。その後はオフラインで使えます。機内でも、山の中でも、人に見せたくないことを考えるときでも。\n\nプライバシー第一\n• アカウント不要、広告なし、トラッキングなし\n• チャット、ファイル、写真は端末の中に残ります\n• サーバーには何も送信しません\n\nかんたんセットアップ\n• 初回起動時に端末をチェックし、合うモデルを提案\n• モデルはいつでも切り替え可能\n• スピードゲージで「速さ」と「賢さ」のバランスを調整\n\nオープンなモデル\n• Qwen、Gemma、LFM、MiniCPMなどのオープンモデル\n• Hugging Faceから一度ダウンロードすれば、あとは完全オフライン\n• お好みで、より自由に答えるモデルも選べます\n\n毎日の作業に\n• 写真やスクリーンショットを理解するモデルも\n• PDFなどのドキュメントを添付\n• 端末内で処理する音声入力\n• Markdownとコードを見やすく表示\n• チャット履歴とエクスポート\n• 11の表示言語\n• 端末に合わせて切り替わるライト／ダークモード\n\nGratis AIはオランダのTaofu B.V.が開発しています。ご質問やご意見は support@taofu.xyz までお寄せください。"
+    },
+    "captions": [
+      "あなたのAIを、あなたの端末で。",
+      "端末内で回答、オフラインでも",
+      "端末に合うモデルを提案",
+      "一度ダウンロード、あとはオフライン",
+      "ライトもダークも、お好みで"
+    ]
+  },
+  "nl": {
+    "apple_locale": "nl-NL",
+    "play_locale": "nl-NL",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "Gratis en privé: lokale AI",
+      "promotional_text": "Chat met open AI-modellen die volledig op je eigen toestel draaien. Geen account, geen advertenties, geen tracking. Je gesprekken blijven van jou.",
+      "description": "Gratis AI is een gratis AI-assistent die op je eigen toestel draait. Stel vragen, schrijf teksten, brainstorm, vat documenten samen of vraag iets over een foto, zonder dat er ook maar één woord naar een server gaat.\n\nDownload een model één keer en daarna werkt alles offline. In het vliegtuig, in de bergen, of gewoon wanneer je iets liever voor jezelf houdt.\n\nPRIVÉ VANAF HET BEGIN\n• Geen account, geen advertenties, geen tracking\n• Chats, bestanden en foto's blijven op je toestel\n• Er gaat niets naar een server\n\nSLIM VAN START\n• Controleert bij de eerste start je toestel en stelt een passend model voor\n• Wissel van model wanneer je wilt\n• Met de snelheidsmeter kies je tussen snel en slim\n\nOPEN MODELLEN\n• Open modelfamilies zoals Qwen, Gemma, LFM en MiniCPM\n• Eén keer gedownload van Hugging Face, daarna volledig offline\n• Als je wilt, kies je modellen die vrijer antwoorden\n\nVOOR ECHT WERK\n• Sommige modellen begrijpen foto's en screenshots\n• Voeg documenten toe, zoals pdf's\n• Spraakinvoer op je eigen toestel\n• Nette opmaak voor markdown en code\n• Chatgeschiedenis met export\n• Beschikbaar in 11 talen\n• Lichte en donkere modus die je toestel volgen\n\nGratis AI wordt gemaakt door Taofu B.V. in Nederland. Vragen of ideeën? Mail naar support@taofu.xyz.",
+      "keywords": "offline,chatbot,assistent,llm,chat,qwen,gemma,privacy,taalmodel,geen account,schrijven"
+    },
+    "play": {
+      "title": "Gratis AI: gratis & privé AI",
+      "short_description": "Gratis, privé AI die lokaal op je eigen toestel draait. Geen account, offline.",
+      "full_description": "Gratis AI is een gratis AI-assistent die op je eigen toestel draait. Stel vragen, schrijf teksten, brainstorm, vat documenten samen of vraag iets over een foto, zonder dat er ook maar één woord naar een server gaat.\n\nDownload een model één keer en daarna werkt alles offline. In het vliegtuig, in de bergen, of gewoon wanneer je iets liever voor jezelf houdt.\n\nPRIVÉ VANAF HET BEGIN\n• Geen account, geen advertenties, geen tracking\n• Chats, bestanden en foto's blijven op je toestel\n• Er gaat niets naar een server\n\nSLIM VAN START\n• Controleert bij de eerste start je toestel en stelt een passend model voor\n• Wissel van model wanneer je wilt\n• Met de snelheidsmeter kies je tussen snel en slim\n\nOPEN MODELLEN\n• Open modelfamilies zoals Qwen, Gemma, LFM en MiniCPM\n• Eén keer gedownload van Hugging Face, daarna volledig offline\n• Als je wilt, kies je modellen die vrijer antwoorden\n\nVOOR ECHT WERK\n• Sommige modellen begrijpen foto's en screenshots\n• Voeg documenten toe, zoals pdf's\n• Spraakinvoer op je eigen toestel\n• Nette opmaak voor markdown en code\n• Chatgeschiedenis met export\n• Beschikbaar in 11 talen\n• Lichte en donkere modus die je toestel volgen\n\nGratis AI wordt gemaakt door Taofu B.V. in Nederland. Vragen of ideeën? Mail naar support@taofu.xyz."
+    },
+    "captions": [
+      "Jouw AI. Jouw toestel. Privé.",
+      "Antwoord op je toestel, offline",
+      "Kiest een model dat past",
+      "Eén download, daarna offline",
+      "Licht of donker, jij kiest"
+    ]
+  },
+  "pl": {
+    "apple_locale": "pl",
+    "play_locale": "pl-PL",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "Darmowa, prywatna, lokalna AI",
+      "promotional_text": "Rozmawiaj z otwartymi modelami AI, które działają w całości na Twoim urządzeniu. Bez konta, bez reklam, bez śledzenia. Twoje rozmowy zostają u Ciebie.",
+      "description": "Gratis AI to darmowy asystent AI, który działa na Twoim urządzeniu. Zadawaj pytania, pisz, szukaj pomysłów, streszczaj dokumenty albo pytaj o zdjęcia, nie wysyłając ani słowa na serwer.\n\nPobierz model raz, a potem wszystko działa offline. W samolocie, w górach albo po prostu wtedy, gdy wolisz zachować coś dla siebie.\n\nPRYWATNOŚĆ OD POCZĄTKU\n• Bez konta, bez reklam, bez śledzenia\n• Czaty, pliki i zdjęcia zostają na Twoim urządzeniu\n• Nic nie jest wysyłane na serwer\n\nSPRYTNY START\n• Przy pierwszym uruchomieniu sprawdza urządzenie i proponuje pasujący model\n• Zmieniaj model w dowolnej chwili\n• Wskaźnik szybkości pozwala wybrać między tempem a inteligencją\n\nOTWARTE MODELE\n• Rodziny otwartych modeli, takie jak Qwen, Gemma, LFM i MiniCPM\n• Pobierane raz z Hugging Face, potem w pełni offline\n• Jeśli chcesz, wybierz modele, które odpowiadają swobodniej\n\nDO PRAWDZIWEJ PRACY\n• Niektóre modele rozumieją zdjęcia i zrzuty ekranu\n• Dołączaj dokumenty, np. pliki PDF\n• Wprowadzanie głosowe na urządzeniu\n• Formatowanie markdown i kodu\n• Historia czatów z eksportem\n• Interfejs w 11 językach\n• Jasny i ciemny motyw zgodny z urządzeniem\n\nGratis AI tworzy Taofu B.V. z Holandii. Pytania lub pomysły? Napisz na support@taofu.xyz.",
+      "keywords": "offline,chatbot,asystent,llm,czat,qwen,gemma,prywatność,bez konta,sztuczna inteligencja"
+    },
+    "play": {
+      "title": "Gratis AI: darmowa i prywatna",
+      "short_description": "Darmowa, prywatna AI działająca lokalnie na Twoim urządzeniu. Bez konta.",
+      "full_description": "Gratis AI to darmowy asystent AI, który działa na Twoim urządzeniu. Zadawaj pytania, pisz, szukaj pomysłów, streszczaj dokumenty albo pytaj o zdjęcia, nie wysyłając ani słowa na serwer.\n\nPobierz model raz, a potem wszystko działa offline. W samolocie, w górach albo po prostu wtedy, gdy wolisz zachować coś dla siebie.\n\nPRYWATNOŚĆ OD POCZĄTKU\n• Bez konta, bez reklam, bez śledzenia\n• Czaty, pliki i zdjęcia zostają na Twoim urządzeniu\n• Nic nie jest wysyłane na serwer\n\nSPRYTNY START\n• Przy pierwszym uruchomieniu sprawdza urządzenie i proponuje pasujący model\n• Zmieniaj model w dowolnej chwili\n• Wskaźnik szybkości pozwala wybrać między tempem a inteligencją\n\nOTWARTE MODELE\n• Rodziny otwartych modeli, takie jak Qwen, Gemma, LFM i MiniCPM\n• Pobierane raz z Hugging Face, potem w pełni offline\n• Jeśli chcesz, wybierz modele, które odpowiadają swobodniej\n\nDO PRAWDZIWEJ PRACY\n• Niektóre modele rozumieją zdjęcia i zrzuty ekranu\n• Dołączaj dokumenty, np. pliki PDF\n• Wprowadzanie głosowe na urządzeniu\n• Formatowanie markdown i kodu\n• Historia czatów z eksportem\n• Interfejs w 11 językach\n• Jasny i ciemny motyw zgodny z urządzeniem\n\nGratis AI tworzy Taofu B.V. z Holandii. Pytania lub pomysły? Napisz na support@taofu.xyz."
+    },
+    "captions": [
+      "Twoja AI. Twoje urządzenie.",
+      "Odpowiada lokalnie, też offline",
+      "Dobiera model do urządzenia",
+      "Jedno pobranie, potem offline",
+      "Jasny czy ciemny – Ty wybierasz"
+    ]
+  },
+  "pt": {
+    "apple_locale": "pt-BR",
+    "play_locale": "pt-BR",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "IA local, grátis e privada",
+      "promotional_text": "Converse com modelos de IA abertos que rodam inteiramente no seu aparelho. Sem conta, sem anúncios, sem rastreamento. Suas conversas ficam com você.",
+      "description": "Gratis AI é um assistente de IA gratuito que roda no seu próprio aparelho. Faça perguntas, escreva, tenha ideias, resuma documentos ou pergunte sobre uma foto, sem mandar uma única palavra para um servidor.\n\nBaixe um modelo uma vez e, depois disso, tudo funciona offline. No avião, na praia ou simplesmente quando você prefere guardar as coisas para si.\n\nPRIVADO DESDE O INÍCIO\n• Sem conta, sem anúncios, sem rastreamento\n• Conversas, arquivos e fotos ficam no seu aparelho\n• Nada é enviado para um servidor\n\nCONFIGURAÇÃO INTELIGENTE\n• Na primeira abertura, analisa o aparelho e sugere um modelo adequado\n• Troque de modelo quando quiser\n• Um medidor de velocidade equilibra rapidez e inteligência\n\nMODELOS ABERTOS\n• Famílias de modelos abertos como Qwen, Gemma, LFM e MiniCPM\n• Baixados uma vez do Hugging Face, depois totalmente offline\n• Se preferir, escolha modelos que respondem com mais liberdade\n\nFEITO PARA O DIA A DIA\n• Alguns modelos entendem fotos e capturas de tela\n• Anexe documentos, como PDFs\n• Entrada de voz no próprio aparelho\n• Respostas com markdown e código formatados\n• Histórico de conversas com exportação\n• Interface em 11 idiomas\n• Modo claro e escuro que acompanham o aparelho\n\nGratis AI é feito pela Taofu B.V., na Holanda. Dúvidas ou ideias? Escreva para support@taofu.xyz.",
+      "keywords": "offline,chatbot,assistente,llm,chat,qwen,gemma,privacidade,sem conta,gratuito,escrever"
+    },
+    "play": {
+      "title": "Gratis AI: IA grátis e privada",
+      "short_description": "IA grátis e privada que roda localmente no seu aparelho. Sem conta, offline.",
+      "full_description": "Gratis AI é um assistente de IA gratuito que roda no seu próprio aparelho. Faça perguntas, escreva, tenha ideias, resuma documentos ou pergunte sobre uma foto, sem mandar uma única palavra para um servidor.\n\nBaixe um modelo uma vez e, depois disso, tudo funciona offline. No avião, na praia ou simplesmente quando você prefere guardar as coisas para si.\n\nPRIVADO DESDE O INÍCIO\n• Sem conta, sem anúncios, sem rastreamento\n• Conversas, arquivos e fotos ficam no seu aparelho\n• Nada é enviado para um servidor\n\nCONFIGURAÇÃO INTELIGENTE\n• Na primeira abertura, analisa o aparelho e sugere um modelo adequado\n• Troque de modelo quando quiser\n• Um medidor de velocidade equilibra rapidez e inteligência\n\nMODELOS ABERTOS\n• Famílias de modelos abertos como Qwen, Gemma, LFM e MiniCPM\n• Baixados uma vez do Hugging Face, depois totalmente offline\n• Se preferir, escolha modelos que respondem com mais liberdade\n\nFEITO PARA O DIA A DIA\n• Alguns modelos entendem fotos e capturas de tela\n• Anexe documentos, como PDFs\n• Entrada de voz no próprio aparelho\n• Respostas com markdown e código formatados\n• Histórico de conversas com exportação\n• Interface em 11 idiomas\n• Modo claro e escuro que acompanham o aparelho\n\nGratis AI é feito pela Taofu B.V., na Holanda. Dúvidas ou ideias? Escreva para support@taofu.xyz."
+    },
+    "captions": [
+      "Sua IA. Seu aparelho. Privada.",
+      "Respostas no aparelho, offline",
+      "Escolhe um modelo sob medida",
+      "Um download, depois offline",
+      "Claro ou escuro, você escolhe"
+    ]
+  },
+  "ru": {
+    "apple_locale": "ru",
+    "play_locale": "ru-RU",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "Бесплатный и приватный ИИ",
+      "promotional_text": "Открытые модели ИИ, которые работают локально, целиком на вашем устройстве. Без аккаунта, без рекламы, без слежки. Ваши разговоры остаются у вас.",
+      "description": "Gratis AI — бесплатный ИИ-ассистент, который работает прямо на вашем устройстве. Задавайте вопросы, пишите тексты, ищите идеи, делайте выжимки из документов или спрашивайте о фото — и ни одно слово не уйдёт на сервер.\n\nСкачайте модель один раз, и дальше всё работает офлайн. В самолёте, в горах или просто когда хочется оставить что-то при себе.\n\nПРИВАТНОСТЬ ПО УМОЛЧАНИЮ\n• Без аккаунта, без рекламы, без слежки\n• Чаты, файлы и фото остаются на устройстве\n• Ничего не отправляется на сервер\n\nУМНЫЙ СТАРТ\n• При первом запуске приложение проверяет устройство и предлагает подходящую модель\n• Меняйте модель в любой момент\n• Шкала скорости помогает выбрать между быстротой и сообразительностью\n\nОТКРЫТЫЕ МОДЕЛИ\n• Семейства открытых моделей: Qwen, Gemma, LFM, MiniCPM и другие\n• Скачиваются один раз с Hugging Face, затем полностью офлайн\n• По желанию — модели, которые отвечают свободнее\n\nДЛЯ НАСТОЯЩИХ ЗАДАЧ\n• Некоторые модели понимают фото и скриншоты\n• Прикрепляйте документы, например PDF\n• Голосовой ввод прямо на устройстве\n• Аккуратное оформление markdown и кода\n• История чатов с экспортом\n• Интерфейс на 11 языках\n• Светлая и тёмная тема, как на вашем устройстве\n\nGratis AI создаёт Taofu B.V. (Нидерланды). Вопросы или идеи? Пишите на support@taofu.xyz.",
+      "keywords": "офлайн,чатбот,ассистент,llm,qwen,gemma,нейросеть,локальный"
+    },
+    "play": {
+      "title": "Gratis AI: приватный ИИ",
+      "short_description": "Бесплатный приватный ИИ, который работает локально на вашем устройстве.",
+      "full_description": "Gratis AI — бесплатный ИИ-ассистент, который работает прямо на вашем устройстве. Задавайте вопросы, пишите тексты, ищите идеи, делайте выжимки из документов или спрашивайте о фото — и ни одно слово не уйдёт на сервер.\n\nСкачайте модель один раз, и дальше всё работает офлайн. В самолёте, в горах или просто когда хочется оставить что-то при себе.\n\nПРИВАТНОСТЬ ПО УМОЛЧАНИЮ\n• Без аккаунта, без рекламы, без слежки\n• Чаты, файлы и фото остаются на устройстве\n• Ничего не отправляется на сервер\n\nУМНЫЙ СТАРТ\n• При первом запуске приложение проверяет устройство и предлагает подходящую модель\n• Меняйте модель в любой момент\n• Шкала скорости помогает выбрать между быстротой и сообразительностью\n\nОТКРЫТЫЕ МОДЕЛИ\n• Семейства открытых моделей: Qwen, Gemma, LFM, MiniCPM и другие\n• Скачиваются один раз с Hugging Face, затем полностью офлайн\n• По желанию — модели, которые отвечают свободнее\n\nДЛЯ НАСТОЯЩИХ ЗАДАЧ\n• Некоторые модели понимают фото и скриншоты\n• Прикрепляйте документы, например PDF\n• Голосовой ввод прямо на устройстве\n• Аккуратное оформление markdown и кода\n• История чатов с экспортом\n• Интерфейс на 11 языках\n• Светлая и тёмная тема, как на вашем устройстве\n\nGratis AI создаёт Taofu B.V. (Нидерланды). Вопросы или идеи? Пишите на support@taofu.xyz."
+    },
+    "captions": [
+      "Ваш ИИ. Ваше устройство.",
+      "Ответы на устройстве, офлайн",
+      "Подберёт модель под устройство",
+      "Одна загрузка — и офлайн",
+      "Светлая или тёмная — решать вам"
+    ]
+  },
+  "zh": {
+    "apple_locale": "zh-Hans",
+    "play_locale": "zh-CN",
+    "apple": {
+      "name": "Gratis AI",
+      "subtitle": "免费、私密的本地 AI",
+      "promotional_text": "开放 AI 模型完全在你的设备上运行。无需账号，无广告，无追踪。你的对话只属于你。",
+      "description": "Gratis AI 是一款在你自己的设备上运行的免费 AI 助手。提问、写作、头脑风暴、总结文档，或者针对一张照片提问——不会有一个字发送到服务器。\n\n模型只需下载一次，之后即可离线使用。在飞机上、在山里，或者只是想把一些事情留给自己的时候。\n\n隐私优先\n• 无需账号，无广告，无追踪\n• 聊天、文件和照片都保存在你的设备上\n• 不向任何服务器发送数据\n\n轻松上手\n• 首次启动时检测设备，并推荐合适的模型\n• 随时切换模型\n• 速度调节，在快速与聪明之间自由取舍\n\n开放模型\n• Qwen、Gemma、LFM、MiniCPM 等开放模型系列\n• 从 Hugging Face 下载一次，之后完全离线\n• 如果你愿意，也可以选择回答更自由的模型\n\n日常好帮手\n• 部分模型能看懂照片和截图\n• 可附加 PDF 等文档\n• 设备端语音输入\n• 支持 Markdown 和代码格式\n• 聊天记录，可导出\n• 11 种界面语言\n• 浅色和深色模式，跟随设备设置\n\nGratis AI 由荷兰的 Taofu B.V. 开发。有问题或建议？请发送邮件至 support@taofu.xyz。",
+      "keywords": "离线,聊天,助手,LLM,端侧,大模型,Qwen,Gemma,隐私,写作"
+    },
+    "play": {
+      "title": "Gratis AI：免费私密 AI",
+      "short_description": "免费、私密的 AI，完全在你的设备本地运行。无需账号，可离线使用。",
+      "full_description": "Gratis AI 是一款在你自己的设备上运行的免费 AI 助手。提问、写作、头脑风暴、总结文档，或者针对一张照片提问——不会有一个字发送到服务器。\n\n模型只需下载一次，之后即可离线使用。在飞机上、在山里，或者只是想把一些事情留给自己的时候。\n\n隐私优先\n• 无需账号，无广告，无追踪\n• 聊天、文件和照片都保存在你的设备上\n• 不向任何服务器发送数据\n\n轻松上手\n• 首次启动时检测设备，并推荐合适的模型\n• 随时切换模型\n• 速度调节，在快速与聪明之间自由取舍\n\n开放模型\n• Qwen、Gemma、LFM、MiniCPM 等开放模型系列\n• 从 Hugging Face 下载一次，之后完全离线\n• 如果你愿意，也可以选择回答更自由的模型\n\n日常好帮手\n• 部分模型能看懂照片和截图\n• 可附加 PDF 等文档\n• 设备端语音输入\n• 支持 Markdown 和代码格式\n• 聊天记录，可导出\n• 11 种界面语言\n• 浅色和深色模式，跟随设备设置\n\nGratis AI 由荷兰的 Taofu B.V. 开发。有问题或建议？请发送邮件至 support@taofu.xyz。"
+    },
+    "captions": [
+      "你的 AI，只在你的设备上",
+      "设备端作答，离线也能用",
+      "为你的设备挑选合适模型",
+      "下载一次，从此离线",
+      "浅色深色，随你喜欢"
+    ]
+  }
+}

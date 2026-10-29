@@ -1,5 +1,4 @@
-const { app, BrowserWindow, ipcMain, utilityProcess, session, nativeTheme } = require( `electron` )
-const { autoUpdater } = require( `electron-updater` )
+const { app, BrowserWindow, ipcMain, utilityProcess, session, nativeTheme, shell } = require( `electron` )
 const path = require( `path` )
 const fs = require( `fs` )
 const os = require( `os` )
@@ -62,6 +61,10 @@ let inference_worker = null
 let active_download_controller = null
 let _is_quitting = false
 let _updater_active = false
+
+// electron-updater, loaded only once auto-update is enabled (never in Mac App Store
+// builds: MAS Electron ships without Squirrel and the store owns updates)
+let autoUpdater = null
 
 // ---------------------------------------------------
 // Vision sidecar — models with an mmproj projector run in
@@ -408,6 +411,12 @@ const create_window = () => {
             contextIsolation: true,
             nodeIntegration: false,
         },
+    } )
+
+    // Links in answers and the "report" mail open in the system browser / mail app, never a new app window
+    main_window.webContents.setWindowOpenHandler( ( { url } ) => {
+        if( /^(https?|mailto):/.test( url ) ) shell.openExternal( url )
+        return { action: `deny` }
     } )
 
     // Load the renderer
@@ -795,6 +804,9 @@ const setup_auto_updater = () => {
     // automatically, so we must NOT call setFeedURL() manually.
     if( !app.isPackaged ) return
 
+    // Mac App Store: the store installs updates, a self-updater is grounds for rejection
+    if( process.mas ) return
+
     // Linux can only self-update an AppImage; other installs have no APPIMAGE env and the updater would error
     if( process.platform === `linux` && !process.env.APPIMAGE ) {
         console.log( `[updater] Not running from an AppImage, auto-update disabled` )
@@ -802,6 +814,7 @@ const setup_auto_updater = () => {
     }
 
     _updater_active = true
+    ;( { autoUpdater } = require( `electron-updater` ) )
 
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
@@ -896,8 +909,10 @@ const setup_runpod_cors = () => {
 
 }
 
-// Single instance: a second launch would start a second inference worker on the same models dir
-const has_instance_lock = app.requestSingleInstanceLock()
+// Single instance: a second launch would start a second inference worker on the same models dir.
+// Mac App Store: LaunchServices already keeps one instance, and the lock's socket is not worth
+// a sandbox surprise (a failed lock would quit the app on every launch)
+const has_instance_lock = process.mas || app.requestSingleInstanceLock()
 if( !has_instance_lock ) app.quit()
 
 // Focus the existing window instead

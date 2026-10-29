@@ -541,3 +541,12 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Android 12+ ignores `@drawable/splash`; `windowSplashScreenBackground` = `@color/app_background` (values / values-night).
 - iOS home-screen icon can stay cached after an update over Wi-Fi install; the IPA's icon is right (decode CgBI PNG to check).
 - Phones: OnePlus blocks `screenrecord`; burst `screencap` on-device inside one `adb shell` to catch splashes.
+
+## Mac App Store build (2026-10-29)
+- `mas:` deep-merges `mac:` → it inherits `hardenedRuntime: true` unless overridden; MAS keeps it `false` (inherit-only helpers can't carry JIT entitlements).
+- Info.plist for the mas build comes from `mac.extendInfo`; `mas.extendInfo` is silently ignored (verified with a Linux `--mac mas --dir` pack).
+- Inherit plist must stay exactly `app-sandbox` + `inherit`; extra keys on a helper = crash at launch / ASC rejection. Rights (network.server for llama-server's 127.0.0.1 listener) go in the parent plist.
+- Without `network.server` the sandbox blocks loopback `listen()` → vision sidecar + `find_free_port` fail (text chat still works via node-llama-cpp, so it looks like "no vision").
+- Profile has no `application-groups`; osx-sign `preAutoEntitlements` adds `TEAMID.bundle` + application-identifier to the top app only. Team-prefixed groups need no profile entry on macOS.
+- MAC_APP_DISTRIBUTION cert CN = "3rd Party Mac Developer Application: Taofu B.V. (2GQT3SY42B)", installer = "3rd Party Mac Developer Installer: …"; electron-builder finds them by those prefixes (it also accepts "Apple Distribution" for the app).
+- Linux can pack `--mac mas --dir` (skips signing) but symlinked node_modules spams "cannot find path for dependency" — harmless there.
