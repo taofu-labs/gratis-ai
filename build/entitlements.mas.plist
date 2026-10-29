@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Mac App Store: every executable runs in the App Sandbox. Writes land in
+         ~/Library/Containers/com.trueperformancenetwork.gratis (app.getPath('userData')) -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!-- Model downloads (Hugging Face), checksum lookups, RunPod cloud inference -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- The llama-server vision sidecar (and the free-port probe in main) listen on 127.0.0.1.
+         The sandbox blocks listening sockets, loopback included, without this -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+
+    <!-- Open / save panels: import a GGUF, attach files, export chats -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+
+    <!-- V8 JIT + node-llama-cpp natives. Only enforced under the hardened runtime, which the
+         mas build leaves off (electron-builder default); kept so turning it on does not break V8 -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- com.apple.application-identifier, com.apple.developer.team-identifier and the
+         application-groups entry Electron's IPC needs are added at signing time by
+         @electron/osx-sign (preAutoEntitlements) from the provisioning profile -->
+</dict>
+</plist>

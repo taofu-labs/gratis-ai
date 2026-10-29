@@ -7,6 +7,7 @@
 | Desktop | GitHub Releases of taofu-labs/gratis-ai | `release-electron.yml` when `package.json` version changes on `main` (failed draft → fix, push, `gh workflow run release-electron.yml`) |
 | Android (testing) | Play Console, app `com.trueperformancenetwork.gratis`, **internal** track, testers list "Gratis internal testers" | CI `Mobile apps` artifact → `PATH=vendor/android/jdk/bin:$PATH node scripts/play_internal.js app-release.aab` (signs with upload key; needs `jarsigner`, from `scripts/android_toolchain.sh`) |
 | iOS (testing) | App Store Connect app 6827061396 "Gratis AI", TestFlight internal group "Gratis internal" (all builds) | CI artifact → `node scripts/ios_testflight.js gratis-unsigned.ipa --tester <ASC user>` (zsign + ASC build upload API) |
+| macOS App Store (not live yet) | ASC app 6827061396 (needs macOS platform added) | `release-mac-app-store.yml` (dispatch) → altool upload; secrets + steps in HUMAN.md |
 
 Every store upload needs a new `package.json` version (build = major·10000 + minor·100 + patch). First store builds: 0.48.0 (4800), 2026-10-26.
 
