@@ -1,6 +1,4 @@
 {
-  "version": "0.55.0",
-  "build": "5500",
   "copyright": "© 2026 Taofu B.V.",
   "content_rights": "USES_THIRD_PARTY_CONTENT",
   "primary_category": "PRODUCTIVITY",
@@ -8,7 +6,9 @@
   "privacy_url": "https://gratis.trueperformancenetwork.com/privacy",
   "support_url": "https://gratis.trueperformancenetwork.com/support",
   "marketing_url": "https://gratis.trueperformancenetwork.com/",
-  "excluded_territories": [ "CHN" ],
+  "excluded_territories": [
+    "CHN"
+  ],
   "review": {
     "contactFirstName": "Mikel",
     "contactLastName": "Palokaj",
@@ -41,8 +41,21 @@
     "violenceRealistic": "INFREQUENT_OR_MILD",
     "violenceRealisticProlongedGraphicOrSadistic": "NONE"
   },
-  "screenshot_types": {
-    "iphone": "APP_IPHONE_67",
-    "ipad": "APP_IPAD_PRO_3GEN_129"
+  "platforms": {
+    "IOS": {
+      "version": "0.55.0",
+      "build": "5500",
+      "screenshot_types": {
+        "iphone": "APP_IPHONE_67",
+        "ipad": "APP_IPAD_PRO_3GEN_129"
+      }
+    },
+    "MAC_OS": {
+      "version": "0.55.0",
+      "build": null,
+      "screenshot_types": {
+        "mac": "APP_DESKTOP"
+      }
+    }
   }
 }
