@@ -13,12 +13,15 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <!-- Dark-only app (src/styles/theme.js): no white strips behind the system bars -->
+        <!-- Theme page colour (values / values-night): no stray strips behind the system bars -->
         <item name="android:windowBackground">@color/app_background</item>
     </style>
 
 
+    <!-- Android 12+ system splash: launcher bunny on the theme's page colour -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/app_background</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>
