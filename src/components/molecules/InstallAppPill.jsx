@@ -38,7 +38,7 @@ export default function InstallAppPill() {
     if( window.electronAPI?.native_inference ) return null
 
     // Off the chat (its input and sidebar footer own the bottom edge) and the app page itself
-    const out_of_place = pathname.startsWith( `/chat` ) || pathname === `/get-app`
+    const out_of_place = pathname.startsWith( `/chat` ) || [ `/get-app`, `/privacy`, `/terms`, `/support` ].includes( pathname )
 
     // Desktop has native apps; phones install the PWA (iOS only by hand)
     const install = is_standalone() || out_of_place ? null

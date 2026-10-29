@@ -89,5 +89,8 @@
     "update_app_offline": "You're offline. Connect to the internet to update.",
 
     "speed_tips": "Speed tips in chat",
-    "speed_tips_description": "Once per session, suggest a faster model when replies are slow, or a smarter one when they are very fast."
+    "speed_tips_description": "Once per session, suggest a faster model when replies are slow, or a smarter one when they are very fast.",
+    "privacy_link": "Privacy policy",
+    "terms_link": "Terms of use",
+    "support_link": "Support"
 }

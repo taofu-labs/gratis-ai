@@ -81,5 +81,8 @@
     "update_app_offline": "Du bist offline. Verbinde dich mit dem Internet, um zu aktualisieren.",
 
     "speed_tips": "Tempo-Tipps im Chat",
-    "speed_tips_description": "Einmal pro Sitzung: ein schnelleres Modell vorschlagen, wenn Antworten langsam sind, oder ein klügeres, wenn sie sehr schnell sind."
+    "speed_tips_description": "Einmal pro Sitzung: ein schnelleres Modell vorschlagen, wenn Antworten langsam sind, oder ein klügeres, wenn sie sehr schnell sind.",
+    "privacy_link": "Datenschutz",
+    "terms_link": "Nutzungsbedingungen",
+    "support_link": "Support"
 }

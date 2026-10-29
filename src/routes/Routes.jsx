@@ -18,6 +18,7 @@ const ModelSelectPage = lazy( preload( () => import( '../components/pages/ModelS
 const DownloadPage = lazy( preload( () => import( '../components/pages/DownloadPage' ) ) )
 const ChatPage = lazy( preload( () => import( '../components/pages/ChatPage' ) ) )
 const GetAppPage = lazy( preload( () => import( '../components/pages/GetAppPage' ) ) )
+const LegalPage = lazy( preload( () => import( '../components/pages/LegalPage' ) ) )
 const NotFoundPage = lazy( preload( () => import( '../components/pages/NotFoundPage' ) ) )
 
 /**
@@ -42,6 +43,7 @@ export default function Routes() {
             <Route path="/download" element={ <DownloadPage /> } />
             <Route path="/chat/:id?" element={ <ChatPage /> } />
             <Route path="/get-app" element={ <GetAppPage /> } />
+            { [ `privacy`, `terms`, `support` ].map( page => <Route key={ page } path={ `/${ page }` } element={ <LegalPage /> } /> ) }
             <Route path="*" element={ <NotFoundPage /> } />
         </RouterRoutes>
     </Suspense>

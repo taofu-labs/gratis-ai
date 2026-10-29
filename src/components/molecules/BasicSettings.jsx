@@ -2,6 +2,7 @@ import { useId } from 'react'
 import styled from 'styled-components'
 import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import Switch from '../atoms/Switch'
 import toast from 'react-hot-toast'
 import Button from '../atoms/Button'
@@ -70,6 +71,26 @@ const AboutRow = styled.div`
     margin-top: ${ ( { theme } ) => theme.spacing.md };
     font-size: 0.75rem;
     color: ${ ( { theme } ) => theme.colors.text_muted };
+`
+
+// Privacy policy, terms and support, reachable from inside the app as the stores require
+const LegalLinks = styled.nav`
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${ ( { theme } ) => theme.spacing.md };
+    margin-top: ${ ( { theme } ) => theme.spacing.sm };
+    font-size: 0.8125rem;
+
+    a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.75rem;
+        color: ${ ( { theme } ) => theme.colors.text_secondary };
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+    }
+
+    a:hover { color: ${ ( { theme } ) => theme.colors.text }; }
 `
 
 const BuildInfo = styled.span`
@@ -164,6 +185,11 @@ export default function BasicSettings( {
                 <RefreshCw size={ 16 } /> { t( update_ready ? `common:update_ready` : `update_app` ) }
             </Button> }
         </AboutRow>
+        <LegalLinks data-testid="legal-links">
+            <Link to="/privacy">{ t( `privacy_link` ) }</Link>
+            <Link to="/terms">{ t( `terms_link` ) }</Link>
+            <Link to="/support">{ t( `support_link` ) }</Link>
+        </LegalLinks>
 
     </>
 

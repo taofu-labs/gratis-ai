@@ -81,5 +81,8 @@
     "update_app_offline": "Je bent offline. Maak verbinding met internet om bij te werken.",
 
     "speed_tips": "Snelheidstips in de chat",
-    "speed_tips_description": "Eén keer per sessie: een sneller model voorstellen als antwoorden traag zijn, of een slimmer model als ze erg snel zijn."
+    "speed_tips_description": "Eén keer per sessie: een sneller model voorstellen als antwoorden traag zijn, of een slimmer model als ze erg snel zijn.",
+    "privacy_link": "Privacybeleid",
+    "terms_link": "Gebruiksvoorwaarden",
+    "support_link": "Support"
 }

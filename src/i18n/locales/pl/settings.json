@@ -81,5 +81,8 @@
     "update_app_offline": "Jesteś offline. Połącz się z internetem, aby zaktualizować.",
 
     "speed_tips": "Wskazówki o szybkości w czacie",
-    "speed_tips_description": "Raz na sesję zaproponuj szybszy model, gdy odpowiedzi są wolne, lub mądrzejszy, gdy są bardzo szybkie."
+    "speed_tips_description": "Raz na sesję zaproponuj szybszy model, gdy odpowiedzi są wolne, lub mądrzejszy, gdy są bardzo szybkie.",
+    "privacy_link": "Polityka prywatności",
+    "terms_link": "Warunki korzystania",
+    "support_link": "Pomoc"
 }

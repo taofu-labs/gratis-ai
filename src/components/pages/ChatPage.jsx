@@ -592,7 +592,7 @@ export default function ChatPage() {
                     `- **Quantization:** ${ model.quantization } (${ model.bpw } bpw)`,
                     `- **Context length:** ${ model.context_length.toLocaleString() } tokens`,
                     `- **File size:** ${ format_file_size( model.file_size_bytes ) }`,
-                    model.uncensored ? `- **Uncensored:** yes` : null,
+                    model.uncensored ? `- **Answers freely:** yes` : null,
                     model.reasoning ? `- **Reasoning:** yes` : null,
                 ].filter( Boolean ).join( `\n` )
                 : `- _No model loaded_`,

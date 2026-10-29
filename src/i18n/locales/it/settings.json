@@ -81,5 +81,8 @@
     "update_app_offline": "Sei offline. Connettiti a internet per aggiornare.",
 
     "speed_tips": "Suggerimenti sulla velocità in chat",
-    "speed_tips_description": "Una volta per sessione, suggerisce un modello più veloce se le risposte sono lente, o più intelligente se sono molto veloci."
+    "speed_tips_description": "Una volta per sessione, suggerisce un modello più veloce se le risposte sono lente, o più intelligente se sono molto veloci.",
+    "privacy_link": "Privacy",
+    "terms_link": "Termini d’uso",
+    "support_link": "Supporto"
 }
