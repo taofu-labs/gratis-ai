@@ -241,6 +241,27 @@ The `release-electron` workflow builds for macOS (arm64 + x64), Windows (x64), a
 >
 > mac assets keep `-arm64`/`-x64` in zip names and `latest-mac.yml` (electron-updater picks the arch by that token); only the dmgs are copied to `Gratis-mac.dmg` / `Gratis-mac-intel.dmg` for download links.
 
+### Electron → Mac App Store
+
+Separate from the DMG (same bundle id, same ASC app 6827061396 as iOS). arm64 only, sandboxed, no notarization.
+
+| | |
+|---|---|
+| Build | `electron-builder --mac mas --arm64 -c.mas.provisioningProfile=<path> -c.buildVersion=<n>` → `release/Gratis-mas-arm64.pkg` |
+| Config | `mas:` in `electron-builder.yml` (inherits `mac:`; `hardenedRuntime: false`). Info.plist keys only via `mac.extendInfo` |
+| Entitlements | `build/entitlements.mas.plist`: sandbox, network client + **server** (llama-server on 127.0.0.1), user-selected files. `build/entitlements.mas.inherit.plist`: sandbox + inherit only, on every helper / `.node` / llama-server |
+| Runtime | `process.mas` → no electron-updater (not even loaded), no `electronAPI.updater` (update button hidden), no single-instance lock. Data in `~/Library/Containers/com.trueperformancenetwork.gratis/` (not shared with the DMG install) |
+| Signing (once, no Mac) | `node scripts/mac_app_store_signing.js` → Mac App + Mac Installer Distribution certs, `Gratis Mac App Store` profile in `.secrets/apple/mas_*`, secret values in `.secrets/handoff/mas_github_secrets.txt` |
+| CI | Actions → `Release Mac App Store` (dispatch only; `upload: false` = build + verify). Fails up front when a secret is missing |
+| Upload | `xcrun altool --upload-package … --type macos` with the ASC API key; build = major·10000 + minor·100 + patch, so bump `package.json` per upload |
+
+| Secret | Value |
+|---|---|
+| `MAS_APP_P12_BASE64` / `MAS_APP_P12_PASSWORD` | 3rd Party Mac Developer Application identity |
+| `MAS_INSTALLER_P12_BASE64` / `MAS_INSTALLER_P12_PASSWORD` | 3rd Party Mac Developer Installer identity |
+| `MAS_PROVISIONING_PROFILE_BASE64` | `Gratis Mac App Store` profile (changes every script run) |
+| `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_KEY_P8_BASE64` | App Store Connect API key (`.secrets/apple/signing.env` + `.p8`) |
+
 ## Model Selection
 
 The app automatically recommends the best model for your hardware. On first launch it detects GPU capabilities and available memory, then picks the highest-quality model that fits.

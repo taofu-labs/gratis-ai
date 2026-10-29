@@ -40,6 +40,11 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   notarize: true
+  # Info.plist comes from `mac:` for the mas build too (mas.extendInfo is ignored)
+  extendInfo:
+    # App Store only, inert in the DMG: HTTPS-only app is export-compliance exempt,
+    # so App Store Connect skips the encryption question on every upload
+    ITSAppUsesNonExemptEncryption: false
   target:
     - target: dmg
       arch:
@@ -49,6 +54,19 @@ mac:
       arch:
         - arm64
         - x64
+
+# --- Mac App Store (`electron-builder --mac mas --arm64`, see release-mac-app-store.yml) ---
+# Inherits `mac:` above, so everything that differs is overridden here.
+# Signing: CSC_LINK (Apple Distribution / 3rd Party Mac Developer Application .p12) signs the
+# app, CSC_INSTALLER_LINK (3rd Party Mac Developer Installer .p12) signs the .pkg.
+# The provisioning profile is a secret: pass `-c.mas.provisioningProfile=<path>` (never committed).
+# arm64 only: Intel Macs keep the DMG; a universal build would have to lipo llama-server.
+mas:
+  artifactName: "Gratis-mas-${arch}.${ext}"
+  # Sandboxed instead of hardened; on, the inherit-only helpers would lose V8's JIT rights
+  hardenedRuntime: false
+  entitlements: build/entitlements.mas.plist
+  entitlementsInherit: build/entitlements.mas.inherit.plist
 
 # --- Windows ---
 win:

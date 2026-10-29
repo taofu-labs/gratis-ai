@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Mac App Store build (Apple Silicon): sandboxed, updated by the App Store; the downloadable DMG is unchanged
+
 ## [0.54.1] - 2026-10-29
 
 ### Fixed
