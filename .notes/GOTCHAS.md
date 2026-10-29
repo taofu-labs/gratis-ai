@@ -550,3 +550,8 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Profile has no `application-groups`; osx-sign `preAutoEntitlements` adds `TEAMID.bundle` + application-identifier to the top app only. Team-prefixed groups need no profile entry on macOS.
 - MAC_APP_DISTRIBUTION cert CN = "3rd Party Mac Developer Application: Taofu B.V. (2GQT3SY42B)", installer = "3rd Party Mac Developer Installer: …"; electron-builder finds them by those prefixes (it also accepts "Apple Distribution" for the app).
 - Linux can pack `--mac mas --dir` (skips signing) but symlinked node_modules spams "cannot find path for dependency" — harmless there.
+
+## Mac App Store CI (2026-10-29)
+- Never pass both CSC_LINK and CSC_INSTALLER_LINK: electron-builder builds its temp keychain twice and fails `SecKeychainUnlock`. The workflow imports both .p12s into its own keychain (CSC_KEYCHAIN).
+- The mas .pkg lands in `release/mas-arm64/`, not `release/`.
+- Store builds need the MAC_OS build attached separately: `node scripts/store_apple.mjs <shots> --platform=MAC_OS` (store/apple.json → platforms.MAC_OS.build).
