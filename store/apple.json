@@ -52,7 +52,7 @@
     },
     "MAC_OS": {
       "version": "0.55.0",
-      "build": null,
+      "build": "5500",
       "screenshot_types": {
         "mac": "APP_DESKTOP"
       }
