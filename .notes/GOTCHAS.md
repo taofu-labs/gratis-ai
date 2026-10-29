@@ -535,3 +535,9 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - `build/icon.png` is the orange tile (Electron/PWA); `build/bunny.png` is the bare glyph `scripts/mobile_icons.py` uses.
 - Capacitor `SystemBars` `DEFAULT` is resolved once natively; `use_theme` re-applies Light/Dark on each switch.
 - Theme follows `prefers-color-scheme` live; e2e must `emulateMedia` to pin one (default is light).
+
+## Native shells must follow the theme too (2026-10-29)
+- iOS: `contentInset: always` leaves a native strip under the status bar; `ThemedBridgeViewController` (SceneDelegate.swift) paints it with a dynamic UIColor. `capacitor.config` `backgroundColor` is static, never rely on it for dark mode.
+- Android 12+ ignores `@drawable/splash`; `windowSplashScreenBackground` = `@color/app_background` (values / values-night).
+- iOS home-screen icon can stay cached after an update over Wi-Fi install; the IPA's icon is right (decode CgBI PNG to check).
+- Phones: OnePlus blocks `screenrecord`; burst `screencap` on-device inside one `adb shell` to catch splashes.

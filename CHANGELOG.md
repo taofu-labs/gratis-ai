@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.54.1] - 2026-10-29
+
+### Fixed
+- iPhone dark mode: status bar area matched the light page, hiding the clock and battery
+- Splash screens follow the device theme (deep blue in dark mode on iPhone and Android 12+)
+
 ## [0.54.0] - 2026-10-28
 
 ### Changed
