@@ -327,6 +327,20 @@ The selector scores every eligible model that fits, then chooses the highest-qua
 - **Sparse benchmark restraint**: Once a model publishes any comparable result, missing fields receive a neutral 50 for sorting. One high GPQA result cannot outrank strong five-benchmark coverage by itself, and the UI shows a composite score only when all five real results exist.
 - **Graceful fallback**: If GPU detection fails (e.g., node-llama-cpp not compiled), we fall back to platform heuristics (macOS + arm64 implies Metal) and then to conservative CPU-only estimates.
 
+## Store listings
+
+Text lives in `store/copy.json` (11 locales, validated lengths), settings in `store/apple.json` / `store/play.json`.
+
+| Step | Command | Notes |
+| --- | --- | --- |
+| Raw screens | `node scripts/store_capture.mjs <profile> <raw> [langs] [devices]` | Dev server on :5173; profile must hold LFM 2.5 1.2B. iPhone / iPad / Android, 5 screens each |
+| Framed shots | `node scripts/store_compose.mjs <raw> <shots>` | 1320×2868 (iPhone 6.9"), 2064×2752 (iPad 13"), 1080×2160 (Play) |
+| Play graphics | `node scripts/store_graphics.mjs <graphics>` | 512 icon, 1024×500 feature graphic per locale |
+| App Store | `node scripts/store_apple.mjs <shots> [--no-screenshots]` | Text, categories, age rating, review contact, price, availability (no CHN), build, screenshots |
+| Google Play | `node scripts/store_play.mjs <shots> <graphics>` | Listings, contact details, images; commits one edit |
+
+No API: Apple App Privacy labels, adding a platform; Play content rating, target audience, data safety, ads, app access. Answers in `.notes/HUMAN.md`.
+
 ## Look and brand
 
 | Piece | Where | Notes |

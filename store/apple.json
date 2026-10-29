@@ -1,0 +1,48 @@
+{
+  "version": "0.54.1",
+  "build": "5401",
+  "copyright": "© 2026 Taofu B.V.",
+  "content_rights": "USES_THIRD_PARTY_CONTENT",
+  "primary_category": "PRODUCTIVITY",
+  "secondary_category": "UTILITIES",
+  "privacy_url": "https://gratis.trueperformancenetwork.com/privacy",
+  "support_url": "https://gratis.trueperformancenetwork.com/support",
+  "marketing_url": "https://gratis.trueperformancenetwork.com/",
+  "excluded_territories": [ "CHN" ],
+  "review": {
+    "contactFirstName": "Mikel",
+    "contactLastName": "Palokaj",
+    "contactPhone": "+31646736526",
+    "contactEmail": "mikel@taofu.xyz",
+    "notes": "Gratis AI runs open-source language models entirely on the device; there is no account and no server of ours. On first launch the app checks the device and suggests a model; tap Get Started, then Start/Download. The model (about 0.7 GB for LFM 2.5 1.2B on iPhone) downloads once from Hugging Face, so please review on Wi-Fi; after that everything works offline, including in Airplane Mode. Models are third-party open-weight models used under their licences (Apache 2.0, LFM Open License, Gemma Terms); the licence of each model is shown in the picker. Answers are AI-generated and may be inaccurate."
+  },
+  "age_rating": {
+    "advertising": false,
+    "ageAssurance": false,
+    "alcoholTobaccoOrDrugUseOrReferences": "INFREQUENT_OR_MILD",
+    "contests": "NONE",
+    "gambling": false,
+    "gamblingSimulated": "NONE",
+    "gunsOrOtherWeapons": "INFREQUENT_OR_MILD",
+    "healthOrWellnessTopics": false,
+    "horrorOrFearThemes": "INFREQUENT_OR_MILD",
+    "lootBox": false,
+    "matureOrSuggestiveThemes": "INFREQUENT_OR_MILD",
+    "medicalOrTreatmentInformation": "INFREQUENT_OR_MILD",
+    "messagingAndChat": false,
+    "parentalControls": false,
+    "profanityOrCrudeHumor": "INFREQUENT_OR_MILD",
+    "sexualContentGraphicAndNudity": "NONE",
+    "sexualContentOrNudity": "INFREQUENT_OR_MILD",
+    "socialMedia": false,
+    "unrestrictedWebAccess": false,
+    "userGeneratedContent": false,
+    "violenceCartoonOrFantasy": "INFREQUENT_OR_MILD",
+    "violenceRealistic": "INFREQUENT_OR_MILD",
+    "violenceRealisticProlongedGraphicOrSadistic": "NONE"
+  },
+  "screenshot_types": {
+    "iphone": "APP_IPHONE_67",
+    "ipad": "APP_IPAD_PRO_3GEN_129"
+  }
+}

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, utilityProcess, session, nativeTheme } = require( `electron` )
+const { app, BrowserWindow, ipcMain, utilityProcess, session, nativeTheme, shell } = require( `electron` )
 const path = require( `path` )
 const fs = require( `fs` )
 const os = require( `os` )
@@ -411,6 +411,12 @@ const create_window = () => {
             contextIsolation: true,
             nodeIntegration: false,
         },
+    } )
+
+    // Links in answers and the "report" mail open in the system browser / mail app, never a new app window
+    main_window.webContents.setWindowOpenHandler( ( { url } ) => {
+        if( /^(https?|mailto):/.test( url ) ) shell.openExternal( url )
+        return { action: `deny` }
     } )
 
     // Load the renderer

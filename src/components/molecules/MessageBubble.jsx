@@ -404,6 +404,8 @@ const MessageBubble = memo( ( {
             can_edit={ is_user && !is_busy }
             on_regenerate={ on_regenerate }
             on_edit={ () => set_is_editing( true ) }
+            can_report={ !is_user && !is_streaming && !!message.content }
+            model_id={ message.stats?.model_id }
         />
 
         { is_editing ?
