@@ -1,9 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## [0.55.0] - 2026-10-29
 
 ### Added
+- Privacy policy, terms and support pages (/privacy, /terms, /support), linked from Settings
+- "Report this answer" on AI replies: opens a pre-filled email to support, nothing is sent automatically
+- Store listings in 11 languages with screenshots for iPhone, iPad and Android (scripts/store_*.mjs)
 - Mac App Store build (Apple Silicon): sandboxed, updated by the App Store; the downloadable DMG is unchanged
+
+### Changed
+- Models that refuse less are labelled "Answers freely" instead of "Uncensored"
+- Links in answers open in the system browser on desktop
 
 ## [0.54.1] - 2026-10-29
 
