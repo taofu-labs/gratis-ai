@@ -555,3 +555,6 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 - Never pass both CSC_LINK and CSC_INSTALLER_LINK: electron-builder builds its temp keychain twice and fails `SecKeychainUnlock`. The workflow imports both .p12s into its own keychain (CSC_KEYCHAIN).
 - The mas .pkg lands in `release/mas-arm64/`, not `release/`.
 - Store builds need the MAC_OS build attached separately: `node scripts/store_apple.mjs <shots> --platform=MAC_OS` (store/apple.json → platforms.MAC_OS.build).
+
+## Play API refuses store-listing commits on the draft app (2026-10-30)
+Service account has app-level "Manage store presence", yet any listing change (text, new locale, icon) fails at `edits.commit` with 403; contact `details` and no-op commits succeed. Not propagation (13 h of retries). Listings were entered by hand from `/review/play-translations.txt` + `/review/play-<lang>/`. Retry `scripts/store_play.mjs` after the first production publish.
