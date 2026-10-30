@@ -1,12 +1,12 @@
 # Privacy policy
 
-*Last updated: 29 October 2026*
+*Last updated: 30 October 2026*
 
 Gratis AI ("Gratis") runs AI models on your own device. Your conversations never leave it.
 
 ## Who we are
 
-Gratis is made by **Taofu B.V.**, James Wattstraat 77 S3, 1097 DL Amsterdam, the Netherlands (KvK 94536872). Questions about privacy: [support@taofu.xyz](mailto:support@taofu.xyz).
+Gratis is made by **Taofu B.V.**, Pedro de Medinalaan 83, 1086 XP Amsterdam, the Netherlands (KvK 94536872). Questions about privacy: [support@taofu.xyz](mailto:support@taofu.xyz).
 
 ## What we collect
 

@@ -21,4 +21,4 @@ Settings → Models removes downloaded models; *Wipe history* in the sidebar rem
 **Which devices work?**
 iPhone and iPad, Android phones, Mac, Windows and Linux, and modern browsers at [gratis.trueperformancenetwork.com](https://gratis.trueperformancenetwork.com).
 
-Gratis is made by Taofu B.V., James Wattstraat 77 S3, 1097 DL Amsterdam, the Netherlands.
+Gratis is made by Taofu B.V., Pedro de Medinalaan 83, 1086 XP Amsterdam, the Netherlands.

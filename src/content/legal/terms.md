@@ -1,8 +1,8 @@
 # Terms of use
 
-*Last updated: 29 October 2026*
+*Last updated: 30 October 2026*
 
-These terms apply to Gratis AI ("Gratis"), made by **Taofu B.V.**, James Wattstraat 77 S3, 1097 DL Amsterdam, the Netherlands (KvK 94536872).
+These terms apply to Gratis AI ("Gratis"), made by **Taofu B.V.**, Pedro de Medinalaan 83, 1086 XP Amsterdam, the Netherlands (KvK 94536872).
 
 ## The app
 
