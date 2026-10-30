@@ -565,3 +565,4 @@ Service account has app-level "Manage store presence", yet any listing change (t
 - Phone Chrome `localhost:5180` can hold a stale service worker from older sessions (old UI, old meta). Unregister via CDP before testing.
 - iOS fallback is testable on Android Chrome: drop `interactive-widget` temporarily → Chrome behaves like Safari.
 - Play draft app: production releases via API only as `status: draft` ("Only releases with status draft may be created on draft app"); tracks commits work even though listing commits 403. Countries + "Send for review" stay in the Console. 0.55.0 (5500) production draft created 2026-10-30.
+- ASC submit via API: POST /reviewSubmissions {platform} → POST /reviewSubmissionItems (appStoreVersion) → PATCH submitted: true. One submission per platform.

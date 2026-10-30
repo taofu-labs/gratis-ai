@@ -608,3 +608,4 @@
 - 2026-10-30 — Touch-keyboard awareness: Chrome Android panned the page under the keyboard (top bar hidden), centered screens clipped the composer. Fix: interactive-widget meta + visualViewport-driven --app-height (iOS Safari) + shrinkable centered columns. Verified on OnePlus Chrome (both paths); iPhone was passcode-locked.
 - 2026-10-30 — Play production draft release 0.55.0 (5500) created via API; countries + send for review left to the Console.
 - 2026-10-30 — Play: production 0.55.0 (5500) sent for review (177 countries, excl. China); managed publishing off → goes live on approval. Two advisory warnings (no deobfuscation/native symbols) ignored.
+- 2026-10-30 — App Store: iOS + macOS 0.55.0 (5500) submitted via ASC API (reviewSubmissions → items → submitted: true); release type MANUAL → press Release after approval.
