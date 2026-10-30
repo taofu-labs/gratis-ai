@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import styled from 'styled-components'
+import { scroll_center } from '../../styles/scroll_center'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { log } from 'mentie'
@@ -62,15 +63,8 @@ const Container = styled.div`
     flex-direction: column;
     align-items: center;
     flex: 1;
-    min-height: 0;
     padding: ${ ( { theme } ) => theme.spacing.xl } ${ ( { theme } ) => theme.spacing.md };
-    overflow-y: auto;
-
-    /* Flex spacers center content when it fits, collapse when it overflows */
-    &::before, &::after {
-        content: '';
-        flex: 1 0 0px;
-    }
+    ${ scroll_center }
 `
 
 const PageActions = styled.div`

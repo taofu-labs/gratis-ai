@@ -561,6 +561,6 @@ Service account has app-level "Manage store presence", yet any listing change (t
 
 ## Touch keyboard (2026-10-30)
 - Chrome Android (108+) only shrinks the visual viewport for the keyboard and pans the page (top bar off screen); `interactive-widget=resizes-content` in index.html makes it resize the layout. iOS Safari ignores that → `use_viewport_height` sizes #root to `visualViewport.height` (`--app-height`) and undoes the pan. Native apps resize natively (Capacitor Keyboard `resize: native`, Android adjustResize).
-- Centered full-height flex columns need `min-height: 0; overflow-y: auto; justify-content: safe center` or keyboard-short viewports clip the composer.
+- Centered full-height flex columns use `scroll_center` (src/styles; flex spacers, since iOS <17.6 has no `safe center`) or keyboard-short viewports clip the composer.
 - Phone Chrome `localhost:5180` can hold a stale service worker from older sessions (old UI, old meta). Unregister via CDP before testing.
 - iOS fallback is testable on Android Chrome: drop `interactive-widget` temporarily → Chrome behaves like Safari.

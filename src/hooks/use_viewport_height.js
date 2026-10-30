@@ -15,11 +15,11 @@ export default function use_viewport_height() {
 
         const sync = () => {
 
-            // Pinch zoom also shrinks the visual viewport; only follow the keyboard
-            if( viewport.scale > 1.01 ) return
+            // Pinch zoom shrinks the visual viewport too; scale it back out so only the keyboard counts
+            document.documentElement.style.setProperty( `--app-height`, `${ viewport.height * viewport.scale }px` )
 
-            document.documentElement.style.setProperty( `--app-height`, `${ viewport.height }px` )
-            if( window.scrollY ) window.scrollTo( 0, 0 )
+            // Undo the keyboard pan at once (html scrolls smoothly), but leave a zoomed-in user free to pan
+            if( window.scrollY && viewport.scale < 1.01 ) window.scrollTo( { top: 0, behavior: `instant` } )
 
         }
 

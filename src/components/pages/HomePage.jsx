@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
+import { scroll_center } from '../../styles/scroll_center'
 import { useNavigate } from 'react-router-dom'
 import { log } from 'mentie'
 import { ArrowLeftRight, AlertCircle, RotateCcw, PanelLeft, HardDrive, Settings } from 'lucide-react'
@@ -37,16 +38,13 @@ const PageWrapper = styled.div`
     overflow: hidden;
 `
 
-// Scrolls instead of clipping when the touch keyboard leaves less room than the content needs
 const Container = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: safe center;
     flex: 1;
     min-width: 0;
-    min-height: 0;
-    overflow-y: auto;
+    ${ scroll_center }
     padding: ${ ( { theme } ) => theme.spacing.xl };
 `
 

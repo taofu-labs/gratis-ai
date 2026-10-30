@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import styled from 'styled-components'
+import { scroll_center } from '../../styles/scroll_center'
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import { log } from 'mentie'
@@ -49,11 +50,10 @@ const InputSection = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: safe center;
     width: 100%;
     flex: ${ ( { $centered } ) => $centered ? '1 1 auto' : '0 0 auto' };
     transition: flex-grow 0.4s cubic-bezier( 0.4, 0, 0.2, 1 );
-    min-height: 0;
+    ${ scroll_center }
     /* Only while centered: pinned, it must not clip the menus that pop up from the composer */
     overflow-y: ${ ( { $centered } ) => $centered ? 'auto' : 'visible' };
     padding: ${ ( { theme } ) => theme.spacing.md };
@@ -101,10 +101,8 @@ const NoModelContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: safe center;
     flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    ${ scroll_center }
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
 `
@@ -127,10 +125,8 @@ const LoadingContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: safe center;
     flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    ${ scroll_center }
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
 `
