@@ -1,0 +1,493 @@
+Gratis AI – Google Play store listing translations
+Add each language in Play Console → Main store listing → Manage translations → Add your own translations.
+Copy each field exactly. Graphics per language are optional (English is used as fallback); if you add them, the files are linked below.
+
+======================================================================
+LANGUAGE: German – de-DE
+======================================================================
+
+APP NAME:
+Gratis AI: Kostenlos & privat
+
+SHORT DESCRIPTION:
+Kostenlose, private KI, die lokal auf deinem Gerät läuft. Ohne Konto, offline.
+
+FULL DESCRIPTION:
+Gratis AI ist ein kostenloser KI-Assistent, der direkt auf deinem Gerät läuft. Stell Fragen, schreib Texte, sammle Ideen, fass Dokumente zusammen oder frag nach einem Foto – ohne dass auch nur ein Wort an einen Server geht.
+
+Lade ein Modell einmal herunter, danach funktioniert alles offline. Im Flugzeug, in den Bergen oder einfach dann, wenn du Dinge lieber für dich behältst.
+
+PRIVAT VON ANFANG AN
+• Kein Konto, keine Werbung, kein Tracking
+• Chats, Dateien und Fotos bleiben auf deinem Gerät
+• Nichts wird an einen Server gesendet
+
+EINFACHER START
+• Prüft beim ersten Start dein Gerät und schlägt ein passendes Modell vor
+• Modell jederzeit wechseln
+• Mit dem Tempo-Regler wählst du zwischen schnell und schlau
+
+OFFENE MODELLE
+• Offene Modellfamilien wie Qwen, Gemma, LFM und MiniCPM
+• Einmal von Hugging Face geladen, danach komplett offline
+• Auf Wunsch auch Modelle, die freier antworten
+
+FÜR ECHTE AUFGABEN
+• Manche Modelle verstehen Fotos und Screenshots
+• Dokumente wie PDFs anhängen
+• Spracheingabe direkt auf dem Gerät
+• Saubere Darstellung von Markdown und Code
+• Chatverlauf mit Export
+• Oberfläche in 11 Sprachen
+• Heller und dunkler Modus, passend zu deinem Gerät
+
+Gratis AI wird von Taofu B.V. in den Niederlanden entwickelt. Fragen oder Ideen? Schreib an support@taofu.xyz.
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-de/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-de/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-de/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-de/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-de/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-de/phone-5.png
+
+======================================================================
+LANGUAGE: Spanish (Spain) – es-ES
+======================================================================
+
+APP NAME:
+Gratis AI: IA gratis y privada
+
+SHORT DESCRIPTION:
+IA gratis y privada que funciona en local, en tu dispositivo. Sin cuenta.
+
+FULL DESCRIPTION:
+Gratis AI es un asistente de IA gratuito que funciona en tu propio dispositivo. Haz preguntas, escribe, genera ideas, resume documentos o pregunta sobre una foto, sin enviar ni una palabra a un servidor.
+
+Descarga un modelo una vez y, a partir de ahí, funciona sin conexión. En un avión, en la montaña o simplemente cuando prefieres guardarte las cosas para ti.
+
+PRIVADA DESDE EL DISEÑO
+• Sin cuenta, sin anuncios, sin rastreo
+• Chats, archivos y fotos se quedan en tu dispositivo
+• No se envía nada a ningún servidor
+
+CONFIGURACIÓN INTELIGENTE
+• La primera vez analiza tu dispositivo y te sugiere un modelo adecuado
+• Cambia de modelo cuando quieras
+• Un indicador de velocidad te deja elegir entre rapidez e inteligencia
+
+MODELOS ABIERTOS
+• Familias de modelos abiertos como Qwen, Gemma, LFM y MiniCPM
+• Se descargan una vez desde Hugging Face y luego funcionan sin conexión
+• Si lo prefieres, elige modelos que responden con más libertad
+
+PENSADA PARA EL DÍA A DÍA
+• Algunos modelos entienden fotos y capturas de pantalla
+• Adjunta documentos, como PDF
+• Dictado por voz en el propio dispositivo
+• Respuestas con formato markdown y código
+• Historial de chats con exportación
+• Interfaz en 11 idiomas
+• Modo claro y oscuro que siguen a tu dispositivo
+
+Gratis AI está hecha por Taofu B.V. en los Países Bajos. ¿Preguntas o ideas? Escríbenos a support@taofu.xyz.
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-es/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-es/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-es/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-es/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-es/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-es/phone-5.png
+
+======================================================================
+LANGUAGE: French (France) – fr-FR
+======================================================================
+
+APP NAME:
+Gratis AI : IA privée gratuite
+
+SHORT DESCRIPTION:
+IA gratuite et privée, qui tourne en local sur votre appareil. Sans compte.
+
+FULL DESCRIPTION:
+Gratis AI est un assistant IA gratuit qui fonctionne sur votre propre appareil. Posez des questions, rédigez, trouvez des idées, résumez des documents ou interrogez une photo, sans envoyer le moindre mot à un serveur.
+
+Téléchargez un modèle une seule fois : ensuite, tout fonctionne hors ligne. Dans l’avion, en montagne, ou simplement quand vous préférez garder les choses pour vous.
+
+PRIVÉE PAR CONCEPTION
+• Sans compte, sans publicité, sans pistage
+• Conversations, fichiers et photos restent sur votre appareil
+• Rien n’est envoyé à un serveur
+
+DÉMARRAGE MALIN
+• Au premier lancement, l’app analyse votre appareil et suggère un modèle adapté
+• Changez de modèle à tout moment
+• Une jauge de vitesse pour choisir entre rapidité et finesse
+
+MODÈLES OUVERTS
+• Des familles de modèles ouverts comme Qwen, Gemma, LFM et MiniCPM
+• Téléchargés une fois depuis Hugging Face, puis entièrement hors ligne
+• Si vous le souhaitez, des modèles qui répondent plus librement
+
+PENSÉE POUR LE QUOTIDIEN
+• Certains modèles comprennent les photos et captures d’écran
+• Joignez des documents, comme des PDF
+• Saisie vocale sur l’appareil
+• Mise en forme markdown et code
+• Historique des conversations avec export
+• Interface en 11 langues
+• Modes clair et sombre qui suivent votre appareil
+
+Gratis AI est conçue par Taofu B.V. aux Pays-Bas. Une question, une idée ? Écrivez à support@taofu.xyz.
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-fr/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-fr/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-fr/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-fr/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-fr/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-fr/phone-5.png
+
+======================================================================
+LANGUAGE: Italian – it-IT
+======================================================================
+
+APP NAME:
+Gratis AI: IA gratis e privata
+
+SHORT DESCRIPTION:
+IA gratis e privata che gira in locale sul tuo dispositivo. Senza account.
+
+FULL DESCRIPTION:
+Gratis AI è un assistente IA gratuito che funziona sul tuo dispositivo. Fai domande, scrivi, trova idee, riassumi documenti o chiedi qualcosa su una foto, senza inviare nemmeno una parola a un server.
+
+Scarica un modello una volta sola e da lì in poi funziona offline. In aereo, in montagna o semplicemente quando preferisci tenere le cose per te.
+
+PRIVATA PER SCELTA
+• Nessun account, niente pubblicità, nessun tracciamento
+• Chat, file e foto restano sul tuo dispositivo
+• Nulla viene inviato a un server
+
+CONFIGURAZIONE INTELLIGENTE
+• Al primo avvio analizza il dispositivo e suggerisce un modello adatto
+• Cambia modello quando vuoi
+• Un indicatore di velocità ti fa scegliere tra rapidità e intelligenza
+
+MODELLI APERTI
+• Famiglie di modelli aperti come Qwen, Gemma, LFM e MiniCPM
+• Scaricati una volta da Hugging Face, poi completamente offline
+• Se preferisci, modelli che rispondono più liberamente
+
+PENSATA PER LE COSE VERE
+• Alcuni modelli capiscono foto e screenshot
+• Allega documenti, come i PDF
+• Dettatura vocale sul dispositivo
+• Risposte formattate in markdown e codice
+• Cronologia delle chat con esportazione
+• Interfaccia in 11 lingue
+• Tema chiaro e scuro che segue il dispositivo
+
+Gratis AI è realizzata da Taofu B.V. nei Paesi Bassi. Domande o idee? Scrivi a support@taofu.xyz.
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-it/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-it/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-it/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-it/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-it/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-it/phone-5.png
+
+======================================================================
+LANGUAGE: Japanese – ja-JP
+======================================================================
+
+APP NAME:
+Gratis AI: 無料・プライベートなAI
+
+SHORT DESCRIPTION:
+無料でプライベート。あなたの端末でローカルに動くAI。アカウント不要。
+
+FULL DESCRIPTION:
+Gratis AIは、あなたの端末の上で動く無料のAIアシスタントです。質問、文章作成、アイデア出し、資料の要約、写真についての質問まで。サーバーには一文字も送りません。
+
+モデルは一度ダウンロードするだけ。その後はオフラインで使えます。機内でも、山の中でも、人に見せたくないことを考えるときでも。
+
+プライバシー第一
+• アカウント不要、広告なし、トラッキングなし
+• チャット、ファイル、写真は端末の中に残ります
+• サーバーには何も送信しません
+
+かんたんセットアップ
+• 初回起動時に端末をチェックし、合うモデルを提案
+• モデルはいつでも切り替え可能
+• スピードゲージで「速さ」と「賢さ」のバランスを調整
+
+オープンなモデル
+• Qwen、Gemma、LFM、MiniCPMなどのオープンモデル
+• Hugging Faceから一度ダウンロードすれば、あとは完全オフライン
+• お好みで、より自由に答えるモデルも選べます
+
+毎日の作業に
+• 写真やスクリーンショットを理解するモデルも
+• PDFなどのドキュメントを添付
+• 端末内で処理する音声入力
+• Markdownとコードを見やすく表示
+• チャット履歴とエクスポート
+• 11の表示言語
+• 端末に合わせて切り替わるライト／ダークモード
+
+Gratis AIはオランダのTaofu B.V.が開発しています。ご質問やご意見は support@taofu.xyz までお寄せください。
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-ja/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-ja/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-ja/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-ja/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-ja/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-ja/phone-5.png
+
+======================================================================
+LANGUAGE: Dutch – nl-NL
+======================================================================
+
+APP NAME:
+Gratis AI: gratis & privé AI
+
+SHORT DESCRIPTION:
+Gratis, privé AI die lokaal op je eigen toestel draait. Geen account, offline.
+
+FULL DESCRIPTION:
+Gratis AI is een gratis AI-assistent die op je eigen toestel draait. Stel vragen, schrijf teksten, brainstorm, vat documenten samen of vraag iets over een foto, zonder dat er ook maar één woord naar een server gaat.
+
+Download een model één keer en daarna werkt alles offline. In het vliegtuig, in de bergen, of gewoon wanneer je iets liever voor jezelf houdt.
+
+PRIVÉ VANAF HET BEGIN
+• Geen account, geen advertenties, geen tracking
+• Chats, bestanden en foto's blijven op je toestel
+• Er gaat niets naar een server
+
+SLIM VAN START
+• Controleert bij de eerste start je toestel en stelt een passend model voor
+• Wissel van model wanneer je wilt
+• Met de snelheidsmeter kies je tussen snel en slim
+
+OPEN MODELLEN
+• Open modelfamilies zoals Qwen, Gemma, LFM en MiniCPM
+• Eén keer gedownload van Hugging Face, daarna volledig offline
+• Als je wilt, kies je modellen die vrijer antwoorden
+
+VOOR ECHT WERK
+• Sommige modellen begrijpen foto's en screenshots
+• Voeg documenten toe, zoals pdf's
+• Spraakinvoer op je eigen toestel
+• Nette opmaak voor markdown en code
+• Chatgeschiedenis met export
+• Beschikbaar in 11 talen
+• Lichte en donkere modus die je toestel volgen
+
+Gratis AI wordt gemaakt door Taofu B.V. in Nederland. Vragen of ideeën? Mail naar support@taofu.xyz.
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-nl/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-nl/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-nl/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-nl/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-nl/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-nl/phone-5.png
+
+======================================================================
+LANGUAGE: Polish – pl-PL
+======================================================================
+
+APP NAME:
+Gratis AI: darmowa i prywatna
+
+SHORT DESCRIPTION:
+Darmowa, prywatna AI działająca lokalnie na Twoim urządzeniu. Bez konta.
+
+FULL DESCRIPTION:
+Gratis AI to darmowy asystent AI, który działa na Twoim urządzeniu. Zadawaj pytania, pisz, szukaj pomysłów, streszczaj dokumenty albo pytaj o zdjęcia, nie wysyłając ani słowa na serwer.
+
+Pobierz model raz, a potem wszystko działa offline. W samolocie, w górach albo po prostu wtedy, gdy wolisz zachować coś dla siebie.
+
+PRYWATNOŚĆ OD POCZĄTKU
+• Bez konta, bez reklam, bez śledzenia
+• Czaty, pliki i zdjęcia zostają na Twoim urządzeniu
+• Nic nie jest wysyłane na serwer
+
+SPRYTNY START
+• Przy pierwszym uruchomieniu sprawdza urządzenie i proponuje pasujący model
+• Zmieniaj model w dowolnej chwili
+• Wskaźnik szybkości pozwala wybrać między tempem a inteligencją
+
+OTWARTE MODELE
+• Rodziny otwartych modeli, takie jak Qwen, Gemma, LFM i MiniCPM
+• Pobierane raz z Hugging Face, potem w pełni offline
+• Jeśli chcesz, wybierz modele, które odpowiadają swobodniej
+
+DO PRAWDZIWEJ PRACY
+• Niektóre modele rozumieją zdjęcia i zrzuty ekranu
+• Dołączaj dokumenty, np. pliki PDF
+• Wprowadzanie głosowe na urządzeniu
+• Formatowanie markdown i kodu
+• Historia czatów z eksportem
+• Interfejs w 11 językach
+• Jasny i ciemny motyw zgodny z urządzeniem
+
+Gratis AI tworzy Taofu B.V. z Holandii. Pytania lub pomysły? Napisz na support@taofu.xyz.
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-pl/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-pl/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-pl/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-pl/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-pl/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-pl/phone-5.png
+
+======================================================================
+LANGUAGE: Portuguese (Brazil) – pt-BR
+======================================================================
+
+APP NAME:
+Gratis AI: IA grátis e privada
+
+SHORT DESCRIPTION:
+IA grátis e privada que roda localmente no seu aparelho. Sem conta, offline.
+
+FULL DESCRIPTION:
+Gratis AI é um assistente de IA gratuito que roda no seu próprio aparelho. Faça perguntas, escreva, tenha ideias, resuma documentos ou pergunte sobre uma foto, sem mandar uma única palavra para um servidor.
+
+Baixe um modelo uma vez e, depois disso, tudo funciona offline. No avião, na praia ou simplesmente quando você prefere guardar as coisas para si.
+
+PRIVADO DESDE O INÍCIO
+• Sem conta, sem anúncios, sem rastreamento
+• Conversas, arquivos e fotos ficam no seu aparelho
+• Nada é enviado para um servidor
+
+CONFIGURAÇÃO INTELIGENTE
+• Na primeira abertura, analisa o aparelho e sugere um modelo adequado
+• Troque de modelo quando quiser
+• Um medidor de velocidade equilibra rapidez e inteligência
+
+MODELOS ABERTOS
+• Famílias de modelos abertos como Qwen, Gemma, LFM e MiniCPM
+• Baixados uma vez do Hugging Face, depois totalmente offline
+• Se preferir, escolha modelos que respondem com mais liberdade
+
+FEITO PARA O DIA A DIA
+• Alguns modelos entendem fotos e capturas de tela
+• Anexe documentos, como PDFs
+• Entrada de voz no próprio aparelho
+• Respostas com markdown e código formatados
+• Histórico de conversas com exportação
+• Interface em 11 idiomas
+• Modo claro e escuro que acompanham o aparelho
+
+Gratis AI é feito pela Taofu B.V., na Holanda. Dúvidas ou ideias? Escreva para support@taofu.xyz.
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-pt/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-pt/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-pt/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-pt/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-pt/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-pt/phone-5.png
+
+======================================================================
+LANGUAGE: Russian – ru-RU
+======================================================================
+
+APP NAME:
+Gratis AI: приватный ИИ
+
+SHORT DESCRIPTION:
+Бесплатный приватный ИИ, который работает локально на вашем устройстве.
+
+FULL DESCRIPTION:
+Gratis AI — бесплатный ИИ-ассистент, который работает прямо на вашем устройстве. Задавайте вопросы, пишите тексты, ищите идеи, делайте выжимки из документов или спрашивайте о фото — и ни одно слово не уйдёт на сервер.
+
+Скачайте модель один раз, и дальше всё работает офлайн. В самолёте, в горах или просто когда хочется оставить что-то при себе.
+
+ПРИВАТНОСТЬ ПО УМОЛЧАНИЮ
+• Без аккаунта, без рекламы, без слежки
+• Чаты, файлы и фото остаются на устройстве
+• Ничего не отправляется на сервер
+
+УМНЫЙ СТАРТ
+• При первом запуске приложение проверяет устройство и предлагает подходящую модель
+• Меняйте модель в любой момент
+• Шкала скорости помогает выбрать между быстротой и сообразительностью
+
+ОТКРЫТЫЕ МОДЕЛИ
+• Семейства открытых моделей: Qwen, Gemma, LFM, MiniCPM и другие
+• Скачиваются один раз с Hugging Face, затем полностью офлайн
+• По желанию — модели, которые отвечают свободнее
+
+ДЛЯ НАСТОЯЩИХ ЗАДАЧ
+• Некоторые модели понимают фото и скриншоты
+• Прикрепляйте документы, например PDF
+• Голосовой ввод прямо на устройстве
+• Аккуратное оформление markdown и кода
+• История чатов с экспортом
+• Интерфейс на 11 языках
+• Светлая и тёмная тема, как на вашем устройстве
+
+Gratis AI создаёт Taofu B.V. (Нидерланды). Вопросы или идеи? Пишите на support@taofu.xyz.
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-ru/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-ru/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-ru/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-ru/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-ru/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-ru/phone-5.png
+
+======================================================================
+LANGUAGE: Chinese (Simplified) – zh-CN
+======================================================================
+
+APP NAME:
+Gratis AI：免费私密 AI
+
+SHORT DESCRIPTION:
+免费、私密的 AI，完全在你的设备本地运行。无需账号，可离线使用。
+
+FULL DESCRIPTION:
+Gratis AI 是一款在你自己的设备上运行的免费 AI 助手。提问、写作、头脑风暴、总结文档，或者针对一张照片提问——不会有一个字发送到服务器。
+
+模型只需下载一次，之后即可离线使用。在飞机上、在山里，或者只是想把一些事情留给自己的时候。
+
+隐私优先
+• 无需账号，无广告，无追踪
+• 聊天、文件和照片都保存在你的设备上
+• 不向任何服务器发送数据
+
+轻松上手
+• 首次启动时检测设备，并推荐合适的模型
+• 随时切换模型
+• 速度调节，在快速与聪明之间自由取舍
+
+开放模型
+• Qwen、Gemma、LFM、MiniCPM 等开放模型系列
+• 从 Hugging Face 下载一次，之后完全离线
+• 如果你愿意，也可以选择回答更自由的模型
+
+日常好帮手
+• 部分模型能看懂照片和截图
+• 可附加 PDF 等文档
+• 设备端语音输入
+• 支持 Markdown 和代码格式
+• 聊天记录，可导出
+• 11 种界面语言
+• 浅色和深色模式，跟随设备设置
+
+Gratis AI 由荷兰的 Taofu B.V. 开发。有问题或建议？请发送邮件至 support@taofu.xyz。
+
+OPTIONAL GRAPHICS:
+- Feature graphic: https://gratis.trueperformancenetwork.com/review/play-zh/feature-graphic-1024x500.png
+- Phone screenshot 1: https://gratis.trueperformancenetwork.com/review/play-zh/phone-1.png
+- Phone screenshot 2: https://gratis.trueperformancenetwork.com/review/play-zh/phone-2.png
+- Phone screenshot 3: https://gratis.trueperformancenetwork.com/review/play-zh/phone-3.png
+- Phone screenshot 4: https://gratis.trueperformancenetwork.com/review/play-zh/phone-4.png
+- Phone screenshot 5: https://gratis.trueperformancenetwork.com/review/play-zh/phone-5.png
