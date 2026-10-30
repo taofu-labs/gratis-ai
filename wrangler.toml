@@ -7,14 +7,10 @@
 name = "gratis-trueperformancenetwork"
 compatibility_date = "2026-02-24"
 
-# Domains. Wrangler treats this list as the full set: keep every entry, or a deploy detaches it.
-# The original host is a proxied DNS record + Worker route (not a custom domain: Cloudflare
-# refuses that while the DNS record exists); gratis-ai.com hosts are Workers custom domains.
-routes = [
-    { pattern = "gratis.trueperformancenetwork.com/*", zone_name = "trueperformancenetwork.com" },
-    { pattern = "gratis-ai.com", custom_domain = true },
-    { pattern = "www.gratis-ai.com", custom_domain = true },
-]
+# Domains live in Cloudflare, not here (with no `routes` key, deploys leave them alone):
+#   gratis.trueperformancenetwork.com  proxied DNS record + Worker route (CI token has no access to that zone's routes)
+#   gratis-ai.com, www.gratis-ai.com   Workers custom domains on this Worker (attached 2026-10-30)
+# Adding `routes` makes wrangler treat it as the full set and try to rewrite all of them.
 
 [assets]
 directory = "./dist"
