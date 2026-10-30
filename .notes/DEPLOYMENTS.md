@@ -2,7 +2,7 @@
 
 | Target | Where | How it ships |
 | --- | --- | --- |
-| Web (taofu-labs) | https://gratis.trueperformancenetwork.com (custom domain of gratis-trueperformancenetwork.ruben-7e1.workers.dev) | `deploy-web.yml` on push to `main` (Cloudflare Workers Static Assets) |
+| Web (taofu-labs) | https://gratis.trueperformancenetwork.com (DNS + Worker route) and https://gratis-ai.com / https://www.gratis-ai.com (Workers custom domains), all on worker gratis-trueperformancenetwork | `deploy-web.yml` on push to `main` (Cloudflare Workers Static Assets) |
 | Web (upstream fork) | https://ai.gratis.sh | Same workflow when the repo is `actuallymentor/gratis-ai` |
 | Desktop | GitHub Releases of taofu-labs/gratis-ai | `release-electron.yml` when `package.json` version changes on `main` (failed draft → fix, push, `gh workflow run release-electron.yml`) |
 | Android (testing) | Play Console, app `com.trueperformancenetwork.gratis`, **internal** track, testers list "Gratis internal testers" | CI `Mobile apps` artifact → `PATH=vendor/android/jdk/bin:$PATH node scripts/play_internal.js app-release.aab` (signs with upload key; needs `jarsigner`, from `scripts/android_toolchain.sh`) |
@@ -18,3 +18,5 @@ Hugging Face rejects `*.workers.dev` referrers, so `index.html` must keep `<meta
 ## RunPod (eval GPUs, shared account — other services live here)
 - REST `https://rest.runpod.io/v1/pods`, Bearer `RUNPOD_API_KEY` (.env.local). Proxy `https://<pod>-8080.proxy.runpod.net`
 - Our pods are named `gratis-eval-*`; never touch other pods. Budget cap given 2026-10-27: $100
+
+Domains are managed in Cloudflare, not wrangler.toml: adding `routes` makes wrangler rewrite all of them, and the CI token can't touch the trueperformancenetwork.com zone's routes (deploy fails, 'partially updated').
