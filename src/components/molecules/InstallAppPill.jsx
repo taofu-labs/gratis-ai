@@ -14,6 +14,9 @@ const Dock = styled.div`
     bottom: calc( ${ ( { theme } ) => theme.spacing.md } + env( safe-area-inset-bottom ) );
     z-index: 20;
     display: flex;
+
+    /* The touch keyboard lifts the bottom edge onto the input; step aside while typing */
+    body:has( input:focus, textarea:focus ) & { display: none; }
 `
 
 // A secondary pill floating over content needs an opaque face

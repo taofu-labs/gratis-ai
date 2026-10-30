@@ -53,7 +53,7 @@ const GlobalStyle = createGlobalStyle`
         letter-spacing: 0;
         word-spacing: normal;
         min-height: 100vh;
-        min-height: 100dvh;
+        min-height: var( --app-height, 100dvh );
         overflow: hidden;
     }
 
@@ -64,9 +64,10 @@ const GlobalStyle = createGlobalStyle`
         text-wrap: balance;
     }
 
+    /* --app-height follows the touch keyboard (use_viewport_height) */
     #root {
         height: 100vh;
-        height: 100dvh;
+        height: var( --app-height, 100dvh );
         display: flex;
         flex-direction: column;
     }

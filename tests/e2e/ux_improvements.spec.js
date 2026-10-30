@@ -389,4 +389,12 @@ test.describe( `UX Improvements - Mobile & Touch`, () => {
         await expect( page.getByTestId( `settings-tab-advanced` ) ).toBeVisible()
     } )
 
+    // An open touch keyboard leaves ~half the screen: top bar and composer must both stay on it
+    test( `chat fits above the touch keyboard`, async ( { page } ) => {
+        await page.goto( `/chat` )
+        await page.setViewportSize( { width: 375, height: 340 } )
+        await expect( page.getByTestId( `settings-btn` ) ).toBeInViewport( { ratio: 1 } )
+        await expect( page.locator( `textarea` ).first() ).toBeInViewport( { ratio: 1 } )
+    } )
+
 } )

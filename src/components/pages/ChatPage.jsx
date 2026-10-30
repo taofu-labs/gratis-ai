@@ -43,16 +43,19 @@ const Container = styled.div`
 `
 
 // Wrapper around ChatInput — centers it vertically when no messages,
-// then smoothly transitions to bottom-pinned when the user sends a message
+// then smoothly transitions to bottom-pinned when the user sends a message.
+// Shrinks and scrolls when the touch keyboard leaves less room than the welcome needs
 const InputSection = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: safe center;
     width: 100%;
-    flex: ${ ( { $centered } ) => $centered ? '1 0 auto' : '0 0 auto' };
+    flex: ${ ( { $centered } ) => $centered ? '1 1 auto' : '0 0 auto' };
     transition: flex-grow 0.4s cubic-bezier( 0.4, 0, 0.2, 1 );
     min-height: 0;
+    /* Only while centered: pinned, it must not clip the menus that pop up from the composer */
+    overflow-y: ${ ( { $centered } ) => $centered ? 'auto' : 'visible' };
     padding: ${ ( { theme } ) => theme.spacing.md };
     background: ${ ( { theme } ) => theme.colors.background };
 
@@ -98,8 +101,10 @@ const NoModelContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: safe center;
     flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
 `
@@ -122,8 +127,10 @@ const LoadingContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: safe center;
     flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
 `

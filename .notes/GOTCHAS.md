@@ -558,3 +558,9 @@ ChatInput's InputPill is `position: relative`; SpeedModeMenu's anchor is not pos
 
 ## Play API refuses store-listing commits on the draft app (2026-10-30)
 Service account has app-level "Manage store presence", yet any listing change (text, new locale, icon) fails at `edits.commit` with 403; contact `details` and no-op commits succeed. Not propagation (13 h of retries). Listings were entered by hand from `/review/play-translations.txt` + `/review/play-<lang>/`. Retry `scripts/store_play.mjs` after the first production publish.
+
+## Touch keyboard (2026-10-30)
+- Chrome Android (108+) only shrinks the visual viewport for the keyboard and pans the page (top bar off screen); `interactive-widget=resizes-content` in index.html makes it resize the layout. iOS Safari ignores that → `use_viewport_height` sizes #root to `visualViewport.height` (`--app-height`) and undoes the pan. Native apps resize natively (Capacitor Keyboard `resize: native`, Android adjustResize).
+- Centered full-height flex columns need `min-height: 0; overflow-y: auto; justify-content: safe center` or keyboard-short viewports clip the composer.
+- Phone Chrome `localhost:5180` can hold a stale service worker from older sessions (old UI, old meta). Unregister via CDP before testing.
+- iOS fallback is testable on Android Chrome: drop `interactive-widget` temporarily → Chrome behaves like Safari.

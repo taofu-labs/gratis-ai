@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.55.1] - 2026-10-30
+
+### Fixed
+- Phones: the touch keyboard no longer pushes the top bar off screen or covers the message box (Chrome on Android, Safari on iPhone)
+- Welcome and setup screens scroll instead of clipping when the keyboard leaves little room
+- "Install app" button steps aside while typing
+
 ## [0.55.0] - 2026-10-29
 
 ### Added

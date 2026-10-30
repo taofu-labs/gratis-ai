@@ -172,14 +172,16 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
 
         const compute_max_height = () => {
             const rect = dropdown_ref.current.getBoundingClientRect()
-            const available = window.innerHeight - rect.top - 16
+            const available = ( window.visualViewport?.height ?? window.innerHeight ) - rect.top - 16
             set_dropdown_max_height( Math.max( 150, available ) )
         }
 
         compute_max_height()
 
-        window.addEventListener( `resize`, compute_max_height )
-        return () => window.removeEventListener( `resize`, compute_max_height )
+        // The visual viewport also shrinks for the touch keyboard
+        const target = window.visualViewport || window
+        target.addEventListener( `resize`, compute_max_height )
+        return () => target.removeEventListener( `resize`, compute_max_height )
 
     }, [ is_open ] )
 

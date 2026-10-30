@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast'
 import GlobalStyle from './styles/GlobalStyle'
 import ErrorBoundary from './components/molecules/ErrorBoundary'
 import use_theme from './hooks/use_theme'
+import use_viewport_height from './hooks/use_viewport_height'
 import InstallAppPill from './components/molecules/InstallAppPill'
 import Routes from './routes/Routes'
 import { register_shortcuts } from './utils/keyboard_shortcuts'
@@ -28,6 +29,7 @@ const router_future = { v7_startTransition: true, v7_relativeSplatPath: true }
 export default function App() {
 
     const { theme } = use_theme()
+    use_viewport_height()
 
     // Sync language from Electron system locale on first load
     useEffect( () => {

@@ -37,13 +37,16 @@ const PageWrapper = styled.div`
     overflow: hidden;
 `
 
+// Scrolls instead of clipping when the touch keyboard leaves less room than the content needs
 const Container = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: safe center;
     flex: 1;
     min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
     padding: ${ ( { theme } ) => theme.spacing.xl };
 `
 
