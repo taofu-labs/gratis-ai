@@ -606,3 +606,4 @@
 - 2026-10-30 — Play listing complete in 11 locales (texts + feature graphic + 5 shots each, hashes verified vs pipeline output); set by browser agent because the API still 403s any listing change for this draft app (contact details commit fine). ASC: Account Holder accepted updated agreement. Both stores ready; submission left to the human.
 - 2026-10-30 — Added gratis-ai.com + www as Workers custom domains (additional; original domain untouched). Verified real SmolLM2 download + chat on gratis-ai.com.
 - 2026-10-30 — Touch-keyboard awareness: Chrome Android panned the page under the keyboard (top bar hidden), centered screens clipped the composer. Fix: interactive-widget meta + visualViewport-driven --app-height (iOS Safari) + shrinkable centered columns. Verified on OnePlus Chrome (both paths); iPhone was passcode-locked.
+- 2026-10-30 — Play production draft release 0.55.0 (5500) created via API; countries + send for review left to the Console.
