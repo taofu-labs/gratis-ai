@@ -7,10 +7,11 @@
 name = "gratis-trueperformancenetwork"
 compatibility_date = "2026-02-24"
 
-# Custom domains. Wrangler treats this list as the full set: keep every domain here,
-# the original one included, or a deploy detaches it.
+# Domains. Wrangler treats this list as the full set: keep every entry, or a deploy detaches it.
+# The original host is a proxied DNS record + Worker route (not a custom domain: Cloudflare
+# refuses that while the DNS record exists); gratis-ai.com hosts are Workers custom domains.
 routes = [
-    { pattern = "gratis.trueperformancenetwork.com", custom_domain = true },
+    { pattern = "gratis.trueperformancenetwork.com/*", zone_name = "trueperformancenetwork.com" },
     { pattern = "gratis-ai.com", custom_domain = true },
     { pattern = "www.gratis-ai.com", custom_domain = true },
 ]
