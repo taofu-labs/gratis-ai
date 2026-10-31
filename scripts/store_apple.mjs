@@ -67,7 +67,9 @@ await api( `/appStoreVersions/${ version.id }`, { method: `PATCH`, body: { type:
 log( PLATFORM, `version`, TARGET.version, `build`, build ? TARGET.build : `none yet` )
 
 const review = await api( `/appStoreVersions/${ version.id }/appStoreReviewDetail` ).catch( () => null )
-const review_attributes = { ...SETTINGS.review, demoAccountRequired: false }
+// Platform-specific notes (e.g. the Mac's entitlement rationale) follow the shared ones
+const notes = [ SETTINGS.review.notes, TARGET.review_notes ].filter( Boolean ).join( `\n\n` )
+const review_attributes = { ...SETTINGS.review, notes, demoAccountRequired: false }
 if( review ) await api( `/appStoreReviewDetails/${ review.id }`, { method: `PATCH`, body: { type: `appStoreReviewDetails`, id: review.id, attributes: review_attributes } } )
 else await api( `/appStoreReviewDetails`, { method: `POST`, body: { type: `appStoreReviewDetails`, attributes: review_attributes,
     relationships: { appStoreVersion: { data: { type: `appStoreVersions`, id: version.id } } } } } )

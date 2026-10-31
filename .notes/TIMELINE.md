@@ -609,3 +609,4 @@
 - 2026-10-30 — Play production draft release 0.55.0 (5500) created via API; countries + send for review left to the Console.
 - 2026-10-30 — Play: production 0.55.0 (5500) sent for review (177 countries, excl. China); managed publishing off → goes live on approval. Two advisory warnings (no deobfuscation/native symbols) ignored.
 - 2026-10-30 — App Store: iOS + macOS 0.55.0 (5500) submitted via ASC API (reviewSubmissions → items → submitted: true); release type MANUAL → press Release after approval.
+- 2026-10-31: macOS 0.55.0 halted by automated check on network.server entitlement; justified via review notes + reply, kept entitlement.

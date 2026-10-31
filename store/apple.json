@@ -53,6 +53,7 @@
     "MAC_OS": {
       "version": "0.55.0",
       "build": "5500",
+      "review_notes": "Mac: the com.apple.security.network.server entitlement is required. Vision models (e.g. Qwen 3.5 2B, SmolVLM2) run in a bundled llama.cpp llama-server helper process that the app launches and talks to over HTTP. It listens on 127.0.0.1 only, on a random free port, protected by a random per-launch API key; it is never reachable from other machines and accepts no outside connections. The App Sandbox blocks listening sockets, loopback included, without this entitlement, so image input would fail. To exercise it: download a vision model in the picker, attach an image in a chat and ask about it.",
       "screenshot_types": {
         "mac": "APP_DESKTOP"
       }
