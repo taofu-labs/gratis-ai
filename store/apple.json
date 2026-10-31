@@ -14,7 +14,7 @@
     "contactLastName": "Palokaj",
     "contactPhone": "+31646736526",
     "contactEmail": "mikel@taofu.xyz",
-    "notes": "Gratis AI runs open-source language models entirely on the device; there is no account and no server of ours. On first launch the app checks the device and suggests a model; tap Get Started, then Start/Download. The model (about 0.7 GB for LFM 2.5 1.2B on iPhone) downloads once from Hugging Face, so please review on Wi-Fi; after that everything works offline, including in Airplane Mode. Models are third-party open-weight models used under their licences (Apache 2.0, LFM Open License, Gemma Terms); the licence of each model is shown in the picker. Answers are AI-generated and may be inaccurate."
+    "notes": "2. Purpose and audience: Gratis AI is a private AI chat assistant that runs open-source language models entirely on the device. It is for anyone who wants an AI assistant without an account, subscription or sending their conversations to a server: privacy-conscious people, students, and people who are often offline (travel, flights, poor coverage). The problem it solves: mainstream AI chat apps need an account and an internet connection and process every message in the cloud. Here nothing leaves the device and it keeps working offline. The app is free, has no ads, no in-app purchases and no account.\n\n3. Setup: no login or credentials needed. Launch the app; it checks the device and recommends a model. Tap Get Started, then Start/Download. The model (about 0.7 GB for LFM 2.5 1.2B on iPhone) downloads once, so please review on Wi-Fi. Then type a question and send it; the answer is generated on the device. Main features: chat (with conversation history in the side menu), switching models in the model picker (each shows its size and licence), image questions with a vision model (download one from the picker, attach a photo with the paperclip), language picker in the top bar, and dark mode that follows the system setting. After the download everything works in Airplane Mode. No sample files are needed; any photo works for image questions.\n\n4. External services: only Hugging Face (huggingface.co), used to download the model files once over HTTPS. There is no backend of ours, no AI cloud service, no authentication, no payment processor, no analytics or tracking. All AI processing happens on the device.\n\n5. Regions: the app works the same in all regions. The interface is available in 11 languages and follows the device language. It is not offered in mainland China.\n\n6. Regulation and third-party material: the app is not in a regulated industry. The AI models are third-party open-weight models published on Hugging Face by their authors and used under their public licences (Apache 2.0, LFM Open License, Gemma Terms of Use); the licence of each model is shown in the picker. We do not distribute protected third-party content. Answers are AI-generated and may be inaccurate, which the app states."
   },
   "age_rating": {
     "advertising": false,
@@ -58,5 +58,6 @@
         "mac": "APP_DESKTOP"
       }
     }
-  }
+  },
+  "review_video": ""
 }
