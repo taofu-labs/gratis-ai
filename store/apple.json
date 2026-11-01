@@ -59,5 +59,5 @@
       }
     }
   },
-  "review_video": ""
+  "review_video": "https://github.com/taofu-labs/gratis-ai/releases/download/app-review-media/gratis-ios-review.mp4 (MP4, 5.7 min). Recorded on a physical iPhone X running iOS 16.7.16, the newest iOS this device supports. It starts from launching a fresh install and shows onboarding, the one-time model download (sped up 40x, as labelled), chatting, the report button (it opens a pre-filled email; the Mail screen is cut because Mail is not set up on this test phone), chat history, the model picker with licences, settings and the language picker. The app has no account, no paid content and no user-generated content shared with others."
 }

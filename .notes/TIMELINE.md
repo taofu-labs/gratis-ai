@@ -611,3 +611,4 @@
 - 2026-10-30 — App Store: iOS + macOS 0.55.0 (5500) submitted via ASC API (reviewSubmissions → items → submitted: true); release type MANUAL → press Release after approval.
 - 2026-10-31: macOS 0.55.0 halted by automated check on network.server entitlement; justified via review notes + reply, kept entitlement.
 - 2026-10-31: iOS 0.55.0 App Review asked for info (recording + 5 answers). Answers in store/apple.json review.notes; recording link goes in review_video, then re-run store_apple.mjs for IOS + MAC_OS and resubmit.
+- 2026-11-01: Recorded iPhone X (iOS 16.7.16) review video via WDA MJPEG, hosted on release app-review-media, linked in review notes; iOS + macOS 0.55.0 resubmitted (WAITING_FOR_REVIEW).

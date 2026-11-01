@@ -69,7 +69,7 @@ log( PLATFORM, `version`, TARGET.version, `build`, build ? TARGET.build : `none 
 const review = await api( `/appStoreVersions/${ version.id }/appStoreReviewDetail` ).catch( () => null )
 // Platform-specific notes (e.g. the Mac's entitlement rationale) follow the shared ones
 // App Review asks for a physical-device screen recording first; `review_video` holds its link
-const video = SETTINGS.review_video && `1. Screen recording (physical device, latest OS, from launch): ${ SETTINGS.review_video }`
+const video = SETTINGS.review_video && `1. Screen recording: ${ SETTINGS.review_video }`
 if( !video ) console.warn( `⚠ store/apple.json review_video is empty, App Review will ask for the screen recording again` )
 const notes = [ video, SETTINGS.review.notes, TARGET.review_notes ].filter( Boolean ).join( `\n\n` )
 const review_attributes = { ...SETTINGS.review, notes, demoAccountRequired: false }
