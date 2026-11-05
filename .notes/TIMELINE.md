@@ -613,3 +613,4 @@
 - 2026-10-31: iOS 0.55.0 App Review asked for info (recording + 5 answers). Answers in store/apple.json review.notes; recording link goes in review_video, then re-run store_apple.mjs for IOS + MAC_OS and resubmit.
 - 2026-11-01: Recorded iPhone X (iOS 16.7.16) review video via WDA MJPEG, hosted on release app-review-media, linked in review notes; iOS + macOS 0.55.0 resubmitted (WAITING_FOR_REVIEW).
 - 2026-11-03: iOS 26 review recording (Mikel, TestFlight 5500) added to release app-review-media; review notes on both queued versions patched to point at it (notes are editable while WAITING_FOR_REVIEW).
+- 2026-11-05: README points to gratis-ai.com as main deployment; ASCII header → pixel bunny wordmark (.github/brand/*.svg, generated from src/components/atoms/brand_paths.js)

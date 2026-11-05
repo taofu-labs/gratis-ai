@@ -2,7 +2,7 @@
 
 | Target | Where | How it ships |
 | --- | --- | --- |
-| Web (taofu-labs) | https://gratis.trueperformancenetwork.com (DNS + Worker route) and https://gratis-ai.com / https://www.gratis-ai.com (Workers custom domains), all on worker gratis-trueperformancenetwork | `deploy-web.yml` on push to `main` (Cloudflare Workers Static Assets) |
+| Web (taofu-labs, **primary: https://gratis-ai.com**) | https://gratis.trueperformancenetwork.com (DNS + Worker route) and https://gratis-ai.com / https://www.gratis-ai.com (Workers custom domains), all on worker gratis-trueperformancenetwork | `deploy-web.yml` on push to `main` (Cloudflare Workers Static Assets) |
 | Web (upstream fork) | https://ai.gratis.sh | Same workflow when the repo is `actuallymentor/gratis-ai` |
 | Desktop | GitHub Releases of taofu-labs/gratis-ai | `release-electron.yml` when `package.json` version changes on `main` (failed draft → fix, push, `gh workflow run release-electron.yml`) |
 | Android (testing) | Play Console, app `com.trueperformancenetwork.gratis`, **internal** track, testers list "Gratis internal testers" | CI `Mobile apps` artifact → `PATH=vendor/android/jdk/bin:$PATH node scripts/play_internal.js app-release.aab` (signs with upload key; needs `jarsigner`, from `scripts/android_toolchain.sh`) |

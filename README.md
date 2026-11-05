@@ -1,28 +1,21 @@
 
 <p align="center">
-<br>
-<br>
-
-```
-                     ┌─────────────────────────────────────┐
-                     │                                     │
-                     │    ╔═╗  ╦═╗  ╔═╗  ╦╔═  ╦  ╔═╗     │
-                     │    ║ ╦  ╠╦╝  ╠═╣  ║╚╗  ║  ╚═╗     │
-                     │    ╚═╝  ╩╚═  ╩ ╩  ╩ ╚  ╩  ╚═╝     │
-                     │              · A I ·                │
-                     │                                     │
-                     │    Private AI that runs on          │
-                     │    your device. No account,         │
-                     │    no cloud, no cost.               │
-                     │                                     │
-                     └─────────────────────────────────────┘
-```
-
-<br>
+  <br>
+  <a href="https://gratis-ai.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/brand/gratis-dark.svg">
+      <img src=".github/brand/gratis-light.svg" alt="gratis" width="320">
+    </picture>
+  </a>
+  <br>
+  <br>
+  Private AI that runs on your device. No account, no cloud, no cost.
+  <br>
+  <br>
 </p>
 
 <h3 align="center">
-  <a href="https://ai.gratis.sh">ai.gratis.sh</a> — use it free, right now, in your browser
+  <a href="https://gratis-ai.com">gratis-ai.com</a> — use it free, right now, in your browser
 </h3>
 
 <p align="center">
@@ -49,7 +42,7 @@ It works in two ways:
 
 **Option 1 — Open the website**
 
-Go to **[ai.gratis.sh](https://ai.gratis.sh)** and start chatting. The app will recommend a model for your hardware and download it. After that first download, it works offline.
+Go to **[gratis-ai.com](https://gratis-ai.com)** and start chatting. The app will recommend a model for your hardware and download it. After that first download, it works offline.
 
 **Option 2 — Install the desktop app**
 
