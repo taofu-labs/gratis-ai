@@ -45,5 +45,5 @@ Open items only. Resolved history lives in TIMELINE.md.
 
 
 ## Bughunt PRs (2026-11-05, drafts)
-- #22 voice fix: needs a full UI voice run on a real device (container too loaded to finish the chat-model step).
+- #22 voice fix: needs a full UI voice run on a real device (container too loaded to finish the chat-model step) + a packaged-Electron voice check (`file://` ORT import disputed by reviewers).
 - #21 dialog a11y: decide whether Escape = "Hide" on VoiceModelDialog mid-download (options in PR comment). UpdateModal unverified in a real Electron update flow.
