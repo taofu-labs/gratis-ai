@@ -572,3 +572,4 @@ Service account has app-level "Manage store presence", yet any listing change (t
 - ASC resubmit after a rejection (UNRESOLVED_ISSUES): PATCH each REJECTED `/reviewSubmissionItems/{id}` with `resolved: true`, then PATCH the submission `submitted: true`. Without the resolve: 409 "Version is not ready to be submitted yet".
 - After a phone reboot, testmanagerd is missing ("device does not offer the requested service") until the DDI is remounted: `mobile_image_mounter.auto_mount(lockdown)` with a heartbeat running. wda.py has no heartbeat → launch WDA yourself with HeartbeatService on the same lockdown.
 - App Review recording: GitHub pre-release `app-review-media` (not latest, so the desktop updater ignores it) hosts the MP4; link lives in store/apple.json `review_video`.
+- Push: env GH_TOKEN is a classic PAT (blocked by org); use GH_TOKEN from .env.local over HTTPS. SSH host key not trusted in container.
