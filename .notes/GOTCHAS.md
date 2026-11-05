@@ -57,6 +57,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Browsers drop `Range` across HF resolve→CDN redirect → 200 full body appended after prefix. `ranged_web_body()` retries the final URL, restarts on non-206.
 - Xet: ramps ~0.2 MB/s for ~10 s then 3–10 MB/s (ETA logic anchors at first byte; trace in `tests/fixtures/xet_download_trace.json`). Crashes WebKit tabs and needs byte streams (absent iOS <16.4) → `can_use_xet()` false for all WebKit.
 - WebKit `File.stream()` can throw on big files (bug 272600) → hash via `slice().arrayBuffer()`.
+- Voice (parakeet.js): unset `ort.env.wasm.wasmPaths` ⇒ jsDelivr; any `webgpu` backend ⇒ 2.4 GB fp32 encoder ORT can't fetch. Keep `wasm` + same-origin `?url` wasm. ORT wasm (~25 MB) is precache-excluded, runtime CacheFirst (`ort-wasm` cache) instead.
 - Storage choice is quota-driven (`should_use_external_model_file`); save dialog only when OPFS quota short.
 - HF 404s (no CORS) any `*.workers.dev` Referer → `index.html` keeps `<meta name="referrer" content="no-referrer">` (unit-tested). Chrome HSTS-forces `.dev`; verify on real deployment.
 
@@ -166,6 +167,8 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Model eval: undici 300 s headers timeout → eval.mjs uses a no-timeout Agent.
 - RunPod: `llama.cpp:server-cuda --model-url` starts router mode with no model while /health = ok → curl GGUF then `-m`. `llama.cpp:full` tools need `LD_LIBRARY_PATH=/app`. Delete only pod ids we logged.
 - WebGPU on RunPod NVIDIA: `nvidia/cuda:*-base`, `NVIDIA_DRIVER_CAPABILITIES=all`, apt `libegl1 libgl1 libglvnd0 libvulkan1 xvfb`, headful Chromium under xvfb, `XDG_RUNTIME_DIR=/tmp`. Flags `--enable-unsafe-webgpu --enable-features=Vulkan --use-angle=vulkan --ignore-gpu-blocklist --enable-dawn-features=vulkan_enable_f16_on_nvidia` (no shader-f16 ⇒ llama.cpp registers 0 WebGPU devices ⇒ silent CPU). Test on localhost (about:blank has no `navigator.gpu`).
+- Playwright Chromium adds `--no-sandbox` by default (container rule: never). Put `chromiumSandbox: true` inside `use.launchOptions`; top-level `use.chromiumSandbox` gets overridden when `launchOptions` is set. Verify via `ps`.
+- Playwright Firefox crashes on `newPage` ("Target crashed") in the Babysit container: no Firefox prod probes here.
 
 ## Git / secrets
 

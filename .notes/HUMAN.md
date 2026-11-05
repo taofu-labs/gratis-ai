@@ -43,5 +43,6 @@ Open items only. Resolved history lives in TIMELINE.md.
 - `tests/e2e/inference_large.spec.js` seeds `gratisai:settings:*` (no-op; prefix is `gratis:`).
 - Stale local branches merged into main (design/*, fix/*, store/*, web/*); `chore/desktop-release-parity` holds only an old notes commit.
 
-## Voice input not offline (found 2026-11-05)
-- parakeet.js sets `ort.env.wasm.wasmPaths` to jsDelivr when unset → voice needs network on first use, and breaks the "no CDN code" promise. Option: copy onnxruntime-web dist to `public/` in `copy_wasm.js` and set `wasmPaths` before `fromHub`. Not done: needs a COEP/precache check.
+
+## A11y (found 2026-11-05)
+- `VoiceModelDialog` (and the `SettingsModal` pattern it copies) is a styled div: no `role="dialog"`/`aria-modal`/label, so screen readers and `getByRole('dialog')` miss it. Candidate for a shared accessible Modal.

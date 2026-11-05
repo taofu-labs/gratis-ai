@@ -39,3 +39,4 @@ Ascending. One line per decision; rationale after `—`.
 - 11-01 iPhone X review recording (WDA MJPEG) on release `app-review-media`; resubmitted.
 - 11-03 iOS 26 review recording added; notes patched while WAITING_FOR_REVIEW.
 - 11-05 README: gratis-ai.com primary, pixel wordmark header. Housekeeping: notes condensed, docs rewritten to match code, stack freshness check (RESEARCH.md). Deps: Capacitor 8.6, unpdf 2, undici 8, Wrangler 4.158 + in-range; ESLint 10 still blocked. No version bump (would trigger store releases).
+- 11-05 Bughunt: voice fixed (int8 WASM model, same-origin ORT + runtime cache) → PR `fix/voice-offline-ort`; modal a11y → PR `fix/a11y-dialogs`. Play/ASC vitals unreachable here (no `.secrets/google`, `signing.env`).

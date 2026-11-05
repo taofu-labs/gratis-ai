@@ -52,6 +52,17 @@ export default defineConfig( ( { mode } ) => {
                     globPatterns: [ `**/*.{js,css,html,wasm,woff2,png}` ],
                     // Exclude large ONNX Runtime WASM binaries from precaching — they're loaded on demand
                     globIgnores: [ `**/*ort-wasm*.wasm` ],
+                    // ...then kept on first voice use, so voice works offline afterwards.
+                    // Filenames are content-hashed: cache-first is safe, old builds age out.
+                    runtimeCaching: [ {
+                        urlPattern: ( { url, sameOrigin } ) => sameOrigin && /\/ort-wasm[^/]*\.wasm$/.test( url.pathname ),
+                        handler: `CacheFirst`,
+                        options: {
+                            cacheName: `ort-wasm`,
+                            expiration: { maxEntries: 2 },
+                            cacheableResponse: { statuses: [ 200 ] },
+                        },
+                    } ],
                     // The self-hosted wasm32 fallback is ~16 MiB.
                     maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
                     // A version bump must replace cached navigation responses even
