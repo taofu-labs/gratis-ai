@@ -93,12 +93,8 @@ export default function use_voice_input() {
         const provider = provider_ref.current
         if( !provider || is_downloading ) return
 
-        // Check WebGPU support before starting the large download
-        if( !navigator.gpu ) {
-            toast.error( `Voice input requires WebGPU. Your browser does not support it.` )
-            return
-        }
-
+        // No capability gate: ASR runs on ORT's WASM backend, which every
+        // supported browser has (threads when cross-origin isolated, else one)
         set_is_downloading( true )
         set_download_progress( { progress: 0, status: `Starting download...` } )
 
