@@ -58,6 +58,24 @@ test.describe( `Settings Modal`, () => {
         await expect( page.getByTestId( `settings-modal` ) ).not.toBeVisible()
     } )
 
+    test( `is an accessible modal dialog: named, traps Tab, restores focus on Escape`, async ( { page } ) => {
+        await page.goto( `/chat` )
+        await page.getByTestId( `settings-btn` ).click()
+
+        const dialog = page.getByRole( `dialog`, { name: `Settings` } )
+        await expect( dialog ).toHaveAttribute( `aria-modal`, `true` )
+
+        // Tab and Shift+Tab never leave the dialog
+        for( const key of [ `Tab`, `Tab`, `Tab`, `Tab`, `Shift+Tab`, `Shift+Tab`, `Shift+Tab` ] ) {
+            await page.keyboard.press( key )
+            expect( await dialog.evaluate( d => d.contains( document.activeElement ) ) ).toBe( true )
+        }
+
+        await page.keyboard.press( `Escape` )
+        await expect( dialog ).toHaveCount( 0 )
+        await expect( page.getByTestId( `settings-btn` ) ).toBeFocused()
+    } )
+
     test( `switching tabs shows different content`, async ( { page } ) => {
         await page.goto( `/chat` )
         await page.getByTestId( `settings-btn` ).click()

@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import styled, { keyframes } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Apple, Monitor, Terminal, FolderDown } from 'lucide-react'
-import { DISPLAY_NAME, EVENTS } from '../../utils/branding'
+import { DISPLAY_NAME } from '../../utils/branding'
 import BrandMark from '../atoms/BrandMark'
+import use_dialog from '../../hooks/use_dialog'
 
 const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || `taofu-labs/gratis-ai`
 
@@ -304,13 +306,8 @@ export default function GetAppPage() {
         return () => clearTimeout( timer )
     }, [ downloading_file, dismiss_modal ] )
 
-    // Close on Escape key
-    useEffect( () => {
-        if( !downloading_file ) return
-        const handle_close = () => dismiss_modal()
-        window.addEventListener( EVENTS.close_modal, handle_close )
-        return () => window.removeEventListener( EVENTS.close_modal, handle_close )
-    }, [ downloading_file, dismiss_modal ] )
+    // Dialog semantics, focus trap, Escape + backdrop close
+    const { title_id, overlay_props, dialog_props } = use_dialog( { is_open: !!downloading_file, on_close: dismiss_modal } )
 
     // Intercept download click — let the native link proceed, then show the modal
     const handle_download_click = ( filename ) => {
@@ -377,18 +374,15 @@ export default function GetAppPage() {
             { t( 'or_continue_browser' ) }
         </BackButton>
 
-        { /* Download-started confirmation modal */ }
-        { downloading_file && <Overlay onClick={ ( e ) => {
-            if( e.target === e.currentTarget ) dismiss_modal()
-        } }
-        >
-            <Modal>
+        { /* Download-started confirmation modal, portaled out of the inert #root */ }
+        { downloading_file && createPortal( <Overlay { ...overlay_props }>
+            <Modal { ...dialog_props }>
 
                 <ModalIcon>
                     <FolderDown size={ 24 } />
                 </ModalIcon>
 
-                <ModalTitle>{ t( 'download_started' ) }</ModalTitle>
+                <ModalTitle id={ title_id }>{ t( 'download_started' ) }</ModalTitle>
 
                 <ModalDescription>
                     { t( 'download_started_description', { name: DISPLAY_NAME } ) }
@@ -401,7 +395,7 @@ export default function GetAppPage() {
                 </div>
 
             </Modal>
-        </Overlay> }
+        </Overlay>, document.body ) }
 
     </Container>
 

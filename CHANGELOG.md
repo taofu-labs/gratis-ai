@@ -7,6 +7,9 @@
 - PDF reading runs on unpdf 2; Capacitor 8.6, Electron 45.2, Wrangler 4.158 and other in-range updates
 - Docs condensed into quick-reference form (DOCUMENTATION, SPECIFICATION, DESIGN, MIGRATE_WLLAMA64)
 
+### Fixed
+- Screen readers: voice, update, download and "download started" popups are announced as named dialogs; Tab stays inside, Escape closes, focus returns to where you were
+
 ## [0.55.1] - 2026-10-30
 
 ### Fixed

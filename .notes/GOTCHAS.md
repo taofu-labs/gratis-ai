@@ -88,7 +88,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 ## UI
 - `#root` needs `height: 100dvh`, not `min-height`: indefinite height lets flex children grow and the message list never scrolls (`body` is `overflow: hidden`).
 
-- Modals portal to `document.body`; `#root` + closed sidebar are `inert`. Dialog content outside the portal is unclickable; tests must open the sidebar first.
+- Every modal = `use_dialog` (role/aria-modal/name, trap, Escape via `close_modal` event, restore) + `createPortal( …, document.body )`; unportaled = inerts itself. Modals portal to `document.body`; `#root` + closed sidebar are `inert`. Dialog content outside the portal is unclickable; tests must open the sidebar first.
 - Only TopBar renders `model-selector-dropdown`; select models via `model-option-{id}` (expand alternatives first). Never match page text (hidden cards).
 - Catalog-mode e2e must not mock a fitting TPN winner. Seed IDB `models` store for "On this device" tests. Wizard: `skip_model_wizard()` or seed `model_wizard_answers`.
 - Accent `#FF8A57` + white fails contrast: fills use `accent_ink`, orange text `accent_text`. CTAs via `atoms/Button`; its 44px hit area is `::before` (no `overflow: hidden`). StrictMode double-mounts → toasts need `id`.
