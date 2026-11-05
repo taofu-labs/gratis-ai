@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- README: gratis-ai.com is the main web address; pixel bunny wordmark header; current model list
+- PDF reading runs on unpdf 2; Capacitor 8.6, Electron 45.2, Wrangler 4.158 and other in-range updates
+- Docs condensed into quick-reference form (DOCUMENTATION, SPECIFICATION, DESIGN, MIGRATE_WLLAMA64)
+
 ## [0.55.1] - 2026-10-30
 
 ### Fixed

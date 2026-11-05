@@ -1,13 +1,12 @@
 # Memory Index
 
-- [`GOTCHAS.md`](GOTCHAS.md) — load before modifying providers, storage, downloads/checksums, WebGPU/Safari/mobile paths, Electron IPC, UI layout, end-to-end tests, or prompt warm-ups / chat history building.
-- [`RESEARCH.md`](RESEARCH.md) — load when evaluating GGUF sources, browser runtimes, model licenses, catalog additions, or TTFT / prompt-cache behaviour.
-- [`MODEL_SELECTION.md`](MODEL_SELECTION.md) — load when changing recommendation scoring, memory budgets, quantization, or model tiers.
-- [`QUANTIZATION_REFERENCE.md`](QUANTIZATION_REFERENCE.md) — load for quant quality, bits-per-weight, KV-cache, or WASM sizing work.
-- [`LLM_MEMORY_REQUIREMENTS.md`](LLM_MEMORY_REQUIREMENTS.md) — load when estimating local/cloud memory or GPU requirements.
-- [`DEPENDENCY_UPGRADES.md`](DEPENDENCY_UPGRADES.md) — load before dependency maintenance or interpreting upgrade risk.
-- [`RUNPOD_API_RESEARCH.md`](RUNPOD_API_RESEARCH.md) — historical reference only; load when maintaining backward-compatible RunPod migration paths.
-- [`TIMELINE.md`](TIMELINE.md) — load when historical decisions, release chronology, or regression context matter.
-- [`HUMAN.md`](HUMAN.md) — load before publishing Electron releases or when an external account action may block CI.
-- [`DEPLOYMENTS.md`](DEPLOYMENTS.md) — load when asked to check prod, deploy, or release.
-- [`TPN_LEDGER.md`](TPN_LEDGER.md) — load before ordering/spending on TPN Workbench (budget, order ids, holds).
+| File | Load when |
+| --- | --- |
+| [`GOTCHAS.md`](GOTCHAS.md) | Before touching runtime/providers, downloads/storage/checksums, WebGPU/Safari/mobile, Electron/sidecar, PWA/deploy, UI layout, tests, stores, device lab, git push |
+| [`RESEARCH.md`](RESEARCH.md) | Evaluating runtimes, models, quants, speed/TTFT, or revisiting stack choices (dated freshness check inside) |
+| [`MODEL_SELECTION.md`](MODEL_SELECTION.md) | Changing catalog policy, picker scoring, memory budgets, quant choice |
+| [`TPN_LEDGER.md`](TPN_LEDGER.md) | Before ordering/spending on TPN, publishing tpnlabs builds (budget, order ids, holds) |
+| [`DEPENDENCY_UPGRADES.md`](DEPENDENCY_UPGRADES.md) | Before dependency maintenance (coupled sets, post-upgrade checks, deferred majors) |
+| [`DEPLOYMENTS.md`](DEPLOYMENTS.md) | "Check prod", deploying, releasing, store uploads, RunPod |
+| [`HUMAN.md`](HUMAN.md) | Before releases/store actions, or when a decision may need the human (open items only) |
+| [`TIMELINE.md`](TIMELINE.md) | When history, rationale of past decisions, or regression context matters |

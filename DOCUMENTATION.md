@@ -2,7 +2,13 @@
 
 > Run AI locally. Your data never leaves your device.
 
-A privacy-first chat app that runs open-source LLMs entirely on your device. Works in the browser (Memory64 WASM via [wllama64](https://github.com/actuallymentor/wllama64)) or as a desktop app (native via [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) in Electron).
+Privacy-first chat app running open-weight LLMs on-device. Runtimes:
+
+| Target | Inference |
+|---|---|
+| Browser (PWA) | Memory64 WASM via [wllama64](https://github.com/actuallymentor/wllama64), WebGPU offload when safe |
+| Desktop (Electron) | [node-llama-cpp](https://github.com/withcatai/node-llama-cpp); vision via bundled `llama-server` |
+| Android / iOS (Capacitor) | bundled llama.cpp `llama-server` on `127.0.0.1` |
 
 ## Quick Start
 
@@ -29,9 +35,9 @@ Build targets are configured in `electron-builder.yml` (macOS dmg + zip, Windows
 
 ### Auto-Updates
 
-The Electron app checks GitHub Releases for new versions on launch. When an update is available, a slim banner appears below the top bar with options to download and install. Updates require code-signed builds — unsigned dev/fork builds skip the check silently. Set `VITE_GITHUB_REPO=owner/repo` at build time (the CI workflow does this automatically via `github.repository`).
+electron-updater checks GitHub Releases (`publish:` in `electron-builder.yml`, never `setFeedURL()`) on launch, auto-downloads, and shows `UpdateBanner` below the top bar. Skipped when unpackaged (dev), on Mac App Store builds, and on Linux outside an AppImage. `VITE_GITHUB_REPO=owner/repo` (`.env`; CI sets `github.repository`) drives download links.
 
-The Electron code lives in `electron/` — `main.js` (window + IPC), `preload.js` (context bridge), `inference_worker.js` (node-llama-cpp in a utilityProcess) and `llama_server.js` (vision sidecar). The renderer auto-detects Electron at runtime and swaps providers.
+Code in `electron/`: `main.js` (window, IPC, updater), `preload.js` (context bridge), `inference_worker.js` (node-llama-cpp in a utilityProcess), `llama_server.js` (vision sidecar), `model_files.js` (GGUF magic, projector names). The renderer detects `window.electronAPI.native_inference` and swaps providers (`src/providers/factory.js`).
 
 ### Vision sidecar (llama-server)
 
@@ -68,7 +74,7 @@ Capacitor 8 wraps the same React build (`vite build --mode native`, no service w
 - Icons/splash: `python3 scripts/mobile_icons.py` (from `build/icon.png`).
 - No Mac: `scripts/swift_typecheck.sh` typechecks the plugin's Swift on Linux against stubs (needs a swift.org toolchain in `vendor/swift`).
 - In-process server: the build patches upstream `server.cpp` so its `shutdown_handler` is mutex-guarded and cleared before the run's stack unwinds; Swift waits for the run to return before starting another.
-- Phones: picker budgets 45% of RAM (automatic pick ≤ 70% of free), context ≤ 8192, and ranks Q5_0/IQ quants below K-quants (no ARM repack kernels).
+- Phones: picker budgets 45% of RAM (automatic pick ≤ 70% of free), both ×1.2 leniency; context ≤ 8192, and ranks Q5_0/IQ quants below K-quants (no ARM repack kernels).
 - Debug the WebView: `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>` → Playwright `connectOverCDP`.
 - Signing: all material lives in gitignored `.secrets/` (never commit; `.gitignore` also blocks `*.p8 *.p12 *.jks *.keystore *.mobileprovision`).
 
@@ -104,27 +110,29 @@ Capacitor 8 wraps the same React build (`vite build --mode native`, no service w
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Vite dev server (browser) |
-| `npm run build` | Production build (browser) |
+| `npm run dev` / `build` / `preview` | Vite dev server / production build / serve the build (browser) |
+| `npm run build:native` | `vite build --mode native` + `cap sync` (mobile) |
 | `npm run dev:electron` | Electron dev with hot-reload |
 | `npm run build:electron` | Package Electron app |
 | `npm run fetch:llama-server` | Fetch the vision sidecar for this platform (`-- --os mac --arch all` for others) |
-| `npm run test` | Playwright E2E tests |
-| `npm run test:unit` | Vitest model and service unit tests |
+| `npm test` | Playwright E2E (`test:ui` = Playwright UI, `test:headed` = visible browser) |
+| `npm run test:pwa` | Build the production PWA, verify headers + cross-origin isolation |
+| `npm run test:unit` | Vitest unit tests (`tests/unit/`) |
 | `npm run lint` | ESLint with auto-fix |
+
+`postinstall` copies wllama64 + compat WASM into `public/wasm` (`scripts/copy_wasm.js`) and installs platform deps.
 
 ## Testing
 
-The test suite is split into fast UI tests and slower inference tests that download real models and run WASM/native inference.
+Fast UI tests vs slow inference tests that download real models. Project membership = `testMatch` regex in each config.
 
-### Test Projects
-
-| Project | Runtime | What it tests |
-|---------|---------|---------------|
-| `ui` | ~30s | UI interactions, routing, settings, theme — no model downloads |
-| `inference` | ~20-30 min | Multi-architecture WASM inference, model switching, abort, chat history, settings effects, deep links |
-| `smoke` | ~30s | Electron app launches, API exposed |
-| `inference` (Electron) | ~15 min | Native node-llama-cpp inference, multi-architecture, IPC model management |
+| Config | Project | Runtime | Covers |
+|---|---|---|---|
+| `playwright.config.js` | `ui` | ~30 s | UI, routing, settings, theme, attachments, vision UI — no downloads |
+| `playwright.config.js` | `inference` | ~20–30 min | WASM inference, switching, abort, history, deep links, checksums, download retry, speed probe |
+| `electron.config.js` | `smoke` | ~30 s | App launches, API exposed |
+| `electron.config.js` | `inference` | ~15 min | node-llama-cpp inference, IPC model management, vision sidecar |
+| `pwa.config.js` | — | ~1 min | Production build: app shell, deployment headers |
 
 ### Running Tests
 
@@ -134,6 +142,9 @@ npx playwright test --config=tests/playwright.config.js --project=ui
 
 # Browser inference tests (downloads real models, runs WASM inference)
 npx playwright test --config=tests/playwright.config.js --project=inference
+
+# All 4 compact architectures (default: SmolLM2 + TinyLlama)
+FULL_INFERENCE=1 npx playwright test --config=tests/playwright.config.js --project=inference tests/e2e/inference_multimodel.spec.js
 
 # Re-run the researched Qwen 3.5 model gate
 RESEARCH_INFERENCE=1 npx playwright test --config=tests/playwright.config.js --project=inference tests/e2e/inference_multimodel.spec.js
@@ -152,14 +163,14 @@ DISPLAY=:99 npx playwright test --config=tests/electron.config.js --project=infe
 
 ### Architecture Coverage
 
-Wllama64 renders each model's embedded Jinja template. The real-inference suite covers these model families:
+Wllama64 renders each model's embedded Jinja template. Fixtures (`tests/fixtures/test_models.js`) use retired community GGUFs, which stay loadable:
 
 | Family | Model | Test file |
 |--------|-------|-----------|
 | SmolLM | SmolLM2 360M | `inference.spec.js`, `inference_multimodel.spec.js` |
 | Llama / Zephyr | TinyLlama 1.1B | `inference_multimodel.spec.js` |
-| Llama 3 | Llama 3.2 1B | `inference_multimodel.spec.js` |
-| Qwen 2 / reasoning | DeepSeek R1 1.5B | `inference_multimodel.spec.js` |
+| Llama 3 | Llama 3.2 1B | `inference_multimodel.spec.js` with `FULL_INFERENCE=1` |
+| Qwen 2 / reasoning | DeepSeek R1 1.5B | `inference_multimodel.spec.js` with `FULL_INFERENCE=1` |
 | Qwen 3.5 hybrid | Qwen 3.5 2B | `inference_multimodel.spec.js` with `RESEARCH_INFERENCE=1` |
 | Qwen 3.5 hybrid | Qwen 3.5 4B / 9B | `inference_large.spec.js` |
 | Mistral 3 | Ministral 3 3B / 14B | `inference_large.spec.js` |
@@ -167,14 +178,12 @@ Wllama64 renders each model's embedded Jinja template. The real-inference suite 
 
 ### Docker / CI Setup
 
-For running tests in Docker or CI, use the setup script:
-
 ```bash
 # Install system deps (Xvfb, Chromium, cmake), start Xvfb, build node-llama-cpp
 bash scripts/setup_docker_e2e.sh
 
 # Pre-download model files to /tmp/gratisai-test-models/ (speeds up Electron tests)
-bash scripts/download_test_models.sh --fast    # SmolLM2 only (~200 MB)
+bash scripts/download_test_models.sh --fast    # SmolLM2 only (~270 MB)
 bash scripts/download_test_models.sh --medium  # 4 compact architecture fixtures (~2.9 GB)
 bash scripts/download_test_models.sh --all     # Add Qwen 3.5 2B (~4.2 GB total)
 ```
@@ -183,45 +192,39 @@ bash scripts/download_test_models.sh --all     # Add Qwen 3.5 2B (~4.2 GB total)
 
 ```
 tests/
-├── playwright.config.js       # Browser test config (ui and inference projects)
-├── electron.config.js         # Electron test config (smoke, inference projects)
-├── fixtures/
-│   └── test_models.js         # Model definitions with HuggingFace URLs
-├── helpers/
-│   ├── wait_for_inference.js   # Poll for assistant response
-│   ├── download_model.js       # UI download flow + model selection helpers
-│   └── electron_helpers.js     # Electron launch, model preloading, IPC helpers
-├── e2e/                        # Browser UI and real-inference specs
-│   ├── inference_large.spec.js # Persistent Memory64 + cache-only large-model gate
-│   ├── inference_multimodel.spec.js
-│   ├── model_switching.spec.js
-│   ├── abort_generation.spec.js
-│   ├── chat_history_with_inference.spec.js
-│   ├── settings_with_inference.spec.js
-│   ├── deep_link_with_inference.spec.js
-│   ├── error_handling.spec.js
-│   ├── theme.spec.js
-│   └── ... (existing UI tests)
-└── electron/                   # Electron E2E tests (4 spec files)
-    ├── smoke.spec.js
-    ├── inference.spec.js
-    ├── multi_architecture.spec.js
-    └── model_management.spec.js
+├── playwright.config.js   # browser: ui + inference projects
+├── electron.config.js     # Electron: smoke + inference projects
+├── pwa.config.js          # production PWA build checks
+├── fixtures/              # test_models.js, PDFs, Xet download trace
+├── helpers/               # download_model, wait_for_inference, electron_helpers, local_model_server
+├── unit/                  # Vitest
+├── e2e/                   # browser UI + real-inference specs
+├── electron/              # Electron specs
+└── pwa/                   # app_shell, deployment
 ```
 
 ## CI/CD
 
-Both workflows trigger when a version bump lands on `main` (the `package.json` version must actually change, not just the file).
+| Workflow | Trigger | Output |
+|---|---|---|
+| `deploy-web.yml` | push to `main` touching web files (`src/`, `public/`, `package.json`, …), or dispatch | Cloudflare Workers |
+| `release-electron.yml` | push to `main` where the `package.json` **version** changes, or dispatch | GitHub Release |
+| `mobile-apps.yml` | push to `main` / `mobile-apps`, or dispatch | `gratis-android` + `gratis-ios` artifacts (nothing published) |
+| `release-mac-app-store.yml` | dispatch only | Mac App Store upload |
+| `browser-bench.yml` | dispatch (optional `wllama64_version`) | Real-browser tokens/sec benchmark |
 
 ### Web → Cloudflare Workers (Static Assets)
 
-The `deploy-web` workflow runs unit and production-PWA checks, builds with Vite, and deploys to Cloudflare Workers via a pinned Wrangler version. The project name and asset directory are configured in `wrangler.toml`. The `public/_headers` file sets `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`; wllama64 requires cross-origin isolation for its shared Memory64 runtime. After deployment, CI polls both the Workers deployment URL and the configured public origin and fails unless representative documents, WASM, and speed-test assets expose the required headers. Forks can set the `PUBLIC_WEB_ORIGIN` repository variable for their custom domain.
-
-Run `npm run test:pwa` to build the production PWA and verify the same header contract, a shared 16 GiB Memory64 reservation, and cross-origin isolation after service-worker control in real Chromium.
+- Steps: unit tests → `test:pwa` → `vite build` → `_headers` check → pinned-Wrangler deploy → `scripts/verify_deployment_headers.js` polls the deployment URL + public origin.
+- `wrangler.toml`: worker name + asset dir. Domains (gratis-ai.com, www, gratis.trueperformancenetwork.com) are managed in the Cloudflare dashboard, not `routes` (wrangler would rewrite them all).
+- `public/_headers`: COOP `same-origin` + COEP `require-corp`; wllama64's shared Memory64 needs cross-origin isolation.
+- Public origin = `PUBLIC_WEB_ORIGIN` repo variable; upstream `actuallymentor/gratis-ai` defaults to https://ai.gratis.sh.
+- `index.html` keeps `<meta name="referrer" content="no-referrer">`: Hugging Face rejects `*.workers.dev` referrers.
+- `npm run test:pwa` checks the same header contract locally, plus a shared 16 GiB Memory64 reservation and isolation after service-worker control.
 
 ### Electron → GitHub Releases
 
-The `release-electron` workflow builds for macOS (arm64 + x64), Windows (x64), and Linux (x64). When signing secrets are configured, macOS builds are signed and notarized and Windows builds are code-signed. When secrets are absent (e.g. in forks), unsigned builds are produced instead. Artifacts stay in a draft GitHub Release tagged `v{version}` until every platform succeeds; failed notarization cannot publish a partial release.
+Builds macOS (arm64 + x64), Windows x64, Linux x64. With secrets: mac signed + notarized, Windows code-signed; without (forks): unsigned. Artifacts sit in a draft release `v{version}` until every platform succeeds, so a failed notarization never publishes a partial release. Failed draft → fix, push, `gh workflow run release-electron.yml`.
 
 ### Secrets
 
@@ -264,68 +267,44 @@ Separate from the DMG (same bundle id, same ASC app 6827061396 as iOS). arm64 on
 
 ## Model Selection
 
-The app automatically recommends the best model for your hardware. On first launch it detects GPU capabilities and available memory, then picks the highest-quality model that fits.
+Catalog: `src/utils/model_catalog.js` (single source of truth). Logic: `select_picker_models` → `select_for_preferences`; device profile: `src/utils/device_detection.js`.
 
-### How detection works
+### Catalog
 
-| Runtime | Detection method |
-|---------|-----------------|
-| **Electron** | Calls `node-llama-cpp`'s `getLlama()` at startup to detect GPU backend (Metal, CUDA, Vulkan), VRAM, and unified memory. Falls back to OS-level `os.totalmem()` if GPU detection fails. |
-| **Browser** | Probes shared Memory64, JSPI, cross-origin isolation, WebGPU, device memory, and WebGL. Memory64 and wasm32 compatibility runtimes receive separate conservative budgets. |
+| Group | Status |
+|---|---|
+| `TPN_BUILDS` | Offered. Quantised + KLD-measured by TPN Workbench (`tpnlabs` on HF); each inherits architecture facts from a community entry (`from`) |
+| `COMMUNITY_MODELS` (local) | `hidden`: never offered, installed copies stay loadable/removable |
+| `COMMUNITY_MODELS` (`cloud_only`) | Legacy OpenRouter / Venice entries; no cloud provider ships, stale `openrouter:` / `venice:` active IDs are cleared on load |
+| TPN winners (`src/utils/tpn_winner_models.js`) | Fetched from `tpnlabs` HF collections titled `TPN-<n>`; lead the pick with default preferences when one fits comfortably |
 
-### Memory budget calculation
+Adding a model: copy an entry, fill architecture (`layers`, `kv_heads`, `head_dim`, `sliding_kv`) from HF `config.json`, exact `file_size_bytes`, optional `mmproj`. See the file header.
 
-Known models use their exact file size plus architecture-specific FP16 KV cache and 500 MB of
-runtime headroom. The memory budget determines automatic recommendations; Memory64 users may also
-manually choose larger entries whose baseline estimate remains below the runtime ceiling.
+### Picker
 
-**Electron (native inference)**
+- Guided wizard (`ModelWizard`) asks priority + needs; expert view (`ModelBrowser`) lists every visible model with fit and speed.
+- Preferences: `priority` (`better` = Smarter / `balanced` / `faster`), `vision` (needs `mmproj`), `fewer_refusals` (needs `uncensored` + UGI evidence). Uncensored models are only picked with `fewer_refusals`; `specialist` models never auto-picked.
+- Score = `quality` (Gratis eval or curated index, discounted by TPN KLD × 0.5) vs log-scaled estimated reply speed, weighted per priority, with per-priority speed floors (1 / 1.5 / 2.5 tok/s).
+- Speed: browser uses measured `browser_tps` × device speed ratio (speed probe, then real replies); else bandwidth ÷ bytes per token, with penalties for MoE, IQ/MXFP4/Q5_0 kernels (WASM, phone ARM) and thinking-by-default models (÷3).
+- Result: `pick` (comfortable fit first), `fallback` (≤60% of pick memory), `step_up` (≥8 quality points smarter, ≥1 tok/s), `relaxed` (nearest pick without a requirement). Speed modes that land on the same model merge.
 
-| GPU type | Budget formula | Rationale |
-|----------|---------------|-----------|
-| Apple Silicon (Metal) | 65% of total RAM | Unified memory with headroom for macOS, Electron, and other applications. |
-| Discrete GPU (CUDA/Vulkan) | max(VRAM, 60% of system RAM) | Weights load to VRAM; partial offloading spills to system RAM. The larger of the two gives the real budget. |
-| CPU-only | 60% of system RAM | Leaves headroom for the OS, Electron, and other applications. |
+### Memory budgets
 
-**Browser (WASM)**
+Estimate = GGUF size + FP16 KV cache (2,048-token baseline; sliding-window layers capped) + 500 MB runtime + 1.25× projector. Soft shares carry `MEMORY_LENIENCY` 1.2; hard ceilings never stretch.
 
-| Runtime | Limit |
-|---------|-------|
-| Shared Memory64 + JSPI | Automatic cards stay below 5.6 GB; verified manual choices may use baseline estimates up to 15 GB below wllama64's 16 GiB virtual ceiling |
-| wasm32 compatibility | ~3.4 GB hard ceiling, further capped to 60% of reported device memory and 70% of the JS heap limit |
+| Runtime | Manual budget | Automatic pick |
+|---|---|---|
+| Electron, Apple Silicon | 65% unified RAM ×1.2 | same |
+| Electron, discrete GPU | max(VRAM, 60% RAM ×1.2) | same |
+| Electron, CPU-only | 60% RAM ×1.2 | same |
+| Mobile apps | 45% RAM ×1.2 | ≤ 70% of free RAM ×1.2 |
+| Browser, Memory64 | min(15 GB, 70% `deviceMemory` ×1.2 (≥ 5.6 GB), measured WASM grant) | ≤ 5.6 GB ×1.2 unless RAM is declared/trusted; > 5.6 GB needs a `browser_verified` receipt or a TPN winner |
+| Browser, wasm32 compat | min(3.4 GB, 60% `deviceMemory` ×1.2, 70% JS heap) | same |
 
-Model selection uses a 2,048-token context baseline. At load time, known catalog models grow by powers of two within the device budget, capped at 16K. Custom models stay at 2K when their architecture is unknown. Allocating an advertised 128K or 262K maximum at startup would waste gigabytes of KV cache before the first short chat.
-
-### What gets recommended
-
-The selector scores every eligible model that fits, then chooses the highest-quality result:
-
-| Hardware | Budget | Recommendation | Why |
-|----------|--------|---------------|-----|
-| Apple Silicon (8 GB) | ~5.2 GB | **Phi-4 Mini 3.8B** (2.49 GB) | Strongest fully covered benchmark score whose 2K estimate fits. |
-| Apple Silicon (16 GB) | ~10.4 GB | **Qwen3 14B Q4** (9.0 GB) | Complete benchmark coverage with native runtime headroom. |
-| Discrete GPU (12 GB VRAM) | ~12 GB | **Qwen3 14B Q5** (10.5 GB) | Higher-quality quant fits the native GPU/runtime budget. |
-| CPU-only system (8 GB RAM) | ~4.8 GB | **Phi-4 Mini 3.8B** (2.49 GB) | Fits the conservative 2K estimate; speed remains hardware-dependent. |
-| Intel laptop (4 GB, no GPU) | ~2.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | Budget fits medium-tier models only. |
-| Browser with Memory64 | 5.6 GB automatic | **Phi-4 Mini 3.8B** (2.49 GB) | Larger receipt-backed models remain available manually, up to the runtime/device estimate. |
-| Browser compatibility runtime (memory unknown) | ~2.4 GB | **DeepSeek R1 1.5B** (1.1 GB) | Firefox/Safari omit the memory hint, so selection stays conservative below the wasm32 ceiling. |
-
-### Model tiers
-
-| Tier | Models | File size | Min budget |
-|------|--------|-----------|-----------|
-| **Lightweight** | SmolLM2 360M, Qwen3 0.6B, TinyLlama 1.1B, Llama 3.2 1B | 271–808 MB | ~0.8 GB |
-| **Medium** | DeepSeek R1 1.5B, Qwen3 1.7B, Qwen 3.5 2B/4B, SmolLM3 3B, Ministral 3 3B | 1.1–2.74 GB | ~1.7 GB |
-| **Heavy** | Qwen3 8B/14B, Qwen 3.5 9B, Ministral 3 14B | 5.0–9.0 GB | ~6.2 GB |
-| **Ultra** | GPT-OSS 20B; Qwen3 32B and Llama 70B variants | 12.1–42.5 GB | GPT-OSS is Memory64-verified; larger weights require desktop RAM |
-
-### Key design decisions
-
-- **Single-user assumption**: This is a desktop app for one person at a time, not a server. Native budgets still reserve 35–40% of RAM for the OS and other workloads.
-- **Apple Silicon gets special treatment**: Unified memory lets the native runtime use a larger share of the machine's RAM than a browser can safely reserve.
-- **Budget-based, not threshold-based**: Instead of hardcoded "if VRAM >= 8 GB then heavy", we calculate the actual memory budget and check which models fit. This naturally adapts to any hardware configuration.
-- **Sparse benchmark restraint**: Once a model publishes any comparable result, missing fields receive a neutral 50 for sorting. One high GPQA result cannot outrank strong five-benchmark coverage by itself, and the UI shows a composite score only when all five real results exist.
-- **Graceful fallback**: If GPU detection fails (e.g., node-llama-cpp not compiled), we fall back to platform heuristics (macOS + arm64 implies Metal) and then to conservative CPU-only estimates.
+- Browser on a phone/tablet: automatic pick also ≤ 50% RAM ×1.2 (2.4 GB if RAM unknown).
+- Browser RAM override (`BrowserRamOverride`, Memory64 only) replaces the privacy-clamped `deviceMemory`.
+- Context: selection uses 2K; at load, browser catalog models double up to 16K within budget (custom models stay 2K). Electron: `estimate_context_for_system()` (70% of RAM) + a retry loop halving context on VRAM errors.
+- Detection: Electron calls `getLlama()` for Metal/CUDA/Vulkan, VRAM, unified memory (fallback `os.totalmem()`, macOS arm64 ⇒ Metal). Browser probes shared Memory64, JSPI, isolation, WebGPU (retained-buffer allocation), WebGL, `deviceMemory`, and the WASM grant (in a worker, per model-screen visit).
 
 ## Store listings
 
@@ -357,15 +336,16 @@ No API: Apple App Privacy labels, adding a platform; Play content rating, target
 
 ```
 src/
-├── components/
-│   ├── atoms/        # Stateless components
-│   ├── molecules/    # Stateful components
-│   └── pages/        # Route-level pages
-├── hooks/            # React hooks
-├── providers/        # LLM providers (wllama64, electron IPC)
-├── stores/           # Zustand + IndexedDB metadata/history
-├── styles/           # Theme + styled-components
-└── utils/            # Utilities
+├── components/{atoms,molecules,pages}/   # stateless / stateful / route-level
+├── content/legal/   # privacy, terms, support (Markdown pages)
+├── hooks/           # React hooks (use_llm, use_model_manager, use_voice_input, …)
+├── i18n/            # i18next; 11 locales, each with its own prompt.json
+├── native/          # Capacitor bridge (electronAPI-shaped)
+├── providers/       # wllama64, Electron IPC, Parakeet (voice input)
+├── routes/          # Routes.jsx, idle-time chunk preloading
+├── stores/          # Zustand + IndexedDB (idb)
+├── styles/          # theme + styled-components globals
+└── utils/           # catalog, device detection, downloads, prompts, …
 ```
 
 ### Prompt warm-ups (browser)
@@ -385,4 +365,4 @@ Time to first token is spent reading the prompt. llama.cpp reuses its cache for 
 
 ## Tech Stack
 
-React 19, Vite, styled-components, react-router, zustand, Playwright, wllama64 (browser), node-llama-cpp (Electron)
+React 19, Vite, styled-components, react-router, zustand, i18next, Capacitor (mobile), Electron + node-llama-cpp (desktop), wllama64 (browser), parakeet.js (voice), Playwright + Vitest. Logging via `mentie`.
