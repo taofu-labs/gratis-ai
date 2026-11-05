@@ -28,4 +28,4 @@ Versions: read `package.json`. This file = coupling rules + deferred majors.
 
 ## Log
 
-- 2026-11-05: Capacitor 8.6 (pinned, bump all 4 + CI `cap sync` handles native), unpdf 2 (only `getDocumentProxy`/`extractText` used — unchanged API; needs Node 24), undici 8 (eval script `Agent` only), Wrangler 4.158 (+ `deploy-web.yml`). Verified: unit 240, UI e2e 88, file_attachment PDF specs, Electron smoke 4.
+- 2026-11-05: Capacitor 8.6 (pinned: bump all 4 npm pkgs AND the exact SPM pin in `mobile/plugin/Package.swift` + `CapApp-SPM/Package.swift`; cap sync does not rewrite exact pins), unpdf 2 (only `getDocumentProxy`/`extractText` used — unchanged API; needs Node 24), undici 8 (eval script must use undici's own `fetch`: Node's built-in fetch rejects v8 dispatchers), Wrangler 4.158 (+ `deploy-web.yml`). Verified: unit 240, UI e2e 88, file_attachment PDF specs, Electron smoke 4.

@@ -284,7 +284,7 @@ Adding a model: copy an entry, fill architecture (`layers`, `kv_heads`, `head_di
 
 - Guided wizard (`ModelWizard`) asks priority + needs; expert view (`ModelBrowser`) lists every visible model with fit and speed.
 - Preferences: `priority` (`better` = Smarter / `balanced` / `faster`), `vision` (needs `mmproj`), `fewer_refusals` (needs `uncensored` + UGI evidence). Uncensored models are only picked with `fewer_refusals`; `specialist` models never auto-picked.
-- Score = `quality` (Gratis eval or curated index, discounted by TPN KLD × 0.5) vs log-scaled estimated reply speed, weighted per priority, with per-priority speed floors (1 / 1.5 / 2.5 tok/s).
+- Score = `quality` (Gratis eval or curated index, discounted by TPN KLD × 0.5 unless the TPN build was evaluated directly; benchmark fallback fills missing fields with a neutral 50) vs log-scaled estimated reply speed, weighted per priority, with per-priority speed floors (1 / 1.5 / 2.5 tok/s).
 - Speed: browser uses measured `browser_tps` × device speed ratio (speed probe, then real replies); else bandwidth ÷ bytes per token, with penalties for MoE, IQ/MXFP4/Q5_0 kernels (WASM, phone ARM) and thinking-by-default models (÷3).
 - Result: `pick` (comfortable fit first), `fallback` (≤60% of pick memory), `step_up` (≥8 quality points smarter, ≥1 tok/s), `relaxed` (nearest pick without a requirement). Speed modes that land on the same model merge.
 
@@ -298,12 +298,12 @@ Estimate = GGUF size + FP16 KV cache (2,048-token baseline; sliding-window layer
 | Electron, discrete GPU | max(VRAM, 60% RAM ×1.2) | same |
 | Electron, CPU-only | 60% RAM ×1.2 | same |
 | Mobile apps | 45% RAM ×1.2 | ≤ 70% of free RAM ×1.2 |
-| Browser, Memory64 | min(15 GB, 70% `deviceMemory` ×1.2 (≥ 5.6 GB), measured WASM grant) | ≤ 5.6 GB ×1.2 unless RAM is declared/trusted; > 5.6 GB needs a `browser_verified` receipt or a TPN winner |
+| Browser, Memory64 | min(15 GB, 70% `deviceMemory` (60% if declared) ×1.2 (≥ 5.6 GB), measured WASM grant) | ≤ 5.6 GB ×1.2 unless RAM is declared/trusted; > 5.6 GB needs a `browser_verified` receipt or a TPN winner |
 | Browser, wasm32 compat | min(3.4 GB, 60% `deviceMemory` ×1.2, 70% JS heap) | same |
 
 - Browser on a phone/tablet: automatic pick also ≤ 50% RAM ×1.2 (2.4 GB if RAM unknown).
 - Browser RAM override (`BrowserRamOverride`, Memory64 only) replaces the privacy-clamped `deviceMemory`.
-- Context: selection uses 2K; at load, browser catalog models double up to 16K within budget (custom models stay 2K). Electron: `estimate_context_for_system()` (70% of RAM) + a retry loop halving context on VRAM errors.
+- Context: selection uses 2K; at load, browser catalog models double up to 16K within budget (models without architecture metadata stay 2K). Electron: `estimate_context_for_system()` (70% of RAM) + a retry loop halving context on VRAM errors.
 - Detection: Electron calls `getLlama()` for Metal/CUDA/Vulkan, VRAM, unified memory (fallback `os.totalmem()`, macOS arm64 ⇒ Metal). Browser probes shared Memory64, JSPI, isolation, WebGPU (retained-buffer allocation), WebGL, `deviceMemory`, and the WASM grant (in a worker, per model-screen visit).
 
 ## Store listings

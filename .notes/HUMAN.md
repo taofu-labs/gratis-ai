@@ -42,3 +42,6 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Dead cloud remnants: `setup_runpod_cors` in `electron/main.js`, hidden `*-cloud` / `*-venice` catalog rows, `openrouter_id`/`venice_id` typedef fields.
 - `tests/e2e/inference_large.spec.js` seeds `gratisai:settings:*` (no-op; prefix is `gratis:`).
 - Stale local branches merged into main (design/*, fix/*, store/*, web/*); `chore/desktop-release-parity` holds only an old notes commit.
+
+## Voice input not offline (found 2026-11-05)
+- parakeet.js sets `ort.env.wasm.wasmPaths` to jsDelivr when unset → voice needs network on first use, and breaks the "no CDN code" promise. Option: copy onnxruntime-web dist to `public/` in `copy_wasm.js` and set `wasmPaths` before `fromHub`. Not done: needs a COEP/precache check.

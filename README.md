@@ -84,7 +84,7 @@ Yes. The AI model runs entirely on your hardware — in your browser tab or in t
 
 The built-in models are just the starting point. You can try other **GGUF models from [Hugging Face](https://huggingface.co/models?library=gguf)** by choosing *Custom model* and pasting a link like `hf.co/org/repo:Q4_K_M` (or a direct `.gguf` URL). This includes coding assistants, roleplay models, and domain-specific fine-tunes.
 
-The model must fit your hardware and use an architecture supported by the bundled llama.cpp runtime.
+The model must fit your hardware, be a chat/instruct model with a built-in chat template, and use an architecture supported by the bundled llama.cpp runtime.
 
 ## For developers
 

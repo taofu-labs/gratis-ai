@@ -11,7 +11,7 @@ let package = Package(
         .library( name: "GratisNative", targets: [ "GratisNativePlugin" ] ),
     ],
     dependencies: [
-        .package( url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.5.3" ),
+        .package( url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.6.0" ),
     ],
     targets: [
         .binaryTarget( name: "LlamaServer", path: "ios/LlamaServer.xcframework" ),

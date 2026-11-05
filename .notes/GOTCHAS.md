@@ -36,7 +36,11 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Worktrees lack `public/wasm/` (gitignored, postinstall). SPA HTML served for `/wasm/wllama.wasm` ⇒ "expected magic word". Copy from main checkout.
 
 ## Browser memory / probes
-
+- WebGPU probe: overall time budget ≠ single stalled op. Buffers confirmed before budget exhaustion = valid lower bound; device loss / per-op timeout invalidates the sample.
+- Custom/legacy loads (no `n_gpu_layers` derivation) must still await an in-flight probe, else retained UMA buffers overlap the WASM model allocation.
+- WASM grant probe (`probe_wasm_memory_grant`) grows untouched pages: catches engine/address-space/commit limits, NOT free physical RAM.
+- Network probe: one bounded `Range` request to the exact GGUF origin; HF may redirect/ignore Range → count streamed bytes, abort at byte/time limit.
+- `n_threads_batch ≠ n_threads` spawns a second worker pool; compat (3.8.1) ignores batch threads but still spawns it → keep equal on compat + phones.
 - `probe_wasm_memory_grant` runs in a throwaway blob Worker (shared memory, 10 s timeout ⇒ null). Main-thread probing was wrong twice (page-load contention; 16 GB reservation lingers until GC). Deadline ⇒ null (unmeasured), NEVER the partial grant (read as "4 GB" on a 16 GiB device). WebKit non-shared `grow` copies the buffer (0.5–1 s/GB).
 - Re-measured each ModelSelectPage visit, skipped while a model is loaded (under-reads).
 - deviceMemory > 8 on Memory64 browsers is trusted; exactly 8 = maybe clamped.
@@ -82,6 +86,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Code fences without language wrap (small models fence prose).
 
 ## UI
+- `#root` needs `height: 100dvh`, not `min-height`: indefinite height lets flex children grow and the message list never scrolls (`body` is `overflow: hidden`).
 
 - Modals portal to `document.body`; `#root` + closed sidebar are `inert`. Dialog content outside the portal is unclickable; tests must open the sidebar first.
 - Only TopBar renders `model-selector-dropdown`; select models via `model-option-{id}` (expand alternatives first). Never match page text (hidden cards).
@@ -106,6 +111,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Domains live in Cloudflare, not `wrangler.toml`: any `routes` key makes wrangler rewrite all (CI token can't touch trueperformancenetwork.com routes).
 
 ## Electron / desktop
+- `LlamaChatSession.prompt()` gets only the last user message → system prompt lives in the session; `_ensure_system_prompt()` recreates it on change. Don't bypass.
 
 - electron-updater v6: never `setFeedURL()`; coordinates come from `electron-builder.yml` `publish`.
 - `ipcMain.handle` rejections serialize Errors as `{}` → return `{ status, message }`.
@@ -148,6 +154,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - WDA: `c.session(bundle)` relaunches app (kills downloads); one session per flow; tap without session via `POST /session/<id>/wda/tap/0` (pt = px/3). Recording: MJPEG on :9100 → `ffmpeg -f mjpeg -use_wallclock_as_timestamps 1 -i http://HOST:9100 -vf fps=30 -c:v libx264 -pix_fmt yuv420p out.mp4`.
 
 ## Testing / tooling
+- mentie enables `log.info` only when the URL contains `localhost`: Vite binds 127.0.0.1 but `baseURL` stays `http://localhost:5173` (log-asserting tests break on the IP).
 
 - Never `pkill -f`/`pgrep -f` with patterns matching your own shell (kills the Bash tool, exit 144). Use `ps -eo pid,args | grep "[v]ite"` or bracket regex.
 - `tests/playwright.config.js` reuses any :5173 server; shared machines → private port. `chromiumSandbox: !process.env.CI`.

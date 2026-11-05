@@ -17,8 +17,8 @@ Privacy-first chat app running open GGUF models on the user's device. No account
 **Principles**
 
 - One React codebase for all targets; the renderer picks a provider at runtime.
-- GGUF only. Each model's embedded Jinja chat template is rendered by llama.cpp — no hand-built prompts.
-- Offline after the first model download. No executable fetched from a CDN.
+- GGUF only. Browser and mobile render each model's embedded Jinja chat template via llama.cpp; Electron text uses node-llama-cpp's chat wrapper (resolved from the model). No hand-built prompts.
+- Offline after the first model download. Inference runtimes are self-hosted; exception: voice input (parakeet.js) loads its ONNX runtime from jsDelivr on first use.
 - Real tests: Playwright drives the real app; inference tests run real models (no mocks).
 
 ---

@@ -16,7 +16,7 @@ import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { fileURLToPath } from 'node:url'
-import { Agent } from 'undici'
+import { Agent, fetch } from 'undici'
 import { PROMPTS } from './prompts.js'
 import { ask_claude } from './claude.mjs'
 
@@ -86,7 +86,8 @@ const start_llama_server = async () => {
 
 }
 
-// Big models on CPU take >300s per reply; undici's default headers timeout would abort them
+// Big models on CPU take >300s per reply; undici's default headers timeout would abort them.
+// Use undici's own fetch: Node's built-in fetch rejects undici 8 dispatchers (v8 handler API)
 const patient = new Agent( { headersTimeout: 0, bodyTimeout: 0 } )
 
 const chat = async ( url, headers, body ) => {

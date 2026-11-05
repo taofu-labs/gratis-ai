@@ -22,7 +22,7 @@ Source of truth: `src/providers/wllama_provider.js`, `src/utils/model_download.j
 
 Option renames: `nPredict` → `max_tokens`, `useCache` → `cache_prompt`, nested `sampling.temperature`
 → top-level `temperature`, `repeat_penalty` → `penalty_repeat`, `repeat_last_n` → `penalty_last_n`,
-settings `stop_sequences` → `stop`.
+`frequency_penalty` → `penalty_freq`, `presence_penalty` → `penalty_present`, settings `stop_sequences` → `stop`.
 
 ## Order
 
@@ -45,7 +45,14 @@ settings `stop_sequences` → `stop`.
 - Validate bytes, not just metadata: exact stored size vs catalog, GGUF header, Xet responses without `Content-Length`.
 - Delete paths abort + unload first, then remove OPFS and IndexedDB records together; "Clear all data" clears OPFS too.
 - Reset provider/store dedup state before awaiting worker shutdown, or a killed load promise blocks later loads.
-- Automatic picks stay conservative (≤ 5.6 GB); larger browser choices need an exact-artifact `browser_verified` receipt.
+- Load with `n_gpu_layers: 0` unless a measured WebGPU allocation allows offload: V3 defaults to full offload (99999 layers).
+- Load instruct/chat GGUFs with an embedded chat template; llama.cpp renders it (no hand-built prompts).
+- Storage keys derive from the download URL: changing `VITE_HF_BASE_URL`, repo or filename changes cache identity.
+  Compare cached `hugging_face_repo` + `file_name` with the catalog; drop stale OPFS + IndexedDB entries together.
+- Memory: start at 2K context, double to 16K only while the estimate fits. `n_batch`: ≤ 4 GB → 512 (multi-thread) / 256;
+  > 4 GB → 256; > 8 GB → 128.
+- Automatic picks are conservative (≤ 5.6 GB ×1.2) unless RAM is declared/trusted; larger browser picks need an
+  exact-artifact `browser_verified` receipt or a TPN winner. Current budgets: [DOCUMENTATION.md](DOCUMENTATION.md#memory-budgets).
 - Electron uses native node-llama-cpp and never runs wllama64.
 
 ## Verification gate
