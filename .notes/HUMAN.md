@@ -44,5 +44,6 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Stale local branches merged into main (design/*, fix/*, store/*, web/*); `chore/desktop-release-parity` holds only an old notes commit.
 
 
-## A11y (found 2026-11-05)
-- `VoiceModelDialog` (and the `SettingsModal` pattern it copies) is a styled div: no `role="dialog"`/`aria-modal`/label, so screen readers and `getByRole('dialog')` miss it. Candidate for a shared accessible Modal.
+## Bughunt PRs (2026-11-05, drafts)
+- #22 voice fix: needs a full UI voice run on a real device (container too loaded to finish the chat-model step).
+- #21 dialog a11y: decide whether Escape = "Hide" on VoiceModelDialog mid-download (options in PR comment). UpdateModal unverified in a real Electron update flow.
