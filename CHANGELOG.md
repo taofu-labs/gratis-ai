@@ -9,6 +9,7 @@
 
 ### Fixed
 - Voice input works again in the browser: it downloads the ~670 MB model it promises (not a 2.5 GB one that failed to load) and runs its speech runtime from Gratis itself, not a third-party CDN, so it keeps working offline after first use, and no longer requires WebGPU
+- Screen readers: voice, update, download and "download started" popups are announced as named dialogs; Tab stays inside, Escape closes, focus returns to where you were
 
 ## [0.55.1] - 2026-10-30
 

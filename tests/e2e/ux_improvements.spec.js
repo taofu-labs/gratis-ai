@@ -87,6 +87,27 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( page.locator( `body` ) ).not.toContainText( `desktop_in_works_title` )
     } )
 
+    test( `get app download-started modal is an accessible dialog`, async ( { page } ) => {
+        await page.goto( `/get-app` )
+
+        // Keep the click from navigating to GitHub; React's handler still opens the modal
+        await page.evaluate( () => document.addEventListener( `click`, e => e.preventDefault(), true ) )
+        const link = page.locator( `a[href$="/releases/latest/download/Gratis-linux.AppImage"]` )
+        await link.click()
+
+        const dialog = page.getByRole( `dialog`, { name: `Download started` } )
+        await expect( dialog ).toHaveAttribute( `aria-modal`, `true` )
+        await expect( dialog.getByRole( `button`, { name: `Got it` } ) ).toBeFocused()
+
+        // Single control: Tab stays on it
+        await page.keyboard.press( `Tab` )
+        await expect( dialog.getByRole( `button`, { name: `Got it` } ) ).toBeFocused()
+
+        await page.keyboard.press( `Escape` )
+        await expect( dialog ).toHaveCount( 0 )
+        await expect( link ).toBeFocused()
+    } )
+
     // ── Model Select Page ─────────────────────────────────────────────
 
     test( `a fitting TPN winner is the recommendation, with the catalog one click away`, async ( { page } ) => {
