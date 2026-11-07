@@ -168,11 +168,12 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - RunPod: `llama.cpp:server-cuda --model-url` starts router mode with no model while /health = ok → curl GGUF then `-m`. `llama.cpp:full` tools need `LD_LIBRARY_PATH=/app`. Delete only pod ids we logged.
 - WebGPU on RunPod NVIDIA: `nvidia/cuda:*-base`, `NVIDIA_DRIVER_CAPABILITIES=all`, apt `libegl1 libgl1 libglvnd0 libvulkan1 xvfb`, headful Chromium under xvfb, `XDG_RUNTIME_DIR=/tmp`. Flags `--enable-unsafe-webgpu --enable-features=Vulkan --use-angle=vulkan --ignore-gpu-blocklist --enable-dawn-features=vulkan_enable_f16_on_nvidia` (no shader-f16 ⇒ llama.cpp registers 0 WebGPU devices ⇒ silent CPU). Test on localhost (about:blank has no `navigator.gpu`).
 - Playwright Chromium adds `--no-sandbox` by default (container rule: never). Put `chromiumSandbox: true` inside `use.launchOptions`; top-level `use.chromiumSandbox` gets overridden when `launchOptions` is set. Verify via `ps`.
-- Playwright Firefox crashes on `newPage` ("Target crashed") in the Babysit container: no Firefox prod probes here.
+- Playwright Firefox crashes on `newPage` ("Target crashed") and WebKit lacks gstreamer libs in the Babysit container → probe via `sudo docker` + `mcr.microsoft.com/playwright:v1.64.1-noble`. Daemon is host-side: bind mounts are empty, use `docker create` + `docker cp` + `start -a`.
 
 ## Git / secrets
 
 - Never commit `.secrets/` (keys, p12, jks, profiles). Stage with `git add -A -- . ':!.env'`, grep cached diff for key material.
+- Play vitals/reviews: `playdeveloperreporting` scope works with the Play service account (`errorIssues:search`, `errorReports:search`); reviews via androidpublisher `/reviews`.
 - Push: env `GH_TOKEN` is a classic PAT the org blocks; use fine-grained `GH_TOKEN` from `.env.local` over HTTPS (extraheader). SSH host key untrusted. That token can't write Actions secrets. `gh` reads too: prefix `GH_TOKEN=$(grep ^GH_TOKEN= .env.local | cut -d= -f2-)`. Guard blocks token-in-URL/git-config: push via `GIT_ASKPASS` script that cats the token.
 - `pkill -f <pattern>` in a Bash call matches that call's own shell command line ⇒ exit 144, kills itself. Kill by PID.
 - Orphan `vite preview` on 127.0.0.1:4173 can outlive sessions and shadow a new `[::1]:4173` one; check `ss -ltnp` first.

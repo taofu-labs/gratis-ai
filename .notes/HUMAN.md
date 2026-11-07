@@ -5,7 +5,9 @@ Open items only. Resolved history lives in TIMELINE.md.
 ## Stores (2026-11-03)
 
 - iOS + macOS 0.55.0 WAITING_FOR_REVIEW (iOS review recording + answers supplied; macOS `network.server` justified). On approval: press Release in ASC (MANUAL release type).
-- Play production 0.55.0 in review; goes live on approval. Then retry `scripts/store_play.mjs` (listing API 403'd on the draft app).
+- Play production 0.55.0 live (2026-11-07). Retry `scripts/store_play.mjs` (listing API 403'd on the draft app).
+- Voice fix (#22) + dialog a11y (#21) are web-only: still 0.55.1, so desktop/mobile/store builds ship broken voice until a version bump. Decide when to release 0.56.
+- https://ai.gratis.sh (upstream `actuallymentor/gratis-ai`) serves an Aug 2026 build; sync upstream `main` or retire the domain.
 - Apple Paid Apps agreement expired (free app unaffected).
 - Back up `.secrets/` outside the container (Play upload key `.secrets/android/upload.jks` SHA-256 69:2B:6E:53…:31:6E is locked in by Play; Apple dist cert exp 2027-10-26, MAS certs exp 2027-10-29).
 - TestFlight group "Gratis internal" has only mentor@palokaj.co; add testers with `--tester`.
