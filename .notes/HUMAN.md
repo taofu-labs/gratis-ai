@@ -42,7 +42,6 @@ Open items only. Resolved history lives in TIMELINE.md.
 ## Code cleanup candidates (not notes)
 
 - Dead cloud remnants: `setup_runpod_cors` in `electron/main.js`, hidden `*-cloud` / `*-venice` catalog rows, `openrouter_id`/`venice_id` typedef fields.
-- `tests/e2e/inference_large.spec.js` seeds `gratisai:settings:*` (no-op; prefix is `gratis:`).
 - Stale local branches merged into main (design/*, fix/*, store/*, web/*); `chore/desktop-release-parity` holds only an old notes commit.
 
 

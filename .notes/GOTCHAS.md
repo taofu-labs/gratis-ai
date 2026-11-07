@@ -155,6 +155,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - WDA: `c.session(bundle)` relaunches app (kills downloads); one session per flow; tap without session via `POST /session/<id>/wda/tap/0` (pt = px/3). Recording: MJPEG on :9100 → `ffmpeg -f mjpeg -use_wallclock_as_timestamps 1 -i http://HOST:9100 -vf fps=30 -c:v libx264 -pix_fmt yuv420p out.mp4`.
 
 ## Testing / tooling
+- Seed/read settings in tests via `tests/helpers/settings.js` (prefix derived from `VITE_APP_NAME`); hardcoded `gratisai:` keys silently no-op. PWA install-pill test flakes when run alongside a real-inference spec (host load).
 - mentie enables `log.info` only when the URL contains `localhost`: Vite binds 127.0.0.1 but `baseURL` stays `http://localhost:5173` (log-asserting tests break on the IP).
 
 - Never `pkill -f`/`pgrep -f` with patterns matching your own shell (kills the Bash tool, exit 144). Use `ps -eo pid,args | grep "[v]ite"` or bracket regex.

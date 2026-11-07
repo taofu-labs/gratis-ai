@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
+import { SETTINGS_EVENT, setting_key } from '../helpers/settings'
 
-const SETTINGS_EVENT = `gratis:settings-changed`
-const HF_TOKEN_KEY = `gratis:settings:hf_token`
+const HF_TOKEN_KEY = setting_key( `hf_token` )
 
 test.describe( `Settings Modal`, () => {
 
