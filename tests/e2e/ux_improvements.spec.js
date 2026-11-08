@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { seed_settings } from '../helpers/settings'
 
 const TPN_MODEL_FILE = `Qwen3.5-4B-Q4_K_M.gguf`
 const TPN_MODEL_ID = `tpn-001-winner-qwen3-5-4b-q4-k-m`
@@ -42,9 +43,7 @@ const mock_tpn_winners = async ( page, { file_size = 420_000_000 } = {} ) => {
 }
 
 // Picker detail tests start where a finished wizard lands: the recommendation
-const finish_wizard_before = page => page.addInitScript( () => {
-    localStorage.setItem( `gratis:settings:model_wizard_answers`, JSON.stringify( { vision: false, fewer_refusals: false } ) )
-} )
+const finish_wizard_before = page => seed_settings( page, { model_wizard_answers: { vision: false, fewer_refusals: false } } )
 
 test.describe( `UX Improvements - Progressive Disclosure`, () => {
 

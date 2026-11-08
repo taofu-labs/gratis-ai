@@ -22,10 +22,10 @@ export const COMMIT_HASH = typeof __COMMIT_HASH__ !== `undefined` ? __COMMIT_HAS
 
 // ── Storage ──────────────────────────────────────────────────────
 
-/** Generic prefix for all app-owned keys: `gratisai:` */
+/** Generic prefix for all app-owned keys, e.g. `gratis:` */
 export const APP_PREFIX = `${ slug }:`
 
-/** localStorage prefix for settings: `gratisai:settings:` */
+/** localStorage prefix for settings, e.g. `gratis:settings:` */
 export const STORAGE_PREFIX = `${ slug }:settings:`
 
 /** IndexedDB database name */
@@ -34,7 +34,7 @@ export const DB_NAME = `${ slug }-db`
 /**
  * Build a full localStorage key for a setting.
  * @param {string} key - Setting name (e.g. `theme`, `active_model_id`)
- * @returns {string} Fully qualified key (e.g. `gratisai:settings:theme`)
+ * @returns {string} Fully qualified key (e.g. `gratis:settings:theme`)
  */
 export const storage_key = ( key ) => `${ STORAGE_PREFIX }${ key }`
 
