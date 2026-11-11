@@ -399,9 +399,14 @@ const is_complete_gguf = ( file_path, expected_size ) => !!expected_size
 /**
  * Hide the main window; a full-screen window leaves full screen first (else macOS keeps a black Space)
  */
+let _pending_hide = null
 const hide_main_window = () => {
     if( !main_window.isFullScreen() ) return main_window.hide()
-    main_window.once( `leave-full-screen`, () => main_window?.hide() )
+    _pending_hide = () => {
+        _pending_hide = null
+        main_window?.hide()
+    }
+    main_window.once( `leave-full-screen`, _pending_hide )
     main_window.setFullScreen( false )
 }
 
@@ -456,6 +461,9 @@ const create_window = () => {
  */
 const show_main_window = () => {
     if( !main_window || main_window.isDestroyed() ) return create_window()
+    // Reopened mid full-screen exit: cancel the hide that would undo this show
+    if( _pending_hide ) main_window.off( `leave-full-screen`, _pending_hide )
+    _pending_hide = null
     if( main_window.isMinimized() ) main_window.restore()
     main_window.show()
     main_window.focus()
@@ -935,6 +943,8 @@ const setup_auto_updater = () => {
     } )
 
     autoUpdater.on( `error`, ( err ) => {
+        // A failed quitAndInstall leaves the app running: closing hides again
+        if( !_is_quitting ) _allow_window_close = false
         console.error( `[updater] Error:`, err?.message || err )
         send( `updater:error`, { message: err?.message || `Update check failed` } )
     } )
