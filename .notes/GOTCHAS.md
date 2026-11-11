@@ -129,6 +129,11 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Never pass both CSC_LINK and CSC_INSTALLER_LINK (double keychain unlock fails); workflow imports both into CSC_KEYCHAIN. `.pkg` lands in `release/mas-arm64/`.
 - Cert CNs: "3rd Party Mac Developer Application/Installer: Taofu B.V. (2GQT3SY42B)". macOS `security import` needs PBE-SHA1-3DES .p12 (`scripts/ios_signing.js` does it).
 - Store builds need MAC_OS build attached: `node scripts/store_apple.mjs <shots> --platform=MAC_OS`.
+- Guideline 4: mac main window must be reopenable after close. `close` hides on darwin (`_allow_window_close` set by before-quit / quitAndInstall); Window → Show Gratis AI + Dock `activate` call `show_main_window`. Don't revert to destroy-on-close.
+- MAS build 0.55.0 (5502; 5501 superseded, menu said "Quit gratisai") was built on ArjunMacbook (`~/gratis-mas`), not CI: workflow derives version from package.json (0.55.1 ⇒ 5501). Next MAS upload must use build > 5502 (0.55.1/0.55.2 collide).
+- Local MAS packaging: Mac lacks WWDR G3 intermediate (identities CSSMERR_TP_NOT_TRUSTED) → import AppleWWDRCAG3.cer into the temp keychain. Provisioning profile must be 0644 (0600 copied from `.secrets/` ⇒ altool 409 "files only readable by root").
+- Distribution-signed MAS apps don't launch locally: test with `--mac mas-dev` + Apple Development cert + MAC_APP_DEVELOPMENT profile (ArjunMacbook UDID registered 2026-11-11, `.secrets/apple/Gratis_Mac_Development.provisionprofile`). Electron MAS dSYMs: `electron-vX-mas-arm64-dsym.tar.xz` from electron releases.
+- ArjunMacbook lock screen (Dutch layout) rejected `babysit mac unlock` 2026-11-11; stop after 3 tries.
 
 ## Stores (API)
 

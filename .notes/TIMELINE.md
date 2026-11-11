@@ -39,3 +39,4 @@ Ascending. One line per decision; rationale after `—`.
 - 11-01 iPhone X review recording (WDA MJPEG) on release `app-review-media`; resubmitted.
 - 11-03 iOS 26 review recording added; notes patched while WAITING_FOR_REVIEW.
 - 11-05 README: gratis-ai.com primary, pixel wordmark header. Housekeeping: notes condensed, docs rewritten to match code, stack freshness check (RESEARCH.md). Deps: Capacitor 8.6, unpdf 2, undici 8, Wrangler 4.158 + in-range; ESLint 10 still blocked. No version bump (would trigger store releases).
+- 11-11 macOS 0.55.0 rejected (Guideline 4: no way to reopen closed window). Fix: hide-on-close + Window → Show Gratis AI + Dock reopen. MAS 0.55.0 built locally on ArjunMacbook: 5501 uploaded, then 5502 with app-menu labels "Gratis AI" (app.name is "gratisai"; renaming would move userData); Mac-specific review notes in `store/apple.json`.

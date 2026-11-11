@@ -186,3 +186,6 @@ mobile/plugin/ios/LlamaServer.xcframework/
 *.jks
 *.keystore
 keystore.properties
+
+# Local scratch (credentials for human review)
+.temp/

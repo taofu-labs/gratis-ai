@@ -4,7 +4,9 @@ Open items only. Resolved history lives in TIMELINE.md.
 
 ## Stores (2026-11-03)
 
-- iOS + macOS 0.55.0 WAITING_FOR_REVIEW (iOS review recording + answers supplied; macOS `network.server` justified). On approval: press Release in ASC (MANUAL release type).
+- iOS 0.55.0 WAITING_FOR_REVIEW. On approval: press Release in ASC (MANUAL release type).
+- macOS 0.55.0 REJECTED (Guideline 4, 2026-11-11) → fixed. Build 5502 VALID, NOT yet selected (version still has 5500). To resubmit: select 5502 on the macOS version (or `node scripts/store_apple.mjs <shots> --platform=MAC_OS --no-screenshots`, which also rewrites descriptions), reply in Resolution Center, resolve the rejected item, submit. Review notes + Mac recording already set. 5501 is VALID but superseded (menu said "Quit gratisai"): expire it.
+- Mac review artifacts on ArjunMacbook `~/gratis-mas/artifacts/` (pkg + Electron dSYMs zip). Mac dev profile "Gratis Mac Development …" + device "Gratis review MacBook Air" registered for local sandbox tests.
 - Play production 0.55.0 in review; goes live on approval. Then retry `scripts/store_play.mjs` (listing API 403'd on the draft app).
 - Apple Paid Apps agreement expired (free app unaffected).
 - Back up `.secrets/` outside the container (Play upload key `.secrets/android/upload.jks` SHA-256 69:2B:6E:53…:31:6E is locked in by Play; Apple dist cert exp 2027-10-26, MAS certs exp 2027-10-29).

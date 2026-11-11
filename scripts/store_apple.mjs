@@ -67,11 +67,13 @@ await api( `/appStoreVersions/${ version.id }`, { method: `PATCH`, body: { type:
 log( PLATFORM, `version`, TARGET.version, `build`, build ? TARGET.build : `none yet` )
 
 const review = await api( `/appStoreVersions/${ version.id }/appStoreReviewDetail` ).catch( () => null )
-// Platform-specific notes (e.g. the Mac's entitlement rationale) follow the shared ones
+// A platform may replace the shared recording link / notes (`review_video`, `notes`: the Mac's
+// differ from the iPhone's); its `review_notes` (e.g. the Mac's entitlement rationale) follow them.
 // App Review asks for a physical-device screen recording first; `review_video` holds its link
-const video = SETTINGS.review_video && `1. Screen recording: ${ SETTINGS.review_video }`
+const review_video = TARGET.review_video ?? SETTINGS.review_video
+const video = review_video && `1. Screen recording: ${ review_video }`
 if( !video ) console.warn( `⚠ store/apple.json review_video is empty, App Review will ask for the screen recording again` )
-const notes = [ video, SETTINGS.review.notes, TARGET.review_notes ].filter( Boolean ).join( `\n\n` )
+const notes = [ video, TARGET.notes ?? SETTINGS.review.notes, TARGET.review_notes ].filter( Boolean ).join( `\n\n` )
 const review_attributes = { ...SETTINGS.review, notes, demoAccountRequired: false }
 if( review ) await api( `/appStoreReviewDetails/${ review.id }`, { method: `PATCH`, body: { type: `appStoreReviewDetails`, id: review.id, attributes: review_attributes } } )
 else await api( `/appStoreReviewDetails`, { method: `POST`, body: { type: `appStoreReviewDetails`, attributes: review_attributes,

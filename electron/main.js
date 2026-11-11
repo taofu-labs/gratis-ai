@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, utilityProcess, session, nativeTheme, shell } = require( `electron` )
+const { app, BrowserWindow, Menu, ipcMain, utilityProcess, session, nativeTheme, shell } = require( `electron` )
 const path = require( `path` )
 const fs = require( `fs` )
 const os = require( `os` )
@@ -60,6 +60,8 @@ let main_window = null
 let inference_worker = null
 let active_download_controller = null
 let _is_quitting = false
+// macOS: closing the window hides it (chat state survives) unless the app is really quitting
+let _allow_window_close = false
 let _updater_active = false
 
 // electron-updater, loaded only once auto-update is enabled (never in Mac App Store
@@ -395,6 +397,15 @@ const is_complete_gguf = ( file_path, expected_size ) => !!expected_size
     && has_gguf_magic( file_path )
 
 /**
+ * Hide the main window; a full-screen window leaves full screen first (else macOS keeps a black Space)
+ */
+const hide_main_window = () => {
+    if( !main_window.isFullScreen() ) return main_window.hide()
+    main_window.once( `leave-full-screen`, () => main_window?.hide() )
+    main_window.setFullScreen( false )
+}
+
+/**
  * Create the main application window
  */
 const create_window = () => {
@@ -428,6 +439,72 @@ const create_window = () => {
 
     // Flush buffered console logs once the renderer is ready to receive them
     main_window.webContents.on( `did-finish-load`, _flush_log_buffer )
+
+    // macOS: red button / Cmd-W hide instead of destroy, so the renderer (open chat, draft,
+    // loaded model, running reply) survives. Window → Show Gratis AI and the Dock bring it back
+    main_window.on( `close`, event => {
+        if( process.platform !== `darwin` || _allow_window_close ) return
+        event.preventDefault()
+        hide_main_window()
+    } )
+    main_window.on( `closed`, () => main_window = null )
+
+}
+
+/**
+ * Show and focus the one main window, creating it only if it is truly gone
+ */
+const show_main_window = () => {
+    if( !main_window || main_window.isDestroyed() ) return create_window()
+    if( main_window.isMinimized() ) main_window.restore()
+    main_window.show()
+    main_window.focus()
+}
+
+/**
+ * macOS menu bar: the standard menus plus Window → Show Gratis AI, the way back after closing
+ * the window (App Review Guideline 4). Other platforms keep Electron's default menu
+ */
+const set_mac_menu = () => {
+
+    if( process.platform !== `darwin` ) return
+
+    const window_menu = {
+        role: `windowMenu`,
+        submenu: [
+            { role: `minimize` },
+            { role: `zoom` },
+            { type: `separator` },
+            { label: `Show Gratis AI`, click: show_main_window },
+            { type: `separator` },
+            { role: `front` },
+        ],
+    }
+
+    // Role labels default to app.name ("gratisai", the package name). Renaming the app would move
+    // userData (chats, models), so only the visible labels change
+    const app_menu = {
+        role: `appMenu`,
+        submenu: [
+            { role: `about`, label: `About Gratis AI` },
+            { type: `separator` },
+            { role: `services` },
+            { type: `separator` },
+            { role: `hide`, label: `Hide Gratis AI` },
+            { role: `hideOthers` },
+            { role: `unhide` },
+            { type: `separator` },
+            { role: `quit`, label: `Quit Gratis AI` },
+        ],
+    }
+
+    Menu.setApplicationMenu( Menu.buildFromTemplate( [
+        app_menu,
+        { role: `fileMenu` },
+        { role: `editMenu` },
+        { role: `viewMenu` },
+        window_menu,
+    ] ) )
 
 }
 
@@ -788,6 +865,8 @@ const register_ipc_handlers = () => {
 
     ipcMain.handle( `updater:install`, () => {
         if( !_updater_active ) return { status: `unavailable` }
+        // Squirrel closes windows before before-quit fires: let the close through
+        _allow_window_close = true
         autoUpdater.quitAndInstall()
     } )
 
@@ -917,9 +996,7 @@ if( !has_instance_lock ) app.quit()
 
 // Focus the existing window instead
 app.on( `second-instance`, () => {
-    if( !main_window ) return
-    if( main_window.isMinimized() ) main_window.restore()
-    main_window.focus()
+    if( main_window ) show_main_window()
 } )
 
 // App lifecycle
@@ -928,17 +1005,20 @@ if( has_instance_lock ) app.whenReady().then( () => {
     ensure_models_dir()
     register_ipc_handlers()
     setup_runpod_cors()
+    set_mac_menu()
     create_window()
     setup_auto_updater()
 
-    app.on( `activate`, () => {
-        if( BrowserWindow.getAllWindows().length === 0 ) create_window()
-    } )
+    // Dock icon click: bring back the hidden window (never a second one)
+    app.on( `activate`, show_main_window )
 
 } )
 
 // Graceful shutdown — clean up worker, abort downloads, then quit
 app.on( `before-quit`, ( event ) => {
+
+    // Quit (Cmd-Q, Dock → Quit, logout) really closes the window instead of hiding it
+    _allow_window_close = true
 
     // Guard: second fire after cleanup completes — let it through
     if( _is_quitting ) return
