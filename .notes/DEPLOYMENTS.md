@@ -7,7 +7,7 @@
 | Desktop | GitHub Releases, taofu-labs/gratis-ai (mac signed+notarized since v0.46; Windows unsigned by decision) | `release-electron.yml` on `package.json` version change |
 | Android | Play app `com.trueperformancenetwork.gratis`: internal track ("Gratis internal testers") + production (0.55.0 / 5500 submitted 2026-10-30) | CI `Mobile apps` artifact → `PATH=vendor/android/jdk/bin:$PATH node scripts/play_internal.js app-release.aab` |
 | iOS | ASC app 6827061396 "Gratis AI"; TestFlight group "Gratis internal"; App Store 0.55.0 waiting for review (2026-11-03) | CI artifact → `node scripts/ios_testflight.js gratis-unsigned.ipa --tester <ASC user>`; listing/review via `scripts/store_apple.mjs` |
-| macOS App Store | same ASC app, MAC_OS platform; 0.55.0 rejected 2026-11-11 (Guideline 4), fix build 5502 VALID, awaiting resubmit | `release-mac-app-store.yml` (dispatch); 5501/5502 built by hand on ArjunMacbook (see GOTCHAS) |
+| macOS App Store | same ASC app, MAC_OS platform; 0.55.0 (5502) resubmitted 2026-11-11 after Guideline 4 rejection, waiting for review | `release-mac-app-store.yml` (dispatch); 5501/5502 built by hand on ArjunMacbook (see GOTCHAS) |
 
 - Store build number = major·10000 + minor·100 + patch; every upload needs a new version.
 - Store releases are MANUAL: press Release in ASC after approval; Play managed publishing off (live on approval).
