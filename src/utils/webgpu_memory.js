@@ -91,6 +91,11 @@ export const webgpu_offload_trusted = (
     // Firefox's WebGPU runs llama.cpp much slower than its CPU (wllama64 1.2.0 measured)
     if( /firefox\//i.test( user_agent ) ) return false
 
+    // Safari runs the wasm32 runtime (no JSPI), where WebGPU offload halves the speed:
+    // M1, Safari 26.1, SmolLM2 360M 21 tok/s on CPU vs 10.5 fully offloaded, LFM 2.5 1.2B
+    // 18 vs 11 with 5 layers offloaded (same replies either way)
+    if( /applewebkit/i.test( user_agent ) && !/chrome\/|chromium\/|edg\/|opr\//i.test( user_agent ) ) return false
+
     // iPadOS Safari asks for desktop sites with a Macintosh UA; Macs have no touch screen
     if( /macintosh/i.test( user_agent ) && max_touch_points > 1 ) return false
 
