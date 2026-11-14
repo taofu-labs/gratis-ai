@@ -10,6 +10,7 @@ import {
     to_data_uri,
     to_openai_messages,
 } from '../../electron/llama_server.js'
+import { DESKTOP_MAX_CTX, estimate_desktop_context } from '../../src/utils/llama_server_protocol.js'
 import { has_gguf_magic, mmproj_local_name } from '../../electron/model_files.js'
 import { to_ipc_messages } from '../../src/providers/electron_ipc_provider.js'
 
@@ -111,6 +112,34 @@ describe( `llama-server sidecar helpers`, () => {
             { timings: { predicted_n: 2 } },
         ] )
 
+    } )
+
+} )
+
+describe( `desktop context selection`, () => {
+
+    // Qwen 3.5 0.8B-like: tiny weights, huge advertised window
+    const small_model = { file_size_bytes: 800_000_000, mmproj_size_bytes: 200_000_000, context_length: 262_144, layers: 24, kv_heads: 2, head_dim: 128 }
+    const GB = 1_000_000_000
+
+    test( `caps a small model's huge window on any machine`, () => {
+        expect( estimate_desktop_context( small_model, 8 * GB ) ).toBe( DESKTOP_MAX_CTX )
+        expect( estimate_desktop_context( small_model, 64 * GB ) ).toBe( DESKTOP_MAX_CTX )
+    } )
+
+    test( `caps custom imports without architecture data`, () => {
+        expect( estimate_desktop_context( { context_length: 131_072 }, 16 * GB ) ).toBe( DESKTOP_MAX_CTX )
+    } )
+
+    test( `keeps a shorter advertised window`, () => {
+        expect( estimate_desktop_context( { ...small_model, context_length: 4096 }, 16 * GB ) ).toBe( 4096 )
+    } )
+
+    test( `still shrinks below the cap when memory is tight`, () => {
+        const big_model = { file_size_bytes: 4.5 * GB, context_length: 131_072, layers: 32, kv_heads: 8, head_dim: 128 }
+        const ctx = estimate_desktop_context( big_model, 8 * GB )
+        expect( ctx ).toBeGreaterThanOrEqual( 2048 )
+        expect( ctx ).toBeLessThan( DESKTOP_MAX_CTX )
     } )
 
 } )

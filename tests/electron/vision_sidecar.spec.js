@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import zlib from 'zlib'
 import { launch_electron, get_models_dir } from '../helpers/electron_helpers'
+import { DESKTOP_MAX_CTX } from '../../src/utils/llama_server_protocol.js'
 
 // Vision sidecar: models with an mmproj run in the bundled llama-server,
 // text-only models stay on node-llama-cpp. Drives window.electronAPI directly
@@ -21,7 +22,8 @@ const VISION = {
     file_name: `Qwen3.5-0.8B-Q4_K_M.gguf`,
     mmproj_cache_name: `Qwen3.5-0.8B-mmproj-F16.gguf`,
     mmproj_file_name: `mmproj-F16.gguf`,
-    context_length: 8192,
+    // The window the model really advertises: the app must not allocate all of it
+    context_length: 262_144,
     reasoning_enabled: false,
 }
 
@@ -178,6 +180,11 @@ test.describe( `Electron vision sidecar`, () => {
         expect( result.has_image_input ).toBe( true )
         expect( result.context_size ).toBeGreaterThan( 0 )
         expect( sidecar_count() ).toBe( 1 )
+
+        // Capped for chat, and the cap is not reported as a memory shortfall
+        console.log( `vision context:`, result.context_size )
+        expect( result.context_size ).toBeLessThanOrEqual( DESKTOP_MAX_CTX )
+        expect( result.context_reduced ).toBe( false )
 
         const png = [ ...make_png() ]
         const { text, meta } = await stream_chat( page, [

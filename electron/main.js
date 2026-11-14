@@ -5,7 +5,7 @@ const os = require( `os` )
 const { LlamaServer, resolve_server_binary } = require( `./llama_server.js` )
 const { mmproj_local_name, has_gguf_magic, lookup_sha256 } = require( `./model_files.js` )
 const { createHash } = require( `crypto` )
-const { estimate_context_size } = require( `../src/utils/llama_server_protocol.js` )
+const { estimate_desktop_context } = require( `../src/utils/llama_server_protocol.js` )
 
 // ---------------------------------------------------
 // Console forwarding — pipes Node.js console output
@@ -278,7 +278,8 @@ const write_manifest = ( manifest ) => {
  * KV cache cost per token, then works out how many tokens fit in 70% of
  * total RAM (leaving headroom for OS, Electron, V8). The result is clamped
  * to the model's advertised context_length so we never exceed what the
- * architecture supports.
+ * architecture supports, and to a chat-sized cap so a small model does not
+ * spend gigabytes on a window nobody fills.
  *
  * If architecture data is missing (custom imports), the model's own context is requested.
  * Shared with the mobile apps (src/utils/llama_server_protocol.js). The worker's VRAM retry loop catches any overestimation — this just
@@ -287,7 +288,7 @@ const write_manifest = ( manifest ) => {
  * @param {Object} model - Model manifest entry
  * @returns {number} Context size to request
  */
-const estimate_context_for_system = ( model ) => estimate_context_size( model, os.totalmem() * 0.7 )
+const estimate_context_for_system = ( model ) => estimate_desktop_context( model, os.totalmem() )
 
 /**
  * Absolute path of a model's vision projector, or null when it has none
@@ -720,8 +721,9 @@ const register_ipc_handlers = () => {
         const model_path = path.join( MODELS_DIR, model.file_name )
         if( !fs.existsSync( model_path ) ) throw new Error( `Model file missing: ${ model.file_name }` )
 
-        // Estimate the largest context that fits in available memory. Use 70%
-        // of total RAM as the budget (headroom for OS, Electron, V8 heap).
+        // Estimate the largest context that fits in available memory, up to
+        // the desktop cap. Use 70% of total RAM as the budget (headroom for
+        // OS, Electron, V8 heap).
         // If we overshoot, the worker's VRAM retry loop will halve down safely.
         const requested_ctx = estimate_context_for_system( model )
 
@@ -751,10 +753,11 @@ const register_ipc_handlers = () => {
                     cpu_only: !gpu.type,
                 } )
 
+                // Reduced = less than requested: the desktop cap sits below most advertised windows
                 return {
                     success: true,
                     context_size: info.context_size,
-                    context_reduced: info.context_size < ( model.context_length || requested_ctx ),
+                    context_reduced: info.context_size < requested_ctx,
                     has_image_input: info.has_image_input,
                     has_projector: true,
                 }
@@ -784,7 +787,7 @@ const register_ipc_handlers = () => {
         return {
             success: true,
             context_size: result.context_size,
-            context_reduced: result.context_size < ( model.context_length || requested_ctx ),
+            context_reduced: result.context_size < requested_ctx,
             has_image_input: false,
             has_projector: !!wants_vision,
         }
