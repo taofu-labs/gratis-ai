@@ -1,9 +1,14 @@
 import { defineConfig } from '@playwright/test'
 
 const large_inference = !!process.env.LARGE_INFERENCE_ARTIFACT_DIR
+
+// Shared machines: E2E_PORT gives a run its own dev server instead of reusing
+// (or colliding with) whatever another session serves on Vite's default
+const port = Number( process.env.E2E_PORT ) || 5173
+const dev_command = `npm run dev -- --host 127.0.0.1 --port ${ port } --strictPort`
 const app_command = large_inference
-    ? `VITE_HF_BASE_URL=http://127.0.0.1:5174 VITE_INFERENCE_DIAGNOSTICS=1 npm run dev -- --host 127.0.0.1`
-    : `npm run dev -- --host 127.0.0.1`
+    ? `VITE_HF_BASE_URL=http://127.0.0.1:5174 VITE_INFERENCE_DIAGNOSTICS=1 ${ dev_command }`
+    : dev_command
 
 export default defineConfig( {
     testDir: `./e2e`,
@@ -14,7 +19,7 @@ export default defineConfig( {
     use: {
         // Vite binds 127.0.0.1 (it may otherwise pick only [::1]); keep the
         // localhost name, which mentie needs to enable dev-level logging
-        baseURL: `http://localhost:5173`,
+        baseURL: `http://localhost:${ port }`,
         headless: true,
         viewport: { width: 1280, height: 720 },
         actionTimeout: 30_000,
@@ -38,7 +43,7 @@ export default defineConfig( {
     webServer: [
         {
             command: app_command,
-            port: 5173,
+            port,
             reuseExistingServer: !process.env.CI && !large_inference,
             timeout: 30_000,
         },
@@ -67,6 +72,18 @@ export default defineConfig( {
             workers: 1,
             timeout: 600_000,
         },
+
+        // One real user journey per engine (model download + inference). The
+        // spec launches its own persistent profile: see cross_browser.spec.js
+        ...[ `chromium`, `firefox`, `webkit` ].map( browserName => ( {
+            name: `smoke-${ browserName }`,
+            testMatch: /\/cross_browser\.spec\.js$/,
+            // The shared launchOptions above are Chromium switches
+            use: { browserName, ...browserName !== `chromium` && { launchOptions: {} } },
+            retries: 0,
+            workers: 1,
+            timeout: 900_000,
+        } ) ),
 
     ],
 

@@ -4,18 +4,16 @@ test.describe( `Query Parameter Support`, () => {
 
     test( `query params are cleaned from URL after processing`, async ( { page } ) => {
         await page.goto( `/chat?q=Hello` )
-        // Wait for the app to clean query params from the URL
-        await page.waitForURL( url => !url.search.includes( `q=Hello` ), { timeout: 5000 } )
-        expect( page.url() ).not.toContain( `q=Hello` )
+        // The app cleans query params once it has mounted: retried under the
+        // config's expect timeout, a fixed 5 s lost to cold dev-server loads
+        await expect( page ).not.toHaveURL( /q=Hello/ )
     } )
 
     // NOTE: "model not found" toast is tested in error_handling.spec.js
 
     test( `model param is cleaned from URL`, async ( { page } ) => {
         await page.goto( `/chat?model=some-model` )
-        // Wait for the app to clean query params from the URL
-        await page.waitForURL( url => !url.search.includes( `model=` ), { timeout: 5000 } )
-        expect( page.url() ).not.toContain( `model=` )
+        await expect( page ).not.toHaveURL( /model=/ )
     } )
 
 } )

@@ -1,5 +1,11 @@
 import { defineConfig } from '@playwright/test'
 
+// Shared machines: PWA_PORT / PWA_OUT_DIR keep a run off the default preview
+// port and out of dist/, which another session may be serving right now
+const port = Number( process.env.PWA_PORT ) || 4173
+const out_dir = process.env.PWA_OUT_DIR ? ` --outDir ${ process.env.PWA_OUT_DIR }` : ``
+const url = `http://127.0.0.1:${ port }`
+
 export default defineConfig( {
     testDir: `./pwa`,
     timeout: 120_000,
@@ -7,7 +13,7 @@ export default defineConfig( {
     retries: 0,
     workers: 1,
     use: {
-        baseURL: `http://127.0.0.1:4173`,
+        baseURL: url,
         headless: true,
         // Keep Chromium's sandbox locally; Ubuntu 24.04 CI runners block the
         // unprivileged user namespaces it needs
@@ -20,8 +26,8 @@ export default defineConfig( {
         },
     },
     webServer: {
-        command: `npm run build && npm run preview -- --host 127.0.0.1`,
-        url: `http://127.0.0.1:4173`,
+        command: `npm run build --${ out_dir } && npm run preview -- --host 127.0.0.1 --port ${ port } --strictPort${ out_dir }`,
+        url,
         reuseExistingServer: false,
         timeout: 120_000,
     },
