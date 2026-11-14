@@ -346,10 +346,7 @@ export default function GetAppPage() {
                     <PlatformDetail>{ detail } ({ file_hint })</PlatformDetail>
 
                     { href
-                        ? <DownloadButton
-                            href={ href }
-                            onClick={ () => handle_download_click( filename ) }
-                        >
+                        ? <DownloadButton href={ href } onClick={ () => handle_download_click( filename ) }>
                             { t( 'download_for', { platform: label } ) }
                         </DownloadButton>
                         : <DisabledButton>{ t( 'not_configured' ) }</DisabledButton> }
@@ -359,7 +356,9 @@ export default function GetAppPage() {
             } ) }
         </CardGrid>
 
+        { /* Both Mac builds refuse to launch below macOS 13: say so before the download */ }
         { GITHUB_REPO && <Footnote>
+            { t( 'mac_requirement' ) }{ ` ` }
             { t( 'intel_mac_prompt' ) }{ ` ` }
             <a
                 href={ download_url( `Gratis-mac-intel.dmg` ) }

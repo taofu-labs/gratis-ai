@@ -55,6 +55,7 @@
     "get_app_tagline": "Téléchargez l'application de bureau pour une IA plus rapide, entièrement hors ligne, alimentée par votre propre matériel.",
     "download_for": "Télécharger pour {{platform}}",
     "not_configured": "Non configuré",
+    "mac_requirement": "L'application Mac nécessite macOS 13 ou une version ultérieure.",
     "intel_mac_prompt": "Vous avez un Mac Intel ?",
     "download_intel_build": "Télécharger la version Intel",
     "not_configured_notice": "Les téléchargements ne sont pas configurés pour ce déploiement. Compilez l'application de bureau depuis les sources ou consultez le dépôt du projet.",

@@ -55,6 +55,7 @@
     "get_app_tagline": "Descarga la app de escritorio para una IA más rápida, completamente offline y con tu propio hardware.",
     "download_for": "Descargar para {{platform}}",
     "not_configured": "No configurado",
+    "mac_requirement": "La app para Mac requiere macOS 13 o posterior.",
     "intel_mac_prompt": "¿Tienes un Mac con Intel?",
     "download_intel_build": "Descargar la versión para Intel",
     "not_configured_notice": "Las descargas no están configuradas para esta instalación. Compila la app de escritorio desde el código fuente o consulta el repositorio del proyecto.",

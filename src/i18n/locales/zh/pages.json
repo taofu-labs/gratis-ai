@@ -55,6 +55,7 @@
     "get_app_tagline": "下载桌面应用，体验由你自己的硬件驱动的更快、完全离线的 AI。",
     "download_for": "下载 {{platform}} 版",
     "not_configured": "未配置",
+    "mac_requirement": "Mac 版需要 macOS 13 或更高版本。",
     "intel_mac_prompt": "使用的是 Intel Mac？",
     "download_intel_build": "下载 Intel 版本",
     "not_configured_notice": "此部署未配置发布下载。请从源码构建桌面应用或查看项目仓库。",
