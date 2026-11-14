@@ -115,6 +115,24 @@ const journey_steps = async ( page, { runtime, logs }, test_info ) => {
 
     } )
 
+    await test.step( `keystrokes that outrun React's scheduler are all taken in`, async () => {
+
+        // WebDriver sendKeys and paste-typers deliver every key within one task.
+        // Reporting the draft upward per keystroke used to count as 50+ nested
+        // updates ("Maximum update depth exceeded"); `errors` catches a relapse
+        const composer = page.getByTestId( `chat-input` )
+        await composer.evaluate( ( input, draft ) => {
+            const { set } = Object.getOwnPropertyDescriptor( HTMLTextAreaElement.prototype, `value` )
+            for( let end = 1; end <= draft.length; end++ ) {
+                set.call( input, draft.slice( 0, end ) )
+                input.dispatchEvent( new InputEvent( `input`, { bubbles: true } ) )
+            }
+        }, LONG_PROMPT )
+        await expect( composer ).toHaveValue( LONG_PROMPT )
+        await composer.fill( `` )
+
+    } )
+
     await test.step( `stop keeps the partial reply and frees the composer`, async () => {
 
         await send_message( page, LONG_PROMPT )
