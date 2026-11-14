@@ -1383,7 +1383,7 @@ const COMMUNITY_MODELS = [
         vision: true,
         mmproj: {
             file_name: `mmproj-gemma-4-E2B-it-Q8_0.gguf`,
-            file_size_bytes: 557_368_064,
+            file_size_bytes: 557_368_096,
             hugging_face_repo: `ggml-org/gemma-4-E2B-it-GGUF`,
         },
         quality: 79,
@@ -1427,7 +1427,7 @@ const COMMUNITY_MODELS = [
         vision: true,
         mmproj: {
             file_name: `mmproj-gemma-4-E4B-it-Q8_0.gguf`,
-            file_size_bytes: 559_874_816,
+            file_size_bytes: 559_874_848,
             hugging_face_repo: `ggml-org/gemma-4-E4B-it-GGUF`,
         },
         quality: 80,
@@ -1471,7 +1471,7 @@ const COMMUNITY_MODELS = [
         // the base projector), so ggml-org's smaller Q8_0 build fits.
         mmproj: {
             file_name: `mmproj-gemma-4-12B-it-Q8_0.gguf`,
-            file_size_bytes: 158_987_616,
+            file_size_bytes: 158_987_648,
             hugging_face_repo: `ggml-org/gemma-4-12B-it-GGUF`,
         },
         quality: 81,
