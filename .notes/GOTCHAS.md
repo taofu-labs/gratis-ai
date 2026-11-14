@@ -182,7 +182,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Integrated GPUs (non-mac, `unifiedSize >= total`) run CPU-only on desktop: Radeon Vulkan was slower than CPU, 2× memory, `ErrorOutOfDeviceMemory` (not a crash → no CPU retry). Browser WebGPU on the same iGPU is correct and faster than WASM CPU: keep.
 - Catalog sizes are exact-match: an upstream re-upload (ggml-org projectors +32 bytes) breaks downloads at 99% forever. Audit: `node scripts/check_catalog_sizes.mjs` (HEAD per file, exit 1 on mismatch).
 - Chromium `storage.estimate()` reports a fake 10 GB quota.
-- iOS 16 Safari (JSC) hangs compiling large SIMD functions in the compat wasm; needs threads, bulk memory, SIMD, sign-ext, nontrapping-fptoint only. Scalarising v128 moves boots the runtime but real SIMD functions still hang → needs a no-SIMD build. The speed probe doubles as the runtime boot check (20 s watchdog, session flag).
+- iOS 16 Safari (JSC) hangs compiling large SIMD functions in the compat wasm; needs threads, bulk memory, SIMD, sign-ext, nontrapping-fptoint only. Scalarising v128 moves boots the runtime but real SIMD functions still hang → needs a no-SIMD build. The speed probe doubles as the runtime boot check (runtime files fetched first, 30 s watchdog, visible tab only, session flag): keep downloads out of the timed window or slow connections get gated.
 - Desktop load paths: `llm:load` carries a `load_generation`; sidecar launches tag `cancelled` (incl. CPU retry). Never fall back to text-only on a cancelled load.
 
 ## Testing / tooling
@@ -195,6 +195,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Playwright WebKit claims Memory64 + JSPI. Install: `npx playwright install webkit && sudo npx playwright install-deps webkit`.
 - Flaky, not regressions: `error_handling` "invalid model param shows toast" (~1/3 cold), `inference.spec` SmolLM2 2+2 at temp 0.7.
 - Container CPU is noisy (load 5–67): never trust absolute tok/s; pair runs or use CI/RunPod.
+- `codex exec` from a foreground shell waits on stdin forever ("Reading additional input from stdin..."): redirect `< /dev/null`.
 - Codex CLI: bubblewrap fails here → `--dangerously-bypass-approvals-and-sandbox` + "do not change files".
 - Model eval: undici 300 s headers timeout → eval.mjs uses a no-timeout Agent.
 - RunPod: `llama.cpp:server-cuda --model-url` starts router mode with no model while /health = ok → curl GGUF then `-m`. `llama.cpp:full` tools need `LD_LIBRARY_PATH=/app`. Delete only pod ids we logged.
