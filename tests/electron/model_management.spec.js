@@ -1,7 +1,7 @@
-import { test, expect, _electron as electron } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import path from 'path'
 import fs from 'fs'
-import { execSync } from 'child_process'
+import { launch_electron } from '../helpers/electron_helpers'
 
 // Tests Electron filesystem model management via IPC:
 // save, list, delete, and re-download through IPC handlers.
@@ -17,21 +17,8 @@ test.describe( `Electron Model Management`, () => {
 
     test.beforeAll( async () => {
 
-        // Build the electron app
-        execSync( `npx electron-vite build`, { cwd: path.resolve( `.` ), stdio: `pipe` } )
-
-        // Launch the Electron app
-        app = await electron.launch( {
-            args: [ path.resolve( `.` ) ],
-            env: {
-                ...process.env,
-                NODE_ENV: `production`,
-                DISPLAY: process.env.DISPLAY || `:99`,
-            },
-        } )
-
-        page = await app.firstWindow()
-        await page.waitForLoadState( `domcontentloaded` )
+        // A fresh profile: the first test expects no models at all
+        ( { app, page } = await launch_electron() )
 
     } )
 

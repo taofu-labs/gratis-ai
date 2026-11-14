@@ -11,9 +11,14 @@ import { wait_for_inference } from '../helpers/wait_for_inference'
 
 const DEEP_BLUE = `rgb(0, 43, 54)`
 
-// Firefox logs this once per wasm thread when a reload tears down the inference
-// workers mid-flight. A worker dying while in use fails the chat steps instead
-const TEARDOWN_NOISE = /uncaught exception: undefined" \{file: "blob:/
+// Console errors that are not defects:
+// - Firefox logs one per wasm thread when a reload tears down the inference
+//   workers mid-flight. A worker dying while in use fails the chat steps instead
+// - WebKit reports the viewport key that Chrome Android needs for its keyboard
+const BENIGN_ERRORS = [
+    /uncaught exception: undefined" \{file: "blob:/,
+    /Viewport argument key "interactive-widget" not recognized/,
+]
 
 const test = base.extend( {
 
@@ -48,7 +53,8 @@ const watch_console = page => {
         // Firefox reports React's dev-mode performance marks as console events
         if( message.type() === `timeStamp` ) return
         logs.push( message.text() )
-        if( message.type() === `error` && !TEARDOWN_NOISE.test( message.text() ) ) errors.push( `console: ${ message.text() }` )
+        const benign = BENIGN_ERRORS.some( pattern => pattern.test( message.text() ) )
+        if( message.type() === `error` && !benign ) errors.push( `console: ${ message.text() }` )
     } )
     return { errors, logs }
 

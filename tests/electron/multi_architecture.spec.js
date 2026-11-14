@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import fs from 'fs'
 import { MODELS, TEST_PROMPT } from '../fixtures/test_models'
-import { launch_electron, preload_model, send_message } from '../helpers/electron_helpers'
+import { launch_electron, preload_model, send_message, use_installed_model } from '../helpers/electron_helpers'
 import { wait_for_inference } from '../helpers/wait_for_inference'
 
 // Multi-architecture native inference tests via Electron.
@@ -70,17 +70,8 @@ test.describe( `Electron Multi-Architecture Inference`, () => {
                 await chat_switch.click()
             }
 
-            // Select the pre-loaded model
-            await expect( page ).toHaveURL( /\/select-model/ )
-            await page.getByTestId( `change-model-toggle` ).click()
-            const option = page.getByTestId( `model-option-${ model.id }` )
-            await expect( option ).toBeVisible( { timeout: 5_000 } )
-            await option.click()
-            await page.getByTestId( `model-select-confirm-btn` ).click()
-
-            // Wait for chat to be ready (model should load from pre-cached file)
-            await expect( page ).toHaveURL( /\/chat/, { timeout: 120_000 } )
-            await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 120_000 } )
+            // Select the pre-loaded model; it loads from the pre-cached file
+            await use_installed_model( page, model )
 
             // Send test prompt
             await send_message( page, TEST_PROMPT )

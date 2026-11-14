@@ -1,8 +1,7 @@
 import { test, expect } from '@playwright/test'
-import { skip_model_wizard } from '../helpers/download_model'
 import fs from 'fs'
 import { MODELS, TEST_PROMPT } from '../fixtures/test_models'
-import { launch_electron, preload_model, send_message } from '../helpers/electron_helpers'
+import { launch_electron, preload_model, send_message, start_with_installed_model } from '../helpers/electron_helpers'
 import { wait_for_inference } from '../helpers/wait_for_inference'
 
 // Tests that settings affect native inference in Electron:
@@ -29,16 +28,8 @@ test.describe( `Electron Settings + Inference`, () => {
         // Pre-load SmolLM2
         await preload_model( app, MODELS.smollm2, CACHE_DIR )
 
-        // Navigate through onboarding
-        await expect( page.getByTestId( `get-started-btn` ) ).toBeEnabled( { timeout: 15_000 } )
-        await page.getByTestId( `get-started-btn` ).click()
-
-        await expect( page ).toHaveURL( /\/select-model/ )
-        await skip_model_wizard( page )
-        await page.getByTestId( `model-select-confirm-btn` ).click()
-
-        await expect( page ).toHaveURL( /\/chat/, { timeout: 120_000 } )
-        await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 120_000 } )
+        // Onboarding into a chat with the installed model
+        await start_with_installed_model( page, MODELS.smollm2 )
 
     } )
 

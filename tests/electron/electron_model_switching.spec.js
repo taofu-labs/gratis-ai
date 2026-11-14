@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import fs from 'fs'
 import { MODELS, TEST_PROMPT } from '../fixtures/test_models'
-import { launch_electron, preload_model, send_message } from '../helpers/electron_helpers'
+import { launch_electron, preload_model, send_message, start_with_installed_model, use_installed_model } from '../helpers/electron_helpers'
 import { wait_for_inference } from '../helpers/wait_for_inference'
 
 // Tests model switching in Electron:
@@ -41,22 +41,8 @@ test.describe( `Electron Model Switching`, () => {
 
     test( `loads first model and produces inference`, async () => {
 
-        // Navigate through onboarding with model A
-        await expect( page.getByTestId( `get-started-btn` ) ).toBeEnabled( { timeout: 15_000 } )
-        await page.getByTestId( `get-started-btn` ).click()
-
-        await expect( page ).toHaveURL( /\/select-model/ )
-
-        // Expand alternatives and select model A specifically
-        await page.getByTestId( `change-model-toggle` ).click()
-        const option_a = page.locator( `button`, { hasText: MODEL_A.name } )
-        await expect( option_a ).toBeVisible( { timeout: 5_000 } )
-        await option_a.click()
-        await page.getByTestId( `model-select-confirm-btn` ).click()
-
-        // Wait for chat
-        await expect( page ).toHaveURL( /\/chat/, { timeout: 120_000 } )
-        await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 120_000 } )
+        // Onboarding into a chat with model A
+        await start_with_installed_model( page, MODEL_A )
 
         // Send test prompt
         await send_message( page, TEST_PROMPT )
@@ -82,7 +68,8 @@ test.describe( `Electron Model Switching`, () => {
             await expect( option_b ).toBeVisible( { timeout: 5_000 } )
             await option_b.click()
 
-            // Wait for model switch
+            // Wait for model switch: the selector names the model that is loaded
+            await expect( dropdown ).toContainText( MODEL_B.name, { timeout: 120_000 } )
             await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 120_000 } )
 
         } else {
@@ -92,16 +79,7 @@ test.describe( `Electron Model Switching`, () => {
             await expect( page.getByTestId( `get-started-btn` ) ).toBeEnabled( { timeout: 15_000 } )
             await page.getByTestId( `get-started-btn` ).click()
 
-            await expect( page ).toHaveURL( /\/select-model/ )
-            await page.getByTestId( `change-model-toggle` ).click()
-
-            const option_b = page.locator( `button`, { hasText: MODEL_B.name } )
-            await expect( option_b ).toBeVisible( { timeout: 5_000 } )
-            await option_b.click()
-            await page.getByTestId( `model-select-confirm-btn` ).click()
-
-            await expect( page ).toHaveURL( /\/chat/, { timeout: 120_000 } )
-            await expect( page.getByTestId( `chat-input` ) ).toBeEnabled( { timeout: 120_000 } )
+            await use_installed_model( page, MODEL_B )
 
         }
 
