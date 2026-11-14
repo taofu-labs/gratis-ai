@@ -4,7 +4,7 @@ Open items only. Resolved history lives in TIMELINE.md.
 
 ## Stores (2026-11-03)
 
-- iOS 0.55.0 WAITING_FOR_REVIEW. On approval: press Release in ASC (MANUAL release type).
+- iOS 0.55.0 (5500) REJECTED (seen 2026-11-14; submission UNRESOLVED_ISSUES). Reason only in ASC Resolution Center (API cannot read it); human must check.
 - macOS 0.55.0 (5502) resubmitted 2026-11-11, WAITING_FOR_REVIEW (5501 expired). On approval: press Release (MANUAL). 5502 lacks commit "full-screen reopen race" (reopen within ~1 s of closing a full-screen window re-hides it; menu/Dock again fixes it) — ships with the next Mac build.
 - Mac review artifacts on ArjunMacbook `~/gratis-mas/artifacts/` (pkg + Electron dSYMs zip). Mac dev profile "Gratis Mac Development …" + device "Gratis review MacBook Air" registered for local sandbox tests.
 - Play production 0.55.0 in review; goes live on approval. Then retry `scripts/store_play.mjs` (listing API 403'd on the draft app).
