@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import styled from 'styled-components'
+import { scroll_center } from '../../styles/scroll_center'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Shield, WifiOff, ChevronDown, ChevronUp, Settings } from 'lucide-react'
@@ -16,6 +17,7 @@ const PageWrapper = styled.div`
     position: relative;
     display: flex;
     flex: 1;
+    min-height: 0;
 `
 
 const TopRight = styled.div`
@@ -43,12 +45,13 @@ const IconButton = styled.button`
     }
 `
 
+// Centered while it fits; scrolls on short viewports (landscape phones, in-app browsers)
 const Container = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     flex: 1;
+    ${ scroll_center }
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
 `

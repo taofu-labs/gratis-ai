@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
+import { scroll_center } from '../../styles/scroll_center'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Apple, Monitor, Terminal, FolderDown } from 'lucide-react'
@@ -54,12 +55,13 @@ const PLATFORMS = [
 
 // ── Styled components ───────────────────────────────────────────
 
+// Centered while it fits; scrolls on short viewports (landscape phones, in-app browsers)
 const Container = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     flex: 1;
+    ${ scroll_center }
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
 `
