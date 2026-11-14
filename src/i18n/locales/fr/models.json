@@ -204,5 +204,8 @@
     "wizard_summary_title": "D’après :",
     "wizard_edit_aria": "Modifier la réponse : {{answer}}",
     "inspecting_device": "Analyse des capacités de votre appareil…",
-    "inspecting_device_hint": "Pour que la recommandation convienne à cet appareil. Cela prend quelques secondes au plus."
+    "inspecting_device_hint": "Pour que la recommandation convienne à cet appareil. Cela prend quelques secondes au plus.",
+    "runtime_unsupported_title": "Ce navigateur ne peut pas exécuter de modèles d'IA",
+    "runtime_unsupported_body": "Son moteur est trop ancien pour exécuter un modèle sur cet appareil. Mettez à jour votre appareil et votre navigateur, ou utilisez l'application Gratis.",
+    "runtime_unsupported_action": "Obtenir l'application"
 }

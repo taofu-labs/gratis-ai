@@ -204,5 +204,8 @@
     "wizard_summary_title": "Based on:",
     "wizard_edit_aria": "Change answer: {{answer}}",
     "inspecting_device": "Inspecting your device's capabilities…",
-    "inspecting_device_hint": "So the recommendation fits this device. This takes a few seconds at most."
+    "inspecting_device_hint": "So the recommendation fits this device. This takes a few seconds at most.",
+    "runtime_unsupported_title": "This browser can't run AI models",
+    "runtime_unsupported_body": "Its engine is too old to run a model on this device. Update your device and browser to the latest version, or use the Gratis app.",
+    "runtime_unsupported_action": "Get the app"
 }

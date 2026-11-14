@@ -150,9 +150,10 @@ export const time_decode = async ( wllama, tokens ) => {
  * Time the probe on a fresh runtime, then dispose it.
  * @param {import('wllama64').Wllama} wllama - Not yet loaded
  * @param {() => boolean} [should_stop] - Checked between stages: a real model started loading
+ * @param {( boot: Promise<void> ) => Promise<void>} [guard_boot] - Wraps the runtime start, e.g. in a watchdog
  * @returns {Promise<number>} tokens per second
  */
-export const measure_probe_tps = async ( wllama, should_stop = () => false ) => {
+export const measure_probe_tps = async ( wllama, should_stop = () => false, guard_boot = boot => boot ) => {
 
     const checkpoint = () => {
         if( should_stop() ) throw new Error( `Speed probe stopped: the device got busy` )
@@ -161,7 +162,7 @@ export const measure_probe_tps = async ( wllama, should_stop = () => false ) => 
     try {
         const skeleton = await fetch_probe_skeleton()
         checkpoint()
-        await wllama.loadModel( [ skeleton ], probe_load_options( probe_threads() ) )
+        await guard_boot( wllama.loadModel( [ skeleton ], probe_load_options( probe_threads() ) ) )
         checkpoint()
 
         // First tokens pay for thread spin-up and page faults

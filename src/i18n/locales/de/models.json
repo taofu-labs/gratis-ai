@@ -204,5 +204,8 @@
     "wizard_summary_title": "Basierend auf:",
     "wizard_edit_aria": "Antwort ändern: {{answer}}",
     "inspecting_device": "Prüfe die Fähigkeiten deines Geräts…",
-    "inspecting_device_hint": "Damit die Empfehlung zu diesem Gerät passt. Das dauert höchstens ein paar Sekunden."
+    "inspecting_device_hint": "Damit die Empfehlung zu diesem Gerät passt. Das dauert höchstens ein paar Sekunden.",
+    "runtime_unsupported_title": "Dieser Browser kann keine KI-Modelle ausführen",
+    "runtime_unsupported_body": "Seine Engine ist zu alt, um ein Modell auf diesem Gerät auszuführen. Aktualisiere Gerät und Browser auf die neueste Version oder nutze die Gratis-App.",
+    "runtime_unsupported_action": "App holen"
 }

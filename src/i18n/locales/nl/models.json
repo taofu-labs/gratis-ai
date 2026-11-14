@@ -204,5 +204,8 @@
     "wizard_summary_title": "Op basis van:",
     "wizard_edit_aria": "Antwoord wijzigen: {{answer}}",
     "inspecting_device": "De mogelijkheden van je apparaat worden bekeken…",
-    "inspecting_device_hint": "Zodat de aanbeveling bij dit apparaat past. Dit duurt hooguit een paar seconden."
+    "inspecting_device_hint": "Zodat de aanbeveling bij dit apparaat past. Dit duurt hooguit een paar seconden.",
+    "runtime_unsupported_title": "Deze browser kan geen AI-modellen draaien",
+    "runtime_unsupported_body": "De engine is te oud om een model op dit apparaat te draaien. Werk je apparaat en browser bij naar de nieuwste versie, of gebruik de Gratis-app.",
+    "runtime_unsupported_action": "Download de app"
 }

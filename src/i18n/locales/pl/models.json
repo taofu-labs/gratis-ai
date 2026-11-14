@@ -204,5 +204,8 @@
     "wizard_summary_title": "Na podstawie:",
     "wizard_edit_aria": "Zmień odpowiedź: {{answer}}",
     "inspecting_device": "Sprawdzanie możliwości urządzenia…",
-    "inspecting_device_hint": "Aby rekomendacja pasowała do tego urządzenia. Potrwa to najwyżej kilka sekund."
+    "inspecting_device_hint": "Aby rekomendacja pasowała do tego urządzenia. Potrwa to najwyżej kilka sekund.",
+    "runtime_unsupported_title": "Ta przeglądarka nie może uruchamiać modeli AI",
+    "runtime_unsupported_body": "Jej silnik jest zbyt stary, by uruchomić model na tym urządzeniu. Zaktualizuj urządzenie i przeglądarkę do najnowszej wersji albo użyj aplikacji Gratis.",
+    "runtime_unsupported_action": "Pobierz aplikację"
 }

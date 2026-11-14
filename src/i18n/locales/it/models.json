@@ -204,5 +204,8 @@
     "wizard_summary_title": "In base a:",
     "wizard_edit_aria": "Cambia risposta: {{answer}}",
     "inspecting_device": "Analisi delle capacità del tuo dispositivo…",
-    "inspecting_device_hint": "Così il consiglio è adatto a questo dispositivo. Ci vogliono al massimo pochi secondi."
+    "inspecting_device_hint": "Così il consiglio è adatto a questo dispositivo. Ci vogliono al massimo pochi secondi.",
+    "runtime_unsupported_title": "Questo browser non può eseguire modelli di IA",
+    "runtime_unsupported_body": "Il suo motore è troppo vecchio per eseguire un modello su questo dispositivo. Aggiorna dispositivo e browser all'ultima versione, oppure usa l'app Gratis.",
+    "runtime_unsupported_action": "Scarica l'app"
 }

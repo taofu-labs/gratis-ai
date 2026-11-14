@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import { ChevronDown, ChevronUp, ArrowLeft, AlertTriangle, LoaderCircle, Link, HardDrive, Settings, List, Trash2, Image, ImageOff, ShieldCheck, MessageCircleQuestion } from 'lucide-react'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
 import use_device_speed_probe from '../../hooks/use_device_speed_probe'
+import use_runtime_boot_failed from '../../hooks/use_runtime_boot_failed'
 import use_model_manager from '../../hooks/use_model_manager'
 import use_speed_estimate from '../../hooks/use_speed_estimate'
 import use_llm_store from '../../stores/llm_store'
@@ -20,6 +21,7 @@ import WizardQuestion, { WizardSummary } from '../molecules/ModelWizard'
 import SpeedGauge from '../atoms/SpeedGauge'
 import { read_speed_mode, read_wizard_answers, write_speed_mode, write_wizard_answers } from '../../utils/speed_mode'
 import ModelBrowser from '../molecules/ModelBrowser'
+import RuntimeUnsupported from '../molecules/RuntimeUnsupported'
 import {
     build_device_profile,
     read_browser_ram_override,
@@ -505,6 +507,9 @@ export default function ModelSelectPage() {
     const runtime_busy = use_llm_store( s => !!( s.loaded_model_id || s.is_loading ) )
     const speed_ratio = use_device_speed_probe( !is_detecting && capabilities?.runtime !== `electron` && !runtime_busy )
 
+    // That probe also boots the runtime: where it cannot start, no model will ever load
+    const runtime_unsupported = use_runtime_boot_failed()
+
     // speed_ratio is read inside build_device_profile; listing it recomputes the profile
     const device = useMemo( () => build_device_profile( capabilities, max_model_bytes ), [ capabilities, max_model_bytes, speed_ratio ] )
     const picks = useMemo(
@@ -875,7 +880,9 @@ export default function ModelSelectPage() {
 
         <Title>{ t( 'pick_a_model' ) }</Title>
 
-        <Column>
+        { runtime_unsupported && <RuntimeUnsupported /> }
+
+        { !runtime_unsupported && <Column>
 
             { /* ── Models already on this device: one click, no download ── */ }
             { cached_models.length > 0 && <Section>
@@ -1061,7 +1068,7 @@ export default function ModelSelectPage() {
 
             </> }
 
-        </Column>
+        </Column> }
 
         <StepIndicator data-testid="step-indicator">
             <StepDot $done />

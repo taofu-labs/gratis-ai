@@ -51,6 +51,7 @@ export const EVENTS = {
     models_changed:  `${ slug }:models-changed`,
     before_update_reload: `${ slug }:before-update-reload`,
     device_measured: `${ slug }:device-measured`,
+    runtime_boot_failed: `${ slug }:runtime-boot-failed`,
     // Fixed name: the Android shell (MainActivity) dispatches it, whatever the brand
     native_back:     `native-back`,
 }

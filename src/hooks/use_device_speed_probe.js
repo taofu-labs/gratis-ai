@@ -4,6 +4,7 @@ import { log } from 'mentie'
 import { storage_key } from '../utils/branding'
 import { measure_probe_tps, REFERENCE_PROBE_TPS } from '../utils/speed_probe'
 import { calibrated_speed_ratio, has_speed_probe, record_speed_ratio } from '../utils/speed_calibration'
+import { record_runtime_boot_failure, runtime_boot_failed, with_boot_watchdog } from '../utils/runtime_boot'
 import { COMPAT_PATHS, CONFIG_PATHS } from '../utils/wllama_paths'
 import use_llm_store from '../stores/llm_store'
 
@@ -36,12 +37,16 @@ const run_probe = () => running ||= ( async () => {
     wllama.setCompat( COMPAT_PATHS, `firefox_safari` )
 
     const started = performance.now()
-    const tps = await measure_probe_tps( wllama, runtime_busy )
+    // No weights to read: a load that drags on is the runtime failing to start
+    const tps = await measure_probe_tps( wllama, runtime_busy, with_boot_watchdog )
     record_speed_ratio( tps / REFERENCE_PROBE_TPS, { probe: true } )
     log.info( `[speed_probe] ${ tps.toFixed( 2 ) } t/s = ${ ( tps / REFERENCE_PROBE_TPS ).toFixed( 2 ) }× reference, ${ Math.round( performance.now() - started ) } ms` )
 
 } )()
-    .catch( error => log.warn( `[speed_probe] failed; keeping the default speed guess:`, error ) )
+    .catch( error => {
+        if( error?.name === `RuntimeBootError` ) record_runtime_boot_failure()
+        log.warn( `[speed_probe] failed; keeping the default speed guess:`, error )
+    } )
     .finally( () => running = null )
 
 /**
@@ -59,7 +64,7 @@ export default function use_device_speed_probe( enabled ) {
 
         // A probe that finished while this picker was busy still counts
         set_ratio( calibrated_speed_ratio() )
-        if( !enabled || has_speed_probe() || !probe_allowed() ) return
+        if( !enabled || has_speed_probe() || runtime_boot_failed() || !probe_allowed() ) return
 
         let live = true
         run_probe().then( () => live && set_ratio( calibrated_speed_ratio() ) )

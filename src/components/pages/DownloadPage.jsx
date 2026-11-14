@@ -10,6 +10,7 @@ import { format_file_size } from '../../utils/model_catalog'
 import { storage_key } from '../../utils/branding'
 import { create_download_eta_estimator, format_download_duration } from '../../utils/network_speed'
 import use_llm from '../../hooks/use_llm'
+import use_runtime_boot_failed from '../../hooks/use_runtime_boot_failed'
 import Button from '../atoms/Button'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 import { BunnyBurrow } from '../atoms/Bunny'
@@ -243,9 +244,13 @@ export default function DownloadPage() {
         }
     }, [] )
 
+    // The picker's probe can finish after a quick tap on Download: stop here
+    // (leaving cancels the transfer), the picker explains
+    const runtime_unsupported = use_runtime_boot_failed()
+
     useEffect( () => {
 
-        if( !model ) {
+        if( !model || runtime_unsupported ) {
             navigate( `/select-model`, { replace: true } )
             return
         }
@@ -322,7 +327,7 @@ export default function DownloadPage() {
             if( !cancelled_ref.current ) set_error( err.message )
         } )
 
-    }, [ model, navigate, on_complete, storage_mode, attempt, t ] )
+    }, [ model, navigate, on_complete, storage_mode, attempt, t, runtime_unsupported ] )
 
     const handle_retry = () => {
         log.info( `[download] Retrying after:`, error )
