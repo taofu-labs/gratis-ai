@@ -53,8 +53,10 @@ export default defineConfig( ( { mode } ) => {
                 },
                 workbox: {
                     globPatterns: [ `**/*.{js,css,html,wasm,woff2,png}` ],
-                    // Exclude large ONNX Runtime WASM binaries from precaching — they're loaded on demand
-                    globIgnores: [ `**/*ort-wasm*.wasm` ],
+                    // Exclude large ONNX Runtime WASM binaries from precaching — they're loaded on demand.
+                    // public/review/ holds store listing graphics for reviewers (12 MB of PNGs):
+                    // served, but never part of the app every visitor installs
+                    globIgnores: [ `**/*ort-wasm*.wasm`, `review/**` ],
                     // The self-hosted wasm32 fallback is ~16 MiB.
                     maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
                     // A version bump must replace cached navigation responses even
