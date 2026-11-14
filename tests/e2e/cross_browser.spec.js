@@ -215,14 +215,15 @@ test.describe( `Cross-browser journey`, () => {
 
     test( `on the runtime the browser picks itself`, async ( { page }, test_info ) => {
 
-        // Chromium, Firefox ≥ 153 and Safari ≥ 26 ship Memory64 + JSPI
+        // Chromium and Firefox ≥ 153 ship Memory64 + JSPI. Playwright WebKit claims
+        // both too, real Safari does not: 26.1 runs wasm32 compat + WebGPU
         await user_journey( page, { runtime: /Memory64/ }, test_info )
 
     } )
 
     test( `on the wasm32 compat runtime of older browsers`, async ( { page }, test_info ) => {
 
-        // No JSPI is what sends older Firefox/Safari down the compat path
+        // No JSPI is what sends older Firefox and real Safari down the compat path
         await page.addInitScript( () => {
             delete WebAssembly.Suspending
         } )
