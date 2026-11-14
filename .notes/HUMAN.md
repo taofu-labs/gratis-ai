@@ -58,3 +58,8 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Browser first reply is slow on phones (SmolLM2 6–26 s TTFT, ~3 tok/s vs native 8–35 tok/s; LFM 1.2B compat 45 s): candidate for warm-up work.
 - Cosmetic, unfixed: install pill covers "Browse all models" on `/select-model` until scroll; speed-mode label flush against fill on touch >480 px; Welcome globe/gear stay fixed while the column scrolls.
 - Lab fixes are user-facing but have no CHANGELOG entry/version bump yet (bump triggers store + desktop releases).
+- Local `main` diverged from `origin/main` (origin has PRs #21–23: voice offline ORT, a11y dialogs, e2e prefix): merge before any push.
+- iOS rejection hypotheses (ranked): (1) Take Photo crashed, no `NSCameraUsageDescription` (fixed `678de3f`; review notes tell the reviewer to attach a photo); (2) download froze after app switch (fixed `9aa661f`); (3) uncensored option in the native wizard/catalog vs mild age rating, no iOS gating — product decision; (4) Report = `mailto`, dead end without a Mail account; (5) review notes say "Get Started, then Start/Download" but there is a 3-question wizard; (6) no app privacy manifest (fixed `c9cdd8d`, unverified in a build; check inbox for ITMS-91053); (7) iPad family supported, never tested.
+- iPhone X now runs a lab build 0.55.1 (zsign, dev profile) with both fixes; camera permission = Don't Allow; Safari tab holds a 731 MB model in OPFS.
+- Safari iOS 16.7: no model loads (compat worker hangs in `__wasm_call_ctors`); follow-up in progress (fix or boot-probe gate).
+- Minor, unfixed: "0.1s to first token" on a ~10 s reply; native "Reading your message… 0%" for 10–16 s; Settings lists desktop shortcuts on phones; speed/ETA inflated right after a resume.

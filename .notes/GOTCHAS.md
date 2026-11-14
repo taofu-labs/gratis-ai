@@ -167,6 +167,9 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Brave reports `deviceMemory` 4 + 2 GB quota, DDG WebView 4 GB (no COI → compat): picker goes smaller there than in Chrome.
 - Parallel agents in one worktree: commit with `git commit <paths>` or a private `GIT_INDEX_FILE`; a shared index sweeps other agents' staged files into your commit.
 - `/tmp` scratch is wiped on container restart; `test-results/` survives.
+- iPhone: CI `Mobile apps` artifact `App.ipa` is dev-signed for the lab phone (in-place install ~10 s, keeps data). JS-only native fix without a Mac: `vite build --mode native --outDir X` in a worktree → swap `Payload/App.app/public` (keep `cordova*.js`) → `zsign -f` (without `-f` on a signed folder: install `0xe8008001`).
+- iPhone Safari tabs inspectable via pymobiledevice3 `WebinspectorService` + heartbeat; evals >~600 chars time out (chunk); worker console needs a BroadcastChannel relay. `timeout -k 3` (plain `timeout` doesn't kill hung clients). WDA `source()`/screenshot can hang >60 s during background generation; no `/wda/device/appearance` (toggle dark via Settings).
+- Pre-commit hook runs `eslint --fix src` over the whole tree, incl. other agents' uncommitted files; slow under load (>2 min).
 
 ## Testing / tooling
 - mentie enables `log.info` only when the URL contains `localhost`: Vite binds 127.0.0.1 but `baseURL` stays `http://localhost:5173` (log-asserting tests break on the IP).
