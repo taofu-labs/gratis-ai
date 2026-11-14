@@ -175,6 +175,12 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Speed probe is skipped under `navigator.webdriver` → `gratis:settings:force_speed_probe=1` to see a real visitor's pick. geckodriver `refresh` bypasses the SW (use `location.reload()`).
 - Never write logs into the project dir during `electron-builder` (file growing mid-pack corrupts the asar). `files: [out/**, package.json]` allowlist keeps src/.notes/.secrets out of `app.asar`.
 - Node inspector `Runtime.evaluate` in Electron main: `require` exists only during the evaluation (later timer callbacks throw → modal blocks quit).
+- OliviaLenovo (Win 11, Ryzen 5 5625U, Radeon iGPU, 16 GB): clean Windows has NO MSVC runtime (CI runners do) → node-llama-cpp addon + `llama-server.exe` die (`ERR_DLOPEN_FAILED`, `C0000135`); DLLs are vendored next to llama-server by `fetch_llama_server.js` (`VC_RUNTIME_DIR`, else System32). `npm ci` there without git needs `NODE_LLAMA_CPP_SKIP_DOWNLOAD=true`.
+- Windows GUI apps: scheduled task `/it /rl LIMITED` running a rewritable `run.cmd` (SSH-started apps are invisible; `babysit windows type` drops backslashes). Extra CDP ports: `ssh -L 127.0.0.N:5194:127.0.0.1:<port>`. Firefox = WebDriver BiDi only, `Host: 127.0.0.1:<own port>`, one session (`session.end`).
+- Lab Edge profiles MUST launch with `--disable-sync --disable-features=msImplicitSignin`: a bare `--no-first-run` profile signed into the owner's Microsoft account and enabled sync.
+- Integrated GPUs (non-mac, `unifiedSize >= total`) run CPU-only on desktop: Radeon Vulkan was slower than CPU, 2× memory, `ErrorOutOfDeviceMemory` (not a crash → no CPU retry). Browser WebGPU on the same iGPU is correct and faster than WASM CPU: keep.
+- Catalog sizes are exact-match: an upstream re-upload (ggml-org projectors +32 bytes) breaks downloads at 99% forever. Audit with `test-results/lab-windows/pc-logs/check_sizes.mjs`.
+- Chromium `storage.estimate()` reports a fake 10 GB quota.
 
 ## Testing / tooling
 - mentie enables `log.info` only when the URL contains `localhost`: Vite binds 127.0.0.1 but `baseURL` stays `http://localhost:5173` (log-asserting tests break on the IP).

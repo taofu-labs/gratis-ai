@@ -15,7 +15,6 @@ Open items only. Resolved history lives in TIMELINE.md.
 ## Unverified on real hardware
 
 - Mac: MAS sandbox at runtime (download, chat, vision). (Signed app, sidecar, Metal verified 2026-11-14.)
-- Windows cheap iGPU: llama-server Vulkan — CPU retry triggers only on crash, not garbage output; consider `--device none` default on win.
 - Sidecar orphaned when the app is SIGKILLed (no parent-death signal in Node).
 - WebGPU loads still use f16 KV, no FA (CPU gets FA + q8_0). Bench on a real GPU (`scripts/bench`, RunPod recipe in GOTCHAS) before extending `CPU_FAST_OPTIONS`.
 - Real-device coverage missing: cheap Windows laptop, 32 GB Mac.
@@ -72,3 +71,10 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Hardening: release ships with Node inspector/remote-debugging fuses on (`EnableNodeCliInspectArguments`). DMG itself unsigned/unstapled (app inside is notarized).
 - Safari hashing a 731 MB model took 270 s on a hidden page (throttled; unconfirmed for real users).
 - Left on ArjunMacbook: `safaridriver --enable`, `~/Applications/Firefox.app`, `~/lab-mac/`. ~3.4 GB of old `Gratis-0.55.0-550x-mas-arm64.pkg*` copies in `$TMPDIR` (not ours, deletable). On OliviaMacbook: `safaridriver --enable`, Chrome for Testing 150 + Firefox 160 in `~/Applications`.
+- INCIDENT (OliviaLenovo): a lab Edge profile auto-signed into the owner's Microsoft account with sync on for ~2 min before deletion; `localhost:5184` history may have synced. Edge first-run dialog will show when the owner next opens Edge (all Edge processes were ended). Tell the owner.
+- Shipped Windows v0.55.1 cannot load ANY model on a clean Windows (no VC++ runtime); vision fails even with it (iGPU OOM). Fixed on main (`c9a7561`, `4b1b7fa`), CI System32 path unexercised, discrete-GPU branch unverified → needs a release.
+- Prod: Gemma 4 E2B/E4B downloads fail at 99% (projector re-upload); fixed in catalog `241c020`, needs a deploy. Existing installs lose vision until the projector re-downloads. Hidden `qwen38-27b-q4km` size also stale (left: updating evicts installed copies).
+- Browser image chat on the Radeon iGPU: WebGPU aborts in `ggml_backend_webgpu_buffer_get_tensor`, CPU fallback then sits at "Reading your message… 0%" >10 min (wllama64 fork).
+- Desktop: load failure right after download shows a raw toast then "Let's get you set up" although the model is on disk. NSIS uninstall leaves 4.5 GB (`%APPDATA%\gratisai` + updater cache; `deleteAppDataOnUninstall` is one-click only) — decision.
+- Picker unstable on the ThinkPad (Gemma 4 E2B "~3.6 tok/s" vs LFM 1.2B "~14–16 tok/s" across first visits), cause unknown. App says "15 GB computer", web "16 GB".
+- Left on OliviaLenovo: `%USERPROFILE%\gratis-lab\` (Chrome for Testing 157, Firefox 160 portable), Firefox 137 MSIX.
