@@ -29,6 +29,12 @@ const browser_storage_backend = new ReliableOPFSBackend()
 
 const abort_error = () => Object.assign( new Error( `Download aborted` ), { name: `AbortError` } )
 
+// Private windows (Safari, Firefox) expose OPFS but reject every use of it with
+// an engine-specific riddle. Name the failure so the UI can explain it.
+const assert_browser_storage = () => navigator.storage.getDirectory().catch( cause => {
+    throw Object.assign( new Error( `Browser storage is unavailable`, { cause } ), { name: `StorageUnavailableError` } )
+} )
+
 /**
  * Get the shared browser model manager backed by OPFS.
  * @returns {ModelManager}
@@ -538,6 +544,8 @@ export const download_model = async ( model, on_progress, signal, { storage_mode
             status: `Downloading...`,
         } )
     }
+
+    if( storage_mode !== `external-file` ) await assert_browser_storage()
 
     const db = await get_db()
     const existing_entry = await db.get( `models`, model.id )

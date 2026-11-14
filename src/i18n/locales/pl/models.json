@@ -81,6 +81,7 @@
     "choose_save_location": "Wybierz miejsce zapisu",
     "large_model_external_storage": "Za mało miejsca w przeglądarce na to pobieranie, więc wybierzesz folder do zapisu.",
     "download_storage_failed": "Nie udało się przygotować lokalnej pamięci na model.",
+    "storage_unavailable": "To okno nie może zapisywać modeli na urządzeniu. Blokuje to tryb prywatny — otwórz Gratis w zwykłym oknie.",
     "ram_override_budget_active": "Limit modeli w przeglądarce: {{budget}}.",
     "ram_override_label": "Moje urządzenie ma więcej RAM…",
     "ram_override_reset": "Użyj RAM wykrytej przez przeglądarkę",

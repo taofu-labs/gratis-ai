@@ -86,6 +86,7 @@
     "choose_save_location": "Opslaglocatie kiezen",
     "large_model_external_storage": "Niet genoeg browseropslag voor deze download, dus je kiest een map om hem in op te slaan.",
     "download_storage_failed": "Lokale modelopslag kon niet worden voorbereid.",
+    "storage_unavailable": "Dit venster kan geen modellen op je apparaat opslaan. Privénavigatie blokkeert dat — open Gratis in een gewoon venster.",
 
     "recommended_start": "Aanbevolen startmodel",
     "your_choice": "Jouw keuze",

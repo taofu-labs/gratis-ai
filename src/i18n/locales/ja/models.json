@@ -81,6 +81,7 @@
     "choose_save_location": "保存場所を選択",
     "large_model_external_storage": "このダウンロードにはブラウザの保存容量が足りないため、保存先のフォルダを選びます。",
     "download_storage_failed": "ローカルのモデル保存領域を準備できませんでした。",
+    "storage_unavailable": "このウィンドウではモデルをデバイスに保存できません。プライベートブラウズでは保存できないため、通常のウィンドウで Gratis を開いてください。",
     "ram_override_budget_active": "ブラウザのモデル上限: {{budget}}。",
     "ram_override_label": "このデバイスにはもっとRAMがあります…",
     "ram_override_reset": "ブラウザが検出したRAMを使う",

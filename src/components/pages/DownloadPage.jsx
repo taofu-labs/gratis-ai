@@ -313,7 +313,8 @@ export default function DownloadPage() {
                 } )
                 .catch( err => {
                     if( err.name !== `AbortError` && !controller.signal.aborted ) {
-                        set_error( err.message )
+                        // A private window cannot store models: explain instead of the engine's message
+                        set_error( err.name === `StorageUnavailableError` ? t( 'storage_unavailable' ) : err.message )
                     }
                 } )
 
@@ -321,7 +322,7 @@ export default function DownloadPage() {
             if( !cancelled_ref.current ) set_error( err.message )
         } )
 
-    }, [ model, navigate, on_complete, storage_mode, attempt ] )
+    }, [ model, navigate, on_complete, storage_mode, attempt, t ] )
 
     const handle_retry = () => {
         log.info( `[download] Retrying after:`, error )

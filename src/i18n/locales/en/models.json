@@ -23,6 +23,7 @@
     "large_model_warning": "Large models may fail to load in the browser. Consider a smaller quantization or the desktop app.",
     "large_model_external_storage": "Not enough browser storage for this download, so you'll pick a folder to save it in.",
     "download_storage_failed": "Could not prepare local model storage.",
+    "storage_unavailable": "This window can't store models on your device. Private browsing blocks it — open Gratis in a regular window.",
     "low_memory_warning": "Only {{free}} of memory free — this model needs about {{needed}}. Try closing other apps or picking a smaller model to avoid slowdowns and potential crashes.",
 
     "local_models_subtitle": "Runs on your device",

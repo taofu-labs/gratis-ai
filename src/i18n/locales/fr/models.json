@@ -81,6 +81,7 @@
     "choose_save_location": "Choisir l'emplacement",
     "large_model_external_storage": "Pas assez de stockage dans le navigateur pour ce téléchargement : vous choisirez un dossier où l'enregistrer.",
     "download_storage_failed": "Impossible de préparer le stockage local du modèle.",
+    "storage_unavailable": "Cette fenêtre ne peut pas enregistrer de modèles sur votre appareil. La navigation privée l'empêche : ouvrez Gratis dans une fenêtre normale.",
     "ram_override_budget_active": "Budget modèles du navigateur : {{budget}}.",
     "ram_override_label": "Mon appareil a plus de RAM…",
     "ram_override_reset": "Utiliser la RAM détectée par le navigateur",
