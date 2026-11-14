@@ -15,8 +15,11 @@ const Dock = styled.div`
     z-index: 20;
     display: flex;
 
-    /* The touch keyboard lifts the bottom edge onto the input; step aside while typing */
-    body:has( input:focus, textarea:focus ) & { display: none; }
+    /* The touch keyboard lifts the bottom edge onto the input; step aside while typing.
+       Touch only: desktop focuses the home composer on arrival and has no keyboard to dodge */
+    @media ( pointer: coarse ) {
+        body:has( input:focus, textarea:focus ) & { display: none; }
+    }
 `
 
 // A secondary pill floating over content needs an opaque face
