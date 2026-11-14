@@ -18,6 +18,8 @@
 //   linux-x64  broken Vulkan driver means the CPU backends (also shipped) take over.
 //              electron/llama_server.js additionally retries CPU-only if a GPU start crashes.
 //              CUDA builds are 150-600 MB, too heavy for an installer aimed at cheap laptops.
+//
+// Windows also gets the MSVC runtime DLLs next to llama-server.exe (see add_vc_runtime).
 
 import { createHash } from 'crypto'
 import { execFileSync } from 'child_process'
@@ -166,8 +168,39 @@ const fetch_target = async ( key ) => {
 
 }
 
+// MSVC runtime DLLs imported by llama-server.exe, its ggml/llama DLLs and
+// node-llama-cpp's prebuilt addon. Microsoft allows shipping them app-local.
+const VC_RUNTIME = [ `msvcp140.dll`, `vcruntime140.dll`, `vcruntime140_1.dll` ]
+
+/**
+ * Put the MSVC runtime next to llama-server.exe. A fresh Windows has no
+ * Visual C++ Redistributable: without these DLLs neither the sidecar nor
+ * node-llama-cpp can start, so no model ever loads. electron/main.js adds this
+ * folder to PATH so node-llama-cpp finds them too.
+ * Source: VC_RUNTIME_DIR, else System32 of the build machine (CI runners have them).
+ * @param {string} dest - Vendor output folder of a Windows build
+ */
+const add_vc_runtime = ( dest ) => {
+
+    const source = process.env.VC_RUNTIME_DIR || join( process.env.SystemRoot || `C:\\Windows`, `System32` )
+    const missing = VC_RUNTIME.filter( ( name ) => !existsSync( join( source, name ) ) )
+
+    // An installer without them works on the build machine and nowhere fresh: fail the build instead
+    if( missing.length ) throw new Error( `MSVC runtime not found in ${ source } (${ missing.join( `, ` ) }): set VC_RUNTIME_DIR to a folder holding the x64 DLLs` )
+
+    for( const name of VC_RUNTIME ) cpSync( join( source, name ), join( dest, name ) )
+    console.log( `[llama-server] MSVC runtime copied from ${ source }` )
+
+}
+
 // ---------------------------------------------------
 // Main
 // ---------------------------------------------------
 
-for( const target of arches ) await fetch_target( `${ target_os }-${ target }` )
+for( const target of arches ) {
+
+    const key = `${ target_os }-${ target }`
+    await fetch_target( key )
+    if( target_os === `win` ) add_vc_runtime( join( VENDOR_DIR, key ) )
+
+}

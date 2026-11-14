@@ -75,6 +75,19 @@ let autoUpdater = null
 
 let _llama_server = null
 
+const server_binary_path = () => resolve_server_binary( {
+    is_packaged: app.isPackaged,
+    resources_path: process.resourcesPath,
+    app_root: app.getAppPath(),
+} )
+
+// Windows without the Visual C++ Redistributable (any fresh install) cannot load
+// node-llama-cpp's addon: its MSVC runtime imports resolve nowhere. The DLLs ship
+// next to llama-server.exe (scripts/fetch_llama_server.js); PATH is the last place
+// Windows looks for an addon's imports, so an installed runtime still wins.
+// Set before the inference worker forks: it inherits this environment.
+if( process.platform === `win32` ) process.env.PATH = `${ process.env.PATH };${ path.dirname( server_binary_path() ) }`
+
 /**
  * Lazily create the sidecar controller (does not spawn anything yet)
  * @returns {LlamaServer}
@@ -83,13 +96,7 @@ const get_llama_server = () => {
 
     if( _llama_server ) return _llama_server
 
-    const binary_path = resolve_server_binary( {
-        is_packaged: app.isPackaged,
-        resources_path: process.resourcesPath,
-        app_root: app.getAppPath(),
-    } )
-
-    _llama_server = new LlamaServer( { binary_path } )
+    _llama_server = new LlamaServer( { binary_path: server_binary_path() } )
     return _llama_server
 
 }
