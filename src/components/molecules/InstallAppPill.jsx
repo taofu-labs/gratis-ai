@@ -30,6 +30,11 @@ const FloatingPill = styled( Button )`
         : `0 2px 12px rgba( 0, 0, 0, 0.12 )` };
 `
 
+// Narrow screens centre their content down to the bottom edge: an icon stays clear of it
+const PillLabel = styled.span`
+    @media ( max-width: 30rem ) { display: none; }
+`
+
 /**
  * Bottom-left "Install app" pill: desktop links to the native apps, mobile
  * installs the PWA. Hidden when already installed, inside the desktop app, and in chat.
@@ -43,12 +48,16 @@ export default function InstallAppPill() {
 
     if( window.electronAPI?.native_inference ) return null
 
-    // Off the chat (its input and sidebar footer own the bottom edge) and the app page itself
-    const out_of_place = pathname.startsWith( `/chat` ) || [ `/get-app`, `/privacy`, `/terms`, `/support` ].includes( pathname )
+    // Off the chat (its input and sidebar footer own the bottom edge) and the app page itself.
+    // Phones: off everything but the landing page, the picker's cards and wizard buttons scroll under a floating pill
+    const phone = is_mobile_os()
+    const out_of_place = pathname.startsWith( `/chat` )
+        || [ `/get-app`, `/privacy`, `/terms`, `/support` ].includes( pathname )
+        || phone && pathname !== `/`
 
     // Desktop has native apps; phones install the PWA (iOS only by hand)
     const install = is_standalone() || out_of_place ? null
-        : !is_mobile_os() ? `native`
+        : !phone ? `native`
             : install_prompt ? `prompt`
                 : is_ios() ? `ios`
                     : null
@@ -68,8 +77,8 @@ export default function InstallAppPill() {
             <Download size={ 16 } /> { t( `install_app` ) }
         </FloatingPill> }
 
-        { ( install === `prompt` || install === `ios` ) && <FloatingPill $variant="secondary" data-testid="install-app-pill" onClick={ prompt_install }>
-            <Download size={ 16 } /> { t( `install_app` ) }
+        { ( install === `prompt` || install === `ios` ) && <FloatingPill $variant="secondary" data-testid="install-app-pill" aria-label={ t( `install_app` ) } onClick={ prompt_install }>
+            <Download size={ 16 } /> <PillLabel>{ t( `install_app` ) }</PillLabel>
         </FloatingPill> }
 
     </Dock>
