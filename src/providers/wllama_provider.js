@@ -25,6 +25,12 @@ import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, MAX_HISTORY_IMAGES, to_wllama_messa
 
 const INFERENCE_DIAGNOSTICS = import.meta.env.VITE_INFERENCE_DIAGNOSTICS === `1`
 const GPU_LOAD_MIN_TIMEOUT_MS = 120_000
+// A CPU load cannot wedge like a GPU one, only crawl. Safari 17 optimises the
+// runtime's largest function on its single compile thread for minutes after a
+// runtime first works (4.5 min on a 2016 dual-core MacBook): a load started
+// meanwhile (after the speed probe, after a reload) runs unoptimised until then:
+// 505 s there instead of 50 s
+const CPU_LOAD_MIN_TIMEOUT_MS = 900_000
 const GPU_LOAD_BYTES_PER_SECOND = 8 * 1024 ** 2
 const GPU_TOKEN_TIMEOUT_MS = 300_000
 const RUNTIME_EXIT_TIMEOUT_MS = 5_000
@@ -854,7 +860,7 @@ export default class WllamaProvider {
         if( compat ) load_options = { ...load_options, n_threads_batch: load_options.n_threads }
 
         const timeout_ms = Math.max(
-            GPU_LOAD_MIN_TIMEOUT_MS,
+            load_options.n_gpu_layers > 0 ? GPU_LOAD_MIN_TIMEOUT_MS : CPU_LOAD_MIN_TIMEOUT_MS,
             model_size / GPU_LOAD_BYTES_PER_SECOND * 1000 + 60_000,
         )
 
