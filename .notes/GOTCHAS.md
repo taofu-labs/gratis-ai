@@ -161,6 +161,12 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Mac tunnels: `babysit mac ssh NAME -N -R p:127.0.0.1:p -L ...` (same for `babysit windows ssh`). geckodriver checks Host incl. port → same port both ends; `-headless` while locked.
 - WebDriver Safari is always ephemeral: no OPFS, no real model download → real Safari needs an unlocked GUI.
 - SW answers any navigation with `index.html`: inject extra test pages, don't navigate to them.
+- Android offline tests: `set-package-networking-enabled false` and CDP offline both block loopback → native app looks broken. Abort non-loopback requests (`page.route`) or drop `adb reverse` (true offline for a localhost origin, any browser).
+- Android side-by-side debug build without repo changes: Gradle init script (`-I`) setting `applicationIdSuffix '.debug'`; launch `com.trueperformancenetwork.gratis.debug/com.trueperformancenetwork.gratis.MainActivity`. `pm clear` blocked on the OnePlus (uninstall/reinstall). `uiautomator dump` sees web text in Firefox, not DDG.
+- `npm run build:native` writes `dist/`: build in a worktree outside `/workspace` (one under `test-results/` gets swept into vitest discovery via the `vendor` symlink).
+- Brave reports `deviceMemory` 4 + 2 GB quota, DDG WebView 4 GB (no COI → compat): picker goes smaller there than in Chrome.
+- Parallel agents in one worktree: commit with `git commit <paths>` or a private `GIT_INDEX_FILE`; a shared index sweeps other agents' staged files into your commit.
+- `/tmp` scratch is wiped on container restart; `test-results/` survives.
 
 ## Testing / tooling
 - mentie enables `log.info` only when the URL contains `localhost`: Vite binds 127.0.0.1 but `baseURL` stays `http://localhost:5173` (log-asserting tests break on the IP).
