@@ -519,7 +519,9 @@ export default function ModelSelectPage() {
     const active_mode = mode_models.find( ( { model } ) => model.id === picks.pick?.id )?.priority ?? preferences.priority
 
     // Hold the recommendation back until discovery settles, so winners don't pop in over it
-    const deciding = tpn_loading || is_detecting || is_inspecting || !capabilities
+    // The device is measured before the remote catalog answers: fit checks need only the former
+    const measuring = is_detecting || is_inspecting || !capabilities
+    const deciding = tpn_loading || measuring
 
     const catalog_rows = useMemo( () => describe_models( MODEL_CATALOG.filter( m => !m.hidden ), device ), [ device ] )
     const retired_rows = useMemo( () => describe_models( MODEL_CATALOG.filter( m => m.hidden ), device ), [ device ] )
@@ -733,7 +735,7 @@ export default function ModelSelectPage() {
         // Judge only against a measured device: until the inspection ends the
         // provisional profile fits nothing, and "Use" silently did nothing.
         // A toast, since these rows sit outside the hero that shows action errors
-        if( !deciding && !check_fit( get_model_by_id( model.id ) || model, device ).fits ) {
+        if( !measuring && !check_fit( get_model_by_id( model.id ) || model, device ).fits ) {
             toast.error( t( 'model_does_not_fit' ), { id: `model-does-not-fit` } )
             return
         }

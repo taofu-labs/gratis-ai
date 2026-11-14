@@ -709,10 +709,16 @@ const register_ipc_handlers = () => {
 
     } )
 
+    // Bumped by every load and unload, so an in-flight load can tell it was superseded
+    let load_generation = 0
+
     // Load a model by ID. Models with a downloaded vision projector run in the
     // llama-server sidecar; everything else in the node-llama-cpp worker.
     // Only one backend holds a model at a time — the other is unloaded first.
     ipcMain.handle( `llm:load`, async ( _event, model_id ) => {
+
+        // A newer load or an unload supersedes this one while it awaits
+        const generation = ++load_generation
 
         const manifest = read_manifest()
         const model = manifest.find( ( m ) => m.id === model_id )
@@ -743,6 +749,9 @@ const register_ipc_handlers = () => {
 
                 // The sidecar takes the GPU only where node-llama-cpp does (not on integrated graphics)
                 const { gpu } = await worker_request( `system:info` )
+
+                // Unloaded or replaced while we asked: starting now would revive a model the user let go of
+                if( generation !== load_generation ) throw Object.assign( new Error( `Model load cancelled` ), { cancelled: true } )
 
                 const info = await get_llama_server().start( {
                     model_id,
@@ -827,6 +836,7 @@ const register_ipc_handlers = () => {
 
     // Unload the current model from whichever backend holds it
     ipcMain.handle( `llm:unload`, async () => {
+        load_generation++
         await _llama_server?.stop()
         if( inference_worker ) await worker_request( `unload` )
         return { success: true }
