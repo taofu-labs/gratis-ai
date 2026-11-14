@@ -228,6 +228,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # npm ci on the Apple Silicon runner skips the Intel inference addon (cpu: x64),
+      # so the x64 DMG shipped with only the arm64 one and could not load a model
+      - name: Add Intel inference addon (macOS)
+        if: matrix.platform == 'mac'
+        run: npm install --no-save --force "@node-llama-cpp/mac-x64@$(node -p "require('./node_modules/node-llama-cpp/package.json').version")"
+
       # Vision sidecar (llama.cpp llama-server), pinned + sha256-verified.
       # macOS packages both arches from one runner, so fetch both.
       - name: Fetch llama-server sidecar
@@ -264,6 +270,11 @@ jobs:
         run: npx electron-builder --${{ matrix.platform }} --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      # Fail the release rather than ship an Intel app without its inference addon
+      - name: Verify Intel inference addon is packaged
+        if: matrix.platform == 'mac'
+        run: ls release/mac/Gratis.app/Contents/Resources/app.asar.unpacked/node_modules/@node-llama-cpp/mac-x64/bins/mac-x64/llama-addon.node
 
       # Friendly dmg names for the download links. The zips and latest-mac.yml keep their
       # arm64/x64 names: electron-updater picks the mac arch by the "arm64" token in the filename
