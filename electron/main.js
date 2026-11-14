@@ -188,6 +188,9 @@ const ensure_worker = () => {
  */
 const worker_request = ( type, payload ) => {
 
+    // A request racing the quit must not respawn the worker: the app would outlive its window
+    if( _is_quitting ) return Promise.reject( new Error( `App is quitting` ) )
+
     return new Promise( ( resolve, reject ) => {
 
         const id = ++_request_id
@@ -757,6 +760,12 @@ const register_ipc_handlers = () => {
                 }
 
             } catch ( err ) {
+
+                // The load was stopped on purpose. Falling back would load the model we just
+                // let go of: after a quit that respawned the worker and kept the app running
+                // without a window, holding the model in memory
+                if( err.cancelled ) throw err
+
                 // Missing binary or a sidecar that cannot start: keep text chat working
                 console.warn( `[llama-server] Vision sidecar unavailable, loading text-only: ${ err.message }` )
                 await _llama_server?.stop()

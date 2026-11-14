@@ -159,8 +159,12 @@ export class LlamaServer {
                 return await this._launch()
             } catch ( err ) {
 
-                // Stopped meanwhile, already on CPU, or not a crash (timeout) — give up
-                if( generation !== this._generation || this._config?.cpu_only || !err.crashed ) throw err
+                // stop() ended this launch on purpose (quit, unload, model switch): tell
+                // callers apart from a sidecar that cannot run, so nobody falls back for it
+                if( generation !== this._generation ) throw Object.assign( err, { cancelled: true } )
+
+                // Already on CPU, or not a crash (timeout) — give up
+                if( this._config?.cpu_only || !err.crashed ) throw err
 
                 this._log.warn( `[llama-server] GPU launch failed (${ err.message }) — retrying CPU-only` )
                 this._config.cpu_only = true
