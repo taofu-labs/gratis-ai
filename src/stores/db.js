@@ -16,6 +16,41 @@ const clear_legacy_model_cache = async () => {
 
 }
 
+// One schema, shared by the app and the schema check below
+const open_db = () => {
+
+    return openDB( DB_NAME, DB_VERSION, {
+
+        upgrade( db ) {
+
+            log.info( `[db] Schema upgrade — creating object stores` )
+
+            // Conversations store
+            if( !db.objectStoreNames.contains( `conversations` ) ) {
+                const conv_store = db.createObjectStore( `conversations`, { keyPath: `id` } )
+                conv_store.createIndex( `updated_at`, `updated_at` )
+            }
+
+            // Messages store
+            if( !db.objectStoreNames.contains( `messages` ) ) {
+                const msg_store = db.createObjectStore( `messages`, { keyPath: `id` } )
+                msg_store.createIndex( `conversation_id`, `conversation_id` )
+            }
+
+            // Model metadata. Legacy entries may contain GGUF blobs; new browser
+            // downloads keep weights in wllama64's streaming OPFS cache.
+            if( !db.objectStoreNames.contains( `models` ) ) {
+                const model_store = db.createObjectStore( `models`, { keyPath: `id` } )
+                model_store.createIndex( `last_used_at`, `last_used_at` )
+                model_store.createIndex( `category`, `category` )
+            }
+
+        },
+
+    } )
+
+}
+
 /**
  * A database created without our schema (opened before the app ever ran, or a
  * browser's half-cleared storage) already has the right version: `upgrade`
@@ -58,40 +93,6 @@ export const get_db = async () => {
     await schema_check
 
     return open_db()
-
-}
-
-const open_db = () => {
-
-    return openDB( DB_NAME, DB_VERSION, {
-
-        upgrade( db ) {
-
-            log.info( `[db] Schema upgrade — creating object stores` )
-
-            // Conversations store
-            if( !db.objectStoreNames.contains( `conversations` ) ) {
-                const conv_store = db.createObjectStore( `conversations`, { keyPath: `id` } )
-                conv_store.createIndex( `updated_at`, `updated_at` )
-            }
-
-            // Messages store
-            if( !db.objectStoreNames.contains( `messages` ) ) {
-                const msg_store = db.createObjectStore( `messages`, { keyPath: `id` } )
-                msg_store.createIndex( `conversation_id`, `conversation_id` )
-            }
-
-            // Model metadata. Legacy entries may contain GGUF blobs; new browser
-            // downloads keep weights in wllama64's streaming OPFS cache.
-            if( !db.objectStoreNames.contains( `models` ) ) {
-                const model_store = db.createObjectStore( `models`, { keyPath: `id` } )
-                model_store.createIndex( `last_used_at`, `last_used_at` )
-                model_store.createIndex( `category`, `category` )
-            }
-
-        },
-
-    } )
 
 }
 
