@@ -74,6 +74,9 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- The paperclip's file picker offers "Take Photo"; without this key iOS kills the app on tap -->
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo to ask the on-device assistant about it. Photos stay on this device.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Voice input turns your speech into text on this device.</string>
 </dict>
