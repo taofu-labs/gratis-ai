@@ -54,7 +54,6 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Desktop needs macOS 13+ (Electron 45): README says so; get-app page still offers the Intel build without an OS hint (copy in 11 locales).
 - Intel mac build shipped arm64-only inference addon; `9f64ebd` fixes CI (unrun). v0.55.1 x64 DMG on GitHub is broken for text inference → needs a new release.
 - x64 `llama-server` needs Accelerate `$NEWLAPACK$ILP64` symbols: vision may fail on early macOS 13.x (unverified).
-- React #185 "Maximum update depth" on burst typing (Firefox, 130 chars via sendKeys): `ChatInput` draft effect → `set_draft` per keystroke; unfixed.
 - Android (OnePlus): Chrome/Firefox/DDG/Brave + app 0.55.0 + 0.55.1 debug all pass after fixes. Left on phone: Firefox 160 installed; gratis-ai.com origin in Chrome holds SmolLM2 + test chats; release app has one extra test conversation.
 - Browser first reply is slow on phones (SmolLM2 6–26 s TTFT, ~3 tok/s vs native 8–35 tok/s; LFM 1.2B compat 45 s): candidate for warm-up work.
 - Cosmetic, unfixed: install pill covers "Browse all models" on `/select-model` until scroll; speed-mode label flush against fill on touch >480 px; Welcome globe/gear stay fixed while the column scrolls.
