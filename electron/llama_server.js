@@ -192,9 +192,13 @@ export class LlamaServer {
     async _launch() {
 
         const config = this._config
+        const generation = this._generation
         if( !config ) throw new Error( `No model assigned to llama-server` )
 
         const port = await find_free_port()
+
+        // stop() ran while we looked for a port and found no child to end: spawn nothing
+        if( generation !== this._generation ) throw new Error( `llama-server launch cancelled` )
         const api_key = randomBytes( 24 ).toString( `hex` )
         const args = build_server_args( { ...config, port, api_key } )
 

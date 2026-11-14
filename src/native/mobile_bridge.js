@@ -183,6 +183,11 @@ export const create_mobile_bridge = ( native, platform ) => {
     const download_file = async ( file, signal ) => {
 
         while( true ) {
+
+            // Cancelled while a listener registered or the app came back: a transfer
+            // started now would have nothing left to abort it
+            if( signal.aborted ) throw cancelled()
+
             try {
                 return await native.download( file )
             } catch ( error ) {

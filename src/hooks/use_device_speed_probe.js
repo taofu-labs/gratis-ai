@@ -36,6 +36,10 @@ const run_probe = () => running ||= ( async () => {
     const wllama = new Wllama( CONFIG_PATHS, { allowOffline: true, suppressNativeLog: true } )
     wllama.setCompat( COMPAT_PATHS, `firefox_safari` )
 
+    // Fetch the runtime first (both builds are precached anyway): the watchdog below
+    // should time the boot, not a 16 MB download on a slow connection
+    await Promise.all( Object.values( { ...CONFIG_PATHS, ...COMPAT_PATHS } ).map( url => fetch( url ).then( response => response.arrayBuffer() ).catch( () => {} ) ) )
+
     const started = performance.now()
     // No weights to read: a load that drags on is the runtime failing to start
     const tps = await measure_probe_tps( wllama, runtime_busy, with_boot_watchdog )
@@ -44,7 +48,8 @@ const run_probe = () => running ||= ( async () => {
 
 } )()
     .catch( error => {
-        if( error?.name === `RuntimeBootError` ) record_runtime_boot_failure()
+        // A hidden tab throttles timers and compilation: slow there proves nothing
+        if( error?.name === `RuntimeBootError` && document.visibilityState === `visible` ) record_runtime_boot_failure()
         log.warn( `[speed_probe] failed; keeping the default speed guess:`, error )
     } )
     .finally( () => running = null )

@@ -788,6 +788,9 @@ const register_ipc_handlers = () => {
         // Text-only path — stop the sidecar first so its memory is released
         await _llama_server?.stop()
 
+        // Unloaded or replaced while the sidecar stopped: do not load what the user let go of
+        if( generation !== load_generation ) throw Object.assign( new Error( `Model load cancelled` ), { cancelled: true } )
+
         const result = await worker_request( `load`, {
             model_path,
             opts: { n_ctx: requested_ctx },

@@ -14,8 +14,9 @@
 
 import { EVENTS, storage_key } from './branding'
 
-// A healthy boot takes 0.2–3 s (desktop to phone); a wrong "cannot start" locks a working browser out
-export const RUNTIME_BOOT_TIMEOUT_MS = 20_000
+// A healthy boot takes 0.2–3 s (desktop to phone) once its files are here; a wrong
+// "cannot start" locks a working browser out for the session, so stay well clear of that
+export const RUNTIME_BOOT_TIMEOUT_MS = 30_000
 
 const FAILED_KEY = storage_key( `runtime_boot_failed` )
 
