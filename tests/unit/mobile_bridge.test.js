@@ -133,11 +133,34 @@ describe( `mobile bridge`, () => {
     test( `a failed download installs nothing`, async () => {
 
         const native = fake_native()
-        native.download.mockRejectedValueOnce( new Error( `Download aborted` ) )
+        native.download.mockRejectedValueOnce( new Error( `Download failed: 500` ) )
         const bridge = create_mobile_bridge( native, `android` )
 
-        await expect( bridge.download_model( MODEL ) ).rejects.toThrow( /aborted/ )
+        await expect( bridge.download_model( MODEL ) ).rejects.toThrow( /500/ )
         expect( native.files.has( `manifest.json` ) ).toBe( false )
+
+    } )
+
+    test( `a download the OS stopped in the background resumes, a cancelled one does not`, async () => {
+
+        // iOS: the background grace period ran out, the plugin rejects as aborted
+        const native = fake_native()
+        native.download.mockRejectedValueOnce( new Error( `Download aborted` ) )
+        const bridge = create_mobile_bridge( native, `ios` )
+
+        await bridge.download_model( MODEL )
+        expect( native.download ).toHaveBeenCalledTimes( 2 )
+        expect( JSON.parse( native.files.get( `manifest.json` ) ) ).toHaveLength( 1 )
+
+        // The user's cancel reaches the plugin the same way, and must stay cancelled
+        native.download.mockClear()
+        native.download.mockImplementationOnce( async () => {
+            await bridge.abort_download()
+            throw new Error( `Download aborted` )
+        } )
+
+        await expect( bridge.download_model( { ...MODEL, id: `n`, file_name: `n.gguf` } ) ).rejects.toThrow( /aborted/ )
+        expect( native.download ).toHaveBeenCalledTimes( 1 )
 
     } )
 

@@ -5,6 +5,8 @@
 ### Fixed
 - Mac: closing the window (red button or Cmd-W) keeps the app and the open chat; Window → Show Gratis AI or the Dock icon brings the same window back (App Store Guideline 4)
 - Mac: app menu reads "About / Hide / Quit Gratis AI" instead of "gratisai"
+- iPhone app: a model download no longer freezes when you leave the app for more than ~30 s; it resumes where it stopped when you come back
+- iOS app declares its required-reason APIs (disk space, file timestamps) in a privacy manifest
 
 ### Changed
 - README: gratis-ai.com is the main web address; pixel bunny wordmark header; current model list

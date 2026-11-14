@@ -153,12 +153,53 @@ export const create_mobile_bridge = ( native, platform ) => {
 
     // ── Downloads ────────────────────────────────────────────────
 
+    // Set by abort_download: tells the user's cancel from the OS stopping a transfer
+    let download_cancelled = false
+
+    /** Resolves once the app is on screen */
+    const app_visible = () => new Promise( resolve => {
+
+        const visible = () => globalThis.document?.visibilityState !== `hidden`
+        if( visible() ) return resolve()
+
+        const on_change = () => {
+            if( !visible() ) return
+            document.removeEventListener( `visibilitychange`, on_change )
+            resolve()
+        }
+        document.addEventListener( `visibilitychange`, on_change )
+
+    } )
+
+    /**
+     * One file to disk. iOS stops the transfer when the app's background grace
+     * period runs out (the plugin rejects as aborted and keeps the partial
+     * file): resume when the user is back instead of leaving a frozen progress bar.
+     */
+    const download_file = async file => {
+
+        while( true ) {
+            try {
+                return await native.download( file )
+            } catch ( error ) {
+                const stopped_by_os = !download_cancelled && /abort/i.test( error?.message || `` )
+                if( !stopped_by_os ) throw error
+                log.info( `[mobile] Download stopped in the background, resuming when visible: ${ file.path }` )
+                await app_visible()
+                if( download_cancelled ) throw error
+            }
+        }
+
+    }
+
     /**
      * Same contract as Electron's `llm:download_model`: model (+ projector)
      * streamed to disk natively, resumed from a partial file, size + GGUF magic
      * + SHA-256 checked, and only then recorded in the manifest.
      */
     const download_model = async ( { url, id, file_name, metadata, expected_size, headers = {}, mmproj } ) => {
+
+        download_cancelled = false
 
         const files = [
             { url, path: file_name, expected_size },
@@ -185,7 +226,7 @@ export const create_mobile_bridge = ( native, platform ) => {
             } )
 
             try {
-                const { size } = await native.download( { url: file.url, path: file.path, headers, expected_size: file.expected_size || 0 } )
+                const { size } = await download_file( { url: file.url, path: file.path, headers, expected_size: file.expected_size || 0 } )
                 done[ index ] = totals[ index ] = sizes[ index ] = size
             } finally {
                 listener.remove()
@@ -214,7 +255,10 @@ export const create_mobile_bridge = ( native, platform ) => {
 
     }
 
-    const abort_download = () => native.abortDownload()
+    const abort_download = () => {
+        download_cancelled = true
+        return native.abortDownload()
+    }
 
     const list_models = read_manifest
 
