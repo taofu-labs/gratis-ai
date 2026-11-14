@@ -10,6 +10,8 @@
 - iPhone app: a model download no longer freezes when you leave the app for more than ~30 s; it resumes where it stopped when you come back
 - iPhone app: "Take Photo" in the attachment menu crashed the app (missing camera permission text)
 - iOS app declares its required-reason APIs (disk space, file timestamps) in a privacy manifest
+- Safari: the picker measures the device's real speed again (the probe always failed there, so everyone got a cautious default pick)
+- Safari 17 on slow Macs: a model that takes minutes to start is waited for instead of failing with "Model worker stopped responding"; a slow start is no longer mistaken for an unsupported browser
 - Windows app: models load on a fresh Windows install (the app now ships the Visual C++ runtime it needs; before, no model could start)
 - Windows/Linux app: laptops with only integrated graphics run on the CPU, which is faster there and stops "out of device memory" errors on image chats
 - Intel Mac app: text chat works again (the x64 build shipped without its inference engine)
@@ -30,6 +32,7 @@
 - Screen readers: voice, update, download and "download started" popups are announced as named dialogs; Tab stays inside, Escape closes, focus returns to where you were
 
 ### Changed
+- Safari answers text about twice as fast (text runs on the CPU there; the GPU is kept for images)
 - Dual-core devices use both cores in the browser (up to 1.5× faster replies on old laptops)
 - The web app installs 12 MB lighter (store review graphics are no longer cached on every device)
 - Get-app page and README state that the Mac app needs macOS 13 or newer
