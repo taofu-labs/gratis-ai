@@ -36,6 +36,21 @@ export default function App() {
         sync_electron_locale() 
     }, [] )
 
+    // Android Back closes an open dialog the way Escape does; cancelling the
+    // event tells the shell it was used, so history stays where it is
+    useEffect( () => {
+
+        const handle_back = event => {
+            if( !document.querySelector( `[aria-modal="true"]` ) ) return
+            event.preventDefault()
+            window.dispatchEvent( new CustomEvent( EVENTS.close_modal ) )
+        }
+
+        window.addEventListener( EVENTS.native_back, handle_back )
+        return () => window.removeEventListener( EVENTS.native_back, handle_back )
+
+    }, [] )
+
     // Register global keyboard shortcuts
     useEffect( () => {
 

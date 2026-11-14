@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { truncate } from '../../utils/format'
+import { EVENTS } from '../../utils/branding'
 
 const SidebarContainer = styled.aside`
     display: flex;
@@ -260,6 +261,21 @@ export default function Sidebar( {
         clearTimeout( timer_ref.current )
         timer_ref.current = setTimeout( () => update_status( `idle` ), ms )
     }
+
+    // Android Back closes the open sidebar instead of leaving the app
+    useEffect( () => {
+
+        if( collapsed ) return
+
+        const handle_back = event => {
+            event.preventDefault()
+            on_toggle()
+        }
+
+        window.addEventListener( EVENTS.native_back, handle_back )
+        return () => window.removeEventListener( EVENTS.native_back, handle_back )
+
+    }, [ collapsed, on_toggle ] )
 
     // Subscribe to updater IPC events for feedback
     useEffect( () => {
