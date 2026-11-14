@@ -184,6 +184,10 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Chromium `storage.estimate()` reports a fake 10 GB quota.
 - iOS 16 Safari (JSC) hangs compiling large SIMD functions in the compat wasm; needs threads, bulk memory, SIMD, sign-ext, nontrapping-fptoint only. Scalarising v128 moves boots the runtime but real SIMD functions still hang → needs a no-SIMD build. The speed probe doubles as the runtime boot check (runtime files fetched first, 30 s watchdog, visible tab only, session flag): keep downloads out of the timed window or slow connections get gated.
 - Desktop load paths: `llm:load` carries a `load_generation`; sidecar launches tag `cancelled` (incl. CPU retry). Never fall back to text-only on a cancelled load.
+- Macs re-lock the moment a Screen Sharing connection closes: one-shot `babysit mac shot|click` lands on the lock screen. Hold one VNC connection open for the whole run (`.lab-evidence/2026-11-14/mac-arm-unlocked/scripts/vnc_hold.py`, statement queue); extra short connections are fine while it is up. `screencapture` over SSH fails.
+- WebKit OPFS `createWritable().write( view )` writes the view's WHOLE underlying buffer (copy views first). Safari drops `Range` across the Hugging Face → CDN redirect (200, not 206): retry on the final URL.
+- Safari wasm32 runtime: WebGPU text decode is ~half the CPU speed (M1: 10.5 vs 21 tok/s) but images never finish on CPU → `webgpu_offload_worthwhile( { vision } )`.
+- Several loaded-model tabs + a 640 MB voice download took the 8 GB M1 off the network: one heavy Safari flow at a time there.
 
 ## Testing / tooling
 - Seed/read settings in tests via `tests/helpers/settings.js` (prefix derived from `VITE_APP_NAME`); hardcoded `gratisai:` keys silently no-op. PWA install-pill test flakes when run alongside a real-inference spec (host load).
