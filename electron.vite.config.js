@@ -1,6 +1,7 @@
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { build_constants } from './vite.config.js'
 
 export default defineConfig( {
 
@@ -35,6 +36,8 @@ export default defineConfig( {
     renderer: {
         plugins: [ react() ],
         root: `.`,
+        // Without these the desktop Settings footer reads "vdev · dev"
+        define: build_constants,
         build: {
             rollupOptions: {
                 input: path.resolve( `index.html` ),

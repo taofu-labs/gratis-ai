@@ -16,6 +16,12 @@ const commit_hash = ( () => {
     }
 } )()
 
+// Version + commit shown in Settings; shared with the desktop renderer (electron.vite.config.js)
+export const build_constants = {
+    __APP_VERSION__: JSON.stringify( pkg.version ),
+    __COMMIT_HASH__: JSON.stringify( commit_hash ),
+}
+
 export default defineConfig( ( { mode } ) => {
 
     const env = loadEnv( mode, process.cwd(), `` )
@@ -26,10 +32,7 @@ export default defineConfig( ( { mode } ) => {
     const native = mode === `native`
 
     return {
-        define: {
-            __APP_VERSION__: JSON.stringify( pkg.version ),
-            __COMMIT_HASH__: JSON.stringify( commit_hash ),
-        },
+        define: build_constants,
         plugins: [
             react(),
             ! native && VitePWA( {

@@ -1,5 +1,9 @@
 import { createGlobalStyle } from 'styled-components'
 
+// Public files sit at '/' on the web but next to index.html in the desktop app,
+// where '/fonts' resolves to the drive root (file:///C:/fonts) and the font never loads
+const FONTS = `${ import.meta.env.BASE_URL }fonts`
+
 const GlobalStyle = createGlobalStyle`
 
     /* Montserrat + Nunito come from @fontsource-variable (src/index.jsx) */
@@ -9,7 +13,7 @@ const GlobalStyle = createGlobalStyle`
         font-style: normal;
         font-weight: 400;
         font-display: swap;
-        src: url('/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
+        src: url('${ FONTS }/ibm-plex-mono-400-latin.woff2') format('woff2');
     }
 
     @font-face {
@@ -17,7 +21,7 @@ const GlobalStyle = createGlobalStyle`
         font-style: normal;
         font-weight: 500;
         font-display: swap;
-        src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
+        src: url('${ FONTS }/ibm-plex-mono-500-latin.woff2') format('woff2');
     }
 
     *, *::before, *::after {
