@@ -47,3 +47,11 @@ Open items only. Resolved history lives in TIMELINE.md.
 
 ## Voice input not offline (found 2026-11-05)
 - parakeet.js sets `ort.env.wasm.wasmPaths` to jsDelivr when unset → voice needs network on first use, and breaks the "no CDN code" promise. Option: copy onnxruntime-web dist to `public/` in `copy_wasm.js` and set `wasmPaths` before `fromHub`. Not done: needs a COEP/precache check.
+
+## Device lab pass (2026-11-14)
+
+- OliviaMacbook is at the lock screen and `babysit mac unlock` is rejected: unlock by hand to get real (non-ephemeral) Safari 17.6 coverage: OPFS download + chat + reload.
+- Desktop needs macOS 13+ (Electron 45): README says so; get-app page still offers the Intel build without an OS hint (copy in 11 locales).
+- Intel mac build shipped arm64-only inference addon; `9f64ebd` fixes CI (unrun). v0.55.1 x64 DMG on GitHub is broken for text inference → needs a new release.
+- x64 `llama-server` needs Accelerate `$NEWLAPACK$ILP64` symbols: vision may fail on early macOS 13.x (unverified).
+- React #185 "Maximum update depth" on burst typing (Firefox, 130 chars via sendKeys): `ChatInput` draft effect → `set_draft` per keystroke; unfixed.
