@@ -3,7 +3,7 @@ import { build_gguf_skeleton, parse_gguf_header } from '../../src/utils/gguf_ske
 import { build_device_profile, estimate_max_model_bytes } from '../../src/utils/device_detection'
 import { MODEL_CATALOG, estimate_decode_speed, format_tokens_per_second } from '../../src/utils/model_catalog'
 import { calibrated_speed_ratio, has_speed_probe, record_speed_ratio } from '../../src/utils/speed_calibration'
-import { SPEED_REFERENCE_ID } from '../../src/utils/speed_probe'
+import { SPEED_REFERENCE_ID, fetch_probe_skeleton } from '../../src/utils/speed_probe'
 
 // ── A tiny hand-written GGUF: 4 blocks, the last one a multi-token-prediction block ──
 
@@ -69,6 +69,29 @@ describe( `zero-weight GGUF skeleton`, () => {
         const { head } = tiny_gguf()
         expect( () => parse_gguf_header( head.subarray( 0, 100 ) ) ).toThrow( RangeError )
         expect( () => parse_gguf_header( new Uint8Array( 64 ) ) ).toThrow( `Not a GGUF file` )
+    } )
+
+    test( `a redirect that drops Range (Safari) is asked again at its final URL`, async () => {
+
+        const { head, file_bytes } = tiny_gguf()
+        const cdn = `https://cdn.example/model.gguf`
+
+        // Hugging Face → CDN: Safari arrives without Range and is handed the whole file
+        const whole_file = { status: 200, redirected: true, url: cdn, body: { cancel: vi.fn( async () => {} ) } }
+        const ranged = new Response( head, { status: 206, headers: { 'Content-Range': `bytes 0-${ head.length - 1 }/${ file_bytes }` } } )
+        const fetch_mock = vi.fn().mockResolvedValueOnce( whole_file ).mockResolvedValueOnce( ranged )
+        vi.stubGlobal( `fetch`, fetch_mock )
+
+        const skeleton = await fetch_probe_skeleton( `https://huggingface.co/x/resolve/main/model.gguf` )
+
+        expect( fetch_mock ).toHaveBeenCalledTimes( 2 )
+        expect( fetch_mock.mock.calls[ 1 ][ 0 ] ).toBe( cdn )
+        expect( fetch_mock.mock.calls[ 1 ][ 1 ].headers.Range ).toMatch( /^bytes=0-/ )
+        expect( whole_file.body.cancel ).toHaveBeenCalled()
+        expect( skeleton.size ).toBeGreaterThan( 0 )
+
+        vi.unstubAllGlobals()
+
     } )
 
 } )

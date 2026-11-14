@@ -62,8 +62,13 @@ const stage_on_disk = async parts => {
 
     const root = await navigator.storage.getDirectory()
     const writable = await ( await root.getFileHandle( PROBE_FILE, { create: true } ) ).createWritable()
+    // WebKit writes a view's whole underlying buffer instead of the view (the kept
+    // header bytes are views into a 64 MB read buffer): Safari staged a corrupt
+    // skeleton and every probe ended "Model failed to load". Views get their own bytes
+    const exact = part => part.byteLength === part.buffer.byteLength ? part : part.slice()
+
     try {
-        for( const part of parts ) await writable.write( part )
+        for( const part of parts ) await writable.write( exact( part ) )
         await writable.close()
     } catch ( error ) {
         // Out of quota: release the half-written file before the in-memory fallback
@@ -90,7 +95,16 @@ const discard_probe_file = async () => {
 export const fetch_probe_skeleton = async ( url = PROBE_URL ) => {
 
     // The header length is unknown up front: stream, and stop once it parses
-    const response = await fetch( url, { headers: { Range: `bytes=0-${ MAX_HEADER_BYTES - 1 }` } } )
+    const headers = { Range: `bytes=0-${ MAX_HEADER_BYTES - 1 }` }
+    let response = await fetch( url, { headers } )
+
+    // Safari drops Range when Hugging Face redirects to its CDN and gets the whole
+    // file (200): the probe failed on every Mac and iPhone. The CDN URL itself honours it
+    if( response.status === 200 && response.redirected && response.url ) {
+        await response.body?.cancel().catch( () => {} )
+        response = await fetch( response.url, { headers } )
+    }
+
     if( response.status !== 206 ) throw new Error( `Speed probe needs range requests (HTTP ${ response.status })` )
     const file_bytes = Number( response.headers.get( `Content-Range` )?.split( `/` )[ 1 ] )
     const reader = response.body.getReader()
