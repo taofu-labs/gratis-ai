@@ -35,7 +35,6 @@ Open items only. Resolved history lives in TIMELINE.md.
 
 ## Stack review (2026-11-05, see RESEARCH.md "Stack freshness check")
 
-- Firefox ≥153 now ships JSPI (Memory64 since 134): verify it takes the fast Memory64 path instead of wasm32 compat. Likely free speed + >3.4 GB models for Firefox users.
 - Optional engines to consider: Chrome on-device `SpeechRecognition` (`processLocally`) as zero-download voice on desktop Chrome; llama-server for desktop text too (drop node-llama-cpp, one engine across desktop + mobile).
 - Watch llama.cpp's official browser/WebGPU build as a long-term replacement for maintaining the wllama64 fork.
 
@@ -63,3 +62,5 @@ Open items only. Resolved history lives in TIMELINE.md.
 - iPhone X now runs a lab build 0.55.1 (zsign, dev profile) with both fixes; camera permission = Don't Allow; Safari tab holds a 731 MB model in OPFS.
 - Safari iOS 16.7: no model loads (compat worker hangs in `__wasm_call_ctors`); follow-up in progress (fix or boot-probe gate).
 - Minor, unfixed: "0.1s to first token" on a ~10 s reply; native "Reading your message… 0%" for 10–16 s; Settings lists desktop shortcuts on phones; speed/ETA inflated right after a resume.
+- Firefox ≥153 verified on the Memory64 + JSPI fast path (Playwright 157, real 160 on Mac/Android); no code change needed.
+- AppImage `.desktop` has `Exec=AppRun --no-sandbox` (electron-builder default?, unverified). `tests/e2e/inference_large.spec.js` hardcodes `localhost:5173`.

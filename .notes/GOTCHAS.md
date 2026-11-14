@@ -184,6 +184,11 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Model eval: undici 300 s headers timeout → eval.mjs uses a no-timeout Agent.
 - RunPod: `llama.cpp:server-cuda --model-url` starts router mode with no model while /health = ok → curl GGUF then `-m`. `llama.cpp:full` tools need `LD_LIBRARY_PATH=/app`. Delete only pod ids we logged.
 - WebGPU on RunPod NVIDIA: `nvidia/cuda:*-base`, `NVIDIA_DRIVER_CAPABILITIES=all`, apt `libegl1 libgl1 libglvnd0 libvulkan1 xvfb`, headful Chromium under xvfb, `XDG_RUNTIME_DIR=/tmp`. Flags `--enable-unsafe-webgpu --enable-features=Vulkan --use-angle=vulkan --ignore-gpu-blocklist --enable-dawn-features=vulkan_enable_f16_on_nvidia` (no shader-f16 ⇒ llama.cpp registers 0 WebGPU devices ⇒ silent CPU). Test on localhost (about:blank has no `navigator.gpu`).
+- e2e while others edit `src/`: Vite HMR reloads mid-test → serve a build snapshot (`vite preview --outDir <private> --port N`, `E2E_PORT=N`; also `PWA_PORT`, `PWA_OUT_DIR`). Cross-browser journey: `--project=smoke-chromium|firefox|webkit` (`tests/e2e/cross_browser.spec.js`, own runtime + forced compat).
+- Playwright Firefox here needs `MOZ_ASSUME_USER_NS=0` (else content processes segfault, launch times out). Config `use.launchOptions` leak into `launchPersistentContext` (Chromium switches reached Firefox).
+- Benign console noise (allowlisted in the journey spec): Firefox "uncaught exception: undefined" from blob workers on reload + React dev `timeStamp` events; WebKit `interactive-widget` viewport key.
+- Electron specs: per-launch `--user-data-dir`; `multi_architecture` 120 s limits flake under load (different model each run). `/tmp/gratisai-test-models` wiped on restart → `scripts/download_test_models.sh --medium`.
+- Filtering `git commit` output for "error" matches the lint summary's "0 errors".
 
 ## Git / secrets
 
