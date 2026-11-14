@@ -10,15 +10,33 @@
 - iPhone app: a model download no longer freezes when you leave the app for more than ~30 s; it resumes where it stopped when you come back
 - iPhone app: "Take Photo" in the attachment menu crashed the app (missing camera permission text)
 - iOS app declares its required-reason APIs (disk space, file timestamps) in a privacy manifest
+- Windows app: models load on a fresh Windows install (the app now ships the Visual C++ runtime it needs; before, no model could start)
+- Windows/Linux app: laptops with only integrated graphics run on the CPU, which is faster there and stops "out of device memory" errors on image chats
+- Intel Mac app: text chat works again (the x64 build shipped without its inference engine)
+- Desktop app: quitting or switching models while an image model loads no longer leaves the app running without a window
+- Desktop app: memory use stays sane with image models (context capped at 16K, as in the browser; a 0.8 GB model took 3.6 GB)
+- Desktop app: Settings shows the real version, and the monospace font loads
+- Desktop downloads are ~30 MB smaller (the app no longer packs its own source tree)
+- Gemma 4 E2B/E4B download in the browser again (it ended "download was incomplete" at 99% after an upstream file change)
+- A browser database left half-created no longer breaks every load, chat and "clear all data" forever
+- Private windows in Safari and Firefox say they cannot store models, instead of a cryptic storage error
+- Welcome, download, get-app and 404 pages scroll on short screens (landscape phones could not reach "Get Started")
+- Typing very fast or pasting in bursts no longer trips a React error in the message box
+- "Use" on an installed model works while the device is still being measured, and an installed model that does not fit says so
+- Android app: Back closes the open sidebar or dialog before leaving the app
+- Mobile apps: a cancelled download can no longer restart when the next one begins
+- Device details show RAM rounded ("7.7 GB", not "7.744217088 GB"); pages report their real language to the browser
+- Desktop: the "Install app" pill is visible on the home page again
+- Voice input works again in the browser: it downloads the ~670 MB model it promises (not a 2.5 GB one that failed to load) and runs its speech runtime from Gratis itself, not a third-party CDN, so it keeps working offline after first use, and no longer requires WebGPU
+- Screen readers: voice, update, download and "download started" popups are announced as named dialogs; Tab stays inside, Escape closes, focus returns to where you were
 
 ### Changed
+- Dual-core devices use both cores in the browser (up to 1.5× faster replies on old laptops)
+- The web app installs 12 MB lighter (store review graphics are no longer cached on every device)
+- Get-app page and README state that the Mac app needs macOS 13 or newer
 - README: gratis-ai.com is the main web address; pixel bunny wordmark header; current model list
 - PDF reading runs on unpdf 2; Capacitor 8.6, Electron 45.2, Wrangler 4.158 and other in-range updates
 - Docs condensed into quick-reference form (DOCUMENTATION, SPECIFICATION, DESIGN, MIGRATE_WLLAMA64)
-
-### Fixed
-- Voice input works again in the browser: it downloads the ~670 MB model it promises (not a 2.5 GB one that failed to load) and runs its speech runtime from Gratis itself, not a third-party CDN, so it keeps working offline after first use, and no longer requires WebGPU
-- Screen readers: voice, update, download and "download started" popups are announced as named dialogs; Tab stays inside, Escape closes, focus returns to where you were
 
 ## [0.55.1] - 2026-10-30
 
