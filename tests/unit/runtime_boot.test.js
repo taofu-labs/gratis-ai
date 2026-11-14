@@ -3,6 +3,7 @@ import { EVENTS } from '../../src/utils/branding.js'
 import {
     RUNTIME_BOOT_TIMEOUT_MS,
     SLOW_BOOT_TIMEOUT_MS,
+    runtime_boot_timeout_ms,
     RuntimeBootError,
     record_runtime_boot_failure,
     runtime_boot_failed,
@@ -33,6 +34,7 @@ describe( `runtime boot watchdog`, () => {
 
         vi.useFakeTimers()
         vi.stubGlobal( `URL`, class {} )
+        vi.stubGlobal( `GestureEvent`, class {} )
         const outcome = with_boot_watchdog( new Promise( () => {} ) ).catch( error => error )
 
         await vi.advanceTimersByTimeAsync( RUNTIME_BOOT_TIMEOUT_MS - 1 )
@@ -48,6 +50,17 @@ describe( `runtime boot watchdog`, () => {
 } )
 
 describe( `runtime boot watchdog on engines past the hang`, () => {
+
+    // Old Firefox and Chrome lack URL.canParse too, but never had the hang
+    test( `only old WebKit gets the short watchdog`, () => {
+
+        vi.stubGlobal( `URL`, class {} )
+        expect( runtime_boot_timeout_ms() ).toBe( SLOW_BOOT_TIMEOUT_MS )
+
+        vi.stubGlobal( `GestureEvent`, class {} )
+        expect( runtime_boot_timeout_ms() ).toBe( RUNTIME_BOOT_TIMEOUT_MS )
+
+    } )
 
     // Safari 17.6 on a 2016 dual-core MacBook: ~50 s to start, then it chats
     test( `a slow start is given time instead of being called a hang`, async () => {

@@ -20,6 +20,7 @@ import { get_external_model_file } from '../utils/external_model_files'
 import { resolve_hf_model } from '../utils/hf_url_parser'
 import { get_browser_cached_model, get_browser_cached_projector, projector_source, verify_installed_model } from '../utils/model_download'
 import { probe_threads } from '../utils/speed_probe'
+import { record_runtime_boot_failure, runtime_may_hang } from '../utils/runtime_boot'
 import { COMPAT_PATHS, CONFIG_PATHS } from '../utils/wllama_paths'
 import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, MAX_HISTORY_IMAGES, to_wllama_messages } from '../utils/attachments'
 
@@ -859,14 +860,21 @@ export default class WllamaProvider {
         // Compat (wllama 3.8.1) ignores n_threads_batch but would still spawn its pool
         if( compat ) load_options = { ...load_options, n_threads_batch: load_options.n_threads }
 
+        // Old WebKit never gets out of its hang: no 15 minutes of patience there
+        const may_hang = runtime_may_hang()
         const timeout_ms = Math.max(
-            load_options.n_gpu_layers > 0 ? GPU_LOAD_MIN_TIMEOUT_MS : CPU_LOAD_MIN_TIMEOUT_MS,
+            load_options.n_gpu_layers > 0 || may_hang ? GPU_LOAD_MIN_TIMEOUT_MS : CPU_LOAD_MIN_TIMEOUT_MS,
             model_size / GPU_LOAD_BYTES_PER_SECOND * 1000 + 60_000,
         )
 
         let timeout_id
         const timeout = new Promise( ( _, reject ) => {
-            timeout_id = setTimeout( () => reject( new Error( `Model worker stopped responding` ) ), timeout_ms )
+            timeout_id = setTimeout( () => {
+                // Someone with a model from before the gate never met the picker's probe:
+                // tell the picker now, so it explains instead of offering more downloads
+                if( may_hang ) record_runtime_boot_failure()
+                reject( new Error( `Model worker stopped responding` ) )
+            }, timeout_ms )
         } )
 
         let observed_worker = null

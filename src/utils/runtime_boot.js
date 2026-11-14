@@ -23,8 +23,14 @@ export const RUNTIME_BOOT_TIMEOUT_MS = 30_000
 // with. On engines past the hang the watchdog is only a backstop.
 export const SLOW_BOOT_TIMEOUT_MS = 180_000
 
-/** How long a boot may take here: `URL.canParse` shipped with Safari 17 */
-export const runtime_boot_timeout_ms = () => typeof URL.canParse === `function` ? SLOW_BOOT_TIMEOUT_MS : RUNTIME_BOOT_TIMEOUT_MS
+/**
+ * Is this the engine with the hang? WebKit (only it has `GestureEvent`, in every
+ * iOS browser too) before Safari 17, which shipped `URL.canParse`.
+ */
+export const runtime_may_hang = () => typeof globalThis.GestureEvent === `function` && typeof URL.canParse !== `function`
+
+/** How long a boot may take here: short only where it can hang for good */
+export const runtime_boot_timeout_ms = () => runtime_may_hang() ? RUNTIME_BOOT_TIMEOUT_MS : SLOW_BOOT_TIMEOUT_MS
 
 const FAILED_KEY = storage_key( `runtime_boot_failed` )
 
