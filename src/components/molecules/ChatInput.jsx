@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useImperativeHandle, useMemo } from 'react'
+import { useState, useRef, useEffect, useImperativeHandle, useMemo, useDeferredValue } from 'react'
 import styled, { keyframes, css } from 'styled-components'
 import { SendHorizonal, Square, Mic, LoaderCircle, Paperclip, X, FileText, ImageOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -490,10 +490,14 @@ export default function ChatInput( {
 
     // Report the unsent message as it would be sent. Null with images: they
     // can push older history images out, so no prefix is safe to read ahead.
+    // The text is deferred: reporting inside every keystroke's own commit makes
+    // the parent's update a nested one, and 50 keystrokes that outrun React's
+    // scheduler (a paste-typer, a busy slow device) trip "Maximum update depth".
+    const reported_text = useDeferredValue( text )
     useEffect( () => {
         if( !on_draft ) return
-        on_draft( images.length ? null : compose_user_message( { text, documents: ready_documents, budget_tokens } ).content )
-    }, [ text, images.length, documents, budget_tokens, on_draft ] )
+        on_draft( images.length ? null : compose_user_message( { text: reported_text, documents: ready_documents, budget_tokens } ).content )
+    }, [ reported_text, images.length, documents, budget_tokens, on_draft ] )
 
     const no_room = ready_documents.length > 0 && budget_tokens < MIN_DOCUMENT_TOKENS
     const images_blocked = images.length > 0 && !image_input
