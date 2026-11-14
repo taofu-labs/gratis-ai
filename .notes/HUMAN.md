@@ -14,7 +14,7 @@ Open items only. Resolved history lives in TIMELINE.md.
 
 ## Unverified on real hardware
 
-- Mac: signed app `spctl -a -vv` / `stapler validate`; llama-server sidecar launch + Metal; MAS sandbox at runtime (download, chat, vision).
+- Mac: MAS sandbox at runtime (download, chat, vision). (Signed app, sidecar, Metal verified 2026-11-14.)
 - Windows cheap iGPU: llama-server Vulkan — CPU retry triggers only on crash, not garbage output; consider `--device none` default on win.
 - Sidecar orphaned when the app is SIGKILLed (no parent-death signal in Node).
 - WebGPU loads still use f16 KV, no FA (CPU gets FA + q8_0). Bench on a real GPU (`scripts/bench`, RunPod recipe in GOTCHAS) before extending `CPU_FAST_OPTIONS`.
@@ -64,3 +64,11 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Minor, unfixed: "0.1s to first token" on a ~10 s reply; native "Reading your message… 0%" for 10–16 s; Settings lists desktop shortcuts on phones; speed/ETA inflated right after a resume.
 - Firefox ≥153 verified on the Memory64 + JSPI fast path (Playwright 157, real 160 on Mac/Android); no code change needed.
 - AppImage `.desktop` has `Exec=AppRun --no-sandbox` (electron-builder default?, unverified). `tests/e2e/inference_large.spec.js` hardcodes `localhost:5173`.
+- BOTH Macs sat at the lock screen all session (unlock rejected): Safari was tested hidden/throttled via safaridriver only. Unlock by hand for: real-speed Safari numbers, PWA "Add to Dock", voice input, private window, full-screen close/reopen race, MAS sandbox runtime.
+- ArjunMacbook results: Safari 26.1 (compat + WebGPU), Chrome 149, Firefox 160 pass download/chat/stop/reload/offline; release DMG notarized OK, Metal on, 109 tok/s SmolLM2. Mac "Unverified on real hardware" items now verified except MAS sandbox.
+- Shipped v0.55.1 desktop: window close destroys the window and main-process logging then throws "Object has been destroyed" (fixed on main, needs a release).
+- Desktop sidecar ctx = 262144 for Qwen 3.5 0.8B → 3.65 GB footprint on an 8 GB Mac (`estimate_context_for_system` spends 70% of total RAM): cap `max_ctx` or budget from free memory — policy decision.
+- Chrome SW install fails when disk is nearly full (16 MiB compat wasm `Cache.put`); Chrome never needs that file → precache only the engine's wasm?
+- Hardening: release ships with Node inspector/remote-debugging fuses on (`EnableNodeCliInspectArguments`). DMG itself unsigned/unstapled (app inside is notarized).
+- Safari hashing a 731 MB model took 270 s on a hidden page (throttled; unconfirmed for real users).
+- Left on ArjunMacbook: `safaridriver --enable`, `~/Applications/Firefox.app`, `~/lab-mac/`. ~3.4 GB of old `Gratis-0.55.0-550x-mas-arm64.pkg*` copies in `$TMPDIR` (not ours, deletable). On OliviaMacbook: `safaridriver --enable`, Chrome for Testing 150 + Firefox 160 in `~/Applications`.

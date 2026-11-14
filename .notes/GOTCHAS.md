@@ -170,6 +170,11 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - iPhone: CI `Mobile apps` artifact `App.ipa` is dev-signed for the lab phone (in-place install ~10 s, keeps data). JS-only native fix without a Mac: `vite build --mode native --outDir X` in a worktree → swap `Payload/App.app/public` (keep `cordova*.js`) → `zsign -f` (without `-f` on a signed folder: install `0xe8008001`).
 - iPhone Safari tabs inspectable via pymobiledevice3 `WebinspectorService` + heartbeat; evals >~600 chars time out (chunk); worker console needs a BroadcastChannel relay. `timeout -k 3` (plain `timeout` doesn't kill hung clients). WDA `source()`/screenshot can hang >60 s during background generation; no `/wda/device/appearance` (toggle dark via Settings).
 - Pre-commit hook runs `eslint --fix src` over the whole tree, incl. other agents' uncommitted files; slow under load (>2 min).
+- ArjunMacbook lock screen: unlock rejected even with `BABYSIT_MAC_WARMUP=6 BABYSIT_MAC_KEY_DELAY=0.2` (dot count right; layout not the cause). Locked ⇒ Safari pages `hidden` (rAF/CSS animations frozen, CPU throttled, native safaridriver clicks no-op → DOM clicks); Chrome/Firefox/Electron stay `visible`. safaridriver windows are ephemeral but OPFS works on Safari 26 (not on 17.6). Lab harness kept in `~/lab-mac/` + `test-results/lab-mac-arm/scripts/`; node at `~/gratis-mas/node-v24.22.2-darwin-arm64`.
+- Real Safari 26.1 has neither JSPI nor Memory64 (wasm32 compat + WebGPU); only Playwright WebKit claims them.
+- Speed probe is skipped under `navigator.webdriver` → `gratis:settings:force_speed_probe=1` to see a real visitor's pick. geckodriver `refresh` bypasses the SW (use `location.reload()`).
+- Never write logs into the project dir during `electron-builder` (file growing mid-pack corrupts the asar). `files: [out/**, package.json]` allowlist keeps src/.notes/.secrets out of `app.asar`.
+- Node inspector `Runtime.evaluate` in Electron main: `require` exists only during the evaluation (later timer callbacks throw → modal blocks quit).
 
 ## Testing / tooling
 - mentie enables `log.info` only when the URL contains `localhost`: Vite binds 127.0.0.1 but `baseURL` stays `http://localhost:5173` (log-asserting tests break on the IP).
