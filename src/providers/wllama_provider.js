@@ -8,7 +8,7 @@ import {
 } from '../utils/device_detection'
 import { select_gpu_offload_layers } from '../utils/gpu_offload'
 import { ModelFitError } from '../utils/model_fit_error'
-import { classify_webgpu_adapter, wait_for_existing_webgpu_memory_probe, webgpu_offload_trusted } from '../utils/webgpu_memory'
+import { classify_webgpu_adapter, wait_for_existing_webgpu_memory_probe, webgpu_offload_trusted, webgpu_offload_worthwhile } from '../utils/webgpu_memory'
 import {
     estimate_model_memory,
     projector_memory,
@@ -361,10 +361,12 @@ export default class WllamaProvider {
         const source = use_projector ? [ ...model_blobs, ...await projector.open() ] : model_blobs
         let probed_capabilities = capabilities
 
-        // Mobile GPUs can compute wrong results in llama.cpp's WebGPU kernels
+        // Mobile GPUs can compute wrong results in llama.cpp's WebGPU kernels,
+        // and Safari's runtime decodes text faster without offload
         const gpu_trusted = webgpu_offload_trusted( capabilities.gpu?.adapter_info )
+            && webgpu_offload_worthwhile( { vision: !!use_projector } )
         if( capabilities.gpu?.webgpu && !gpu_trusted ) {
-            log.info( `[wllama] WebGPU offload not trusted on this GPU; loading on CPU` )
+            log.info( `[wllama] WebGPU offload not used here; loading on CPU` )
 
             // The capability hook may still hold probe buffers in shared memory
             await wait_for_existing_webgpu_memory_probe()

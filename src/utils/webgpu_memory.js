@@ -91,11 +91,6 @@ export const webgpu_offload_trusted = (
     // Firefox's WebGPU runs llama.cpp much slower than its CPU (wllama64 1.2.0 measured)
     if( /firefox\//i.test( user_agent ) ) return false
 
-    // Safari runs the wasm32 runtime (no JSPI), where WebGPU offload halves the speed:
-    // M1, Safari 26.1, SmolLM2 360M 21 tok/s on CPU vs 10.5 fully offloaded, LFM 2.5 1.2B
-    // 18 vs 11 with 5 layers offloaded (same replies either way)
-    if( /applewebkit/i.test( user_agent ) && !/chrome\/|chromium\/|edg\/|opr\//i.test( user_agent ) ) return false
-
     // iPadOS Safari asks for desktop sites with a Macintosh UA; Macs have no touch screen
     if( /macintosh/i.test( user_agent ) && max_touch_points > 1 ) return false
 
@@ -340,4 +335,26 @@ export const wait_for_existing_webgpu_memory_probe = async () =>
 export const reset_webgpu_memory_probe = () => {
     cached_probe = null
     probe_promise = null
+}
+
+/**
+ * Whether WebGPU offload pays off, on an adapter that is trusted to compute right.
+ * Safari runs the wasm32 runtime (no JSPI), where offload halves text speed
+ * (M1, Safari 26.1: SmolLM2 360M 21 tok/s on CPU vs 10.5 fully offloaded, LFM 2.5
+ * 1.2B 18 vs 11 with 5 layers offloaded, same replies). Images are the exception:
+ * Qwen 3.5 0.8B read one in 37 s offloaded and was still at 0% after 6 minutes on CPU.
+ *
+ * @param {Object} [options]
+ * @param {boolean} [options.vision] - The load includes a vision projector
+ * @param {string} [user_agent]
+ * @returns {boolean}
+ */
+export const webgpu_offload_worthwhile = (
+    { vision = false } = {},
+    user_agent = globalThis.navigator?.userAgent || ``,
+) => {
+
+    const safari = /applewebkit/i.test( user_agent ) && !/chrome\/|chromium\/|edg\/|opr\//i.test( user_agent )
+    return vision || !safari
+
 }

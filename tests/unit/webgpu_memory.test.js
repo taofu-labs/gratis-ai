@@ -7,6 +7,7 @@ import {
     select_webgpu_probe_target,
     wait_for_existing_webgpu_memory_probe,
     webgpu_offload_trusted,
+    webgpu_offload_worthwhile,
 } from '../../src/utils/webgpu_memory'
 
 const MIB = 1024 ** 2
@@ -218,14 +219,25 @@ describe( `WebGPU memory probing`, () => {
         // Firefox: WebGPU slower than its CPU
         expect( webgpu_offload_trusted( { vendor: `nvidia` }, `Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0` ) ).toBe( false )
 
-        // Desktop Safari: wasm32 runtime, WebGPU measured at half the CPU speed on an M1
-        expect( webgpu_offload_trusted( { vendor: `apple` }, `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Safari/605.1.15` ) ).toBe( false )
-
         // Desktop GPUs keep offload, including masked adapters
         expect( webgpu_offload_trusted( { vendor: `nvidia` }, desktop ) ).toBe( true )
         expect( webgpu_offload_trusted( { vendor: `apple`, architecture: `metal-3` }, desktop ) ).toBe( true )
         expect( webgpu_offload_trusted( { vendor: `intel`, architecture: `gen-12lp` }, desktop ) ).toBe( true )
         expect( webgpu_offload_trusted( {}, desktop ) ).toBe( true )
+
+    } )
+
+    test( `Safari offloads only for images`, () => {
+
+        const safari = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Safari/605.1.15`
+        const chrome = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/155.0 Safari/537.36`
+
+        // wasm32 runtime: text decodes twice as fast on CPU, an image never finishes there
+        expect( webgpu_offload_worthwhile( {}, safari ) ).toBe( false )
+        expect( webgpu_offload_worthwhile( { vision: true }, safari ) ).toBe( true )
+
+        expect( webgpu_offload_worthwhile( {}, chrome ) ).toBe( true )
+        expect( webgpu_offload_worthwhile( { vision: true }, chrome ) ).toBe( true )
 
     } )
 
