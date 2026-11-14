@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { DEFAULT_MODELS, ALL_INFERENCE_MODELS, RESEARCH_MODELS, TEST_PROMPT } from '../fixtures/test_models'
 import { download_model_via_ui, send_message } from '../helpers/download_model'
 import { wait_for_inference } from '../helpers/wait_for_inference'
+import { seed_settings } from '../helpers/settings'
 
 // Multi-architecture inference tests — downloads and runs real model inference.
 //
@@ -30,11 +31,7 @@ test.describe( `Multi-Architecture Inference`, () => {
             // Bound deterministic smoke inference. This still exercises the real
             // sampler; it avoids a small reasoning model spending minutes on a
             // one-token arithmetic answer.
-            await page.addInitScript( () => {
-                localStorage.setItem( `gratisai:settings:max_tokens`, `64` )
-                localStorage.setItem( `gratisai:settings:temperature`, `0` )
-                localStorage.setItem( `gratisai:settings:seed`, `42` )
-            } )
+            await seed_settings( page, { max_tokens: 64, temperature: 0, seed: 42 } )
 
             // Scale timeouts with model size — ~1 second per MB download + loading + inference
             const download_timeout = Math.max( 300_000, model.size_mb * 1_000 )

@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { seed_settings } from '../helpers/settings'
 
 // A returning user lands on the home page, which hosts the chat input
 test.beforeEach( async ( { page } ) => {
-    await page.addInitScript( () => localStorage.setItem( `gratis:settings:active_model_id`, `fake-model` ) )
+    await seed_settings( page, { active_model_id: `fake-model` } )
 } )
 
 const open_settings = page => page.getByRole( `button`, { name: `Open settings` } ).first().click()

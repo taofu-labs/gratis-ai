@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import styled from 'styled-components'
 import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import use_dialog from '../../hooks/use_dialog'
 
 const Overlay = styled.div`
     position: fixed;
@@ -97,33 +98,24 @@ export default function UpdateModal( {
 
     const { t } = useTranslation( `pages` )
 
-    // Close on Escape key
-    useEffect( () => {
-
-        if( !is_ready_to_install || dismissed ) return
-
-        const handle_key = ( e ) => {
-            if( e.key === `Escape` ) on_dismiss()
-        }
-
-        window.addEventListener( `keydown`, handle_key )
-        return () => window.removeEventListener( `keydown`, handle_key )
-
-    }, [ is_ready_to_install, dismissed, on_dismiss ] )
+    // Dialog semantics, focus trap, Escape + backdrop close
+    const is_open = !!available_update && is_ready_to_install && !dismissed
+    const { title_id, overlay_props, dialog_props } = use_dialog( { is_open, on_close: on_dismiss } )
 
     // Only visible when download is complete and not dismissed
-    if( !available_update || !is_ready_to_install || dismissed ) return null
+    if( !is_open ) return null
 
     const { version } = available_update
 
-    return <Overlay onClick={ on_dismiss }>
-        <Modal onClick={ e => e.stopPropagation() }>
+    // Portal out of #root — the app behind is made inert while open
+    return createPortal( <Overlay { ...overlay_props }>
+        <Modal { ...dialog_props }>
 
             <IconContainer>
                 <RefreshCw size={ 24 } />
             </IconContainer>
 
-            <Title>{ t( `update_ready_title` ) }</Title>
+            <Title id={ title_id }>{ t( `update_ready_title` ) }</Title>
             <Description>{ t( `update_ready_description`, { version } ) }</Description>
 
             <ButtonRow>
@@ -136,6 +128,6 @@ export default function UpdateModal( {
             </ButtonRow>
 
         </Modal>
-    </Overlay>
+    </Overlay>, document.body )
 
 }

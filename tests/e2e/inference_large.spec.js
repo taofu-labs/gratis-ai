@@ -5,6 +5,7 @@ import { chromium, test, expect } from '@playwright/test'
 import { LARGE_INFERENCE_MODELS } from '../fixtures/test_models'
 import { download_model_via_ui, send_message } from '../helpers/download_model'
 import { wait_for_inference } from '../helpers/wait_for_inference'
+import { seed_settings } from '../helpers/settings'
 
 const requested_ids = ( process.env.LARGE_INFERENCE_MODELS || `` )
     .split( `,` )
@@ -159,11 +160,7 @@ test.describe( `Persistent Memory64 inference`, () => {
 
                 context = await launch_context( profile )
                 await instrument_context( context, events )
-                await context.addInitScript( () => {
-                    localStorage.setItem( `gratisai:settings:max_tokens`, `128` )
-                    localStorage.setItem( `gratisai:settings:temperature`, `0` )
-                    localStorage.setItem( `gratisai:settings:seed`, `42` )
-                } )
+                await seed_settings( context, { max_tokens: 128, temperature: 0, seed: 42 } )
 
                 const page = context.pages()[ 0 ] || await context.newPage()
                 await configure_page( context, page, model )

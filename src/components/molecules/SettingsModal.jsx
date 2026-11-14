@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useId } from 'react'
-import { createPortal, flushSync } from 'react-dom'
+import { useState, useId } from 'react'
+import { createPortal } from 'react-dom'
 import styled, { keyframes } from 'styled-components'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -7,8 +7,7 @@ import BasicSettings from './BasicSettings'
 import AdvancedSettings from './AdvancedSettings'
 import ModelsSettings from './ModelsSettings'
 import use_settings from '../../hooks/use_settings'
-import use_dialog_focus from '../../hooks/use_dialog_focus'
-import { EVENTS } from '../../utils/branding'
+import use_dialog from '../../hooks/use_dialog'
 
 const Overlay = styled.div`
     position: fixed;
@@ -113,10 +112,10 @@ export default function SettingsModal( { is_open, on_close, on_model_switch, on_
     const [ active_tab, set_active_tab ] = useState( `basic` )
     const { settings, update_setting } = use_settings()
     const { t } = useTranslation( `settings` )
-    const modal_ref = useRef( null )
     const id = useId()
 
-    use_dialog_focus( modal_ref, is_open )
+    // Dialog semantics, focus trap, Escape + backdrop close
+    const { title_id, overlay_props, dialog_props } = use_dialog( { is_open, on_close } )
 
     const TABS = [
         { id: `basic`, label: t( `tab_basic` ) },
@@ -124,25 +123,7 @@ export default function SettingsModal( { is_open, on_close, on_model_switch, on_
         { id: `models`, label: t( `tab_models` ) },
     ]
 
-    // Listen for global close-modal events (Escape key)
-    useEffect( () => {
-
-        // Close within the keypress: the app stays inert until this commits,
-        // so a deferred close would drop input typed right after Escape
-        const handle_close = () => {
-            if( is_open ) flushSync( on_close )
-        }
-        window.addEventListener( EVENTS.close_modal, handle_close )
-        return () => window.removeEventListener( EVENTS.close_modal, handle_close )
-
-    }, [ is_open, on_close ] )
-
     if( !is_open ) return null
-
-    // Close on backdrop click
-    const handle_overlay_click = ( e ) => {
-        if( e.target === e.currentTarget ) on_close()
-    }
 
     // Arrow keys move between tabs (WAI-ARIA tabs pattern)
     const handle_tab_keydown = ( e ) => {
@@ -158,17 +139,11 @@ export default function SettingsModal( { is_open, on_close, on_model_switch, on_
     }
 
     // Portal out of #root — the app behind is made inert while open
-    return createPortal( <Overlay data-testid="settings-modal" onClick={ handle_overlay_click }>
-        <Modal
-            ref={ modal_ref }
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={ `${ id }-title` }
-            tabIndex={ -1 }
-        >
+    return createPortal( <Overlay data-testid="settings-modal" { ...overlay_props }>
+        <Modal { ...dialog_props } tabIndex={ -1 }>
 
             <Header>
-                <Title id={ `${ id }-title` }>{ t( `title` ) }</Title>
+                <Title id={ title_id }>{ t( `title` ) }</Title>
                 <CloseButton onClick={ on_close } aria-label={ t( `common:aria_close_settings` ) }>
                     <X size={ 18 } />
                 </CloseButton>

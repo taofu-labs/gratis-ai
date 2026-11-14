@@ -57,6 +57,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Browsers drop `Range` across HF resolve→CDN redirect → 200 full body appended after prefix. `ranged_web_body()` retries the final URL, restarts on non-206.
 - Xet: ramps ~0.2 MB/s for ~10 s then 3–10 MB/s (ETA logic anchors at first byte; trace in `tests/fixtures/xet_download_trace.json`). Crashes WebKit tabs and needs byte streams (absent iOS <16.4) → `can_use_xet()` false for all WebKit.
 - WebKit `File.stream()` can throw on big files (bug 272600) → hash via `slice().arrayBuffer()`.
+- Voice (parakeet.js): unset `ort.env.wasm.wasmPaths` ⇒ jsDelivr; any `webgpu` backend ⇒ 2.4 GB fp32 encoder ORT can't fetch. Keep `wasm` + same-origin `?url` wasm. ORT wasm (~25 MB) is precache-excluded, runtime CacheFirst (`ort-wasm` cache) instead.
 - Storage choice is quota-driven (`should_use_external_model_file`); save dialog only when OPFS quota short.
 - HF 404s (no CORS) any `*.workers.dev` Referer → `index.html` keeps `<meta name="referrer" content="no-referrer">` (unit-tested). Chrome HSTS-forces `.dev`; verify on real deployment.
 
@@ -88,7 +89,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 ## UI
 - `#root` needs `height: 100dvh`, not `min-height`: indefinite height lets flex children grow and the message list never scrolls (`body` is `overflow: hidden`).
 
-- Modals portal to `document.body`; `#root` + closed sidebar are `inert`. Dialog content outside the portal is unclickable; tests must open the sidebar first.
+- Every modal = `use_dialog` (role/aria-modal/name, trap, Escape via `close_modal` event, restore) + `createPortal( …, document.body )`; unportaled = inerts itself. Modals portal to `document.body`; `#root` + closed sidebar are `inert`. Dialog content outside the portal is unclickable; tests must open the sidebar first.
 - Only TopBar renders `model-selector-dropdown`; select models via `model-option-{id}` (expand alternatives first). Never match page text (hidden cards).
 - Catalog-mode e2e must not mock a fitting TPN winner. Seed IDB `models` store for "On this device" tests. Wizard: `skip_model_wizard()` or seed `model_wizard_answers`.
 - Accent `#FF8A57` + white fails contrast: fills use `accent_ink`, orange text `accent_text`. CTAs via `atoms/Button`; its 44px hit area is `::before` (no `overflow: hidden`). StrictMode double-mounts → toasts need `id`.
@@ -183,6 +184,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Chromium `storage.estimate()` reports a fake 10 GB quota.
 
 ## Testing / tooling
+- Seed/read settings in tests via `tests/helpers/settings.js` (prefix derived from `VITE_APP_NAME`); hardcoded `gratisai:` keys silently no-op. PWA install-pill test flakes when run alongside a real-inference spec (host load).
 - mentie enables `log.info` only when the URL contains `localhost`: Vite binds 127.0.0.1 but `baseURL` stays `http://localhost:5173` (log-asserting tests break on the IP).
 
 - Never `pkill -f`/`pgrep -f` with patterns matching your own shell (kills the Bash tool, exit 144). Use `ps -eo pid,args | grep "[v]ite"` or bracket regex.
@@ -200,8 +202,13 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Benign console noise (allowlisted in the journey spec): Firefox "uncaught exception: undefined" from blob workers on reload + React dev `timeStamp` events; WebKit `interactive-widget` viewport key.
 - Electron specs: per-launch `--user-data-dir`; `multi_architecture` 120 s limits flake under load (different model each run). `/tmp/gratisai-test-models` wiped on restart → `scripts/download_test_models.sh --medium`.
 - Filtering `git commit` output for "error" matches the lint summary's "0 errors".
+- Playwright Chromium adds `--no-sandbox` by default (container rule: never). Put `chromiumSandbox: true` inside `use.launchOptions`; top-level `use.chromiumSandbox` gets overridden when `launchOptions` is set. Verify via `ps`.
+- Playwright Firefox crashes on `newPage` ("Target crashed") and WebKit lacks gstreamer libs in the Babysit container → probe via `sudo docker` + `mcr.microsoft.com/playwright:v1.64.1-noble`. Daemon is host-side: bind mounts are empty, use `docker create` + `docker cp` + `start -a`.
 
 ## Git / secrets
 
 - Never commit `.secrets/` (keys, p12, jks, profiles). Stage with `git add -A -- . ':!.env'`, grep cached diff for key material.
-- Push: env `GH_TOKEN` is a classic PAT the org blocks; use fine-grained `GH_TOKEN` from `.env.local` over HTTPS (extraheader). SSH host key untrusted. That token can't write Actions secrets.
+- Play vitals/reviews: `playdeveloperreporting` scope works with the Play service account (`errorIssues:search`, `errorReports:search`); reviews via androidpublisher `/reviews`.
+- Push: env `GH_TOKEN` is a classic PAT the org blocks; use fine-grained `GH_TOKEN` from `.env.local` over HTTPS (extraheader). SSH host key untrusted. That token can't write Actions secrets. `gh` reads too: prefix `GH_TOKEN=$(grep ^GH_TOKEN= .env.local | cut -d= -f2-)`. Guard blocks token-in-URL/git-config: push via `GIT_ASKPASS` script that cats the token.
+- `pkill -f <pattern>` in a Bash call matches that call's own shell command line ⇒ exit 144, kills itself. Kill by PID.
+- Orphan `vite preview` on 127.0.0.1:4173 can outlive sessions and shadow a new `[::1]:4173` one; check `ss -ltnp` first.

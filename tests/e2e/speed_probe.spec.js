@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { skip_model_wizard } from '../helpers/download_model'
+import { seed_settings } from '../helpers/settings'
 
 // The picker times a zero-weight skeleton of the smallest catalog model (only
 // its header is downloaded) and scales every reference speed to this browser
@@ -8,7 +9,7 @@ test( `the speed probe measures this browser and the picker shows tok/s`, async 
     test.setTimeout( 180_000 )
 
     // Automated browsers skip the probe unless a test opts in
-    await page.addInitScript( () => localStorage.setItem( `gratis:settings:force_speed_probe`, `1` ) )
+    await seed_settings( page, { force_speed_probe: 1 } )
     await page.goto( `/select-model` )
     await skip_model_wizard( page )
     await expect( page.getByTestId( `model-hero-tps` ) ).toContainText( /~[\d.]+ tok\/s/, { timeout: 15_000 } )

@@ -1,11 +1,12 @@
-import { useEffect, useId, useRef } from 'react'
+import { useRef } from 'react'
+import { createPortal } from 'react-dom'
 import styled, { keyframes } from 'styled-components'
 import { Download, ShieldCheck, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import Button from '../atoms/Button'
 import SpeedGauge from '../atoms/SpeedGauge'
 import { mode_text } from './SpeedModeMenu'
-import { EVENTS } from '../../utils/branding'
+import use_dialog from '../../hooks/use_dialog'
 import { format_file_size, format_tokens_per_second, model_download_bytes } from '../../utils/model_catalog'
 
 const fade_in = keyframes`
@@ -104,45 +105,19 @@ const Actions = styled.div`
 export default function ModelDownloadDialog( { mode, on_confirm, on_close } ) {
 
     const { t } = useTranslation( `models` )
-    const title_id = useId()
     const confirm_ref = useRef( null )
-    const dialog_ref = useRef( null )
 
-    // Escape (app-wide close event) and focus on the primary action
-    useEffect( () => {
-
-        if( !mode ) return
-        const previous = document.activeElement
-        confirm_ref.current?.focus()
-        window.addEventListener( EVENTS.close_modal, on_close )
-        return () => {
-            window.removeEventListener( EVENTS.close_modal, on_close )
-            previous?.focus?.()
-        }
-
-    }, [ mode, on_close ] )
+    // Dialog semantics, focus trap, Escape + backdrop close; focus lands on the primary action
+    const { title_id, overlay_props, dialog_props } = use_dialog( { is_open: !!mode, on_close, initial_focus: confirm_ref } )
 
     if( !mode ) return null
-
-    // Focus trap: Tab and Shift+Tab cycle inside the dialog, never into the page behind it
-    const trap_focus = e => {
-        if( e.key !== `Tab` ) return
-        const focusable = [ ...dialog_ref.current.querySelectorAll( `button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])` ) ]
-        const [ first, last ] = [ focusable[ 0 ], focusable.at( -1 ) ]
-        if( e.shiftKey && document.activeElement === first ) {
-            e.preventDefault()
-            last.focus()
-        } else if( !e.shiftKey && document.activeElement === last ) {
-            e.preventDefault()
-            first.focus()
-        }
-    }
 
     const { label, speed } = mode_text( t, mode.priority )
     const size = format_file_size( model_download_bytes( mode.model ) )
 
-    return <Overlay onClick={ e => e.target === e.currentTarget && on_close() }>
-        <Dialog ref={ dialog_ref } role="dialog" aria-modal="true" aria-labelledby={ title_id } onKeyDown={ trap_focus } data-testid="mode-download-dialog">
+    // Portal out of #root — the app behind is made inert while open
+    return createPortal( <Overlay { ...overlay_props }>
+        <Dialog { ...dialog_props } data-testid="mode-download-dialog">
 
             <Header>
                 <Title id={ title_id }>{ t( `mode_download_title`, { mode: label } ) }</Title>
@@ -168,6 +143,6 @@ export default function ModelDownloadDialog( { mode, on_confirm, on_close } ) {
             </Actions>
 
         </Dialog>
-    </Overlay>
+    </Overlay>, document.body )
 
 }

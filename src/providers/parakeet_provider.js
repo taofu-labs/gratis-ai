@@ -9,6 +9,9 @@
 import { log } from 'mentie'
 import { get_db } from '../stores/db'
 
+// Vite fingerprints and serves this from our origin; the default ORT bundle (JSEP) loads exactly this binary
+import ORT_WASM_URL from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm?url'
+
 const MODEL_KEY = `parakeet-tdt-0.6b-v3`
 const MODEL_DISPLAY_NAME = `Parakeet TDT 0.6B v3`
 const MODEL_SIZE_BYTES = 640 * 1024 * 1024 // ~640MB approximate
@@ -50,8 +53,13 @@ export default class ParakeetProvider {
 
         try {
 
-            // Dynamic import to avoid bundling parakeet.js when not needed
-            const { fromHub } = await import( 'parakeet.js' )
+            // Dynamic imports keep ASR out of the main bundle until first use
+            const [ { fromHub }, ort ] = await Promise.all( [ import( 'parakeet.js' ), import( 'onnxruntime-web' ) ] )
+
+            // parakeet.js points an unset wasmPaths at jsDelivr, which breaks
+            // offline voice and the "no CDN code" promise. Pin ORT's own default:
+            // the same-origin wasm Vite emits next to the bundle.
+            ort.env.wasm.wasmPaths ??= { wasm: ORT_WASM_URL }
 
             // Track cumulative download progress across multiple files
             let bytes_completed = 0
@@ -70,8 +78,11 @@ export default class ParakeetProvider {
                 on_progress?.( { progress, status: `Downloading ${ file }...` } )
             }
 
+            // WASM keeps the int8 encoder (~670 MB, what the dialog promises). Any
+            // webgpu mode forces fp32: a 2.4 GB external-data file that ORT's
+            // 32-bit heap cannot fetch ("Failed to fetch"), so voice never loads.
             this._model = await fromHub( MODEL_KEY, {
-                backend: `webgpu`,
+                backend: `wasm`,
                 progress: progress_handler,
             } )
 

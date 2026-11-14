@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { seed_settings } from '../helpers/settings'
 
 const TPN_MODEL_FILE = `Qwen3.5-4B-Q4_K_M.gguf`
 const TPN_MODEL_ID = `tpn-001-winner-qwen3-5-4b-q4-k-m`
@@ -42,9 +43,7 @@ const mock_tpn_winners = async ( page, { file_size = 420_000_000 } = {} ) => {
 }
 
 // Picker detail tests start where a finished wizard lands: the recommendation
-const finish_wizard_before = page => page.addInitScript( () => {
-    localStorage.setItem( `gratis:settings:model_wizard_answers`, JSON.stringify( { vision: false, fewer_refusals: false } ) )
-} )
+const finish_wizard_before = page => seed_settings( page, { model_wizard_answers: { vision: false, fewer_refusals: false } } )
 
 test.describe( `UX Improvements - Progressive Disclosure`, () => {
 
@@ -85,6 +84,27 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( page.locator( `a[href$="/releases/latest/download/Gratis-mac-intel.dmg"]` ) ).toHaveCount( 1 )
         await expect( page.getByText( `Or continue in your browser` ) ).toBeVisible()
         await expect( page.locator( `body` ) ).not.toContainText( `desktop_in_works_title` )
+    } )
+
+    test( `get app download-started modal is an accessible dialog`, async ( { page } ) => {
+        await page.goto( `/get-app` )
+
+        // Keep the click from navigating to GitHub; React's handler still opens the modal
+        await page.evaluate( () => document.addEventListener( `click`, e => e.preventDefault(), true ) )
+        const link = page.locator( `a[href$="/releases/latest/download/Gratis-linux.AppImage"]` )
+        await link.click()
+
+        const dialog = page.getByRole( `dialog`, { name: `Download started` } )
+        await expect( dialog ).toHaveAttribute( `aria-modal`, `true` )
+        await expect( dialog.getByRole( `button`, { name: `Got it` } ) ).toBeFocused()
+
+        // Single control: Tab stays on it
+        await page.keyboard.press( `Tab` )
+        await expect( dialog.getByRole( `button`, { name: `Got it` } ) ).toBeFocused()
+
+        await page.keyboard.press( `Escape` )
+        await expect( dialog ).toHaveCount( 0 )
+        await expect( link ).toBeFocused()
     } )
 
     // ── Model Select Page ─────────────────────────────────────────────

@@ -11,8 +11,9 @@ const FOCUSABLE = [
  * The dialog must render outside #root (portal) so inert does not hit it.
  * @param {React.RefObject<HTMLElement>} ref - Dialog element
  * @param {boolean} is_open - Whether the dialog is shown
+ * @param {React.RefObject<HTMLElement>} [initial_focus] - Control to focus on open, e.g. the primary action
  */
-export default function use_dialog_focus( ref, is_open ) {
+export default function use_dialog_focus( ref, is_open, initial_focus ) {
 
     // Layout effect: inert must lift in the same commit that closes the dialog,
     // or input typed right after Esc lands on a still-inert page and is dropped
@@ -27,13 +28,13 @@ export default function use_dialog_focus( ref, is_open ) {
         // Hide the app from keyboard, pointer and screen readers
         if( app_root ) app_root.inert = true
 
-        // Prefer the first focusable control, else the dialog itself. Collapsed
+        // Prefer the requested control, then the first focusable one, else the dialog itself. Collapsed
         // panels use visibility:hidden, which keeps layout boxes but not focus.
         const is_reachable = ( el ) => el.checkVisibility
             ? el.checkVisibility( { visibilityProperty: true } )
             : el.getClientRects().length > 0 && getComputedStyle( el ).visibility !== `hidden`
         const focusables = () => [ ...dialog.querySelectorAll( FOCUSABLE ) ].filter( is_reachable )
-        ;( focusables()[ 0 ] || dialog ).focus()
+        ;( initial_focus?.current || focusables()[ 0 ] || dialog ).focus()
 
         // Wrap Tab / Shift+Tab at the edges
         const handle_keydown = ( e ) => {
@@ -67,6 +68,6 @@ export default function use_dialog_focus( ref, is_open ) {
             return_target?.focus()
         }
 
-    }, [ is_open, ref ] )
+    }, [ is_open, ref, initial_focus ] )
 
 }

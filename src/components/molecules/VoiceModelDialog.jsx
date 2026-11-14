@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import styled, { keyframes } from 'styled-components'
 import { Mic, X, AlertCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { EVENTS } from '../../utils/branding'
+import use_dialog from '../../hooks/use_dialog'
 
 const Overlay = styled.div`
     position: fixed;
@@ -177,7 +177,7 @@ const LoadingDot = styled.div`
 
 /**
  * Two-state dialog for confirming ASR model download and showing progress.
- * Follows the existing modal pattern from SettingsModal.
+ * Escape and backdrop clicks are ignored mid-download; "Hide" still closes it.
  *
  * @param {Object} props
  * @param {boolean} props.is_open - Whether the dialog is visible
@@ -201,31 +201,19 @@ export default function VoiceModelDialog( {
 
     const { t } = useTranslation( `pages` )
 
-    // Close on Escape key
-    useEffect( () => {
-
-        const handle_close = () => {
-            if( is_open && !is_downloading ) on_close()
-        }
-        window.addEventListener( EVENTS.close_modal, handle_close )
-        return () => window.removeEventListener( EVENTS.close_modal, handle_close )
-
-    }, [ is_open, is_downloading, on_close ] )
+    // Dialog semantics, focus trap, Escape + backdrop close (not mid-download)
+    const { title_id, overlay_props, dialog_props } = use_dialog( { is_open, on_close, dismissable: !is_downloading } )
 
     if( !is_open ) return null
 
-    // Close on backdrop click (only when not downloading)
-    const handle_overlay_click = ( e ) => {
-        if( e.target === e.currentTarget && !is_downloading ) on_close()
-    }
-
     const progress_percent = Math.round( ( download_progress?.progress || 0 ) * 100 )
 
-    return <Overlay onClick={ handle_overlay_click }>
-        <Modal>
+    // Portal out of #root — the app behind is made inert while open
+    return createPortal( <Overlay { ...overlay_props }>
+        <Modal { ...dialog_props }>
 
             <Header>
-                <Title>{ is_downloading ? t( `downloading_model` ) : t( `voice_input` ) }</Title>
+                <Title id={ title_id }>{ is_downloading ? t( `downloading_model` ) : t( `voice_input` ) }</Title>
                 { !is_downloading && <CloseButton onClick={ on_close } aria-label={ t( `common:aria_close_dialog` ) }>
                     <X size={ 18 } />
                 </CloseButton> }
@@ -282,6 +270,6 @@ export default function VoiceModelDialog( {
             </> }
 
         </Modal>
-    </Overlay>
+    </Overlay>, document.body )
 
 }
