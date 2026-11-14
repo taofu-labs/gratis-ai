@@ -18,6 +18,14 @@ import { EVENTS, storage_key } from './branding'
 // "cannot start" locks a working browser out for the session, so stay well clear of that
 export const RUNTIME_BOOT_TIMEOUT_MS = 30_000
 
+// Safari 17 ended the hang, but still compiles those functions on first call:
+// a 2016 dual-core MacBook on 17.6 takes 30–60 s to start a model it then chats
+// with. On engines past the hang the watchdog is only a backstop.
+export const SLOW_BOOT_TIMEOUT_MS = 180_000
+
+/** How long a boot may take here: `URL.canParse` shipped with Safari 17 */
+export const runtime_boot_timeout_ms = () => typeof URL.canParse === `function` ? SLOW_BOOT_TIMEOUT_MS : RUNTIME_BOOT_TIMEOUT_MS
+
 const FAILED_KEY = storage_key( `runtime_boot_failed` )
 
 export class RuntimeBootError extends Error {
@@ -34,7 +42,7 @@ export class RuntimeBootError extends Error {
  * @param {number} [timeout_ms]
  * @returns {Promise<T>}
  */
-export const with_boot_watchdog = ( boot, timeout_ms = RUNTIME_BOOT_TIMEOUT_MS ) => {
+export const with_boot_watchdog = ( boot, timeout_ms = runtime_boot_timeout_ms() ) => {
 
     let timeout_id
     const watchdog = new Promise( ( _, reject ) => {

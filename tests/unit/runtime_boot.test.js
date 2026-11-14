@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { EVENTS } from '../../src/utils/branding.js'
 import {
     RUNTIME_BOOT_TIMEOUT_MS,
+    SLOW_BOOT_TIMEOUT_MS,
     RuntimeBootError,
     record_runtime_boot_failure,
     runtime_boot_failed,
@@ -31,6 +32,7 @@ describe( `runtime boot watchdog`, () => {
     test( `a runtime that never starts is a RuntimeBootError once the watchdog runs out`, async () => {
 
         vi.useFakeTimers()
+        vi.stubGlobal( `URL`, class {} )
         const outcome = with_boot_watchdog( new Promise( () => {} ) ).catch( error => error )
 
         await vi.advanceTimersByTimeAsync( RUNTIME_BOOT_TIMEOUT_MS - 1 )
@@ -40,6 +42,33 @@ describe( `runtime boot watchdog`, () => {
         const error = await outcome
         expect( error ).toBeInstanceOf( RuntimeBootError )
         expect( error.name ).toBe( `RuntimeBootError` )
+
+    } )
+
+} )
+
+describe( `runtime boot watchdog on engines past the hang`, () => {
+
+    // Safari 17.6 on a 2016 dual-core MacBook: ~50 s to start, then it chats
+    test( `a slow start is given time instead of being called a hang`, async () => {
+
+        vi.useFakeTimers()
+        let start
+        const outcome = with_boot_watchdog( new Promise( resolve => start = resolve ) )
+
+        await vi.advanceTimersByTimeAsync( RUNTIME_BOOT_TIMEOUT_MS * 2 )
+        start( `ready` )
+        await expect( outcome ).resolves.toBe( `ready` )
+
+    } )
+
+    test( `a start that never comes still ends in a RuntimeBootError`, async () => {
+
+        vi.useFakeTimers()
+        const outcome = with_boot_watchdog( new Promise( () => {} ) ).catch( error => error )
+
+        await vi.advanceTimersByTimeAsync( SLOW_BOOT_TIMEOUT_MS )
+        expect( await outcome ).toBeInstanceOf( RuntimeBootError )
 
     } )
 
