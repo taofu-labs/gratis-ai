@@ -74,7 +74,8 @@ export default function DeviceInfo( { capabilities } ) {
         { /* RAM */ }
         { memory.device_memory && <InfoCard>
             <HardDrive size={ 14 } />
-            { t( `device_ram` ) }: <Value>{ memory.device_memory } GB</Value>
+            { /* Native apps report exact bytes (7.744217088), browsers a rounded bucket */ }
+            { t( `device_ram` ) }: <Value>{ Math.round( memory.device_memory * 10 ) / 10 } GB</Value>
         </InfoCard> }
 
         { /* CPU cores */ }
