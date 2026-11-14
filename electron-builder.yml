@@ -3,6 +3,15 @@ productName: Gratis
 directories:
   output: release/
 
+# Ship only what runs: electron-vite's bundles (main, preload, renderer + public/) and
+# package.json; electron-builder adds the production node_modules itself. The default
+# (`**/*`) packs the whole project dir into app.asar: sources, tests, mobile/, notes,
+# the other arch's llama-server, and on a dev machine untracked files such as .secrets/
+# (a log still being written during packaging even corrupts the asar: "Unable to find a valid app").
+files:
+  - "out/**"
+  - "package.json"
+
 # node-llama-cpp needs filesystem access for native .node binaries and mmap'd model files
 asar: true
 asarUnpack:
