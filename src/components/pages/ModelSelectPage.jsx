@@ -730,8 +730,11 @@ export default function ModelSelectPage() {
 
     // Cached copies still face the fit check: RAM overrides or devices change
     const use_cached_model = model => {
-        if( !check_fit( get_model_by_id( model.id ) || model, device ).fits ) {
-            set_action_error( t( 'model_does_not_fit' ) )
+        // Judge only against a measured device: until the inspection ends the
+        // provisional profile fits nothing, and "Use" silently did nothing.
+        // A toast, since these rows sit outside the hero that shows action errors
+        if( !deciding && !check_fit( get_model_by_id( model.id ) || model, device ).fits ) {
+            toast.error( t( 'model_does_not_fit' ), { id: `model-does-not-fit` } )
             return
         }
         localStorage.setItem( storage_key( `active_model_id` ), model.id )
