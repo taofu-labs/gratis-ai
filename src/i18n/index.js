@@ -157,6 +157,14 @@ i18n.use( initReactI18next ).init( {
 
 } )
 
+// Screen readers, hyphenation and browser translate prompts go by <html lang>,
+// not by the visible text: keep it on the active language (index.html ships `en`)
+const sync_document_language = language => {
+    if( typeof document !== `undefined` && language ) document.documentElement.lang = language
+}
+i18n.on( `languageChanged`, sync_document_language )
+sync_document_language( i18n.language )
+
 /**
  * Fetch the system locale from Electron and switch if available.
  * No-op in browser environments.
