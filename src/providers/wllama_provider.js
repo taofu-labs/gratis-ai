@@ -19,6 +19,7 @@ import {
 import { get_external_model_file } from '../utils/external_model_files'
 import { resolve_hf_model } from '../utils/hf_url_parser'
 import { get_browser_cached_model, get_browser_cached_projector, projector_source, verify_installed_model } from '../utils/model_download'
+import { probe_threads } from '../utils/speed_probe'
 import { COMPAT_PATHS, CONFIG_PATHS } from '../utils/wllama_paths'
 import { IMAGE_MAX_TOKENS, IMAGE_MIN_TOKENS, MAX_HISTORY_IMAGES, to_wllama_messages } from '../utils/attachments'
 
@@ -305,7 +306,7 @@ export default class WllamaProvider {
         // Keep enough CPU for the browser compositor. Large reported core counts
         // otherwise create a wasteful pthread pool in desktop-class browsers.
         const hardware_threads = navigator.hardwareConcurrency || 1
-        const n_threads = Math.min( 8, Math.max( 1, Math.floor( hardware_threads / 2 ) ) )
+        const n_threads = probe_threads()
 
         // Prefill is short and compute-bound: twice the decode threads lifts it
         // 45–65% (RunPod bench, wllama64 1.2.0) while decode stays memory-bound.

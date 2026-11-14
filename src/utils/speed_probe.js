@@ -42,8 +42,15 @@ export const probe_load_options = n_threads => ( {
     cache_type_v: `q8_0`,
 } )
 
-/** The app's thread count: half the cores, leaving room for the compositor. */
-export const probe_threads = () => Math.min( 8, Math.max( 1, Math.floor( ( globalThis.navigator?.hardwareConcurrency || 1 ) / 2 ) ) )
+/**
+ * The app's thread count: half the cores, leaving room for the compositor.
+ * Dual cores keep both: Chrome and Firefox on macOS report physical cores, and
+ * one thread decoded 1.6× slower on a 2-core MacBook (2026-11-14).
+ */
+export const probe_threads = () => {
+    const hardware_threads = globalThis.navigator?.hardwareConcurrency || 1
+    return Math.min( 8, Math.max( Math.min( hardware_threads, 2 ), Math.floor( hardware_threads / 2 ) ) )
+}
 
 /**
  * Write the skeleton to OPFS. A ~340 MB Blob can outgrow Chrome's in-memory
