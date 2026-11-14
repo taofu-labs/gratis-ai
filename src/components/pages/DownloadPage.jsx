@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import styled, { keyframes } from 'styled-components'
+import { scroll_center } from '../../styles/scroll_center'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { X, CheckCircle, RotateCcw } from 'lucide-react'
@@ -13,12 +14,13 @@ import Button from '../atoms/Button'
 import ModelLoadStage from '../atoms/ModelLoadStage'
 import { BunnyBurrow } from '../atoms/Bunny'
 
+// Centered while it fits; scrolls on short viewports (landscape phones, in-app browsers)
 const Container = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     flex: 1;
+    ${ scroll_center }
     padding: ${ ( { theme } ) => theme.spacing.xl };
     text-align: center;
 `
