@@ -160,6 +160,8 @@ const DetailsToggle = styled.button`
 
 const DetailsPanel = styled.div`
     overflow: hidden;
+    /* A clipping flex item may shrink to nothing: on a short viewport the column must scroll instead */
+    flex-shrink: 0;
     max-height: ${ ( { $expanded } ) => $expanded ? `200px` : `0px` };
     opacity: ${ ( { $expanded } ) => $expanded ? 1 : 0 };
     visibility: ${ ( { $expanded } ) => $expanded ? `visible` : `hidden` };
