@@ -212,18 +212,15 @@ export const estimate_context_size = ( model, budget_bytes, { overhead_bytes = 5
 
 }
 
-// Desktops: models may take ~70% of total RAM (headroom for OS, Electron, V8),
-// and context stops at the browser's ceiling. Uncapped, a small model asks for
-// its whole advertised window: 262k tokens made a 0.8 GB model take 3.65 GB on
-// an 8 GB Mac, 131k ran a 16 GB Vulkan PC out of device memory
+// Desktops: weights + context may take ~70% of total RAM (headroom for OS, Electron, V8).
+// No fixed ceiling: a machine with the memory gets the model's whole window
 export const DESKTOP_MEMORY_SHARE = 0.7
-export const DESKTOP_MAX_CTX = 16_384
 
 /**
- * Context size for the desktop app: what fits the machine, capped for chat
+ * Context size for the desktop app: the largest window that fits the machine
  * @param {Object} model - Manifest entry
  * @param {number} total_memory - Total system RAM in bytes
  * @returns {number} Context size to request
  */
 export const estimate_desktop_context = ( model, total_memory ) =>
-    estimate_context_size( model, total_memory * DESKTOP_MEMORY_SHARE, { max_ctx: DESKTOP_MAX_CTX } )
+    estimate_context_size( model, total_memory * DESKTOP_MEMORY_SHARE )

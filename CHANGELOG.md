@@ -14,7 +14,6 @@
 - Windows/Linux app: laptops with only integrated graphics run on the CPU, which is faster there and stops "out of device memory" errors on image chats
 - Intel Mac app: text chat works again (the x64 build shipped without its inference engine)
 - Desktop app: quitting or switching models while an image model loads no longer leaves the app running without a window
-- Desktop app: memory use stays sane with image models (context capped at 16K, as in the browser; a 0.8 GB model took 3.6 GB)
 - Desktop app: Settings shows the real version, and the monospace font loads
 - Desktop downloads are ~30 MB smaller (the app no longer packs its own source tree)
 - Gemma 4 E2B/E4B download in the browser again (it ended "download was incomplete" at 99% after an upstream file change)
