@@ -164,6 +164,44 @@ describe( `mobile bridge`, () => {
 
     } )
 
+    test( `a cancelled download stays cancelled when the next one starts before its rejection arrives`, async () => {
+
+        const native = fake_native()
+        const bridge = create_mobile_bridge( native, `ios` )
+
+        // A hangs in the plugin until it is told to abort
+        let reject_first
+        native.download.mockImplementationOnce( () => new Promise( ( _, reject ) => reject_first = reject ) )
+        const first = bridge.download_model( MODEL )
+        await vi.waitFor( () => expect( reject_first ).toBeDefined() )
+
+        // Cancel A, start B, and only then let the plugin report A's abort
+        await bridge.abort_download()
+        const second = bridge.download_model( { ...MODEL, id: `n`, file_name: `n.gguf` } )
+        reject_first( new Error( `Download aborted` ) )
+
+        await expect( first ).rejects.toThrow( /aborted/ )
+        await second
+        expect( native.download.mock.calls.map( ( [ { path } ] ) => path ) ).toEqual( [ `m.gguf`, `n.gguf` ] )
+        expect( JSON.parse( native.files.get( `manifest.json` ) ).map( entry => entry.id ) ).toEqual( [ `n` ] )
+
+    } )
+
+    test( `a download that completes after its cancel installs nothing`, async () => {
+
+        const native = fake_native()
+        const bridge = create_mobile_bridge( native, `ios` )
+
+        native.download.mockImplementationOnce( async ( { expected_size } ) => {
+            await bridge.abort_download()
+            return { size: expected_size }
+        } )
+
+        await expect( bridge.download_model( MODEL ) ).rejects.toThrow( /aborted/ )
+        expect( native.files.has( `manifest.json` ) ).toBe( false )
+
+    } )
+
     test( `loads on CPU with device tuning, a phone-sized context and the projector when present`, async () => {
 
         const native = fake_native( { free_memory: 3e9 } )

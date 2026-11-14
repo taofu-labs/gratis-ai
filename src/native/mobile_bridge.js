@@ -153,21 +153,25 @@ export const create_mobile_bridge = ( native, platform ) => {
 
     // ── Downloads ────────────────────────────────────────────────
 
-    // Set by abort_download: tells the user's cancel from the OS stopping a transfer
-    let download_cancelled = false
+    // One controller per download_model call: abort_download cancels the one
+    // running, and a later download can never revive it
+    let active_download = null
+    const cancelled = () => new Error( `Download aborted` )
 
-    /** Resolves once the app is on screen */
-    const app_visible = () => new Promise( resolve => {
+    /** Resolves once the app is on screen, rejects if the download is cancelled first */
+    const app_visible = signal => new Promise( ( resolve, reject ) => {
 
         const visible = () => globalThis.document?.visibilityState !== `hidden`
         if( visible() ) return resolve()
 
-        const on_change = () => {
-            if( !visible() ) return
-            document.removeEventListener( `visibilitychange`, on_change )
-            resolve()
+        // One signal drops both listeners, whichever fires first
+        const listening = new AbortController()
+        const settle = ( settled, value ) => {
+            listening.abort()
+            settled( value )
         }
-        document.addEventListener( `visibilitychange`, on_change )
+        document.addEventListener( `visibilitychange`, () => visible() && settle( resolve ), listening )
+        signal.addEventListener( `abort`, () => settle( reject, cancelled() ), listening )
 
     } )
 
@@ -176,17 +180,16 @@ export const create_mobile_bridge = ( native, platform ) => {
      * period runs out (the plugin rejects as aborted and keeps the partial
      * file): resume when the user is back instead of leaving a frozen progress bar.
      */
-    const download_file = async file => {
+    const download_file = async ( file, signal ) => {
 
         while( true ) {
             try {
                 return await native.download( file )
             } catch ( error ) {
-                const stopped_by_os = !download_cancelled && /abort/i.test( error?.message || `` )
+                const stopped_by_os = !signal.aborted && /abort/i.test( error?.message || `` )
                 if( !stopped_by_os ) throw error
                 log.info( `[mobile] Download stopped in the background, resuming when visible: ${ file.path }` )
-                await app_visible()
-                if( download_cancelled ) throw error
+                await app_visible( signal )
             }
         }
 
@@ -199,7 +202,10 @@ export const create_mobile_bridge = ( native, platform ) => {
      */
     const download_model = async ( { url, id, file_name, metadata, expected_size, headers = {}, mmproj } ) => {
 
-        download_cancelled = false
+        const { signal } = active_download = new AbortController()
+        const assert_live = () => {
+            if( signal.aborted ) throw cancelled()
+        }
 
         const files = [
             { url, path: file_name, expected_size },
@@ -218,6 +224,7 @@ export const create_mobile_bridge = ( native, platform ) => {
         const sizes = []
         for( const [ index, file ] of files.entries() ) {
 
+            assert_live()
             const listener = await native.addListener( `downloadProgress`, ( { path, bytes, total, verifying } ) => {
                 if( path !== file.path ) return
                 done[ index ] = bytes
@@ -226,7 +233,7 @@ export const create_mobile_bridge = ( native, platform ) => {
             } )
 
             try {
-                const { size } = await download_file( { url: file.url, path: file.path, headers, expected_size: file.expected_size || 0 } )
+                const { size } = await download_file( { url: file.url, path: file.path, headers, expected_size: file.expected_size || 0 }, signal )
                 done[ index ] = totals[ index ] = sizes[ index ] = size
             } finally {
                 listener.remove()
@@ -236,6 +243,7 @@ export const create_mobile_bridge = ( native, platform ) => {
 
         // Record the install only once every file is complete and verified
         const installed = await read_manifest()
+        assert_live()
         const previous = installed.find( entry => entry.id === id )
         const manifest = installed.filter( entry => entry.id !== id )
         const now = Date.now()
@@ -256,7 +264,7 @@ export const create_mobile_bridge = ( native, platform ) => {
     }
 
     const abort_download = () => {
-        download_cancelled = true
+        active_download?.abort()
         return native.abortDownload()
     }
 
