@@ -127,6 +127,7 @@ export class LlamaServer {
      * @param {string} config.mmproj_path
      * @param {number} config.n_ctx
      * @param {boolean} [config.reasoning_enabled]
+     * @param {boolean} [config.cpu_only] - Skip the GPU from the start (integrated graphics)
      * @returns {Promise<{ context_size: number, has_image_input: boolean, cpu_only: boolean }>}
      */
     async start( config ) {
@@ -136,7 +137,7 @@ export class LlamaServer {
         // A launch cancelled by stop() must settle before the next one starts
         await this._launching?.catch( () => {} )
 
-        this._config = { ...config, cpu_only: false }
+        this._config = { ...config, cpu_only: !!config.cpu_only }
         return this._launch_with_fallback()
 
     }

@@ -44,6 +44,7 @@ class NativeInference {
 
     constructor() {
         this._llama = null
+        this._llama_ready = null
         this._model = null
         this._context = null
         this._session = null
@@ -52,6 +53,42 @@ class NativeInference {
         this._abort_controller = null
         this._system_prompt = null
         this._LlamaChatSession = null
+    }
+
+    /**
+     * The node-llama-cpp instance, created once: GPU backend when it pays off, else CPU.
+     *
+     * Integrated graphics (Windows/Linux laptops) only borrow system RAM, and
+     * llama.cpp's Vulkan backend loses to the CPU there. Measured on a Ryzen 5
+     * 5625U + Radeon iGPU: 62 vs 99 tok/s (SmolLM2 360M), 9-15 vs 17 tok/s
+     * (Gemma 4 E2B), at twice the memory, 5x the load time and with
+     * ErrorOutOfDeviceMemory on large contexts. Apple Silicon is unified too,
+     * but Metal is fast.
+     * @returns {Promise<import('node-llama-cpp').Llama>}
+     */
+    _get_llama() {
+
+        this._llama_ready ||= ( async () => {
+
+            const { getLlama } = await import( `node-llama-cpp` )
+            const llama = await getLlama()
+            if( !llama.gpu || process.platform === `darwin` ) return llama
+
+            // All GPU memory is shared with the CPU: no discrete card to win on
+            const { total, unifiedSize } = await llama.getVramState()
+            if( unifiedSize < total ) return llama
+
+            console.info( `[inference] Integrated graphics only (${ llama.gpu }) — running on CPU` )
+            await llama.dispose()
+            return getLlama( { gpu: false } )
+
+        } )()
+
+        // A failed start (missing runtime, broken driver) may be retried by the next load
+        this._llama_ready.catch( () => { this._llama_ready = null } )
+
+        return this._llama_ready
+
     }
 
     /**
@@ -72,9 +109,9 @@ class NativeInference {
         if( this._model ) await this.unload()
 
         // node-llama-cpp loaded lazily — heavy native dep
-        const { getLlama, LlamaChatSession } = await import( `node-llama-cpp` )
+        const { LlamaChatSession } = await import( `node-llama-cpp` )
         this._LlamaChatSession = LlamaChatSession
-        this._llama = await getLlama()
+        this._llama = await this._get_llama()
 
         const MIN_CTX = 512
         const requested_ctx = opts.n_ctx || 2048
@@ -336,8 +373,7 @@ class NativeInference {
 
         try {
 
-            const { getLlama } = await import( `node-llama-cpp` )
-            const llama = await getLlama()
+            const llama = await this._get_llama()
 
             const gpu_type = llama.gpu
             if( gpu_type ) info.gpu.type = gpu_type

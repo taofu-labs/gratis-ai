@@ -736,12 +736,16 @@ const register_ipc_handlers = () => {
 
             try {
 
+                // The sidecar takes the GPU only where node-llama-cpp does (not on integrated graphics)
+                const { gpu } = await worker_request( `system:info` )
+
                 const info = await get_llama_server().start( {
                     model_id,
                     model_path,
                     mmproj_path,
                     n_ctx: requested_ctx,
                     reasoning_enabled: model.reasoning_enabled,
+                    cpu_only: !gpu.type,
                 } )
 
                 return {
