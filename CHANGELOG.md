@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.55.3] - 2026-11-15
 
 ### Fixed
 - Mac: closing the window (red button or Cmd-W) keeps the app and the open chat; Window → Show Gratis AI or the Dock icon brings the same window back (App Store Guideline 4)

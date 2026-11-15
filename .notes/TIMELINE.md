@@ -51,3 +51,4 @@ Ascending. One line per decision; rationale after `—`.
 - 11-14 Device-lab pass done: ~35 fixes across web/desktop/Android/iOS (see CHANGELOG Unreleased). Merged origin/main (PRs #21–23). Codex 5-persona review → cancel races + fit-check fixes. Desktop ctx capped at 16K. iOS 16 Safari gated, not fixed (needs no-SIMD wasm). Both Macs stayed locked (Safari tested hidden via safaridriver). No push/deploy/version bump.
 - 11-14/15 Macs unlocked (slow key delay) → real Safari runs: Safari speed probe fixed (Range across HF redirect, OPFS view writes), Safari text on CPU / images on WebGPU, Safari 17.6 slow-start mitigations. Desktop 16K ctx cap removed again (human: 70% RAM budget only). ArjunMacbook dropped off the network mid-run (voice model download).
 
+- 2026-11-15: M1 Mac coverage finished (Safari voice/Dock/private/theme, desktop main, MAS sandbox); human OK to push + deploy + upload builds without review submission → 0.55.3.

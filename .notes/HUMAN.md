@@ -88,3 +88,11 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Decision wanted: skip the speed probe on Safari 17.x (first load ~50 s instead of ~8 min, at the cost of an uncalibrated pick)? Held back: Safari 26 on the M1 runs the probe fine and the Safari version that fixes the compile is unknown. The no-SIMD / smaller-ctor wasm build would fix both this and iOS 16.
 - Left on OliviaMacbook: Automation permission "sshd-keygen-wrapper → Safari" still granted (remove in Security & Privacy → Automation); `safaridriver --enable`; Chrome for Testing 150 + Firefox 160 in `~/Applications`. Screen locked again.
 - Cosmetic: download error screen, Retry button touches the "0%" figure.
+
+## Release 0.55.3 (2026-11-15)
+
+- Human 2026-11-15: push to main, web deploy, rebuild apps, store uploads allowed; do NOT submit for review. 0.55.2 skipped (MAS build 5502 taken).
+- M1 real Safari 26.1 + desktop main + MAS sandbox (mas-dev) all pass on HEAD. Gaps: voice transcription accuracy (lid closed, no speech into the mic; pipeline ran, empty result), MAS vision, offline chat inside the Dock web app.
+- Qwen 3.5 0.8B vision on the 8 GB M1 loads `--ctx-size 262144` (model's full window), sidecar 3.6 GB, 15% free, swap steady: accepted no-cap consequence, watch for complaints.
+- ArjunMacbook had rebooted; on arrival dozens of Terminal windows ran `/tmp/gui_du.sh` with two Terminal permission prompts (not ours; Don't Allow + Terminal killed). Left there: `~/lab-mac`, `~/gratis-mas`, Firefox, `safaridriver --enable`, SmolLM2 (271 MB) in `~/Library/Containers/com.trueperformancenetwork.gratis`.
+- LFM 1.2B Q6_K loaded in one Safari tab = ~3.4 GB WebContent RSS on the M1.
