@@ -1,12 +1,14 @@
 // Sign an Android App Bundle with the Play upload key and release it to the
 // Play Console's internal testing track.
 //
-// Usage: node scripts/play_internal.js path/to/app-release.aab [--draft]
+// Usage: node scripts/play_internal.js path/to/app-release.aab [--draft] [--no-review]
 // Needs: .secrets/android/{upload.jks,keystore.properties}, .secrets/google/play-service-account.json, jarsigner
 //
 // Unsigned bundles (CI without the keystore secret) are signed here first; an
 // already signed one is uploaded as-is. Apps Google still treats as drafts
 // only accept draft releases: pass --draft, then roll out in the Play Console.
+// --no-review commits without sending the changes to Google's review (Play
+// demands it while other changes wait: send them from the Play Console later).
 
 import { execFileSync } from 'child_process'
 import { createSign } from 'crypto'
@@ -21,6 +23,7 @@ const UPLOAD_API = `https://androidpublisher.googleapis.com/upload/androidpublis
 
 const [ aab_input ] = process.argv.slice( 2 ).filter( arg => !arg.startsWith( `--` ) )
 const draft = process.argv.includes( `--draft` )
+const no_review = process.argv.includes( `--no-review` )
 if( !aab_input ) throw new Error( `Usage: node scripts/play_internal.js <app-release.aab> [--draft]` )
 
 const properties = Object.fromEntries( readFileSync( `.secrets/android/keystore.properties`, `utf8` )
@@ -113,6 +116,6 @@ await call( token, `${ API }/edits/${ edit.id }/tracks/${ TRACK }`, { method: `P
     track: TRACK,
     releases: [ { name: `${ version } (${ bundle.versionCode })`, versionCodes: [ String( bundle.versionCode ) ], status: draft ? `draft` : `completed` } ],
 } } )
-await call( token, `${ API }/edits/${ edit.id }:commit`, { method: `POST` } )
+await call( token, `${ API }/edits/${ edit.id }:commit${ no_review ? `?changesNotSentForReview=true` : `` }`, { method: `POST` } )
 
 console.log( `Play ${ TRACK } track: ${ version } (${ bundle.versionCode }) ${ draft ? `saved as a draft — roll it out in the Play Console` : `released to internal testers` }` )
