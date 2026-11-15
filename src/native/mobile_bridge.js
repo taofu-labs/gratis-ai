@@ -15,6 +15,7 @@ import { log } from 'mentie'
 import {
     build_request_body,
     build_server_args,
+    create_reply_reader,
     create_sse_parser,
     estimate_context_size,
     mmproj_local_name,
@@ -220,10 +221,17 @@ export const create_mobile_bridge = ( native, platform ) => {
         // Summed progress over both files, throttled natively
         const totals = files.map( file => file.expected_size || 0 )
         const done = files.map( () => 0 )
-        const report = status => {
+        // `verifying` (share of the file hashed) marks disk reads: the page keeps those out of speed and ETA
+        const report = ( status, verifying ) => {
             const bytes_total = totals.reduce( ( sum, size ) => sum + size, 0 )
             const bytes_loaded = done.reduce( ( sum, bytes ) => sum + bytes, 0 )
-            download_progress.emit( { progress: bytes_total ? Math.min( bytes_loaded / bytes_total, 1 ) : 0, bytes_loaded, bytes_total, status } )
+            download_progress.emit( {
+                progress: bytes_total ? Math.min( bytes_loaded / bytes_total, 1 ) : 0,
+                bytes_loaded,
+                bytes_total,
+                status,
+                ... verifying === undefined ? {} : { verifying },
+            } )
         }
 
         const sizes = []
@@ -234,7 +242,10 @@ export const create_mobile_bridge = ( native, platform ) => {
                 if( path !== file.path ) return
                 done[ index ] = bytes
                 if( total ) totals[ index ] = total
-                report( verifying ? `Verifying...` : `Downloading...` )
+
+                // A resumed part is hashed from disk before the transfer continues
+                if( verifying ) report( `Verifying...`, totals[ index ] ? bytes / totals[ index ] : 0 )
+                else report( `Downloading...` )
             } )
 
             try {
@@ -455,18 +466,7 @@ export const create_mobile_bridge = ( native, platform ) => {
         const controller = new AbortController()
         abort_controller = controller
 
-        let full_text = ``
-        let timings = null
-        const on_data = payload => {
-            if( payload.error ) throw new Error( payload.error.message || `llama-server error` )
-            const text = payload.choices?.[ 0 ]?.delta?.content
-            if( payload.prompt_progress && !full_text ) on_chunk( { prompt_progress: payload.prompt_progress } )
-            if( payload.timings ) ( { timings } = payload )
-            if( text ) {
-                full_text += text
-                on_chunk( text )
-            }
-        }
+        const reply = create_reply_reader( on_chunk )
 
         try {
 
@@ -478,7 +478,7 @@ export const create_mobile_bridge = ( native, platform ) => {
             } )
             if( !response.ok ) throw new Error( `llama-server ${ response.status }: ${ ( await response.text().catch( () => `` ) ).slice( 0, 300 ) }` )
 
-            const feed = create_sse_parser( on_data )
+            const feed = create_sse_parser( reply.on_data )
             const decoder = new TextDecoder()
             const reader = response.body.getReader()
             while( true ) {
@@ -487,15 +487,15 @@ export const create_mobile_bridge = ( native, platform ) => {
                 feed( decoder.decode( value, { stream: true } ) )
             }
 
-            if( timings ) on_chunk( { timings } )
-            return full_text
+            if( reply.timings ) on_chunk( { timings: reply.timings } )
+            return reply.text
 
         } catch ( error ) {
 
-            if( controller.signal.aborted ) return full_text
+            if( controller.signal.aborted ) return reply.text
 
             // The OS killed the server (memory) before any text: restart once
-            if( error instanceof TypeError && !full_text && !is_retry && config ) {
+            if( error instanceof TypeError && !reply.text && !is_retry && config ) {
                 log.warn( `[mobile] Connection lost (${ error.message }) — restarting the model` )
                 server = null
                 return run_chat( messages, opts, on_chunk, true )

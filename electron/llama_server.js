@@ -17,7 +17,7 @@ import { spawn } from 'child_process'
 import { randomBytes } from 'crypto'
 import net from 'net'
 import path from 'path'
-import { build_server_args, build_request_body, create_sse_parser } from '../src/utils/llama_server_protocol.js'
+import { build_server_args, build_request_body, create_reply_reader, create_sse_parser } from '../src/utils/llama_server_protocol.js'
 
 // Protocol helpers are shared with the mobile apps, which run the same server
 export {
@@ -337,23 +337,7 @@ export class LlamaServer {
         this._abort_controller = abort_controller
 
         const body = build_request_body( messages, opts, this._config )
-        let full_text = ``
-        let timings = null
-
-        const on_data = ( payload ) => {
-
-            if( payload.error ) throw new Error( payload.error.message || `llama-server error` )
-
-            const text = payload.choices?.[ 0 ]?.delta?.content
-            if( payload.prompt_progress && !full_text ) on_chunk( { prompt_progress: payload.prompt_progress } )
-            if( payload.timings ) ( { timings } = payload )
-
-            if( text ) {
-                full_text += text
-                on_chunk( text )
-            }
-
-        }
+        const reply = create_reply_reader( on_chunk )
 
         try {
 
@@ -369,21 +353,21 @@ export class LlamaServer {
                 throw new Error( `llama-server ${ response.status }: ${ detail.slice( 0, 300 ) }` )
             }
 
-            const feed = create_sse_parser( on_data )
+            const feed = create_sse_parser( reply.on_data )
             const decoder = new TextDecoder()
             for await ( const chunk of response.body ) feed( decoder.decode( chunk, { stream: true } ) )
 
-            if( timings ) on_chunk( { timings } )
-            return full_text
+            if( reply.timings ) on_chunk( { timings: reply.timings } )
+            return reply.text
 
         } catch ( err ) {
 
-            if( abort_controller.signal.aborted ) return full_text
+            if( abort_controller.signal.aborted ) return reply.text
 
             // Connection dropped before any text — the process probably died just
             // before or during the request. Let the exit register, restart, retry once.
             const dropped = err instanceof TypeError && err.message === `fetch failed`
-            if( dropped && !full_text && !is_retry && this._config ) {
+            if( dropped && !reply.text && !is_retry && this._config ) {
                 this._log.warn( `[llama-server] Connection lost (${ err.cause?.code || err.message }) — retrying once` )
                 await sleep( 500 )
                 return this.chat_stream( messages, opts, on_chunk, true )

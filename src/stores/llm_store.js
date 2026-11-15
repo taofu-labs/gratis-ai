@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { log } from 'mentie'
 import { create_provider } from '../providers/factory'
 import { storage_key } from '../utils/branding'
+import { has_visible_output } from '../utils/llama_server_protocol'
 import { get_model_by_id, implied_bandwidth_gbs } from '../utils/model_catalog'
 import { record_bandwidth_sample, record_speed_ratio } from '../utils/speed_calibration'
 
@@ -334,13 +335,15 @@ const use_llm_store = create( ( set, get ) => ( {
                     continue
                 }
 
-                if( !first_token_time ) {
+                full_text += chunk
+                chunk_count++
+
+                // A template's prefilled think tags arrive before the prompt is read: not a first token
+                if( !first_token_time && has_visible_output( full_text ) ) {
                     first_token_time = performance.now()
                     show_progress.flush()
                     set( { prompt_progress: null } )
                 }
-                full_text += chunk
-                chunk_count++
                 emit( full_text, chunk )
             }
             emit.flush()

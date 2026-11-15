@@ -10,7 +10,7 @@ import {
     to_data_uri,
     to_openai_messages,
 } from '../../electron/llama_server.js'
-import { estimate_desktop_context } from '../../src/utils/llama_server_protocol.js'
+import { create_reply_reader, estimate_desktop_context, has_visible_output } from '../../src/utils/llama_server_protocol.js'
 import { has_gguf_magic, mmproj_local_name } from '../../electron/model_files.js'
 import { to_ipc_messages } from '../../src/providers/electron_ipc_provider.js'
 
@@ -111,6 +111,62 @@ describe( `llama-server sidecar helpers`, () => {
             { choices: [ { delta: { content: `Hello` } } ] },
             { timings: { predicted_n: 2 } },
         ] )
+
+    } )
+
+    test( `think tags and whitespace alone are not output`, () => {
+
+        expect( has_visible_output( `` ) ).toBe( false )
+        expect( has_visible_output( `<think>\n\n</think>\n\n` ) ).toBe( false )
+        expect( has_visible_output( `<think>\n` ) ).toBe( false )
+        expect( has_visible_output( `<think>\nOkay` ) ).toBe( true )
+        expect( has_visible_output( `<think>\n\n</think>\n\nHi` ) ).toBe( true )
+        expect( has_visible_output( `Hi` ) ).toBe( true )
+
+    } )
+
+    test( `a prefilled empty think block neither starts the reply nor stops prompt progress`, () => {
+
+        const text_delta = content => ( { choices: [ { delta: { content } } ] } )
+        const progress = processed => ( { choices: [ { delta: {} } ], prompt_progress: { total: 300, cache: 0, processed } } )
+
+        // What llama-server sends for an image turn with --reasoning-format none
+        const chunks = []
+        const reply = create_reply_reader( chunk => chunks.push( chunk ) )
+        const payloads = [ text_delta( `<think>\n\n</think>\n\n` ), progress( 100 ), progress( 300 ), text_delta( `A cat` ), progress( 300 ), text_delta( `.` ), { timings: { predicted_n: 3 } } ]
+        payloads.forEach( reply.on_data )
+
+        expect( chunks ).toEqual( [
+            { prompt_progress: { total: 300, cache: 0, processed: 100 } },
+            { prompt_progress: { total: 300, cache: 0, processed: 300 } },
+            `<think>\n\n</think>\n\nA cat`,
+            `.`,
+        ] )
+        expect( reply.text ).toBe( `<think>\n\n</think>\n\nA cat.` )
+        expect( reply.timings ).toEqual( { predicted_n: 3 } )
+
+    } )
+
+    test( `real thinking streams from its first word, tags included`, () => {
+
+        const chunks = []
+        const reply = create_reply_reader( chunk => chunks.push( chunk ) )
+        const deltas = [ `<think>`, `\n`, `Let`, ` me see`, `\n</think>\n\n`, `Hi` ]
+        deltas.forEach( content => reply.on_data( { choices: [ { delta: { content } } ] } ) )
+
+        expect( chunks ).toEqual( [ `<think>\nLet`, ` me see`, `\n</think>\n\n`, `Hi` ] )
+
+    } )
+
+    test( `a reply that never gets past the lead-in stays empty, and server errors throw`, () => {
+
+        const chunks = []
+        const reply = create_reply_reader( chunk => chunks.push( chunk ) )
+        reply.on_data( { choices: [ { delta: { content: `<think>\n\n</think>\n\n` } } ] } )
+
+        expect( chunks ).toEqual( [] )
+        expect( reply.text ).toBe( `` )
+        expect( () => reply.on_data( { error: { message: `out of memory` } } ) ).toThrow( /out of memory/ )
 
     } )
 

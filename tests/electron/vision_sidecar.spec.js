@@ -106,7 +106,7 @@ const make_png = () => {
  * @param {import('@playwright/test').Page} page
  * @param {Array} messages - `attachments[].data` given as a number array (converted to ArrayBuffer in page)
  * @param {Object} [opts] - Generation options
- * @returns {Promise<{ text: string, meta: Array }>}
+ * @returns {Promise<{ text: string, meta: Array, first_text: string, progress_before_text: number }>}
  */
 const stream_chat = ( page, messages, opts = { max_tokens: 48, temperature: 0 } ) => page.evaluate( async ( [ messages, opts ] ) => {
 
@@ -117,8 +117,18 @@ const stream_chat = ( page, messages, opts = { max_tokens: 48, temperature: 0 } 
     } ) )
 
     let text = ``
+    let first_text = null
+    let progress_before_text = 0
     const meta = []
-    const remove_token = api.on_stream_token( ( chunk ) => typeof chunk === `string` ? text += chunk : meta.push( chunk ) )
+    const remove_token = api.on_stream_token( ( chunk ) => {
+        if( typeof chunk === `string` ) {
+            first_text ??= chunk
+            text += chunk
+            return
+        }
+        meta.push( chunk )
+        if( chunk.prompt_progress && first_text === null ) progress_before_text++
+    } )
     const done = new Promise( ( resolve ) => {
         const remove_done = api.on_stream_done( () => {
             remove_done()
@@ -129,7 +139,7 @@ const stream_chat = ( page, messages, opts = { max_tokens: 48, temperature: 0 } 
     await api.start_stream( ipc_messages, opts )
     await done
     remove_token()
-    return { text, meta }
+    return { text, meta, first_text, progress_before_text }
 
 }, [ messages, opts ] )
 
@@ -183,7 +193,7 @@ test.describe( `Electron vision sidecar`, () => {
         console.log( `vision context:`, result.context_size )
 
         const png = [ ...make_png() ]
-        const { text, meta } = await stream_chat( page, [
+        const { text, meta, first_text, progress_before_text } = await stream_chat( page, [
             { role: `system`, content: `You are a helpful assistant.` },
             { role: `user`, content: `What colour is the square in this image? Answer with one word.`, attachments: [ { kind: `image`, mime: `image/png`, name: `square.png`, data: png } ] },
         ] )
@@ -191,6 +201,12 @@ test.describe( `Electron vision sidecar`, () => {
         console.log( `vision answer:`, JSON.stringify( text ) )
         expect( text.toLowerCase() ).toContain( `red` )
         expect( meta.some( ( chunk ) => chunk.timings ) ).toBe( true )
+
+        // The template's prefilled empty think block is sent before the image is read:
+        // it must not arrive alone (it would count as the first token and end prompt progress)
+        console.log( `first text chunk:`, JSON.stringify( first_text ), `after`, progress_before_text, `progress events` )
+        expect( first_text.replace( /<\/?think>/g, `` ).trim() ).not.toBe( `` )
+        expect( progress_before_text ).toBeGreaterThan( 0 )
 
         // Follow-up keeps the full history (image included) — node-llama-cpp only sees the last turn
         const follow_up = await stream_chat( page, [

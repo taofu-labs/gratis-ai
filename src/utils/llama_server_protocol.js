@@ -174,6 +174,69 @@ export const create_sse_parser = ( on_data ) => {
 }
 
 /**
+ * True once a reply holds more than think tags and whitespace. Thinking
+ * templates prefill `<think>\n\n</think>\n\n` (thinking off) or `<think>\n`
+ * (on) before the model has produced anything.
+ * @param {string} text - Reply so far
+ * @returns {boolean}
+ */
+export const has_visible_output = ( text = `` ) => text.replace( /<\/?think>/g, `` ).trim().length > 0
+
+/**
+ * Turns llama-server's stream payloads into what the renderer expects: text
+ * deltas, `{ prompt_progress }` until the reply starts, and the final timings.
+ *
+ * With `--reasoning-format none` the server sends the template's prefilled
+ * think tags as the first content chunk, before it reads the prompt. That
+ * lead-in is held back until real output follows: sent on arrival it counts
+ * as the first token and hides prompt progress for the whole wait. Real
+ * thinking passes through, tags included.
+ *
+ * @param {( chunk: string|Object ) => void} on_chunk
+ * @returns {{ on_data: ( payload: Object ) => void, text: string, timings: Object|null }} Live getters
+ */
+export const create_reply_reader = ( on_chunk ) => {
+
+    let text = ``
+    let held = ``
+    let timings = null
+
+    const on_data = ( payload ) => {
+
+        if( payload.error ) throw new Error( payload.error.message || `llama-server error` )
+
+        if( payload.prompt_progress && !text ) on_chunk( { prompt_progress: payload.prompt_progress } )
+        if( payload.timings ) ( { timings } = payload )
+
+        const delta = payload.choices?.[ 0 ]?.delta?.content
+        if( !delta ) return
+
+        // Nothing visible yet: keep collecting the lead-in
+        const pending = held + delta
+        if( !text && !has_visible_output( pending ) ) {
+            held = pending
+            return
+        }
+
+        held = ``
+        text += pending
+        on_chunk( pending )
+
+    }
+
+    return {
+        on_data,
+        get text() {
+            return text
+        },
+        get timings() {
+            return timings
+        },
+    }
+
+}
+
+/**
  * Pick a context size from the model's architecture and a memory budget.
  *
  * KV cache cost per token comes from the model's layers / kv_heads / head_dim;

@@ -262,6 +262,37 @@ describe( `llm store stop`, () => {
 
     } )
 
+    test( `a template's prefilled think tags are not the first token, real thinking is`, async () => {
+
+        // A provider that forwards chunks as they come, one per `step_ms`
+        const scripted = ( chunks, step_ms ) => use_llm_store.setState( { _provider_type: `local`, _provider: {
+            is_ready: () => true,
+            async *chat_stream() {
+                for( const chunk of chunks ) {
+                    await sleep( step_ms )
+                    yield chunk
+                }
+            },
+        } } )
+
+        // The empty think block arrives at once, the prompt is read for a while, then the answer starts
+        scripted( [ `<think>\n\n</think>\n\n`, { prompt_progress: { total: 400, cache: 0, processed: 200 } }, `Hi` ], 150 )
+        const reply = use_llm_store.getState().chat_stream( [], {} )
+        await sleep( 375 )
+        expect( use_llm_store.getState().prompt_progress ).toEqual( { total: 400, cache: 0, processed: 200 } )
+
+        const { text, stats } = await reply
+        expect( text ).toBe( `<think>\n\n</think>\n\nHi` )
+        expect( stats.ttft_ms ).toBeGreaterThanOrEqual( 400 )
+
+        // Thinking the user can watch counts from its first word
+        scripted( [ `<think>\n`, `Let me see`, `</think>\n\n`, `Hi` ], 100 )
+        const thinking = await use_llm_store.getState().chat_stream( [], {} )
+        expect( thinking.stats.ttft_ms ).toBeGreaterThanOrEqual( 190 )
+        expect( thinking.stats.ttft_ms ).toBeLessThan( 300 )
+
+    } )
+
 } )
 
 describe( `llm store load ownership`, () => {

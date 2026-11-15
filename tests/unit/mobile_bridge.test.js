@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { create_mobile_bridge, tuning_args } from '../../src/native/mobile_bridge.js'
+import { create_download_eta_estimator } from '../../src/utils/network_speed.js'
 
 // Snapdragon 695: six Cortex-A55 @ 1.8 GHz, two Cortex-A78 @ 2.2 GHz
 const SD695_CORES = [ 1804800, 1804800, 1804800, 1804800, 1804800, 1804800, 2208000, 2208000 ].map( ( max_khz, id ) => ( { id, max_khz } ) )
@@ -130,6 +131,54 @@ describe( `mobile bridge`, () => {
 
     } )
 
+    test( `hashing a resumed part is flagged as verifying, so it never counts as download speed`, async () => {
+
+        const MB = 1e6
+        const model = { ...MODEL, expected_size: 1000 * MB }
+        const native = fake_native()
+        const bridge = create_mobile_bridge( native, `android` )
+
+        // The page's rule: only transfer events feed the speed and ETA estimate
+        let clock = 0
+        let mid_transfer = null
+        const eta = create_download_eta_estimator( { now: () => clock } )
+        const events = []
+        bridge.on_download_progress( event => {
+            events.push( event )
+            if( event.verifying === undefined ) eta.update( event )
+        } )
+
+        // 800 MB already on disk hash at 80 MB/s, the rest arrives at 2 MB/s
+        native.download.mockImplementationOnce( async ( { path, expected_size } ) => {
+            const emit = ( bytes, verifying ) => native.emit( `downloadProgress`, { path, bytes, total: expected_size, verifying } )
+            for( let hashed = 20 * MB; hashed <= 800 * MB; hashed += 20 * MB ) {
+                clock += 250
+                emit( hashed, true )
+            }
+            for( let written = 800.5 * MB; written <= 860 * MB; written += 0.5 * MB ) {
+                clock += 250
+                emit( written, false )
+            }
+            mid_transfer = eta.snapshot()
+            return { size: expected_size }
+        } )
+
+        await bridge.download_model( model )
+
+        const hashing = events.filter( event => event.status === `Verifying...` )
+        expect( hashing ).toHaveLength( 40 )
+        expect( hashing.every( event => event.verifying > 0 && event.verifying <= 0.8 ) ).toBe( true )
+        expect( hashing.at( -1 ) ).toMatchObject( { verifying: 0.8, bytes_loaded: 800 * MB } )
+        expect( events.filter( event => event.status === `Downloading...` ).every( event => event.verifying === undefined ) ).toBe( true )
+
+        // 140 MB left at 2 MB/s is over a minute, not the seconds the hashing rate suggests
+        const { bps, eta_seconds } = mid_transfer
+        expect( bps / MB ).toBeCloseTo( 2, 1 )
+        expect( eta_seconds ).toBeGreaterThan( 60 )
+        expect( eta_seconds ).toBeLessThan( 80 )
+
+    } )
+
     test( `a failed download installs nothing`, async () => {
 
         const native = fake_native()
@@ -243,6 +292,12 @@ describe( `mobile bridge`, () => {
         expect( chunks ).toEqual( [ `Hello`, ` there`, { timings: { predicted_per_second: 12 } } ] )
         expect( done ).toBe( 1 )
         expect( fake_server.last_body ).toMatchObject( { stream: true, max_tokens: 64, messages: [ { role: `user`, content: `hi` } ] } )
+
+        // The template's prefilled empty think block waits for the first real text
+        vi.stubGlobal( `fetch`, fake_server( { reply: [ `<think>\n\n</think>\n\n`, `Hello` ] } ) )
+        chunks.length = 0
+        await bridge.start_stream( [ { role: `user`, content: `hi` } ], {} )
+        expect( chunks[ 0 ] ).toBe( `<think>\n\n</think>\n\nHello` )
 
     } )
 
