@@ -177,7 +177,12 @@ public class GratisNativePlugin: CAPPlugin, CAPBridgedPlugin {
                 let ( size, sha256 ) = try await downloads.run( url: url, file: try Self.model_file( path ), path: path, headers: headers, expected_size: expected_size )
                 call.resolve( [ "size": size, "sha256": sha256 as Any ] )
             } catch {
-                call.reject( downloads.aborted ? "Download aborted" : error.localizedDescription )
+                if downloads.aborted { return call.reject( "Download aborted" ) }
+
+                // Our own messages say it all; system errors need their codes to be diagnosable
+                let detail = ModelDownloader.detail( of: error )
+                NSLog( "%@", "[gratis] model-download failed: \( error.localizedDescription ) [\( detail )] (\( path ))" )
+                call.reject( error is PluginError ? error.localizedDescription : "\( error.localizedDescription ) [\( detail )]" )
             }
         }
     }
