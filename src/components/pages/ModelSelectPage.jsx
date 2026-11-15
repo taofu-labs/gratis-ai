@@ -781,7 +781,8 @@ export default function ModelSelectPage() {
             const storage_mode = active_uses_external_file ? `external-file` : `opfs`
             if( storage_mode === `external-file` ) await choose_external_model_file( active_model )
             else request_persistent_storage()
-            navigate( `/download`, { state: { model: active_model, storage_mode, return_to } } )
+            // `from_picker` lets a cancelled download step back here instead of stacking a second picker
+            navigate( `/download`, { state: { model: active_model, storage_mode, return_to, from_picker: true } } )
         } catch ( error ) {
             if( error?.name !== `AbortError` ) set_action_error( error.message || t( 'download_storage_failed' ) )
         }

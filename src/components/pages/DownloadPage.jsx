@@ -178,6 +178,22 @@ export default function DownloadPage() {
     const storage_mode = location.state?.storage_mode || `opfs`
     const return_to = location.state?.return_to || `/chat`
 
+    // Opened from the picker: it is the previous history entry, so step back to it.
+    // Replacing instead would leave two pickers and a Back press that "does nothing".
+    // Deep links and other entry points have no picker behind them: replace this page.
+    const from_picker = !!location.state?.from_picker
+    const left_ref = useRef( false )
+    const back_to_picker = useCallback( () => {
+
+        // Once only: a second step back (StrictMode re-runs effects) would leave the picker too
+        if( left_ref.current ) return
+        left_ref.current = true
+
+        if( from_picker ) navigate( -1 )
+        else navigate( `/select-model`, { replace: true } )
+
+    }, [ from_picker, navigate ] )
+
     const [ progress, set_progress ] = useState( { progress: 0, bytes_loaded: 0, bytes_total: 0, status: t( 'preparing' ) } )
     const [ error, set_error ] = useState( null )
     const [ phase, set_phase ] = useState( `downloading` )
@@ -251,7 +267,7 @@ export default function DownloadPage() {
     useEffect( () => {
 
         if( !model || runtime_unsupported ) {
-            navigate( `/select-model`, { replace: true } )
+            back_to_picker()
             return
         }
 
@@ -327,7 +343,7 @@ export default function DownloadPage() {
             if( !cancelled_ref.current ) set_error( err.message )
         } )
 
-    }, [ model, navigate, on_complete, storage_mode, attempt, t, runtime_unsupported ] )
+    }, [ model, back_to_picker, on_complete, storage_mode, attempt, t, runtime_unsupported ] )
 
     const handle_retry = () => {
         log.info( `[download] Retrying after:`, error )
@@ -345,7 +361,7 @@ export default function DownloadPage() {
             log.warn( `[download] Could not discard partial download:`, discard_error?.message )
         } )
 
-        navigate( `/select-model`, { replace: true } )
+        back_to_picker()
     }
 
     if( !model ) return null
