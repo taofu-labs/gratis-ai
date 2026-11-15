@@ -141,7 +141,8 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Play draft app: listing commits 403 despite permissions (13 h retries); entered by hand from `/review/play-*`. Tracks commits OK but only `status: draft` releases. Retry `scripts/store_play.mjs` after first production publish.
 - ASC submit: POST `/reviewSubmissions` → `/reviewSubmissionItems` → PATCH `submitted: true`. Resubmit after rejection: PATCH each REJECTED item `resolved: true` first (else 409). Review notes editable while WAITING_FOR_REVIEW.
 - App Review media on GitHub pre-release `app-review-media` (not latest → updater ignores); link in `store/apple.json` `review_video`.
-- `scripts/play_internal.js` needs `jarsigner`: `PATH=$PWD/vendor/android/jdk/bin:$PATH`.
+- `scripts/play_internal.js` needs `jarsigner`: `PATH=$PWD/vendor/android/jdk/bin:$PATH`. Commit 400 "Changes cannot be sent for review automatically" ⇒ `--no-review` (then Send for review in Play Console).
+- CI iOS artifact is dev-signed `App.ipa`; `ios_testflight.js` re-signs it fine.
 
 ## Mobile
 
@@ -182,6 +183,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Integrated GPUs (non-mac, `unifiedSize >= total`) run CPU-only on desktop: Radeon Vulkan was slower than CPU, 2× memory, `ErrorOutOfDeviceMemory` (not a crash → no CPU retry). Browser WebGPU on the same iGPU is correct and faster than WASM CPU: keep.
 - Catalog sizes are exact-match: an upstream re-upload (ggml-org projectors +32 bytes) breaks downloads at 99% forever. Audit: `node scripts/check_catalog_sizes.mjs` (HEAD per file, exit 1 on mismatch).
 - Chromium `storage.estimate()` reports a fake 10 GB quota.
+- Prod journey: temp config (baseURL prod, no webServer) + copy of `cross_browser.spec.js` without the `[wllama] Loaded` log assert (mentie logs only on localhost). Container Firefox failed to spawn child processes on 2026-11-15 (`Failed to launch tab subprocess`, cause unknown) → use a device.
 - iOS 16 Safari (JSC) hangs compiling large SIMD functions in the compat wasm; needs threads, bulk memory, SIMD, sign-ext, nontrapping-fptoint only. Scalarising v128 moves boots the runtime but real SIMD functions still hang → needs a no-SIMD build. The speed probe doubles as the runtime boot check (runtime files fetched first, 30 s watchdog, visible tab only, session flag): keep downloads out of the timed window or slow connections get gated.
 - Desktop load paths: `llm:load` carries a `load_generation`; sidecar launches tag `cancelled` (incl. CPU retry). Never fall back to text-only on a cancelled load.
 - Macs re-lock the moment a Screen Sharing connection closes: one-shot `babysit mac shot|click` lands on the lock screen. Hold one VNC connection open for the whole run (`.lab-evidence/2026-11-14/mac-arm-unlocked/scripts/vnc_hold.py`, statement queue); extra short connections are fine while it is up. `screencapture` over SSH fails.
