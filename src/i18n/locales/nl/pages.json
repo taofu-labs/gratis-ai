@@ -55,7 +55,7 @@
     "get_app_tagline": "Download de desktop-app voor snellere, volledig offline AI op je eigen hardware.",
     "download_for": "Downloaden voor {{platform}}",
     "not_configured": "Niet geconfigureerd",
-    "mac_requirement": "De Mac-app vereist macOS 13 of nieuwer.",
+    "mac_requirement": "De Mac-app vereist macOS 13.3 of nieuwer.",
     "intel_mac_prompt": "Heb je een Intel Mac?",
     "download_intel_build": "Download de Intel-versie",
     "not_configured_notice": "Downloads zijn niet geconfigureerd voor deze omgeving. Bouw de desktop-app vanuit de broncode of bekijk de projectrepository.",

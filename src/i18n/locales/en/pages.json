@@ -60,7 +60,7 @@
     "desktop_in_works_models": "Built for TPN winner models",
     "download_for": "Download for {{platform}}",
     "not_configured": "Not configured",
-    "mac_requirement": "The Mac app needs macOS 13 or newer.",
+    "mac_requirement": "The Mac app needs macOS 13.3 or newer.",
     "intel_mac_prompt": "Running an Intel Mac?",
     "download_intel_build": "Download the Intel build",
     "not_configured_notice": "Release downloads are not configured for this deployment. Build the desktop app from source or check the project repository.",

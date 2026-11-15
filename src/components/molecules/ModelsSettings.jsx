@@ -51,17 +51,20 @@ const ModelList = styled.div`
     gap: ${ ( { theme } ) => theme.spacing.xs };
 `
 
+// Narrow panels: the actions drop below the name instead of squeezing it
 const ModelItem = styled.div`
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
     padding: ${ ( { theme } ) => theme.spacing.sm };
     border: 1px solid ${ ( { theme } ) => theme.colors.border };
     border-radius: ${ ( { theme } ) => theme.border_radius.md };
 `
 
 const ModelInfo = styled.div`
-    flex: 1;
+    flex: 1 1 9rem;
     min-width: 0;
 `
 
@@ -88,7 +91,10 @@ const Badge = styled.span`
 
 const ModelActions = styled.div`
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: ${ ( { theme } ) => theme.spacing.xs };
+    margin-left: auto;
 `
 
 const SmallButton = styled.button`
@@ -99,6 +105,10 @@ const SmallButton = styled.button`
     color: ${ ( { theme } ) => theme.colors.text_secondary };
     transition: all 0.15s;
     min-height: 2rem;
+
+    /* Labels stay on one line; the row wraps instead of the buttons overlapping */
+    white-space: nowrap;
+    flex-shrink: 0;
 
     &:hover:not(:disabled) {
         background: ${ ( { theme } ) => theme.colors.surface_hover };
@@ -453,7 +463,7 @@ export default function ModelsSettings( { settings = {}, on_setting_change, on_c
                                     data-testid={ `model-delete-btn-${ model.id }` }
                                     onClick={ () => handle_delete( model ) }
                                 >
-                                    { confirming === model.id ? t( `click_again_to_confirm` ) : t( `remove` ) }
+                                    { confirming === model.id ? t( `press_again_to_confirm` ) : t( `remove` ) }
                                 </DeleteButton>
                             </ModelActions>
                         </ModelItem>

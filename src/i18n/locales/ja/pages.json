@@ -55,7 +55,7 @@
     "get_app_tagline": "デスクトップアプリをダウンロードして、あなたのハードウェアで動く高速な完全オフラインAIを体験しましょう。",
     "download_for": "{{platform}}版をダウンロード",
     "not_configured": "未設定",
-    "mac_requirement": "Mac版にはmacOS 13以降が必要です。",
+    "mac_requirement": "Mac版にはmacOS 13.3以降が必要です。",
     "intel_mac_prompt": "Intel Macをお使いですか？",
     "download_intel_build": "Intel版をダウンロード",
     "not_configured_notice": "このデプロイではリリースのダウンロードが設定されていません。ソースからデスクトップアプリをビルドするか、プロジェクトのリポジトリをご確認ください。",

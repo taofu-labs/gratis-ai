@@ -55,7 +55,7 @@
     "get_app_tagline": "Lade die Desktop-App herunter für schnellere, vollständig offline nutzbare KI — betrieben von deiner eigenen Hardware.",
     "download_for": "Für {{platform}} herunterladen",
     "not_configured": "Nicht konfiguriert",
-    "mac_requirement": "Die Mac-App benötigt macOS 13 oder neuer.",
+    "mac_requirement": "Die Mac-App benötigt macOS 13.3 oder neuer.",
     "intel_mac_prompt": "Hast du einen Intel-Mac?",
     "download_intel_build": "Intel-Build herunterladen",
     "not_configured_notice": "Release-Downloads sind für diese Bereitstellung nicht konfiguriert. Erstelle die Desktop-App aus dem Quellcode oder schau im Projekt-Repository nach.",

@@ -49,6 +49,9 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   notarize: true
+  # The bundled llama-server (image chat) links Accelerate's NEWLAPACK ILP64 symbols,
+  # which first shipped in macOS 13.3. Inherited by the mas build.
+  minimumSystemVersion: "13.3"
   # Info.plist comes from `mac:` for the mas build too (mas.extendInfo is ignored)
   extendInfo:
     # App Store only, inert in the DMG: HTTPS-only app is export-compliance exempt,

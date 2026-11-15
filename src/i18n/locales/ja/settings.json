@@ -58,7 +58,7 @@
     "active": "アクティブ",
     "cached": "キャッシュ済み",
     "switch_to_this": "このモデルに切り替え",
-    "click_again_to_confirm": "もう一度クリックして確認",
+    "press_again_to_confirm": "もう一度押して確認",
     "remove": "削除",
 
     "add_model": "モデルを追加",

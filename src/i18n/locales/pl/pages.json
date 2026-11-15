@@ -55,7 +55,7 @@
     "get_app_tagline": "Pobierz aplikację desktopową — szybsze, w pełni offline AI zasilane Twoim sprzętem.",
     "download_for": "Pobierz dla {{platform}}",
     "not_configured": "Nie skonfigurowano",
-    "mac_requirement": "Aplikacja na Maca wymaga systemu macOS 13 lub nowszego.",
+    "mac_requirement": "Aplikacja na Maca wymaga systemu macOS 13.3 lub nowszego.",
     "intel_mac_prompt": "Masz Maca z procesorem Intel?",
     "download_intel_build": "Pobierz wersję Intel",
     "not_configured_notice": "Pliki do pobrania nie są skonfigurowane dla tego wdrożenia. Zbuduj aplikację desktopową ze źródeł lub sprawdź repozytorium projektu.",

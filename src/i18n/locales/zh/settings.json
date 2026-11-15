@@ -58,7 +58,7 @@
     "active": "使用中",
     "cached": "已缓存",
     "switch_to_this": "切换到此模型",
-    "click_again_to_confirm": "再次点击以确认",
+    "press_again_to_confirm": "再次按下以确认",
     "remove": "移除",
 
     "add_model": "添加模型",

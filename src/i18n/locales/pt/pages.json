@@ -55,7 +55,7 @@
     "get_app_tagline": "Baixe o app desktop para uma IA mais rápida e totalmente offline, usando o poder do seu próprio hardware.",
     "download_for": "Baixar para {{platform}}",
     "not_configured": "Não configurado",
-    "mac_requirement": "O app para Mac requer o macOS 13 ou posterior.",
+    "mac_requirement": "O app para Mac requer o macOS 13.3 ou posterior.",
     "intel_mac_prompt": "Usando um Mac com Intel?",
     "download_intel_build": "Baixar versão Intel",
     "not_configured_notice": "Os downloads de versões não estão configurados para esta instalação. Compile o app desktop a partir do código-fonte ou consulte o repositório do projeto.",

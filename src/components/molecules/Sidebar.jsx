@@ -453,7 +453,7 @@ export default function Sidebar( {
                     aria-label={ confirming_wipe ? t( 'common:aria_confirm_wipe_history' ) : t( 'common:aria_wipe_history' ) }
                 >
                     <Trash size={ 14 } />
-                    { confirming_wipe ? t( 'settings:click_again_to_confirm' ) : t( 'wipe_history' ) }
+                    { confirming_wipe ? t( 'settings:press_again_to_confirm' ) : t( 'wipe_history' ) }
                 </WipeButton>
             </SidebarFooter> }
 

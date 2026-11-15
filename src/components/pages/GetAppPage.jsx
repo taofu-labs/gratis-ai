@@ -356,7 +356,7 @@ export default function GetAppPage() {
             } ) }
         </CardGrid>
 
-        { /* Both Mac builds refuse to launch below macOS 13: say so before the download */ }
+        { /* Both Mac builds refuse to launch below macOS 13.3 (llama-server needs its Accelerate): say so before the download */ }
         { GITHUB_REPO && <Footnote>
             { t( 'mac_requirement' ) }{ ` ` }
             { t( 'intel_mac_prompt' ) }{ ` ` }

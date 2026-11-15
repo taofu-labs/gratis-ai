@@ -76,7 +76,7 @@ Yes. The AI model runs entirely on your hardware — in your browser tab or in t
 
 ## Requirements
 
-- A current 64-bit browser **or** the desktop app (macOS 13 Ventura or newer on Mac; older Macs use the browser version). Chrome/Edge 137+ use the Memory64 runtime; unsupported Firefox and Safari versions use a slower, locally bundled compatibility runtime.
+- A current 64-bit browser **or** the desktop app (macOS 13.3 Ventura or newer on Mac; older Macs use the browser version). Chrome/Edge 137+ use the Memory64 runtime; unsupported Firefox and Safari versions use a slower, locally bundled compatibility runtime.
 - Enough free RAM for the model you choose (the app handles this automatically)
 - An internet connection for the first model download only
 

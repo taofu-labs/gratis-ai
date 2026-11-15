@@ -82,6 +82,7 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect( page.locator( `a[href$="/releases/latest/download/Gratis-win.exe"]` ) ).toHaveCount( 1 )
         await expect( page.locator( `a[href$="/releases/latest/download/Gratis-linux.AppImage"]` ) ).toHaveCount( 1 )
         await expect( page.locator( `a[href$="/releases/latest/download/Gratis-mac-intel.dmg"]` ) ).toHaveCount( 1 )
+        await expect( page.getByText( `The Mac app needs macOS 13.3 or newer.` ) ).toBeVisible()
         await expect( page.getByText( `Or continue in your browser` ) ).toBeVisible()
         await expect( page.locator( `body` ) ).not.toContainText( `desktop_in_works_title` )
     } )
@@ -208,7 +209,7 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
      * Seed SmolLM2 as a finished download and the active model, the way the app stores it
      * @param {import('@playwright/test').Page} page
      */
-    const seed_cached_model = async page => {
+    const seed_cached_model = async ( page, model_name = `SmolLM2 360M` ) => {
 
         // Wait for the app to create its schema (name follows VITE_APP_NAME)
         const db_name = async () => ( await page.evaluate( () => indexedDB.databases() ) )
@@ -217,14 +218,14 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
         await expect.poll( db_name ).toBeTruthy()
         const name = await db_name()
 
-        await page.evaluate( ( { name } ) => new Promise( ( resolve, reject ) => {
+        await page.evaluate( ( { name, model_name } ) => new Promise( ( resolve, reject ) => {
             const request = indexedDB.open( name )
             request.onerror = () => reject( request.error )
             request.onsuccess = () => {
                 const tx = request.result.transaction( `models`, `readwrite` )
                 tx.objectStore( `models` ).put( {
                     id: `smollm2-360m-q4km`,
-                    name: `SmolLM2 360M`,
+                    name: model_name,
                     parameters_label: `360M`,
                     file_size_bytes: 271_000_000,
                     last_used_at: Date.now(),
@@ -233,10 +234,44 @@ test.describe( `UX Improvements - Progressive Disclosure`, () => {
                 tx.onerror = () => reject( tx.error )
             }
             localStorage.setItem( `${ name.replace( /-db$/, `` ) }:settings:active_model_id`, `smollm2-360m-q4km` )
-        } ), { name } )
+        } ), { name, model_name } )
         await page.reload()
 
     }
+
+    test( `phone width: the remove confirmation never overlaps its neighbour, and suits touch`, async ( { page } ) => {
+
+        await page.setViewportSize( { width: 375, height: 812 } )
+        await mock_tpn_winners( page )
+        await page.goto( `/select-model` )
+        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
+
+        // A second, inactive model whose name wraps at this width
+        await seed_cached_model( page, `SmolLM2 360M Instruct Uncensored Long Name` )
+        await page.evaluate( () => Object.keys( localStorage )
+            .filter( key => key.endsWith( `:active_model_id` ) )
+            .forEach( key => localStorage.setItem( key, `another-model` ) ) )
+        await page.reload()
+        await expect( page.getByTestId( `model-hero-name` ) ).toBeVisible()
+
+        await page.getByTestId( `settings-btn` ).click()
+        await page.getByTestId( `settings-tab-models` ).click()
+        const switch_button = page.getByTestId( `model-load-btn-smollm2-360m-q4km` )
+        const remove_button = page.getByTestId( `model-delete-btn-smollm2-360m-q4km` )
+        await remove_button.click()
+        await expect( remove_button ).toHaveText( `Press again to confirm` )
+
+        // Side by side or stacked, the two labels keep their own space inside the row
+        const [ a, b, row ] = await Promise.all( [ switch_button, remove_button, page.getByTestId( `settings-modal` ).getByTestId( `cached-model-smollm2-360m-q4km` ) ].map( el => el.boundingBox() ) )
+        const apart = a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y
+        expect( apart ).toBe( true )
+        expect( b.x + b.width ).toBeLessThanOrEqual( row.x + row.width )
+        for( const button of [ switch_button, remove_button ] ) {
+            expect( await button.evaluate( el => el.scrollWidth <= el.clientWidth ) ).toBe( true )
+        }
+        await page.screenshot( { path: test.info().outputPath( `models-settings-375.png` ) } )
+
+    } )
 
     test( `cached models are listed with one-click reuse`, async ( { page } ) => {
         await mock_tpn_winners( page )
