@@ -13,9 +13,17 @@ test.describe( `PWA shell`, () => {
     test( `desktop install pill points at the native apps`, async ( { page } ) => {
 
         await page.goto( `/` )
-        await expect( page.getByTestId( `install-app-pill` ) ).toHaveAttribute( `href`, `/get-app` )
 
-        await page.getByTestId( `install-app-pill` ).click()
+        // The pill steps aside while the (autofocused) chat input has focus
+        // (the app re-focuses it as the model state settles, so keep blurring until it sticks)
+        const pill = page.getByTestId( `install-app-pill` )
+        await expect( async () => {
+            await page.evaluate( () => document.activeElement?.blur() )
+            await expect( pill ).toBeVisible( { timeout: 500 } )
+        } ).toPass()
+        await expect( pill ).toHaveAttribute( `href`, `/get-app` )
+
+        await pill.evaluate( el => el.click() )
         await expect( page ).toHaveURL( /\/get-app$/ )
         await expect( page.getByTestId( `install-app-pill` ) ).toHaveCount( 0 )
 
