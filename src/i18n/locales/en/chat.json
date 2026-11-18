@@ -9,10 +9,11 @@
     "collapse": "Collapse",
 
     "what_can_i_help_with": "What can I help with?",
-    "privacy_local": "You are using a local model. Nobody can see what you do.",
+    "privacy_local": "AI runs entirely on this device. What you type and attach never leaves it. Reply speed depends on your device and the model's size.",
     "privacy_openrouter": "You are using an OpenRouter cloud model. OpenRouter can see what you do.",
     "privacy_venice": "You are using a Venice cloud model. Nobody can see what you do.",
     "loading_your_model": "Loading your model...",
+    "loading_your_model_hint": "Reading the model into this device's memory. Nothing is sent anywhere.",
 
     "lets_get_you_set_up": "Let's get you set up",
     "no_model_description": "You need to download an AI model before you can start chatting. It only takes a minute.",

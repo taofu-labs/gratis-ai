@@ -9,10 +9,11 @@
     "collapse": "收起",
 
     "what_can_i_help_with": "有什么我可以帮你的？",
-    "privacy_local": "你正在使用本地模型。没有人能看到你的操作。",
+    "privacy_local": "AI 完全在本设备上运行。你输入和附加的内容不会离开本设备。回复速度取决于设备和模型大小。",
     "privacy_openrouter": "你正在使用 OpenRouter 云端模型。OpenRouter 可以看到你的操作。",
     "privacy_venice": "你正在使用 Venice 云端模型。没有人能看到你的操作。",
     "loading_your_model": "正在加载模型...",
+    "loading_your_model_hint": "正在把模型加载到本设备的内存中，不会发送任何内容。",
 
     "lets_get_you_set_up": "让我们开始设置",
     "no_model_description": "开始聊天前需要下载一个 AI 模型，只需一分钟即可完成。",

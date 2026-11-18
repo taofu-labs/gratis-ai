@@ -16,11 +16,19 @@ import { split_documents } from '../../utils/attachments'
 import use_object_url from '../../hooks/use_object_url'
 
 
+// Replies never fetch anything: a Markdown image would make the WebView request
+// any URL the model (or a prompt-injected document) wrote, so it shows as text
+const ReplyImage = ( { alt, src } ) => <span data-testid="reply-image-placeholder">[{ alt || src }]</span>
+
+const MARKDOWN_COMPONENTS = { pre: CodeBlock, img: ReplyImage }
+
+
 /**
  * Extract <think>...</think> blocks from model output.
  * Some models (Qwen3, DeepSeek-R1 distills) emit thinking tokens
  * before their actual response — we surface these in a collapsible block.
  */
+
 const parse_thinking = ( content, is_streaming ) => {
 
     // Completed think block — closing tag present
@@ -491,7 +499,7 @@ const MessageBubble = memo( ( {
                 { display_response && <ReactMarkdown
                     remarkPlugins={ [ remarkGfm ] }
                     rehypePlugins={ [ rehypeHighlight ] }
-                    components={ { pre: CodeBlock } }
+                    components={ MARKDOWN_COMPONENTS }
                 >
                     { display_response }
                 </ReactMarkdown> }

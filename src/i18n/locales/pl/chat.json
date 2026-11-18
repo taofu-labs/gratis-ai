@@ -9,10 +9,11 @@
     "collapse": "Zwiń",
 
     "what_can_i_help_with": "W czym mogę pomóc?",
-    "privacy_local": "Używasz modelu lokalnego. Nikt nie widzi, co robisz.",
+    "privacy_local": "AI działa w całości na tym urządzeniu. To, co piszesz i załączasz, nigdy go nie opuszcza. Szybkość odpowiedzi zależy od urządzenia i rozmiaru modelu.",
     "privacy_openrouter": "Używasz modelu chmurowego OpenRouter. OpenRouter widzi, co robisz.",
     "privacy_venice": "Używasz modelu chmurowego Venice. Nikt nie widzi, co robisz.",
     "loading_your_model": "Ładowanie modelu…",
+    "loading_your_model_hint": "Ładowanie modelu do pamięci tego urządzenia. Nic nie jest wysyłane.",
 
     "lets_get_you_set_up": "Przygotujmy wszystko",
     "no_model_description": "Zanim zaczniesz rozmawiać, musisz pobrać model AI. To zajmie tylko chwilę.",

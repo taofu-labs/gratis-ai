@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, Check, Download, Gauge, Image, ImageOff, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Cpu, Download, Gauge, Image, ImageOff, ShieldCheck, Sparkles } from 'lucide-react'
 import Button from '../atoms/Button'
 import { format_file_size, format_tokens_per_second, model_download_bytes } from '../../utils/model_catalog'
 
@@ -177,6 +177,7 @@ export default function ModelHero( {
                 { photos ? t( `fact_photos_yes` ) : t( `fact_photos_no` ) }
             </Fact>
             <Fact><ShieldCheck size={ 16 } />{ t( `fact_private` ) }</Fact>
+            <Fact data-testid="model-hero-hardware"><Cpu size={ 16 } />{ t( `fact_speed` ) }</Fact>
         </Facts> }
 
         { children }

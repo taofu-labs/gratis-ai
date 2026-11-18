@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams, useLocation } from 'react-rout
 import { v4 as uuid } from 'uuid'
 import { log } from 'mentie'
 import toast from 'react-hot-toast'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, X } from 'lucide-react'
 import AppLayout from '../molecules/AppLayout'
 import MessageList from '../molecules/MessageList'
 import ChatInput from '../molecules/ChatInput'
@@ -137,6 +137,26 @@ const LoadingText = styled.p`
     font-size: 0.95rem;
 `
 
+const LoadingHint = styled.p`
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+    margin-top: ${ ( { theme } ) => theme.spacing.xs };
+    font-size: 0.85rem;
+    max-width: 22rem;
+`
+
+const StopLoadingButton = styled.button`
+    display: flex;
+    align-items: center;
+    gap: ${ ( { theme } ) => theme.spacing.xs };
+    margin-top: ${ ( { theme } ) => theme.spacing.md };
+    padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md }` };
+    min-height: 2.75rem;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+    font-size: 0.85rem;
+
+    &:hover { color: ${ ( { theme } ) => theme.colors.error }; }
+`
+
 const LoadingLane = styled.div`
     width: min( 100%, 22rem );
     margin-bottom: ${ ( { theme } ) => theme.spacing.md };
@@ -202,7 +222,14 @@ export default function ChatPage() {
     const messages_ref = useRef( messages )
     messages_ref.current = messages
 
-    const { load_model, chat_stream, warm, cancel_warm, abort, is_generating, is_loading: is_model_loading, loaded_model_id, capabilities } = use_llm()
+    const { load_model, unload_model, chat_stream, warm, cancel_warm, abort, is_generating, is_loading: is_model_loading, loaded_model_id, capabilities } = use_llm()
+
+    // Stop a slow load: the model stays downloaded, the picker offers it or a smaller one
+    const handle_stop_loading = () => {
+        log.info( `[ChatPage] Model load stopped by user` )
+        unload_model().catch( stop_error => log.warn( `[ChatPage] Could not stop the load:`, stop_error?.message ) )
+        navigate( `/select-model` )
+    }
     const {
         conversations,
         create_conversation,
@@ -1069,7 +1096,13 @@ export default function ChatPage() {
             return <LoadingContainer data-testid="model-loading">
                 <LoadingLane><BunnyBurrow /></LoadingLane>
                 <LoadingText>{ t( 'loading_your_model' ) }</LoadingText>
+                <LoadingHint>{ t( 'loading_your_model_hint' ) }</LoadingHint>
                 <ModelLoadStage />
+                { /* The model stays downloaded: the picker offers it, or a smaller one */ }
+                <StopLoadingButton onClick={ handle_stop_loading } data-testid="stop-loading-btn">
+                    <X size={ 16 } />
+                    { t( 'models:cancel_loading' ) }
+                </StopLoadingButton>
             </LoadingContainer>
         }
 

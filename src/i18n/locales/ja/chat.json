@@ -9,10 +9,11 @@
     "collapse": "折りたたむ",
 
     "what_can_i_help_with": "何かお手伝いできますか？",
-    "privacy_local": "ローカルモデルを使用中です。あなたの操作は誰にも見えません。",
+    "privacy_local": "AIはすべてこのデバイス上で動作します。入力した内容や添付ファイルが外部に送られることはありません。返答の速さはデバイスとモデルのサイズによって変わります。",
     "privacy_openrouter": "OpenRouterのクラウドモデルを使用中です。OpenRouterはあなたの操作を閲覧できます。",
     "privacy_venice": "Veniceのクラウドモデルを使用中です。あなたの操作は誰にも見えません。",
     "loading_your_model": "モデルを読み込み中...",
+    "loading_your_model_hint": "モデルをこのデバイスのメモリに読み込んでいます。何も送信されません。",
 
     "lets_get_you_set_up": "セットアップを始めましょう",
     "no_model_description": "チャットを始めるにはAIモデルのダウンロードが必要です。1分ほどで完了します。",

@@ -364,6 +364,14 @@ export default function DownloadPage() {
         back_to_picker()
     }
 
+    // Loading is cancellable too: the download stays, the picker offers it again
+    const handle_stop_loading = () => {
+        log.info( `[download] Load stopped by user` )
+        cancelled_ref.current = true
+        unload_model().catch( stop_error => log.warn( `[download] Could not stop the load:`, stop_error?.message ) )
+        back_to_picker()
+    }
+
     if( !model ) return null
 
     const eta_state = eta_ref.current.snapshot()
@@ -416,6 +424,10 @@ export default function DownloadPage() {
             <StatusMessage>{ t( 'preparing_your_model_detail', { name: model.name } ) }</StatusMessage>
             <LoadingLane><BunnyBurrow /></LoadingLane>
             <ModelLoadStage />
+            <CancelButton onClick={ handle_stop_loading } data-testid="stop-loading-btn">
+                <X size={ 16 } />
+                { t( 'cancel_loading' ) }
+            </CancelButton>
         </Container>
     }
 

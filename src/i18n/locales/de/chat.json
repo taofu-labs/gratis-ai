@@ -9,10 +9,11 @@
     "collapse": "Einklappen",
 
     "what_can_i_help_with": "Wie kann ich helfen?",
-    "privacy_local": "Du verwendest ein lokales Modell. Niemand kann sehen, was du tust.",
+    "privacy_local": "Die KI läuft komplett auf diesem Gerät. Was du schreibst und anhängst, verlässt es nie. Wie schnell Antworten kommen, hängt von deinem Gerät und der Größe des Modells ab.",
     "privacy_openrouter": "Du verwendest ein OpenRouter-Cloud-Modell. OpenRouter kann sehen, was du tust.",
     "privacy_venice": "Du verwendest ein Venice-Cloud-Modell. Niemand kann sehen, was du tust.",
     "loading_your_model": "Dein Modell wird geladen…",
+    "loading_your_model_hint": "Das Modell wird in den Speicher dieses Geräts geladen. Dabei wird nichts gesendet.",
 
     "lets_get_you_set_up": "Lass uns loslegen",
     "no_model_description": "Du musst zuerst ein KI-Modell herunterladen, bevor du chatten kannst. Das dauert nur eine Minute.",

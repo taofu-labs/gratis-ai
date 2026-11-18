@@ -236,7 +236,8 @@ const use_llm_store = create( ( set, get ) => ( {
             } catch ( err ) {
 
                 // A newer load or an unload superseded this one and owns the outcome
-                if( err.name === `LoadInterruptedError` ) {
+                // (an unload clears the slot synchronously, so a stopped load lands here too)
+                if( err.name === `LoadInterruptedError` || get()._load_promise !== promise ) {
                     log.info( `[use_llm] Load of ${ model_id } superseded` )
                     return
                 }

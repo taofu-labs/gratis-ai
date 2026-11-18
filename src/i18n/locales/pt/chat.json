@@ -9,10 +9,11 @@
     "collapse": "Recolher",
 
     "what_can_i_help_with": "Como posso ajudar?",
-    "privacy_local": "Você está usando um modelo local. Ninguém pode ver o que você faz.",
+    "privacy_local": "A IA funciona inteiramente neste dispositivo. O que você digita e anexa nunca sai dele. A velocidade das respostas depende do seu dispositivo e do tamanho do modelo.",
     "privacy_openrouter": "Você está usando um modelo na nuvem do OpenRouter. O OpenRouter pode ver o que você faz.",
     "privacy_venice": "Você está usando um modelo na nuvem do Venice. Ninguém pode ver o que você faz.",
     "loading_your_model": "Carregando seu modelo...",
+    "loading_your_model_hint": "Carregando o modelo na memória deste dispositivo. Nada é enviado.",
 
     "lets_get_you_set_up": "Vamos configurar tudo",
     "no_model_description": "Você precisa baixar um modelo de IA antes de começar a conversar. Leva apenas um minuto.",
