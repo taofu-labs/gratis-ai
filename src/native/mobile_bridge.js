@@ -539,6 +539,9 @@ export const create_mobile_bridge = ( native, platform ) => {
         get_system_info,
         get_system_locale: async () => navigator.language,
 
+        // granted | denied | restricted | prompt; null where the plugin has no such method (Android)
+        camera_access: () => native.cameraAccess?.().then( ( { state } ) => state ).catch( () => null ) ?? Promise.resolve( null ),
+
         load_model,
         unload_model,
         get_loaded_model,

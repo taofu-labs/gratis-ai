@@ -42,6 +42,7 @@
     "get_vision_model": "Obter {{name}} · {{size}}",
     "choose_vision_model": "Escolher um modelo que lê imagens",
     "images_in_chat_only": "Abra um chat para adicionar imagens",
+    "camera_off_hint": "O acesso à câmera está desativado para este app. Ative-o no app Ajustes para tirar fotos aqui ou escolha uma da sua biblioteca.",
     "image_unreadable": "Não foi possível ler a imagem “{{name}}”",
     "pasted_image": "imagem colada",
     "image_conversation_title": "Imagem",

@@ -62,7 +62,7 @@ export default function ReadingIndicator() {
     const percent = use_llm_store( s => prompt_percent( s.prompt_progress ) )
 
     const label = is_loading ? t( `waiting_for_model` )
-        : percent !== null ? t( `reading_message`, { percent } )
+        : percent ? t( `reading_message`, { percent } )
             : t( `reading` )
 
     return <Wrapper data-testid="reading-indicator">

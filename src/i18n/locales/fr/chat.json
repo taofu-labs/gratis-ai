@@ -42,6 +42,7 @@
     "get_vision_model": "Obtenir {{name}} · {{size}}",
     "choose_vision_model": "Choisir un modèle qui lit les images",
     "images_in_chat_only": "Ouvrez une conversation pour ajouter des images",
+    "camera_off_hint": "L'accès à l'appareil photo est désactivé pour cette app. Activez-le dans l'app Réglages pour prendre des photos ici, ou choisissez-en une dans votre photothèque.",
     "image_unreadable": "Impossible de lire l’image « {{name}} »",
     "pasted_image": "image collée",
     "image_conversation_title": "Image",

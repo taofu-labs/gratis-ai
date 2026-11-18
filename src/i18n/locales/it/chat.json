@@ -42,6 +42,7 @@
     "get_vision_model": "Scarica {{name}} · {{size}}",
     "choose_vision_model": "Scegli un modello che legge le immagini",
     "images_in_chat_only": "Apri una chat per aggiungere immagini",
+    "camera_off_hint": "L'accesso alla fotocamera è disattivato per questa app. Attivalo nell'app Impostazioni per scattare foto qui, oppure scegline una dalla libreria.",
     "image_unreadable": "Impossibile leggere l’immagine «{{name}}»",
     "pasted_image": "immagine incollata",
     "image_conversation_title": "Immagine",

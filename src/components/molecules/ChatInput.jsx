@@ -583,7 +583,17 @@ export default function ChatInput( {
 
     const add_files = files => files.forEach( file => is_image_file( file ) ? add_image( file ) : add_document( file ) )
 
-    const handle_attach_click = () => file_input_ref.current?.click()
+    const handle_attach_click = () => {
+
+        // Synchronous: the picker only opens inside the tap's own gesture
+        file_input_ref.current?.click()
+
+        // iOS shows a silent black camera when access is off: say why (the library still works)
+        window.electronAPI?.camera_access?.().then( state => {
+            if( state === `denied` || state === `restricted` ) toast( t( `camera_off_hint` ), { id: `camera-off`, duration: 8000 } )
+        } )
+
+    }
 
     const handle_file_select = ( e ) => {
         const files = [ ...e.target.files || [] ]

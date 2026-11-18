@@ -42,6 +42,7 @@
     "get_vision_model": "获取 {{name}} · {{size}}",
     "choose_vision_model": "选择能读取图片的模型",
     "images_in_chat_only": "打开对话后即可添加图片",
+    "camera_off_hint": "此应用的相机访问已关闭。要在这里拍照，请在“设置”App 中开启，或从图库中选择一张照片。",
     "image_unreadable": "无法读取图片“{{name}}”",
     "pasted_image": "粘贴的图片",
     "image_conversation_title": "图片",

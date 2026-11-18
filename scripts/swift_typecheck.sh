@@ -37,6 +37,11 @@ public final class OSLog: @unchecked Sendable { public init( subsystem: String, 
 public struct OSLogType: Sendable { public static let `default` = OSLogType() }
 public func os_log( _ message: StaticString, log: OSLog, type: OSLogType, _ args: CVarArg... ) {}
 STUB
+cat > "${WORK}/stubs/AVFoundation.swift" <<'STUB'
+public enum AVAuthorizationStatus { case notDetermined, restricted, denied, authorized }
+public enum AVMediaType { case video }
+public final class AVCaptureDevice { public static func authorizationStatus( for t: AVMediaType ) -> AVAuthorizationStatus { .notDetermined } }
+STUB
 cat > "${WORK}/stubs/Capacitor.swift" <<'STUB'
 import Foundation
 public typealias JSObject = [ String: Any ]
@@ -55,7 +60,7 @@ public final class CAPPluginCall {
 public func sysctlbyname( _ n: UnsafePointer<CChar>, _ a: UnsafeMutableRawPointer?, _ b: UnsafeMutablePointer<Int>?, _ c: UnsafeMutableRawPointer?, _ d: Int ) -> Int32 { 0 }
 STUB
 
-for module in UIKit CryptoKit Metal os Capacitor; do
+for module in UIKit CryptoKit Metal os AVFoundation Capacitor; do
     swiftc -parse-as-library -emit-module -module-name "${module}" -emit-module-path "${WORK}/mods/${module}.swiftmodule" "${WORK}/stubs/${module}.swift"
 done
 cp "${SRC}/LlamaServerShim/gratis_llama_server.h" "${SRC}/LlamaServerShim/module.modulemap" "${WORK}/mods/"

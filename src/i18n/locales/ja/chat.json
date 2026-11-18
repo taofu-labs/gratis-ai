@@ -42,6 +42,7 @@
     "get_vision_model": "{{name}} を入手 · {{size}}",
     "choose_vision_model": "画像を読めるモデルを選ぶ",
     "images_in_chat_only": "画像を追加するにはチャットを開いてください",
+    "camera_off_hint": "このアプリのカメラへのアクセスがオフになっています。ここで写真を撮るには設定アプリでオンにするか、ライブラリから写真を選んでください。",
     "image_unreadable": "画像「{{name}}」を読み込めませんでした",
     "pasted_image": "貼り付けた画像",
     "image_conversation_title": "画像",

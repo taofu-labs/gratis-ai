@@ -1,4 +1,5 @@
 import Foundation
+import AVFoundation
 import Capacitor
 import Metal
 import os
@@ -19,6 +20,7 @@ public class GratisNativePlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "GratisNative"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod( name: "getSystemInfo", returnType: CAPPluginReturnPromise ),
+        CAPPluginMethod( name: "cameraAccess", returnType: CAPPluginReturnPromise ),
         CAPPluginMethod( name: "readText", returnType: CAPPluginReturnPromise ),
         CAPPluginMethod( name: "writeText", returnType: CAPPluginReturnPromise ),
         CAPPluginMethod( name: "deleteFile", returnType: CAPPluginReturnPromise ),
@@ -95,6 +97,18 @@ public class GratisNativePlugin: CAPPlugin, CAPBridgedPlugin {
         } catch {
             call.reject( error.localizedDescription )
         }
+    }
+
+    /** Camera permission as the attach menu will meet it (WebKit owns the picker; denied = a black camera view) */
+    @objc func cameraAccess( _ call: CAPPluginCall ) {
+        let state: String
+        switch AVCaptureDevice.authorizationStatus( for: .video ) {
+        case .authorized: state = "granted"
+        case .denied: state = "denied"
+        case .restricted: state = "restricted"
+        default: state = "prompt"
+        }
+        call.resolve( [ "state": state ] )
     }
 
     private func sysctl_int( _ name: String ) -> Int? {

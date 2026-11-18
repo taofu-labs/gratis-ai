@@ -42,6 +42,7 @@
     "get_vision_model": "Pobierz {{name}} · {{size}}",
     "choose_vision_model": "Wybierz model, który odczytuje obrazy",
     "images_in_chat_only": "Otwórz czat, aby dodać obrazy",
+    "camera_off_hint": "Dostęp do aparatu jest wyłączony dla tej aplikacji. Włącz go w aplikacji Ustawienia, aby robić tu zdjęcia, albo wybierz zdjęcie z biblioteki.",
     "image_unreadable": "Nie udało się odczytać obrazu „{{name}}”",
     "pasted_image": "wklejony obraz",
     "image_conversation_title": "Obraz",

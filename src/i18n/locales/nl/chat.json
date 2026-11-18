@@ -42,6 +42,7 @@
     "get_vision_model": "{{name}} ophalen · {{size}}",
     "choose_vision_model": "Kies een model dat afbeeldingen leest",
     "images_in_chat_only": "Open een chat om afbeeldingen toe te voegen",
+    "camera_off_hint": "Cameratoegang staat uit voor deze app. Zet het aan in de app Instellingen om hier foto's te maken, of kies er een uit je bibliotheek.",
     "image_unreadable": "Kon de afbeelding ‘{{name}}’ niet lezen",
     "pasted_image": "geplakte afbeelding",
     "image_conversation_title": "Afbeelding",
