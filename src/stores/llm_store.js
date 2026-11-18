@@ -229,6 +229,14 @@ const use_llm_store = create( ( set, get ) => ( {
             try {
                 await provider.load_model( model_id, track_progress )
 
+                // Stopped mid-load (an unload emptied the slot): the provider may still have
+                // finished, so free it rather than publish a model nobody asked for any more
+                if( get()._load_promise !== promise ) {
+                    if( !get()._load_promise ) await provider.unload_model().catch( () => {} )
+                    log.info( `[use_llm] Load of ${ model_id } finished after it was stopped` )
+                    return
+                }
+
                 // Use provider's canonical ID — reflects a potentially recreated endpoint
                 const final_model_id = provider.get_loaded_model() || model_id
                 set( { loaded_model_id: final_model_id, capabilities: read_capabilities( provider ) } )
