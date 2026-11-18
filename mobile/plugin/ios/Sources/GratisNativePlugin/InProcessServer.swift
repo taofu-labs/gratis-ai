@@ -1,5 +1,6 @@
 import Foundation
 import LlamaServer
+import os
 
 /**
  * llama-server on a background thread of the app itself. One at a time:
@@ -10,6 +11,9 @@ import LlamaServer
 final class InProcessServer {
 
     private static let log_tail_lines = 60
+
+    // llama.cpp's own lines in the device log: an abort() takes the in-memory tail with it
+    private static let device_log = OSLog( subsystem: "com.trueperformancenetwork.gratis", category: "llama-server" )
 
     var on_exit: ( ( Int32, String ) -> Void )?
     private( set ) var running = false
@@ -107,6 +111,7 @@ final class InProcessServer {
     }
 
     private func append( _ lines: ArraySlice<String> ) {
+        lines.forEach { os_log( "%{public}@", log: Self.device_log, type: .default, $0 as NSString ) }
         lock.withLock {
             log_lines.append( contentsOf: lines )
             if log_lines.count > Self.log_tail_lines { log_lines.removeFirst( log_lines.count - Self.log_tail_lines ) }

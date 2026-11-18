@@ -415,8 +415,21 @@ export const create_mobile_bridge = ( native, platform ) => {
             },
         }
 
+        // A projector that cannot load (memory on small iPhones) must not cost
+        // the chat: one text-only retry, and the picker's image offer explains the rest
+        const launch_or_text_only = async () => {
+            try {
+                return await launch( load_generation )
+            } catch ( error ) {
+                if( !has_projector || load_generation !== generation ) throw error
+                log.warn( `[mobile] Vision load failed (${ error.message }), retrying text-only` )
+                config = { ...config, args_base: { ...config.args_base, mmproj_path: null } }
+                return launch( load_generation )
+            }
+        }
+
         try {
-            const info = await launch( load_generation )
+            const info = await launch_or_text_only()
             await write_manifest( manifest.map( entry => entry.id === model_id ? { ...entry, last_used_at: Date.now() } : entry ) )
             return {
                 success: true,

@@ -192,6 +192,7 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Several loaded-model tabs + a 640 MB voice download took the 8 GB M1 off the network: one heavy Safari flow at a time there.
 - Safari 17.x (JSC) keeps optimising the runtime's biggest function for minutes after a runtime first works; a second runtime started meanwhile (reload, load after the probe) crawls (505 s vs 50 s on a 2016 dual-core). Hence the 15 min CPU load timeout; the short boot watchdog applies only where `runtime_may_hang()` (WebKit without `URL.canParse`).
 - Real Safari can be scripted with `osascript … do JavaScript` after `defaults write` (Develop menu + Allow JavaScript from Apple Events) and one Automation click; `ioreg` `CGSSessionScreenIsLocked` lies (trust a screenshot); VNC `IncompleteReadError` is transient (retry).
+- ArjunMacbook iOS signing over SSH: keychain needs WWDR G3 **and** Apple Inc. Root (`AppleIncRootCertificate.cer`), else codesign `unable to build chain` + `errSecInternalComponent` (verify-cert/cms still pass). Re-`unlock-keychain` in every SSH session. Disk: our home holds only ~6 GB of the 228 GB; ~4 GB free is the ceiling without touching others' data (Droog sim 2.9 GB isn't ours). No brew: cmake/ninja in `~/bin` (not on PATH).
 
 ## Testing / tooling
 - Seed/read settings in tests via `tests/helpers/settings.js` (prefix derived from `VITE_APP_NAME`); hardcoded `gratisai:` keys silently no-op. PWA install-pill test flakes when run alongside a real-inference spec (host load).

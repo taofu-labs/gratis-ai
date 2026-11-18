@@ -32,6 +32,10 @@ public func MTLCreateSystemDefaultDevice() -> MTLDevice? { nil }
 STUB
 cat > "${WORK}/stubs/os.swift" <<'STUB'
 public func os_proc_available_memory() -> Int { 0 }
+import Foundation
+public final class OSLog: @unchecked Sendable { public init( subsystem: String, category: String ) {} }
+public struct OSLogType: Sendable { public static let `default` = OSLogType() }
+public func os_log( _ message: StaticString, log: OSLog, type: OSLogType, _ args: CVarArg... ) {}
 STUB
 cat > "${WORK}/stubs/Capacitor.swift" <<'STUB'
 import Foundation

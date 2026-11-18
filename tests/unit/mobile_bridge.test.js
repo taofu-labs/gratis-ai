@@ -106,6 +106,28 @@ describe( `mobile bridge`, () => {
 
     } )
 
+    test( `a projector that cannot load falls back to text-only instead of failing the model`, async () => {
+
+        vi.stubGlobal( `fetch`, fake_server() )
+        const native = fake_native()
+        const bridge = create_mobile_bridge( native, `ios` )
+        await bridge.download_model( { ...MODEL, mmproj: { url: `https://huggingface.co/org/repo/resolve/main/mmproj-F16.gguf`, file_name: `mmproj-F16.gguf`, expected_size: 500 } } )
+
+        // The vision launch dies during load (llama-server exits), the text-only one comes up
+        native.startServer.mockImplementation( async ( { args } ) => {
+            native.started.push( args )
+            native.running = !args.includes( `--mmproj` )
+        } )
+
+        const result = await bridge.load_model( `m` )
+
+        expect( native.started ).toHaveLength( 2 )
+        expect( native.started[ 0 ] ).toContain( `--mmproj` )
+        expect( native.started[ 1 ] ).not.toContain( `--mmproj` )
+        expect( result ).toMatchObject( { success: true, has_image_input: false } )
+
+    } )
+
     test( `downloads model + projector, then records one manifest entry`, async () => {
 
         const native = fake_native()

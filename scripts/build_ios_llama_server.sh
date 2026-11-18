@@ -72,6 +72,20 @@ if 'gratis-v2:' not in source:
     open( path, 'w' ).write( source )
 PATCH
 
+# A projector whose weights cannot be allocated (memory pressure on small
+# iPhones) hits GGML_ASSERT( buffer ) and abort()s the whole app: throw instead,
+# clip_init catches it and the server reports a failed load
+python3 - "${SRC}/tools/mtmd/clip.cpp" <<'PATCH'
+import sys
+path = sys.argv[ 1 ]
+source = open( path ).read()
+if 'gratis-clip-v1:' not in source:
+    old = '            ctx_clip.buf.reset(ggml_backend_alloc_ctx_tensors_from_buft(ctx_clip.ctx_data.get(), buft));\n'
+    new = old + '            if (!ctx_clip.buf) { // gratis-clip-v1: embedded server\n                throw std::runtime_error(string_format("%s: failed to allocate %s weights buffer\\n", __func__, ggml_backend_buft_name(buft)));\n            }\n'
+    if source.count( old ) != 1: sys.exit( 'clip.cpp patch failed (upstream changed?)' )
+    open( path, 'w' ).write( source.replace( old, new ) )
+PATCH
+
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 
