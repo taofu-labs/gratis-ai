@@ -152,6 +152,11 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - iOS Swift never built on a Mac: run `scripts/swift_typecheck.sh` (Swift 6.2 in vendor/swift; Debian 13 needs libncurses.so.6 symlink in vendor/swift/compat). iOS CMake needs `CMAKE_MACOSX_BUNDLE=OFF`.
 - iOS WebView: `contentInset: always` + `ThemedBridgeViewController` paints the status strip (config `backgroundColor` is static). Keyboard plugin `resize: native`. Android 12+ splash = `windowSplashScreenBackground`. Capacitor `SystemBars` DEFAULT resolved once → `use_theme` re-applies.
 - `increased-memory-limit` entitlement needs a paid team; without it iOS caps the app ~½ RAM.
+- In-process llama-server: a projector weights alloc that fails hits `GGML_ASSERT(buffer)` → abort() kills the app (patched in `build_ios_llama_server.sh`, marker `gratis-clip-v1`). Its log lines go to os_log (subsystem com.trueperformancenetwork.gratis, category llama-server): read them with the syslog tool, process image `App`.
+- First llama-server start after an install sits ~28 s in `initializing ...` on A11 (embedded Metal library compiled at device init, even with `--device none`); later starts take seconds. Stop during load waits for the load to finish (terminate hook installs only after load).
+- iPhone X perf (0.55.4, Qwen 3.5 0.8B Q5_K_M + projector, CPU): download 798 MB ~150 s, load ~4 s warm, text ~13 tok/s, TTFT ~5 s; photo question ~1000 prompt tokens, ~65 s TTFT.
+- iOS signed builds without CI: ArjunMacbook `~/gratis-ios` mirrors `mobile/` + `node_modules/@capacitor/keyboard` (+ prebuilt `LlamaServer.xcframework`, not in git). Build the web bundle in a container worktree, but a symlinked node_modules makes `cap sync` write absolute paths into Package.swift/capacitor.settings.gradle: `git checkout` them before shipping. Export plists `build/store.plist` (app-store-connect) and `build/dev.plist` (debugging, lab phone) live there; `asc.env` + `altool --validate-app/--upload-app`.
+- Lab phone: pcapd is not offered over Wi-Fi (use App Privacy Report or code audit). WDA MJPEG stalls while the app generates → screen recordings freeze; ffmpeg on a stalled MJPEG ignores SIGINT (use `-t` + mkv). WDA died after an on-device image prompt on the 3 GB iPhone X and would not relaunch remotely.
 - iOS home-screen icon may stay cached after a Wi-Fi install.
 
 ## Device lab

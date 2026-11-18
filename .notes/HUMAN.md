@@ -4,7 +4,7 @@ Open items only. Resolved history lives in TIMELINE.md.
 
 ## Stores (2026-11-03)
 
-- iOS 0.55.0 (5500) REJECTED (seen 2026-11-14; submission UNRESOLVED_ISSUES). Reason only in ASC Resolution Center (API cannot read it); human must check.
+- iOS: version record renamed 0.55.0 → 0.55.4 with build 5504 attached + new review notes (2026-11-18), PREPARE_FOR_SUBMISSION. Old submission still UNRESOLVED_ISSUES. Submit from ASC (and reply in Resolution Center) when ready. See "iOS review prep 0.55.4" below.
 - macOS 0.55.0 (5502) resubmitted 2026-11-11, WAITING_FOR_REVIEW (5501 expired). On approval: press Release (MANUAL). 5502 lacks commit "full-screen reopen race" (reopen within ~1 s of closing a full-screen window re-hides it; menu/Dock again fixes it) — ships with the next Mac build.
 - Mac review artifacts on ArjunMacbook `~/gratis-mas/artifacts/` (pkg + Electron dSYMs zip). Mac dev profile "Gratis Mac Development …" + device "Gratis review MacBook Air" registered for local sandbox tests.
 - Play production 0.55.0 live (2026-11-07). Retry `scripts/store_play.mjs` (listing API 403'd on the draft app).
@@ -103,3 +103,17 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Open bugs from that pass (unfixed, shipped): (1) iOS 1/8 background cycles: download dies "Cocoa error 256" in `hash_file` (ModelDownloader.swift), only relaunch recovers, root cause unknown → surface the POSIX errno first; expiry handler should call `endBackgroundTask` synchronously. (2) Android/web: each cancelled download leaves a duplicate picker history entry (DownloadPage `navigate('/select-model', { replace: true })` after picker pushed `/download`) → Back seems dead. (3) verify progress counted as download speed after resume (`mobile_bridge.js`). (4) Settings → Models at 375 pt: "Click again to confirm" overlaps "Switch to this". (5) Desktop vision TTFT "0.1s": llama-server emits the prefilled empty `<think>` block as first chunk (`llm_store.js` first-token, `llama_server.js` on_data also stops prompt progress) → skip think-only chunks while `full_text` is empty.
 - iPhone Safari on prod with a pre-installed model: "Model worker stopped responding" after ~95–130 s, then Choose another → gate notice in 2 s. Fresh-visit gate timing not measured.
 - Windows: uninstaller leaves `%LOCALAPPDATA%\gratisai-updater\installer.exe` (467 MB) + `%APPDATA%\gratisai`; silent uninstall under `Start-Process -Wait` over SSH hung once. Left on OliviaLenovo: `%APPDATA%\gratisai` (975 MB, 2 models), app uninstalled. OnePlus: two partial downloads (~210 MB) in app storage.
+
+## iOS review prep 0.55.4 (2026-11-18)
+
+- NOT submitted. ASC: 0.55.4 (5504) selected on the iOS version; review notes in `store/apple.json` pushed via API. Reply in Resolution Center + Submit for Review by hand.
+- Apple's crash logs: not reachable (Resolution Center attachments aren't in the API, none in the workspace). Diagnosis from code/history: 0.55.0 lacked NSCameraUsageDescription → TCC abort on Take Photo (fixed since 0.55.3, verified again). If Apple's .ips shows a different stack (e.g. `clip_model_loader::load_tensors` / `ggml_abort`), that's the projector-alloc abort fixed in 5504.
+- iPad: NO physical iPad and no simulator build (LlamaServer.xcframework is device-only), so iPad is untested. The file input is `display:none`; on iPad WebKit anchors the attach popover to the element, so it may appear at an odd spot (no crash expected). Test on an iPad before submitting if possible.
+- Review notes no longer carry a screen-recording link (the old one showed 0.55.0). Apple asked for a recording before → record one on a real iPhone (newer than X) and add `review_video` back to `store/apple.json` (keep notes + video ≤ 4000 chars).
+- Store names: ASC already has "GRTS AI" in all 11 locales; `store/copy.json` names and subtitles now match ASC (they were "Gratis AI" and would have been reverted by `store_apple.mjs`).
+- package.json is now 0.55.4. Pushing main triggers desktop + Android + MAS releases at 0.55.4. Nothing pushed.
+- Lab iPhone X (shared): left with 0.55.4 dev build (fresh, Qwen 3.5 0.8B downloaded), camera permission OFF, **App Privacy Report turned ON** (Settings → Privacy & Security, turn off if unwanted), WDA runner down (would not relaunch remotely: relaunch/reboot by hand). Its Safari still shows a stale "Increase Storage Size?" dialog for a dead trycloudflare tab (not ours).
+- App Privacy Report readout for GRTS AI not captured (WDA died first). Network claims rest on the code audit (Hugging Face only; llama-server on 127.0.0.1).
+- Model quality: Qwen 3.5 0.8B on a dark photo answered "I'm unable to view any images" (the image did reach it: ~1000 prompt tokens). The reviewer's device will likely get a bigger model; consider whether 0.8B should be the photo pick on 3 GB phones.
+- Follow-up: precompiled Metal library (avoid the ~28 s first start on A11), iOS 27 SDK needed for uploads from April 2027 (altool warning 90725).
+

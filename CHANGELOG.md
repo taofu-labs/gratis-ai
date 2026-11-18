@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.55.4] - 2026-11-18
+
+### Added
+- Picker and chat say AI runs entirely on the device and speed depends on hardware and model size (663b6be)
+- "Stop loading" while a model loads, on the download page and the chat loading screen (663b6be)
+- iPhone app: tapping attach with camera access off explains how to turn it on (824c499)
+
+### Changed
+- iPhone home-screen name is "GRTS AI" (store name); web and in-app brand stay Gratis AI (663b6be)
+- "Reading your message…" shows no "0%" until real progress arrives (824c499)
+
+### Fixed
+- iPhone app: a photo model that runs short of memory no longer closes the app; it falls back to text-only (4408685)
+- Replies never load remote images a model writes in Markdown; they show as text (663b6be)
+- iPhone app: a download that fails reading its partial file recovers without a relaunch (83734af)
+- Cancelled downloads step back to the picker instead of stacking a second one (8e11435)
+- Phone apps: honest first-token time and download ETA (a05a367)
+- Settings → Models row no longer overlaps at phone width; Mac minimum is macOS 13.3 (b74ba66)
+
 ## [0.55.3] - 2026-11-15
 
 ### Fixed
