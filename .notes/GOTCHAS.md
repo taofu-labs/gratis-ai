@@ -229,3 +229,5 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Push: env `GH_TOKEN` is a classic PAT the org blocks; use fine-grained `GH_TOKEN` from `.env.local` over HTTPS (extraheader). SSH host key untrusted. That token can't write Actions secrets. `gh` reads too: prefix `GH_TOKEN=$(grep ^GH_TOKEN= .env.local | cut -d= -f2-)`. Guard blocks token-in-URL/git-config: push via `GIT_ASKPASS` script that cats the token.
 - `pkill -f <pattern>` in a Bash call matches that call's own shell command line ⇒ exit 144, kills itself. Kill by PID.
 - Orphan `vite preview` on 127.0.0.1:4173 can outlive sessions and shadow a new `[::1]:4173` one; check `ss -ltnp` first.
+
+- Xcode 27 (Sept 2026): Apple silicon + macOS ≥ 26.6 only; GitHub label `xcode-27` (macos-latest = Xcode 26.6 / SDK 26.5 as of 2026-11). Can only debug devices on iOS ≥ 17 (lab iPhone X is 16: install via pymobiledevice3 still fine).

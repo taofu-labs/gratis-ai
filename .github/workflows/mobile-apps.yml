@@ -64,8 +64,10 @@ jobs:
             mobile/android/app/build/outputs/apk/release/*.apk
             mobile/android/app/build/outputs/bundle/release/app-release.aab
 
+  # App Store uploads need the iOS 27 SDK from April 2027 (ITMS-90725);
+  # macos-latest still ships Xcode 26, the xcode-27 image tracks Xcode 27.x
   ios:
-    runs-on: macos-latest
+    runs-on: xcode-27
     env:
       SIGNED: ${{ secrets.IOS_DEV_P12_BASE64 != '' && secrets.IOS_DEV_P12_PASSWORD != '' && secrets.IOS_DEV_PROFILE_BASE64 != '' && secrets.APPLE_TEAM_ID != '' }}
     steps:
@@ -80,7 +82,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: vendor/ios/.cache
-          key: llama-ios-${{ hashFiles('scripts/build_ios_llama_server.sh', 'mobile/plugin/ios/LlamaServerShim/**') }}
+          key: llama-ios-xcode27-${{ hashFiles('scripts/build_ios_llama_server.sh', 'mobile/plugin/ios/LlamaServerShim/**') }}
 
       - name: Build llama-server (iphoneos arm64)
         run: |
