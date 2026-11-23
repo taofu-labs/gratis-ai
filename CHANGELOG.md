@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.56.0] - 2026-11-23
+## [Unreleased] - web only (gratis-ai.com), 2026-11-23
 
 ### Added
 - Optional Gratis Pro on the web: Sign in with Gratis (OAuth PKCE), cloud models Pro Fast / Pro Smart

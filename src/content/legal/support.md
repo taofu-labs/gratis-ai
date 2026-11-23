@@ -13,7 +13,7 @@ Models are large (0.3 to 6 GB). Stay on Wi-Fi and keep the app open; an interrup
 Open the model picker and choose a smaller or faster model, or set the speed gauge to *Faster*. Phones and older computers work best with models around 1 GB.
 
 **Does anything leave my device?**
-No. Your chats stay on your device. Gratis only goes online to download models and app updates. The one exception is optional Gratis Pro on the web: messages you send to a Pro cloud model go to Gratis's servers. See the [privacy policy](/privacy).
+No. Your chats stay on your device. Gratis only goes online to download models and app updates. The one exception is optional Gratis Pro on the web: messages you send to a Pro cloud model go to Gratis's servers, and are stored there only if you enabled that in your Gratis account. See the [privacy policy](/privacy).
 
 **How do I delete my data?**
 Settings → Models removes downloaded models; *Wipe history* in the sidebar removes your chats. Uninstalling removes everything.

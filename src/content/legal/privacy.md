@@ -39,7 +39,7 @@ Gratis Pro is an optional paid add-on for faster, larger cloud models. The free,
 
 - You sign in with a Gratis account at account.gratis-ai.com. The app stores a sign-in token in your browser; signing out deletes it.
 - When you pick a Pro model, the conversation you send to it (text only) goes to Gratis's servers to generate the reply. On-device models never send anything.
-- Your chat history still lives only on your device.
+- Your chat history in the app lives on your device. Gratis Pro does not keep your messages, unless you turn on the option to store them in your Gratis account. You can turn it off again at any time.
 - Your Gratis account and Pro usage are covered by the account service's own terms and privacy policy.
 
 ## Children

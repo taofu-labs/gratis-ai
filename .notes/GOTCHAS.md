@@ -233,4 +233,5 @@ Terse footguns. Code comments hold the "how"; this holds the "don't".
 - Orphan `vite preview` on 127.0.0.1:4173 can outlive sessions and shadow a new `[::1]:4173` one; check `ss -ltnp` first.
 
 - Xcode 27 (Sept 2026): Apple silicon + macOS ≥ 26.6 only; GitHub label `xcode-27` (macos-latest = Xcode 26.6 / SDK 26.5 as of 2026-11). Can only debug devices on iOS ≥ 17 (lab iPhone X is 16: install via pymobiledevice3 still fine).
+- Pro shipped web-only with version still 0.55.4 (2026-11-23): next desktop/store release must bump past it and fold the "Unreleased" changelog section in.
 - Gratis Pro client ids: dev in `.env.development` (vite dev only), prod in `deploy-web.yml` env. `.env` must NOT carry one: the fork deploy (ai.gratis.sh) reads `.env` too and the prod client only accepts gratis-ai.com. `/authorize` validates client + redirect only after login.
