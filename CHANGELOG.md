@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.56.0] - 2026-11-23
+
+### Added
+- Optional Gratis Pro on the web: Sign in with Gratis (OAuth PKCE), cloud models Pro Fast / Pro Smart
+- "Pro" button in the top bar opens a Free vs Pro explainer: "Gratis is free. Forever."
+- Model menu splits into "On this device · Free" and "Cloud · Pro" (locked until signed in)
+- Settings → Pro: account, weekly allowance, hide Pro models
+- Model picker: optional card pointing to Pro for models bigger than the device can run
+- Pro is hidden without `VITE_GRATIS_CLIENT_ID`, and always hidden in the desktop and phone apps
+
 ## [0.55.4] - 2026-11-18
 
 ### Added

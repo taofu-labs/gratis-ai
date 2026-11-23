@@ -127,3 +127,7 @@ Open items only. Resolved history lives in TIMELINE.md.
 - After Xcode 27: install it to ~/Applications, `xcode-select` (sudo), first launch, rebuild LlamaServer.xcframework + archive in ~/gratis-ios, then delete Xcode-26.1.1 (4.3 GB).
 - 2026-11-20: CI `xcode-27` verified (run 44742686932: Xcode 27.1, DTSDKName iphoneos27.1, 0.55.4/5504). Pushed main 3d27c61 (rebased on b822730) ⇒ 0.55.4 desktop/web/Android releases. Not device-tested: chonki has no iPhone pair record (Mac's /var/db/lockdown is TCC-blocked). Next iOS upload: CI artifact + `scripts/ios_testflight.js` (build must be > 5504).
 - Mac macOS 26.7.3 update blocked: needs 26.7 GB free, Mac has 21.5 GB; ours left ≈5.6 GB (Xcode 26.1.1 4.3 GB, Firefox, ~/gratis-ios, ~/gratis-mas). Waiting on user: delete our Xcode 26.1.1, free arjunmali data, or stay on 26.1 + CI. Wrap sudo commands in a script file on the Mac (`babysit mac sudo` breaks quoted args).
+
+## Gratis Pro (2026-11-23)
+- Waiting on client id from the human (sent redirect URIs: gratis-ai.com, www, gratis.trueperformancenetwork.com, ai.gratis.sh, localhost:5173/4173 — all `/pro/callback`). Public client ⇒ id is not secret: put `VITE_GRATIS_CLIENT_ID` in `.env` (deploy-web builds from it). Then test real sign-in + chat on prod-like origin.
+- Decide: Pro in desktop/phone apps (needs native OAuth + origin story; iOS needs IAP or no upgrade link). Revoke call shape at `/oauth/token` unverified (best effort).

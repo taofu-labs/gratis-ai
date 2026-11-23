@@ -1,11 +1,12 @@
 import styled from 'styled-components'
-import { Settings, PanelLeft, ArrowLeftRight } from 'lucide-react'
+import { Settings, PanelLeft, ArrowLeftRight, Zap } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ModelSelector from './ModelSelector'
 import LanguageSelector from './LanguageSelector'
 import BrandMark from '../atoms/BrandMark'
 import use_llm_store from '../../stores/llm_store'
+import use_pro_store from '../../stores/pro_store'
 
 const Bar = styled.header`
     display: flex;
@@ -82,6 +83,40 @@ const ChangeModelButton = styled.button`
     }
 `
 
+// Quiet outlined pill; the bolt carries the brand colour
+const ProButton = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2rem;
+    padding: 0 0.75rem;
+    margin-right: ${ ( { theme } ) => theme.spacing.xs };
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: ${ ( { theme } ) => theme.colors.text };
+    border: 1px solid ${ ( { theme } ) => theme.colors.border_control };
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    transition: border-color 0.15s, background-color 0.15s;
+
+    svg { color: ${ ( { theme } ) => theme.colors.accent_text }; }
+
+    &:hover {
+        border-color: ${ ( { theme } ) => theme.colors.border_strong };
+        background: ${ ( { theme } ) => theme.colors.surface_hover };
+    }
+
+    /* Phones: bolt only, so the model name keeps its room */
+    @media ( max-width: ${ ( { theme } ) => theme.breakpoints.mobile } ) {
+        padding: 0 0.5rem;
+        margin-right: 0;
+        span { display: none; }
+    }
+
+    /* Invisible 44px hit area around the 32px face */
+    position: relative;
+    &::before { content: ''; position: absolute; inset: -6px -2px; }
+`
+
 /**
  * Top navigation bar with model selector and settings
  * @param {Object} props
@@ -111,6 +146,7 @@ export default function TopBar( {
 
     // While a model loads nothing is "loaded" yet; name the incoming model instead of "No model"
     const loading_model_id = use_llm_store( s => s._loading_model_id )
+    const { available: pro_available, open_explainer } = use_pro_store()
 
     return <Bar inert={ inert }>
 
@@ -145,6 +181,14 @@ export default function TopBar( {
 
         { /* Right: language + settings */ }
         <RightSection>
+            { pro_available && <ProButton
+                data-testid="pro-btn"
+                onClick={ open_explainer }
+                aria-label={ t( `pro:aria_open_pro` ) }
+            >
+                <Zap size={ 14 } />
+                <span>{ t( `pro:pro` ) }</span>
+            </ProButton> }
             <LanguageSelector />
 
             <IconButton

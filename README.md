@@ -38,6 +38,8 @@ It works in two ways:
 | Model size limit | ~15 GB (browser memory ceiling), less on low-RAM devices | Only limited by your RAM |
 | Works offline | After first model download | After first model download |
 
+**Optional Gratis Pro (web).** If your device can't run the model you want, sign in with Gratis to use bigger, faster cloud models. Pro messages go to Gratis's servers. It's an add-on: the on-device app stays free, with no account. Pro needs `VITE_GRATIS_CLIENT_ID` at build time and stays hidden without it.
+
 ## How do I use it?
 
 **Option 1 — Open the website**

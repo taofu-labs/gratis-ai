@@ -188,9 +188,10 @@ const Chip = styled.button`
  * @param {Function} props.on_pick - Receives the option key
  * @param {Function} [props.on_back]
  * @param {Function} props.on_skip - Finish with the current answers
+ * @param {JSX.Element} [props.aside] - Shown below the answers (e.g. the Pro card)
  * @returns {JSX.Element}
  */
-export default function WizardQuestion( { id, index, total, title, hint, options, on_pick, on_back, on_skip } ) {
+export default function WizardQuestion( { id, index, total, title, hint, options, on_pick, on_back, on_skip, aside } ) {
 
     const { t } = useTranslation( `models` )
     const card_ref = useRef( null )
@@ -235,6 +236,8 @@ export default function WizardQuestion( { id, index, total, title, hint, options
                 { option.active && <Check size={ 16 } aria-hidden="true" /> }
             </Option> ) }
         </Options>
+
+        { aside }
 
         <Footer>
             { on_back ? <LinkButton type="button" data-testid="wizard-back" onClick={ on_back }>

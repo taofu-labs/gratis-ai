@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import use_device_capabilities from './use_device_capabilities'
 import { build_device_profile } from '../utils/device_detection'
 import { write_speed_mode } from '../utils/speed_mode'
+import { is_cloud_model } from '../providers/gratis_provider'
 import {
     MODEL_CATALOG,
     estimate_decode_speed,
@@ -30,7 +31,8 @@ export default function use_speed_modes( { loaded_model_id, cached_models, refre
 
     return useMemo( () => {
 
-        if( !capabilities ) return { modes: [], active: null }
+        // Speed modes trade on-device models; a cloud model has nothing to trade
+        if( !capabilities || is_cloud_model( loaded_model_id ) ) return { modes: [], active: null }
 
         // Calibrated speeds live in storage; `refresh` re-reads them after replies
         const device = build_device_profile( capabilities, max_model_bytes )

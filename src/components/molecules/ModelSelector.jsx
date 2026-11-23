@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import styled, { useTheme } from 'styled-components'
-import { ChevronDown, Check, Plus, Settings, LoaderCircle, AlertTriangle } from 'lucide-react'
+import { ChevronDown, Check, Plus, Settings, LoaderCircle, AlertTriangle, Cloud, Lock, Zap } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { format_file_size, can_fit_in_memory, get_model_by_id } from '../../utils/model_catalog'
 import use_device_capabilities from '../../hooks/use_device_capabilities'
+import use_pro_store from '../../stores/pro_store'
+import { CLOUD_MODELS, get_cloud_model } from '../../providers/gratis_provider'
 
 const Container = styled.div`
     position: relative;
@@ -106,6 +108,44 @@ const ActionOption = styled( ModelOption )`
     font-size: 0.8rem;
 `
 
+const GroupLabel = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: ${ ( { theme } ) => theme.spacing.sm };
+    padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md } ${ theme.spacing.xs }` };
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+`
+
+const ProBadge = styled.span`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.0625rem 0.375rem;
+    border-radius: ${ ( { theme } ) => theme.border_radius.md };
+    background: ${ ( { theme } ) => `${ theme.colors.accent }26` };
+    color: ${ ( { theme } ) => theme.colors.accent_text };
+    letter-spacing: 0;
+    text-transform: none;
+`
+
+const Footnote = styled.div`
+    padding: ${ ( { theme } ) => `${ theme.spacing.xs } ${ theme.spacing.md } ${ theme.spacing.sm }` };
+    font-size: 0.75rem;
+    color: ${ ( { theme } ) => theme.colors.text_muted };
+
+    button {
+        color: ${ ( { theme } ) => theme.colors.accent_text };
+        text-decoration: underline;
+        font-size: inherit;
+        min-height: 1.5rem;
+    }
+`
+
 const NoModelHint = styled.div`
     padding: ${ ( { theme } ) => `${ theme.spacing.sm } ${ theme.spacing.md }` };
     font-size: 0.8rem;
@@ -137,6 +177,8 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
     const theme = useTheme()
     const { t } = useTranslation( `models` )
     const { max_model_bytes, is_detecting } = use_device_capabilities()
+    const { available: pro_available, show_pro_models, signed_in, open_explainer } = use_pro_store()
+    const show_cloud = pro_available && show_pro_models
 
     // Close dropdown on click outside or Escape key
     useEffect( () => {
@@ -187,7 +229,8 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
 
     // Find the active model's display name
     const active_model = cached_models.find( ( m ) => m.id === active_model_id )
-    const display_name = is_switching ? t( `common:loading` ) : active_model?.name || t( `no_model` )
+    const active_cloud = get_cloud_model( active_model_id )
+    const display_name = is_switching ? t( `common:loading` ) : active_model?.name || active_cloud && t( active_cloud.name_key ) || t( `no_model` )
 
     const handle_select = ( model_id ) => {
         set_is_open( false )
@@ -195,6 +238,18 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
             on_switch( model_id )
         }
         if( on_after_select ) on_after_select()
+    }
+
+    // Locked until signed in: the explainer says what Pro is and that free stays free
+    const handle_cloud = ( model_id ) => {
+        if( signed_in ) return handle_select( model_id )
+        set_is_open( false )
+        open_explainer()
+    }
+
+    const handle_explain = () => {
+        set_is_open( false )
+        open_explainer()
     }
 
     const handle_add = () => {
@@ -223,6 +278,8 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
 
         { is_open &&
             <Dropdown ref={ dropdown_ref } style={ dropdown_max_height !== undefined ? { maxHeight: dropdown_max_height } : undefined }>
+
+                { show_cloud && <GroupLabel>{ t( `pro:model_menu_local` ) }</GroupLabel> }
 
                 { cached_models.length === 0 ?
                     <NoModelHint>
@@ -255,6 +312,32 @@ export default function ModelSelector( { cached_models = [], active_model_id, is
                             { too_large && <AlertTriangle size={ 12 } style={ { color: theme.colors.warning, flexShrink: 0 } } /> }
                         </ModelOption>
                     } ) }
+
+                { show_cloud && <>
+                    <Divider />
+                    <GroupLabel>
+                        { t( `pro:model_menu_cloud` ) }
+                        <ProBadge><Zap size={ 11 } />{ t( `pro:pro` ) }</ProBadge>
+                    </GroupLabel>
+                    { CLOUD_MODELS.map( ( model ) => <ModelOption
+                        key={ model.id }
+                        data-testid={ `model-option-${ model.id }` }
+                        onClick={ () => handle_cloud( model.id ) }
+                    >
+                        { model.id === active_model_id ?
+                            <Check size={ 14 } style={ { flexShrink: 0 } } />
+                            :
+                            <Cloud size={ 14 } style={ { flexShrink: 0, color: theme.colors.text_muted } } /> }
+                        <ModelInfo>
+                            <ModelLabel>{ t( model.name_key ) }</ModelLabel>
+                            <ModelMeta>{ t( model.hint_key ) }</ModelMeta>
+                        </ModelInfo>
+                        { !signed_in && <Lock size={ 12 } aria-label={ t( `pro:sign_in` ) } style={ { color: theme.colors.text_muted, flexShrink: 0 } } /> }
+                    </ModelOption> ) }
+                    <Footnote>
+                        { t( `pro:model_menu_footer` ) } <button type="button" data-testid="model-whats-pro-btn" onClick={ handle_explain }>{ t( `pro:whats_pro` ) }</button>
+                    </Footnote>
+                </> }
 
                 <Divider />
 

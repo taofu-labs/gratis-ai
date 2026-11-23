@@ -21,6 +21,7 @@ import WizardQuestion, { WizardSummary } from '../molecules/ModelWizard'
 import SpeedGauge from '../atoms/SpeedGauge'
 import { read_speed_mode, read_wizard_answers, write_speed_mode, write_wizard_answers } from '../../utils/speed_mode'
 import ModelBrowser from '../molecules/ModelBrowser'
+import ProWizardCard from '../molecules/ProWizardCard'
 import RuntimeUnsupported from '../molecules/RuntimeUnsupported'
 import {
     build_device_profile,
@@ -945,6 +946,7 @@ export default function ModelSelectPage() {
                     on_pick={ key => answer( questions[ question ], key ) }
                     on_back={ question > 0 ? () => set_question( question - 1 ) : null }
                     on_skip={ finish_wizard }
+                    aside={ question === 0 && <ProWizardCard /> }
                 />
             </Section> }
 

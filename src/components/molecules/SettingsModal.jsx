@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import BasicSettings from './BasicSettings'
 import AdvancedSettings from './AdvancedSettings'
 import ModelsSettings from './ModelsSettings'
+import ProSettings from './ProSettings'
+import { pro_available } from '../../utils/gratis_auth'
 import use_settings from '../../hooks/use_settings'
 import use_dialog from '../../hooks/use_dialog'
 
@@ -121,6 +123,7 @@ export default function SettingsModal( { is_open, on_close, on_model_switch, on_
         { id: `basic`, label: t( `tab_basic` ) },
         { id: `advanced`, label: t( `tab_advanced` ) },
         { id: `models`, label: t( `tab_models` ) },
+        ... pro_available() ? [ { id: `pro`, label: t( `pro:pro` ) } ] : [],
     ]
 
     if( !is_open ) return null
@@ -185,6 +188,8 @@ export default function SettingsModal( { is_open, on_close, on_model_switch, on_
                         settings={ settings }
                         on_change={ update_setting }
                     /> }
+
+                { active_tab === `pro` && <ProSettings /> }
 
                 { active_tab === `models` &&
                     <ModelsSettings

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { log } from 'mentie'
 import { create_provider } from '../providers/factory'
+import GratisProvider, { is_cloud_model } from '../providers/gratis_provider'
 import { storage_key } from '../utils/branding'
 import { has_visible_output } from '../utils/llama_server_protocol'
 import { get_model_by_id, implied_bandwidth_gbs } from '../utils/model_catalog'
@@ -139,6 +140,8 @@ const use_llm_store = create( ( set, get ) => ( {
      * Ensure the provider is initialised (handles async creation).
      * Uses a shared promise so all concurrent callers get the same instance.
      *
+     * `cloud:` ids get the Gratis Pro provider; switching type unloads the old
+     * one, so a local model's RAM is freed while a cloud model is in use.
      * Stale cloud-provider model IDs from earlier builds are cleared so users
      * land back on the local model picker.
      */
@@ -146,7 +149,7 @@ const use_llm_store = create( ( set, get ) => ( {
 
         const state = get()
         const target_id = model_id || localStorage.getItem( storage_key( `active_model_id` ) ) || ``
-        const target_type = `local`
+        const target_type = is_cloud_model( target_id ) ? `cloud` : `local`
 
         const current_type = state._provider_type
 
@@ -173,14 +176,16 @@ const use_llm_store = create( ( set, get ) => ( {
             set( { _provider: null, _provider_promise: null, loaded_model_id: null } )
         }
 
-        // Standard local provider
-        if( !state._provider_promise ) {
-            const promise = create_provider()
+        // Gratis Pro (cloud) or the standard local provider
+        if( !get()._provider_promise ) {
+            const promise = target_type === `cloud`
+                ? Promise.resolve( new GratisProvider() )
+                : create_provider()
             set( { _provider_promise: promise } )
         }
 
         const provider = await get()._provider_promise
-        set( { _provider: provider, _provider_type: `local` } )
+        set( { _provider: provider, _provider_type: target_type } )
         return provider
 
     },

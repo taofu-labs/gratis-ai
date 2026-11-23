@@ -9,6 +9,7 @@ import ErrorBoundary from './components/molecules/ErrorBoundary'
 import use_theme from './hooks/use_theme'
 import use_viewport_height from './hooks/use_viewport_height'
 import InstallAppPill from './components/molecules/InstallAppPill'
+import ProDialog from './components/molecules/ProDialog'
 import Routes from './routes/Routes'
 import { register_shortcuts } from './utils/keyboard_shortcuts'
 import { EVENTS } from './utils/branding'
@@ -71,6 +72,7 @@ export default function App() {
                 <QueryParamProvider adapter={ ReactRouter6Adapter }>
                     <Routes />
                     <InstallAppPill />
+                    <ProDialog />
                     <Toaster
                         position="top-center"
                         toastOptions={ {
