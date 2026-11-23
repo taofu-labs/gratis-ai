@@ -89,6 +89,31 @@ describe( `Sign in with Gratis`, () => {
         expect( auth.is_signed_in() ).toBe( false )
     } )
 
+    test( `a refresh still in flight cannot restore the session after sign-out`, async () => {
+        localStorage.setItem( SESSION_KEY, JSON.stringify( { access_token: `old`, refresh_token: `rt1`, expires_at: 0 } ) )
+        let answer
+        fetch.mockImplementationOnce( () => new Promise( resolve => answer = resolve ) )
+        fetch.mockResolvedValue( json( 200, {} ) )
+        const pending = auth.get_access_token().catch( err => err )
+        await new Promise( resolve => setTimeout( resolve, 0 ) )
+        await auth.sign_out()
+        answer( json( 200, { access_token: `new`, refresh_token: `rt2`, expires_in: 900 } ) )
+        await pending
+        expect( auth.is_signed_in() ).toBe( false )
+    } )
+
+    test( `a 401 refreshes once and retries before asking to sign in`, async () => {
+        localStorage.setItem( SESSION_KEY, JSON.stringify( { access_token: `at1`, refresh_token: `rt1`, expires_at: Date.now() + 600_000 } ) )
+        fetch
+            .mockResolvedValueOnce( json( 401, { error: { code: `invalid_token` } } ) )
+            .mockResolvedValueOnce( json( 200, { access_token: `at2`, refresh_token: `rt2`, expires_in: 900 } ) )
+            .mockResolvedValueOnce( json( 200, { percent_used: 1 } ) )
+        const response = await auth.gratis_fetch( `/v1/usage` )
+        expect( response.status ).toBe( 200 )
+        expect( fetch.mock.calls[ 2 ][ 1 ].headers.Authorization ).toBe( `Bearer at2` )
+        expect( auth.read_session().refresh_token ).toBe( `rt2` )
+    } )
+
 } )
 
 describe( `Gratis Pro provider`, () => {
@@ -117,6 +142,18 @@ describe( `Gratis Pro provider`, () => {
         expect( request ).toMatchObject( { model: `text-fast`, stream: true, messages: [ { role: `user`, content: `Hi` } ] } )
         expect( fetch.mock.calls[ 1 ][ 1 ].headers.Authorization ).toBe( `Bearer at` )
 
+    } )
+
+    test( `an error event mid-stream rejects instead of passing as a finished reply`, async () => {
+        signed_in()
+        const provider = new provider_module.default()
+        fetch.mockResolvedValueOnce( json( 200, { can_infer: true } ) )
+        await provider.load_model( `cloud:text-fast` )
+        fetch.mockResolvedValueOnce( sse( [ { choices: [ { delta: { content: `Par` } } ] }, { error: { code: `upstream_error`, message: `boom` } } ] ) )
+        const read = async () => {
+            for await ( const chunk of provider.chat_stream( [ { role: `user`, content: `Hi` } ] ) ) void chunk
+        }
+        await expect( read() ).rejects.toThrow()
     } )
 
     test( `loading without a plan fails with a plain explanation`, async () => {

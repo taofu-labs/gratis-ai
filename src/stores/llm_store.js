@@ -162,30 +162,22 @@ const use_llm_store = create( ( set, get ) => ( {
             throw new Error( `This model connection is no longer supported. Choose a local model to continue.` )
         }
 
-        // If we have a provider of the correct type, reuse it
-        if( state._provider && current_type === target_type ) {
-            return state._provider
-        }
+        // A provider of this type exists or is being created: share it
+        const existing = state._provider || state._provider_promise
+        if( existing && current_type === target_type ) return existing
 
-        // Provider type changed — dispose old one if it exists
-        if( state._provider ) {
-            log.info( `[use_llm] Switching provider type: ${ current_type } → ${ target_type }` )
-            try {
-                await state._provider.unload_model()
-            } catch { /* best effort */ }
-            set( { _provider: null, _provider_promise: null, loaded_model_id: null } )
-        }
+        // Switch type. Detach the old provider synchronously so no caller can
+        // reuse it mid-disposal; the new one is created once it has let go
+        if( existing ) log.info( `[use_llm] Switching provider type: ${ current_type } → ${ target_type }` )
+        const disposed = Promise.resolve( existing ).then( old => old?.unload_model() ).catch( () => {} )
 
-        // Gratis Pro (cloud) or the standard local provider
-        if( !get()._provider_promise ) {
-            const promise = target_type === `cloud`
-                ? Promise.resolve( new GratisProvider() )
-                : create_provider()
-            set( { _provider_promise: promise } )
-        }
+        const promise = disposed.then( () => target_type === `cloud` ? new GratisProvider() : create_provider() )
+        set( { _provider: null, _provider_type: target_type, _provider_promise: promise, loaded_model_id: null } )
 
-        const provider = await get()._provider_promise
-        set( { _provider: provider, _provider_type: target_type } )
+        const provider = await promise
+
+        // A later switch superseded this one: its provider owns the store
+        if( get()._provider_promise === promise ) set( { _provider: provider } )
         return provider
 
     },
@@ -237,7 +229,7 @@ const use_llm_store = create( ( set, get ) => ( {
                 // Stopped mid-load (an unload emptied the slot): the provider may still have
                 // finished, so free it rather than publish a model nobody asked for any more
                 if( get()._load_promise !== promise ) {
-                    if( !get()._load_promise ) await provider.unload_model().catch( () => {} )
+                    if( !get()._load_promise || get()._provider !== provider ) await provider.unload_model().catch( () => {} )
                     log.info( `[use_llm] Load of ${ model_id } finished after it was stopped` )
                     return
                 }

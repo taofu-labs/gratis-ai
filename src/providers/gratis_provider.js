@@ -114,6 +114,10 @@ export default class GratisProvider {
         // SSE → text deltas; the last chunk's `usage` becomes the store's timings
         const queue = []
         const parse = create_sse_parser( data => {
+
+            // An error mid-stream must not pass for a finished reply
+            if( data.error ) throw gratis_error( data.error.status || 502, data )
+
             const text = data.choices?.[ 0 ]?.delta?.content
             if( text ) queue.push( text )
             if( data.usage?.completion_tokens ) queue.push( { timings: { predicted_n: data.usage.completion_tokens, prompt_n: data.usage.prompt_tokens } } )
@@ -129,6 +133,9 @@ export default class GratisProvider {
                 parse( decoder.decode( value, { stream: true } ) )
                 while( queue.length ) yield queue.shift()
             }
+        } catch ( err ) {
+            reader.cancel().catch( () => {} )
+            throw err
         } finally {
             reader.releaseLock?.()
             if( this._controller === controller ) this._controller = null

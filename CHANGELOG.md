@@ -10,6 +10,9 @@
 - Model picker: optional card pointing to Pro for models bigger than the device can run
 - Pro is hidden without `VITE_GRATIS_CLIENT_ID`, and always hidden in the desktop and phone apps
 
+### Fixed
+- Switching between Pro and on-device models in quick succession always ends on the model you picked
+
 ## [0.55.4] - 2026-11-18
 
 ### Added

@@ -148,6 +148,47 @@ export const finish_sign_in = async params => {
 // One refresh at a time: rotation invalidates the old refresh token
 let refreshing = null
 
+// Bumped by sign-out, so a refresh still in flight cannot bring the session back
+let session_epoch = 0
+
+const EXPIRED_MESSAGE = `Your Gratis session expired. Sign in again to use Pro models.`
+
+// Other tabs share the session: hold a cross-tab lock where the browser has one
+const with_refresh_lock = fn => globalThis.navigator?.locks ? navigator.locks.request( `gratis-token-refresh`, fn ) : fn()
+
+/**
+ * Trade the stored refresh token for a new pair, unless another tab already did
+ * @returns {Promise<string>} A fresh access token
+ */
+const refresh_session = () => with_refresh_lock( async () => {
+
+    const epoch = session_epoch
+    const session = read_session()
+    if( !session?.refresh_token ) {
+        clear_session()
+        throw new SignInRequiredError( EXPIRED_MESSAGE )
+    }
+
+    // Another tab refreshed while this one waited for the lock
+    if( session.expires_at - EXPIRY_MARGIN_MS > Date.now() ) return session.access_token
+
+    try {
+        const tokens = await post_token( { grant_type: `refresh_token`, refresh_token: session.refresh_token } )
+        if( epoch !== session_epoch ) throw new SignInRequiredError()
+        return write_session( tokens ).access_token
+    } catch ( err ) {
+
+        // A rejected grant (expired after 14 idle days, revoked) needs a fresh sign-in
+        if( err.status === 400 || err.status === 401 ) {
+            clear_session()
+            throw new SignInRequiredError( EXPIRED_MESSAGE )
+        }
+        throw err
+
+    }
+
+} )
+
 /**
  * A valid access token, refreshed when close to expiry
  * @returns {Promise<string>}
@@ -157,34 +198,23 @@ export const get_access_token = async () => {
     const session = read_session()
     if( !session ) throw new SignInRequiredError()
     if( session.expires_at - EXPIRY_MARGIN_MS > Date.now() ) return session.access_token
-    if( !session.refresh_token ) {
-        clear_session()
-        throw new SignInRequiredError()
-    }
 
-    refreshing ||= post_token( { grant_type: `refresh_token`, refresh_token: session.refresh_token } )
-        .then( write_session )
-        .catch( err => {
+    refreshing ||= refresh_session().finally( () => refreshing = null )
+    return refreshing
 
-            // A rejected grant (expired after 14 idle days, revoked) needs a fresh sign-in
-            if( err.status === 400 || err.status === 401 ) {
-                clear_session()
-                throw new SignInRequiredError( `Your Gratis session expired. Sign in again to use Pro models.` )
-            }
-            throw err
+}
 
-        } )
-        .finally( () => refreshing = null )
-
-    const { access_token } = await refreshing
-    return access_token
-
+/** Mark the stored access token as spent, so the next call refreshes it */
+const expire_access_token = () => {
+    const session = read_session()
+    if( session ) localStorage.setItem( SESSION_KEY, JSON.stringify( { ...session, expires_at: 0 } ) )
 }
 
 /** Revoke the refresh token (best effort) and forget the session */
 export const sign_out = async () => {
 
     const session = read_session()
+    session_epoch++
     clear_session()
     if( !session?.refresh_token ) return
 
@@ -202,7 +232,7 @@ export const sign_out = async () => {
  * @param {RequestInit} [options]
  * @returns {Promise<Response>}
  */
-export const gratis_fetch = async ( path, options = {} ) => {
+export const gratis_fetch = async ( path, options = {}, retry = true ) => {
 
     const token = await get_access_token()
     const response = await fetch( `${ GRATIS_BASE_URL }${ path }`, {
@@ -210,11 +240,15 @@ export const gratis_fetch = async ( path, options = {} ) => {
         headers: { ...options.headers, Authorization: `Bearer ${ token }` },
     } )
 
-    // The server no longer accepts this token: drop it so the UI asks to sign in
-    if( response.status === 401 ) {
-        clear_session()
-        throw new SignInRequiredError( `Your Gratis session expired. Sign in again to use Pro models.` )
+    if( response.status !== 401 ) return response
+
+    // Expired in transit or revoked: refresh once and retry before asking to sign in
+    if( retry ) {
+        if( read_session()?.access_token === token ) expire_access_token()
+        return gratis_fetch( path, options, false )
     }
-    return response
+
+    clear_session()
+    throw new SignInRequiredError( EXPIRED_MESSAGE )
 
 }
