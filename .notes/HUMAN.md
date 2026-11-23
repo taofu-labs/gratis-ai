@@ -129,5 +129,7 @@ Open items only. Resolved history lives in TIMELINE.md.
 - Mac macOS 26.7.3 update blocked: needs 26.7 GB free, Mac has 21.5 GB; ours left ≈5.6 GB (Xcode 26.1.1 4.3 GB, Firefox, ~/gratis-ios, ~/gratis-mas). Waiting on user: delete our Xcode 26.1.1, free arjunmali data, or stay on 26.1 + CI. Wrap sudo commands in a script file on the Mac (`babysit mac sudo` breaks quoted args).
 
 ## Gratis Pro (2026-11-23)
-- Waiting on client id from the human (sent redirect URIs: gratis-ai.com, www, gratis.trueperformancenetwork.com, ai.gratis.sh, localhost:5173/4173 — all `/pro/callback`). Public client ⇒ id is not secret: put `VITE_GRATIS_CLIENT_ID` in `.env` (deploy-web builds from it). Then test real sign-in + chat on prod-like origin.
+- Client ids (public, not secret): dev `CqHiZPYb7gDJcWye` (localhost:5173 + 4173) in `.env.development`; prod `7c5rjrkqDHpxhza8` (https://gratis-ai.com only) injected by `deploy-web.yml` for taofu-labs/gratis-ai only (fork ai.gratis.sh builds without Pro). `vite preview` uses prod mode ⇒ no Pro there.
+- gratis.trueperformancenetwork.com + www.gratis-ai.com now redirect to gratis-ai.com client-side (index.html); human: "we are not responsible for gratis.trueperformancenetwork.com". Browser data (chats, OPFS models) is per origin ⇒ users of the old hosts start fresh. A Cloudflare redirect rule would be cleaner but the CI token can't touch that zone.
+- Real sign-in not yet completed: login needs the human's passkey/email. Dev flow reaches the real login page with the right client/redirect. Privacy/support copy for Pro drafted by the agent: human should review.
 - Decide: Pro in desktop/phone apps (needs native OAuth + origin story; iOS needs IAP or no upgrade link). Revoke call shape at `/oauth/token` unverified (best effort).

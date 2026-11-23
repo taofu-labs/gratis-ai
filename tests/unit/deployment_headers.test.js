@@ -86,6 +86,23 @@ describe( `deployment headers`, () => {
 
     } )
 
+    test( `old hostnames move to gratis-ai.com, keeping the path`, () => {
+
+        const index_html = readFileSync( `index.html`, `utf-8` )
+        const [ , script ] = index_html.match( /<script>([\s\S]*?)<\/script>/ )
+        const redirect_for = url => {
+            const { protocol, host, hostname, pathname, search, hash } = new URL( url )
+            let target = null
+            new Function( `location`, script )( { protocol, host, hostname, pathname, search, hash, replace: to => target = to } )
+            return target
+        }
+
+        expect( redirect_for( `https://gratis.trueperformancenetwork.com/chat/1?q=hi#x` ) ).toBe( `https://gratis-ai.com/chat/1?q=hi#x` )
+        expect( redirect_for( `http://gratis.trueperformancenetwork.com/` ) ).toBe( `https://gratis-ai.com/` )
+        expect( redirect_for( `https://www.gratis-ai.com/pro/callback?code=x` ) ).toBe( `https://gratis-ai.com/pro/callback?code=x` )
+
+    } )
+
     test( `moves named http hosts to https, keeps local dev on http`, () => {
 
         // Plain http is never cross-origin isolated: no threads, no OPFS model storage
@@ -98,8 +115,9 @@ describe( `deployment headers`, () => {
             return target
         }
 
-        expect( redirect_for( `http://gratis.trueperformancenetwork.com/chat/1?q=hi#x` ) ).toBe( `https://gratis.trueperformancenetwork.com/chat/1?q=hi#x` )
-        expect( redirect_for( `https://gratis.trueperformancenetwork.com/` ) ).toBeNull()
+        expect( redirect_for( `http://ai.gratis.sh/chat/1?q=hi#x` ) ).toBe( `https://ai.gratis.sh/chat/1?q=hi#x` )
+        expect( redirect_for( `https://ai.gratis.sh/` ) ).toBeNull()
+        expect( redirect_for( `https://gratis-ai.com/` ) ).toBeNull()
         expect( redirect_for( `http://localhost:5173/` ) ).toBeNull()
         expect( redirect_for( `http://127.0.0.1:5173/` ) ).toBeNull()
         expect( redirect_for( `http://192.168.2.10:5173/` ) ).toBeNull()

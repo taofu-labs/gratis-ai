@@ -59,6 +59,8 @@ jobs:
         run: npm run build
         env:
           VITE_GITHUB_REPO: ${{ github.repository }}
+          # Gratis Pro production client: registered for https://gratis-ai.com only, so forks build without Pro
+          VITE_GRATIS_CLIENT_ID: ${{ github.repository == 'taofu-labs/gratis-ai' && '7c5rjrkqDHpxhza8' || '' }}
 
       - name: Verify COOP/COEP headers file
         run: |

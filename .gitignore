@@ -146,6 +146,7 @@ vite.config.ts.timestamp-*
 # Dotfiles
 .*
 !.env
+!.env.development
 !.nvmrc
 !.gitignore
 !.husky

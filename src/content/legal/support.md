@@ -13,12 +13,12 @@ Models are large (0.3 to 6 GB). Stay on Wi-Fi and keep the app open; an interrup
 Open the model picker and choose a smaller or faster model, or set the speed gauge to *Faster*. Phones and older computers work best with models around 1 GB.
 
 **Does anything leave my device?**
-No. Your chats stay on your device. Gratis only goes online to download models and app updates. See the [privacy policy](/privacy).
+No. Your chats stay on your device. Gratis only goes online to download models and app updates. The one exception is optional Gratis Pro on the web: messages you send to a Pro cloud model go to Gratis's servers. See the [privacy policy](/privacy).
 
 **How do I delete my data?**
 Settings → Models removes downloaded models; *Wipe history* in the sidebar removes your chats. Uninstalling removes everything.
 
 **Which devices work?**
-iPhone and iPad, Android phones, Mac, Windows and Linux, and modern browsers at [gratis.trueperformancenetwork.com](https://gratis.trueperformancenetwork.com).
+iPhone and iPad, Android phones, Mac, Windows and Linux, and modern browsers at [gratis-ai.com](https://gratis-ai.com).
 
 Gratis is made by Taofu B.V., Pedro de Medinalaan 83, 1086 XP Amsterdam, the Netherlands.

@@ -9,6 +9,10 @@
 - Settings → Pro: account, weekly allowance, hide Pro models
 - Model picker: optional card pointing to Pro for models bigger than the device can run
 - Pro is hidden without `VITE_GRATIS_CLIENT_ID`, and always hidden in the desktop and phone apps
+- Privacy policy and support page cover Gratis Pro (messages to Pro models leave the device)
+
+### Changed
+- gratis.trueperformancenetwork.com and www.gratis-ai.com redirect to gratis-ai.com
 
 ### Fixed
 - Switching between Pro and on-device models in quick succession always ends on the model you picked

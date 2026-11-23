@@ -7,9 +7,11 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#002B36" />
     <!-- Never leak page URLs to model hosts; Hugging Face also rejects some referrers (e.g. *.workers.dev) -->
     <meta name="referrer" content="no-referrer" />
-    <!-- Plain http has no cross-origin isolation: no threads, no OPFS. Hosts reached by name always move to https -->
+    <!-- Old hostnames move to the canonical gratis-ai.com (the only origin Sign in with Gratis accepts).
+         Plain http has no cross-origin isolation: no threads, no OPFS. Hosts reached by name always move to https -->
     <script>
-        if( location.protocol === 'http:' && !/^(localhost|\[::1\]|[\d.]+)$/.test( location.hostname ) ) location.replace( 'https://' + location.host + location.pathname + location.search + location.hash )
+        if( /^(gratis\.trueperformancenetwork\.com|www\.gratis-ai\.com)$/.test( location.hostname ) ) location.replace( 'https://gratis-ai.com' + location.pathname + location.search + location.hash )
+        else if( location.protocol === 'http:' && !/^(localhost|\[::1\]|[\d.]+)$/.test( location.hostname ) ) location.replace( 'https://' + location.host + location.pathname + location.search + location.hash )
     </script>
     <title>%VITE_APP_NAME%</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />

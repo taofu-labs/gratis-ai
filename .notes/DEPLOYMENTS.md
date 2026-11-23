@@ -2,7 +2,7 @@
 
 | Target | Where | Ships via |
 | --- | --- | --- |
-| Web (primary) | https://gratis-ai.com, https://www.gratis-ai.com (Workers custom domains) + https://gratis.trueperformancenetwork.com (DNS + Worker route); worker `gratis-trueperformancenetwork` | `deploy-web.yml` on push to `main` (Workers Static Assets) |
+| Web (primary) | https://gratis-ai.com (canonical; Workers custom domain). www.gratis-ai.com (custom domain) + gratis.trueperformancenetwork.com (DNS + Worker route) serve the same Worker but redirect to gratis-ai.com in index.html; worker `gratis-trueperformancenetwork` | `deploy-web.yml` on push to `main` (Workers Static Assets) |
 | Web (upstream fork) | https://ai.gratis.sh | same workflow when repo = `actuallymentor/gratis-ai` |
 | Desktop | GitHub Releases, taofu-labs/gratis-ai (mac signed+notarized since v0.46; Windows unsigned by decision) | `release-electron.yml` on `package.json` version change |
 | Android | Play app `com.trueperformancenetwork.gratis`: internal track ("Gratis internal testers", 0.55.3 / 5503 uploaded 2026-11-15, not sent for review) + production (0.55.0 / 5500 live, track `completed` 2026-11-07) | CI `Mobile apps` artifact → `PATH=vendor/android/jdk/bin:$PATH node scripts/play_internal.js app-release.aab` |
