@@ -57,3 +57,11 @@ Sources: https://raw.githubusercontent.com/WebAssembly/website/main/features.jso
 
 - EPYC 9575F 4 thr tg: LFM 1.2B Q4 88 · Qwen 2B 43 · Gemma E2B Q4 42 (PLE ⇒ ≈ dense 2B) · Granite 3B 27 · Qwen 4B 22 · 9B 13 · Gemma 26B IQ4_XS 22. IQ2/IQ3 2–2.5× slower than K-quants even on x86.
 - OnePlus Nord CE3 Lite (SM6375) native vs Chrome: MiniCPM 1B 21.4 / 1.5, LFM Q4 17.7 / 1.2, Qwen 2B 8.9 / 0.67, Granite 3B 6.2 / 0.39 ⇒ native 12–16× web. E4B in Chrome OOMs on 7.5 GB phone. iPhone X native ≈ 0.5× Nord.
+
+## 2026-11-23 — Gratis Pro inference (account.gratis-ai.com/llms.txt)
+- "Sign in with Gratis": OAuth 2.1 code + PKCE S256, public client (no secret). `client_id` issued by a Gratis admin; redirect URI exact match (loopback any port OK). `/v1` browser calls need origin == registered redirect origin → native/Electron need their own redirect URIs.
+- Access token 15 min; refresh rotates every use (persist new one); grant dies after 14 d idle. Default scope `inference offline_access`.
+- OpenAI-compatible `/v1/chat/completions` (SSE, `usage` in last chunk). Use aliases `text-fast`/`text-smart`, not raw ids. `/v1/models` per-tier; `/v1/usage` → `percent_used`, `resets_at`, `can_infer`, `blockers`.
+- No prices exposed: weekly rolling allowance as %. Errors: `no_tier` 403 → upsell, `usage_limit_reached` 429, `too_many_concurrent_requests` 429 (max 4), `free_capacity_exhausted` 503.
+- Data modes (user-side, invisible to app): sovereign (saved to account) vs shadow (no storage).
+- Product rule from user: local inference is primary and always works; Pro = optional upgrade, copy must promise free stays free.
